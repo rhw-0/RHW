@@ -626,29 +626,40 @@ function stockFor(name) { const item = findCommodity(name); return item ? quanti
 
 function displayRecipeName(name) { return displayName({ name }); }
 
-function renderProductionModules() { if (!els.productionGrid) return;
+function renderProductionModules() { const grid = document.getElementById('productionGrid'); if (!grid) return;
 
-els.productionGrid.innerHTML = RECIPES.map(recipe => { const productItem = findCommodity(recipe.product); const productStock = productItem ? quantity(productItem) : 0;
+if (!Array.isArray(RECIPES) || !RECIPES.length) { grid.innerHTML = '<div class="production-card"><div class="production-title">No recipes configured</div></div>'; return; }
 
-const ingredientData = recipe.ingredients.map(([name, required]) => {
-  const stock = stockFor(name);
+grid.innerHTML = RECIPES.map(recipe => { const productItem = findCommodity(recipe.product); const productStock = productItem ? quantity(productItem) : 0;
+
+const ingredientData = recipe.ingredients.map(pair => {
+  const ingredientName = pair[0];
+  const required = pair[1];
+  const stock = stockFor(ingredientName);
   const cycles = required > 0 ? Math.floor(stock / required) : 0;
-  return { name, required, stock, cycles };
+  return { name: ingredientName, required, stock, cycles };
 });
 
 const possibleCycles = ingredientData.length ? Math.min(...ingredientData.map(i => i.cycles)) : 0;
 const possibleOutput = possibleCycles * recipe.output;
-const bottleneck = ingredientData.reduce((lowest, current) => current.cycles < lowest.cycles ? current : lowest, ingredientData[0]);
+const bottleneck = ingredientData.length ? ingredientData.reduce((lowest, current) => current.cycles < lowest.cycles ? current : lowest) : null;
 const cardState = possibleCycles <= 0 ? 'critical' : possibleCycles < 10 ? 'low' : 'ok';
 
 const ingredientRows = ingredientData.map(item => {
   const isBottleneck = bottleneck && item.name === bottleneck.name;
-  return `<li class="${isBottleneck ? 'bottleneck' : ''}"><span>${displayRecipeName(item.name)}</span><small>Req ${number(item.required)}</small><strong>${number(item.stock)}</strong></li>`;
+  return `<li class="${isBottleneck ? 'bottleneck' : ''}">
+    <span>${displayRecipeName(item.name)}</span>
+    <small>Req ${number(item.required)}</small>
+    <strong>${number(item.stock)}</strong>
+  </li>`;
 }).join('');
 
 return `<div class="production-card ${cardState}">
   <div class="production-top">
-    <div><div class="production-title">${displayRecipeName(recipe.product)}</div><div class="production-sub">Output per cycle: ${number(recipe.output)}</div></div>
+    <div>
+      <div class="production-title">${displayRecipeName(recipe.product)}</div>
+      <div class="production-sub">Output per cycle: ${number(recipe.output)}</div>
+    </div>
     ${statusPill(cardState)}
   </div>
   <div class="production-stats">
