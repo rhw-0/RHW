@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V5</title>
+  <title>RHW Command Dashboard · V5.1</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -446,7 +446,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V5)
+   RHW DASHBOARD LOGIC (V5.1)
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -570,11 +570,18 @@ function renderProductionModules() {
 function renderList(target, list, emptyText) { 
   if (!list.length) { target.innerHTML = `<li><span>${emptyText}</span><span class="pill ok">SECURE</span></li>`; return; } 
   target.innerHTML = list.slice(0, 8).map(item => { 
-    const role = assetRole(item); const state = stockState(item); const need = needAmount(item); 
-    const detail = role === 'export' ? `${number(quantity(item))} UNITS SECURED` : state === 'ok' ? 'NOMINAL' : `DEFICIT: ${number(need)}`; 
+    const state = stockState(item); 
+    const need = needAmount(item); 
+    const q = quantity(item);
+    
+    const detail = state === 'ok' ? 'NOMINAL' : `DEFICIT: ${number(need)}`; 
+    
     return `<li class="alert-${state}">
               <span><strong>${escapeHTML(displayName(item))}</strong><small>${detail}</small></span>
-              ${statusPill(state)}
+              <div style="display:flex; align-items:center; gap:12px;">
+                <strong style="font-size:16px; font-family: var(--font-tech);">${number(q)}</strong>
+                ${statusPill(state)}
+              </div>
             </li>`; 
   }).join(''); 
 }
