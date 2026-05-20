@@ -1,8 +1,9 @@
-<!DOCTYPE html><html lang="de">
+<!DOCTYPE html>
+<html lang="de">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V2</title>
+  <title>RHW Command Dashboard · V3</title>
   <style>
     :root {
       --bg: #07090b;
@@ -22,471 +23,365 @@
       --warn-soft: rgba(230, 163, 61, 0.16);
       --good: #53bd86;
       --good-soft: rgba(83, 189, 134, 0.15);
-    }* { box-sizing: border-box; }
-
-body {
-  background:
-    radial-gradient(circle at 80% 20%, rgba(176,120,32,0.08), transparent 25%),
-    radial-gradient(circle at 20% 0%, rgba(40,70,120,0.12), transparent 30%),
-  margin: 0;
-  background:
-    radial-gradient(circle at 20% 0%, rgba(47,128,237,0.15), transparent 34%),
-    radial-gradient(circle at 85% 8%, rgba(210,173,103,0.10), transparent 32%),
-    linear-gradient(180deg, #090d12 0%, var(--bg) 55%, #040506 100%);
-  color: var(--text);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-header {
-  position: relative;
-  overflow: hidden;
-  padding: 26px 32px 18px;
-  border-bottom: 1px solid var(--line);
-  background: rgba(7, 9, 11, 0.86);
-  z-index: 20;
-  backdrop-filter: blur(10px);
-}
-
-.eyebrow {
-  color: var(--gold);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.topline {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin-top: 7px;
-}
-
-h1 {
-  margin: 0;
-  font-size: 36px;
-  line-height: 1;
-}
-
-.hero-left {
-  display:flex;
-  align-items:center;
-  gap:22px;
-}
-.crest {
-  width:120px;
-  height:auto;
-  filter: drop-shadow(0 0 18px rgba(180,130,40,0.15));
-  flex-shrink:0;
-}
-.crest-watermark {
-  position:absolute;
-  right:-40px;
-  top:-20px;
-  width:420px;
-  height:420px;
-  background-image:url('https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png');
-  background-size:contain;
-  background-repeat:no-repeat;
-  opacity:0.035;
-  pointer-events:none;
-  z-index:1;
-  filter: grayscale(20%);
-}
-.subtitle {
-  margin-top: 9px;
-  color: var(--muted);
-  max-width: 920px;
-  line-height: 1.45;
-}
-
-.live-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid rgba(83,189,134,0.45);
-  background: var(--good-soft);
-  color: #ccefdc;
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--good);
-  box-shadow: 0 0 16px var(--good);
-}
-
-main {
-  padding: 24px 32px 40px;
-  display: grid;
-  gap: 18px;
-}
-
-.cards {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  gap: 14px;
-}
-
-.card, .panel, .alert-card {
-  background: linear-gradient(180deg, rgba(23, 30, 38, 0.98), rgba(12, 16, 21, 0.98));
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.30);
-}
-
-.card {
-  background: linear-gradient(135deg, rgba(8,16,28,0.96), rgba(14,22,36,0.96));
-  border: 1px solid rgba(182,140,60,0.22);
-  box-shadow: inset 0 1px 0 rgba(255,220,150,0.03); padding: 18px; }
-
-.label {
-  color: #b7d7ff;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-}
-
-.value {
-  margin-top: 8px;
-  font-size: 25px;
-  font-weight: 900;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.alert-card {
-  padding: 16px;
-  min-height: 160px;
-}
-
-.alert-title {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 12px;
-  font-weight: 900;
-}
-
-.alert-title span:first-child {
-  color: var(--gold);
-  text-transform: uppercase;
-  font-size: 13px;
-  letter-spacing: 0.12em;
-}
-
-.count-badge {
-  border-radius: 999px;
-  padding: 4px 10px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--line);
-  font-size: 12px;
-}
-
-.alert-list {
-  display: grid;
-  gap: 9px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  max-height: 210px;
-  overflow: auto;
-}
-
-.alert-list li {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  padding: 9px 10px;
-  border: 1px solid var(--line-soft);
-  border-radius: 12px;
-  background: rgba(255,255,255,0.025);
-}
-
-.alert-list li.alert-critical {
-  border-color: rgba(224, 86, 86, 0.62);
-  background: linear-gradient(90deg, rgba(224,86,86,0.13), rgba(255,255,255,0.025));
-}
-
-.alert-list li.alert-low {
-  border-color: rgba(230, 163, 61, 0.58);
-  background: linear-gradient(90deg, rgba(230,163,61,0.12), rgba(255,255,255,0.025));
-}
-
-.alert-list li.alert-ok {
-  border-color: rgba(83, 189, 134, 0.32);
-}
-
-.alert-list small {
-  color: var(--muted);
-  display: block;
-  margin-top: 3px;
-}
-
-.progress-shell {
-  height: 8px;
-  background: #080b0f;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  overflow: hidden;
-  margin-top: 7px;
-}
-
-.progress-bar {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--danger), var(--warn), var(--good));
-}
-
-.panel {
-  border: 1px solid rgba(182,140,60,0.18);
-  box-shadow: 0 10px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,220,150,0.02); overflow: hidden; }
-
-.panel-head {
-  padding: 16px;
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.025);
-}
-
-.panel-title { font-size: 18px; font-weight: 900; }
-
-.controls {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-input, select, button {
-  background: #080c10;
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
-  outline: none;
-}
-
-input:focus, select:focus { border-color: rgba(47,128,237,0.9); }
-
-button {
-  cursor: pointer;
-  background: linear-gradient(180deg, #1d5086, #12395f);
-  border-color: #2e72ae;
-  font-weight: 900;
-}
-
-button:hover { filter: brightness(1.12); }
-
-.ghost-button {
-  background: #0b0f13;
-  border-color: var(--line);
-}
-
-.status {
-  color: var(--muted);
-  font-size: 13px;
-  padding: 0 16px 14px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.mini-note {
-  color: #b7d7ff;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-th, td {
-  text-align: left;
-  padding: 11px 12px;
-  border-bottom: 1px solid rgba(45, 56, 70, 0.8);
-  white-space: nowrap;
-}
-
-th {
-  color: #b7d7ff;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: #111821;
-  cursor: pointer;
-  user-select: none;
-}
-
-th:hover { color: var(--text); }
-tr:hover td { background: rgba(47, 128, 237, 0.08); }
-
-.table-wrap {
-  max-height: 66vh;
-  overflow: auto;
-}
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 4px 9px;
-  font-size: 12px;
-  font-weight: 900;
-  border: 1px solid var(--line);
-}
-
-.critical { color: #ffd4d4; background: var(--danger-soft); border-color: rgba(224, 86, 86, 0.48); }
-.low { color: #ffe4b8; background: var(--warn-soft); border-color: rgba(230, 163, 61, 0.50); }
-.ok { color: #ccefdc; background: var(--good-soft); border-color: rgba(83, 189, 134, 0.48); }
-.buy { color: #d7e9ff; background: var(--blue-soft); border-color: rgba(47, 128, 237, 0.48); }
-.sell { color: #f3e0b8; background: rgba(210, 173, 103, 0.15); border-color: rgba(210, 173, 103, 0.48); }
-.both { color: #efe1ff; background: rgba(176, 103, 226, 0.16); border-color: rgba(176, 103, 226, 0.48); }
-
-.production-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 14px;
-  padding: 16px;
-}
-
-.production-card {
-  border: 1px solid rgba(182,140,60,0.22);
-  background: linear-gradient(180deg, rgba(10,17,27,0.98), rgba(8,11,15,0.98));
-  border-radius: 14px;
-  padding: 14px;
-  box-shadow: inset 0 1px 0 rgba(255,220,150,0.03);
-}
-
-.production-card.critical { border-color: rgba(224,86,86,0.58); }
-.production-card.low { border-color: rgba(230,163,61,0.55); }
-
-.production-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.production-title {
-  color: var(--gold);
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 13px;
-}
-
-.production-sub {
-  color: var(--muted);
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.production-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin: 12px 0;
-}
-
-.production-stat {
-  border: 1px solid var(--line-soft);
-  border-radius: 10px;
-  padding: 8px;
-  background: rgba(255,255,255,0.025);
-}
-
-.production-stat small {
-  display: block;
-  color: var(--muted);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.production-stat strong {
-  display: block;
-  margin-top: 4px;
-  font-size: 15px;
-}
-
-.recipe-list {
-  display: grid;
-  gap: 7px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.recipe-list li {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 8px;
-  align-items: center;
-  padding: 8px 9px;
-  border: 1px solid var(--line-soft);
-  border-radius: 10px;
-  background: rgba(255,255,255,0.022);
-  font-size: 13px;
-}
-
-.recipe-list li.bottleneck {
-  border-color: rgba(224,86,86,0.58);
-  background: linear-gradient(90deg, rgba(224,86,86,0.12), rgba(255,255,255,0.02));
-}
-
-.recipe-list small { color: var(--muted); }
-
-.error {
-  padding: 14px 16px;
-  color: #ffd1d1;
-  background: rgba(224, 86, 86, 0.12);
-  border-top: 1px solid rgba(224, 86, 86, 0.35);
-  display: none;
-}
-
-.footnote {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-@media (max-width: 1000px) {
-  .cards, .summary-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 700px) {
-  .cards, .summary-grid { grid-template-columns: 1fr; }
-  header, main { padding-left: 16px; padding-right: 16px; }
-  .panel-head { align-items: stretch; flex-direction: column; }
-  .controls { justify-content: stretch; }
-  input, select, button { width: 100%; }
-  th { position: static; }
-}
-
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(47,128,237,0.15), transparent 34%),
+        radial-gradient(circle at 85% 8%, rgba(210,173,103,0.10), transparent 32%),
+        linear-gradient(180deg, #090d12 0%, var(--bg) 55%, #040506 100%);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    header {
+      position: relative;
+      overflow: hidden;
+      padding: 26px 32px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(7, 9, 11, 0.86);
+      z-index: 20;
+      backdrop-filter: blur(10px);
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .topline {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-top: 7px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 36px;
+      line-height: 1;
+    }
+
+    .hero-left {
+      display:flex;
+      align-items:center;
+      gap:22px;
+    }
+
+    .crest {
+      width:120px;
+      height:auto;
+      filter: drop-shadow(0 0 18px rgba(180,130,40,0.15));
+      flex-shrink:0;
+    }
+
+    .crest-watermark {
+      position:absolute;
+      right:-40px;
+      top:-20px;
+      width:420px;
+      height:420px;
+      background-image:url('https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png');
+      background-size:contain;
+      background-repeat:no-repeat;
+      opacity:0.035;
+      pointer-events:none;
+      z-index:1;
+      filter: grayscale(20%);
+    }
+
+    .subtitle {
+      margin-top: 9px;
+      color: var(--muted);
+      max-width: 920px;
+      line-height: 1.45;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(83,189,134,0.45);
+      background: var(--good-soft);
+      color: #ccefdc;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 16px var(--good);
+    }
+
+    main {
+      padding: 24px 32px 40px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 14px;
+    }
+
+    .card, .panel, .alert-card {
+      background: linear-gradient(180deg, rgba(23, 30, 38, 0.98), rgba(12, 16, 21, 0.98));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.30);
+    }
+
+    .card {
+      background: linear-gradient(135deg, rgba(8,16,28,0.96), rgba(14,22,36,0.96));
+      border: 1px solid rgba(182,140,60,0.22);
+      box-shadow: inset 0 1px 0 rgba(255,220,150,0.03);
+      padding: 18px;
+    }
+
+    .label {
+      color: #b7d7ff;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    .value {
+      margin-top: 8px;
+      font-size: 25px;
+      font-weight: 900;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1.1fr 1fr;
+      gap: 14px;
+    }
+
+    .alert-card {
+      padding: 16px;
+      min-height: 160px;
+    }
+
+    .alert-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+      font-weight: 900;
+    }
+
+    .alert-title span:first-child {
+      color: var(--gold);
+      text-transform: uppercase;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+    }
+
+    .count-badge {
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--line);
+      font-size: 12px;
+    }
+
+    .alert-list {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      max-height: 210px;
+      overflow: auto;
+    }
+
+    .alert-list li {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 9px 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.025);
+    }
+
+    .alert-list li.alert-critical {
+      border-color: rgba(224, 86, 86, 0.62);
+      background: linear-gradient(90deg, rgba(224,86,86,0.13), rgba(255,255,255,0.025));
+    }
+
+    .alert-list li.alert-low {
+      border-color: rgba(230, 163, 61, 0.58);
+      background: linear-gradient(90deg, rgba(230,163,61,0.12), rgba(255,255,255,0.025));
+    }
+
+    .alert-list li.alert-ok {
+      border-color: rgba(83, 189, 134, 0.32);
+    }
+
+    .alert-list small {
+      color: var(--muted);
+      display: block;
+      margin-top: 3px;
+    }
+
+    .panel {
+      border: 1px solid rgba(182,140,60,0.18);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,220,150,0.02);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .panel-title { font-size: 18px; font-weight: 900; }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    input, select, button {
+      background: #080c10;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus, select:focus { border-color: rgba(47,128,237,0.9); }
+
+    button {
+      cursor: pointer;
+      background: linear-gradient(180deg, #1d5086, #12395f);
+      border-color: #2e72ae;
+      font-weight: 900;
+    }
+
+    button:hover { filter: brightness(1.12); }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 0 16px 14px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(45, 56, 70, 0.8);
+      white-space: nowrap;
+    }
+
+    th {
+      color: #b7d7ff;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: #111821;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    th:hover { color: var(--text); background: #1a2430; }
+    tr:hover td { background: rgba(47, 128, 237, 0.08); }
+
+    .table-wrap {
+      max-height: 66vh;
+      overflow: auto;
+    }
+
+    #itemsBody {
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 900;
+      border: 1px solid var(--line);
+    }
+
+    .critical { color: #ffd4d4; background: var(--danger-soft); border-color: rgba(224, 86, 86, 0.48); }
+    .low { color: #ffe4b8; background: var(--warn-soft); border-color: rgba(230, 163, 61, 0.50); }
+    .ok { color: #ccefdc; background: var(--good-soft); border-color: rgba(83, 189, 134, 0.48); }
+    .buy { color: #d7e9ff; background: var(--blue-soft); border-color: rgba(47, 128, 237, 0.48); }
+    .sell { color: #f3e0b8; background: rgba(210, 173, 103, 0.15); border-color: rgba(210, 173, 103, 0.48); }
+    .both { color: #efe1ff; background: rgba(176, 103, 226, 0.16); border-color: rgba(176, 103, 226, 0.48); }
+
+    .error {
+      padding: 14px 16px;
+      color: #ffd1d1;
+      background: rgba(224, 86, 86, 0.12);
+      border-top: 1px solid rgba(224, 86, 86, 0.35);
+      display: none;
+    }
+
+    .footnote {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1000px) {
+      .cards, .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .cards, .summary-grid { grid-template-columns: 1fr; }
+      header, main { padding-left: 16px; padding-right: 16px; }
+      .topline, .hero-left { align-items: flex-start; }
+      .hero-left { flex-direction: column; gap: 14px; }
+      .crest { width: 92px; }
+      h1 { font-size: 30px; }
+      .panel-head { align-items: stretch; flex-direction: column; }
+      .controls { justify-content: stretch; }
+      input, select, button { width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -506,234 +401,403 @@ tr:hover td { background: rgba(47, 128, 237, 0.08); }
         <div class="footnote" style="margin-top:14px;text-align:right;"><em>“Bretonia needs a fist. We provide the steel.”</em><br>— Alistair Thorne</div>
       </div>
     </div>
-  </header>  <main>
+  </header>
+
+  <main>
     <section class="cards">
       <div class="card"><div class="label">Command Authority</div><div class="value" style="font-size:20px;">Alistair Thorne</div></div>
       <div class="card"><div class="label">Chartered Authority</div><div class="value" style="font-size:20px;">BMM</div></div>
       <div class="card"><div class="label">Operational Theater</div><div class="value" id="systemName">–</div></div>
       <div class="card"><div class="label">Tracked Strategic Assets</div><div class="value" id="itemCount">–</div></div>
-    </section><section class="summary-grid">
-  <div class="alert-card">
-    <div class="alert-title"><span>Facility Maintenance</span><span class="count-badge" id="maintenanceCount">0</span></div>
-    <ul class="alert-list" id="maintenanceList"></ul>
-  </div>
-  <div class="alert-card">
-    <div class="alert-title"><span>Export Inventory</span><span class="count-badge" id="exportCount">0</span></div>
-    <ul class="alert-list" id="exportList"></ul>
-  </div>
-</section>
+    </section>
 
-<section class="panel production-panel">
-  <div class="panel-head">
-    <div>
-      <div class="panel-title">PRODUCTION MODULES</div>
-      <div class="footnote">Recipe view based on current RHW stock. Output is provisional: all products = 1 per cycle, Multi-Mode Focusing Chamber = 10 per cycle.</div>
-    </div>
-  </div>
-  <div class="production-grid" id="productionGrid"></div>
-</section>
+    <section class="summary-grid">
+      <div class="alert-card">
+        <div class="alert-title"><span>Facility Maintenance</span><span class="count-badge" id="maintenanceCount">0</span></div>
+        <ul class="alert-list" id="maintenanceList"></ul>
+      </div>
+      <div class="alert-card">
+        <div class="alert-title"><span>Export Inventory</span><span class="count-badge" id="exportCount">0</span></div>
+        <ul class="alert-list" id="exportList"></ul>
+      </div>
+      <div class="alert-card">
+        <div class="alert-title"><span>Industrial Procurement</span><span class="count-badge" id="criticalCount">0</span></div>
+        <ul class="alert-list" id="criticalList"></ul>
+      </div>
+    </section>
 
-<section class="panel">
-  <div class="panel-head">
-    <div>
-      <div class="panel-title">THORNE LOGISTICS MANIFEST</div>
-      <div class="footnote">Filter by operational role.</div>
-    </div>
-    <div class="controls">
-      <input id="search" type="search" placeholder="Asset lookup…" />
-      <select id="roleFilter">
-        <option value="all">All Assets</option>
-        <option value="maintenance">Facility Maintenance</option>
-        <option value="procurement">Industrial Procurement</option>
-        <option value="export">Export Inventory</option>
-      </select>
-      <button id="refreshBtn">Refresh Telemetry</button>
-    </div>
-  </div>
-  <div class="status" id="statusText"></div>
-  <div class="error" id="errorBox"></div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Asset</th><th>Role</th><th>Status</th><th>Quantity</th><th>Need</th><th>Sell</th><th>Buy</th>
-        </tr>
-      </thead>
-      <tbody id="itemsBody"></tbody>
-    </table>
-  </div>
-</section>
-
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">THORNE LOGISTICS MANIFEST</div>
+          <div class="footnote">Filter by operational role. Click table headers to sort.</div>
+        </div>
+        <div class="controls">
+          <input id="search" type="search" placeholder="Asset lookup…" />
+          <select id="roleFilter">
+            <option value="all">All Assets</option>
+            <option value="maintenance">Facility Maintenance</option>
+            <option value="procurement">Industrial Procurement</option>
+            <option value="export">Export Inventory</option>
+          </select>
+          <button id="refreshBtn">Refresh Telemetry</button>
+        </div>
+      </div>
+      <div class="status" id="statusText"></div>
+      <div class="error" id="errorBox"></div>
+      <div class="table-wrap">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th data-sort="name">Asset</th>
+              <th data-sort="role">Role</th>
+              <th data-sort="status">Status</th>
+              <th data-sort="quantity">Quantity</th>
+              <th data-sort="need">Need</th>
+              <th data-sort="sell">Sell</th>
+              <th data-sort="buy">Buy</th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+      </div>
+    </section>
   </main>
+
 <script>
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
-const AUTO_REFRESH_MS = 60000;const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods']; const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components']; const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'niobium', 'super alloy', 'titanium'];
+const AUTO_REFRESH_MS = 30000;
 
-const RECIPES = [ { product: 'Multi-Mode Focusing Chamber', output: 10, ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] }, { product: 'Reactor Systems', output: 1, ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] }, { product: 'Superstructure Systems', output: 1, ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] }, { product: 'Gold', output: 1, ingredients: [['Gold Ore',425], ['MOX',170]] }, { product: 'Prototype Components', output: 1, ingredients: [['Military Salvage',255]] } ];
+const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods'];
+const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components'];
+const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'niobium', 'super alloy', 'titanium'];
 
-const CUSTOM_ALERTS = { 'basic alloy': { red: 2500, yellow: 15000 }, 'food rations': { red: 2500, yellow: 15000 }, 'consumer goods': { red: 2500, yellow: 15000 }, 'gold': { red: 5000, yellow: 15000 }, 'reactor systems': { red: 200, yellow: 500 }, 'superstructure systems': { red: 200, yellow: 500 }, 'prototype components': { red: 2500, yellow: 5000 }, 'multi-mode focusing chamber': { red: 500, yellow: 1000 }, 'multi-mode focusing chambers': { red: 500, yellow: 1000 } };
+const CUSTOM_ALERTS = {
+  'basic alloy': { red: 2500, yellow: 15000 },
+  'food rations': { red: 2500, yellow: 15000 },
+  'consumer goods': { red: 2500, yellow: 15000 },
+  'gold': { red: 5000, yellow: 15000 },
+  'reactor systems': { red: 200, yellow: 500 },
+  'superstructure systems': { red: 200, yellow: 500 },
+  'prototype components': { red: 2500, yellow: 5000 },
+  'multi-mode focusing chamber': { red: 500, yellow: 1000 },
+  'multi-mode focusing chambers': { red: 500, yellow: 1000 }
+};
 
-let items = []; let lastLoaded = null; let rhwBase = null;
+let items = [];
+let lastLoaded = null;
+let rhwBase = null;
+let sortCol = 'name';
+let sortAsc = true;
+let isLoading = false;
 
-const els = { liveStatus: document.getElementById('liveStatus'), systemName: document.getElementById('systemName'), itemCount: document.getElementById('itemCount'), maintenanceList: document.getElementById('maintenanceList'), exportList: document.getElementById('exportList'), maintenanceCount: document.getElementById('maintenanceCount'), exportCount: document.getElementById('exportCount'), itemsBody: document.getElementById('itemsBody'), statusText: document.getElementById('statusText'), errorBox: document.getElementById('errorBox'), search: document.getElementById('search'), roleFilter: document.getElementById('roleFilter'), refreshBtn: document.getElementById('refreshBtn'), productionGrid: document.getElementById('productionGrid') };
+const els = {
+  liveStatus: document.getElementById('liveStatus'),
+  systemName: document.getElementById('systemName'),
+  itemCount: document.getElementById('itemCount'),
+  maintenanceList: document.getElementById('maintenanceList'),
+  criticalList: document.getElementById('criticalList'),
+  exportList: document.getElementById('exportList'),
+  maintenanceCount: document.getElementById('maintenanceCount'),
+  criticalCount: document.getElementById('criticalCount'),
+  exportCount: document.getElementById('exportCount'),
+  itemsBody: document.getElementById('itemsBody'),
+  statusText: document.getElementById('statusText'),
+  errorBox: document.getElementById('errorBox'),
+  search: document.getElementById('search'),
+  roleFilter: document.getElementById('roleFilter'),
+  refreshBtn: document.getElementById('refreshBtn'),
+  tableHeaders: document.querySelectorAll('#dataTable th[data-sort]')
+};
 
-function normalize(value) { return String(value || '').trim().toLowerCase(); }
-
-function number(value) { const x = Number(value); return Number.isFinite(x) ? x.toLocaleString('de-DE') : '–'; }
-
-function itemName(item) { return item.name || item.item_name || item.nickname || String(item.id || 'Unknown Asset'); }
-
-function commodityKey(item) { const raw = normalize(itemName(item)); const idx = raw.indexOf('('); return (idx >= 0 ? raw.slice(0, idx) : raw).trim(); }
-
-function keyFromName(name) { const raw = normalize(name); const idx = raw.indexOf('('); return (idx >= 0 ? raw.slice(0, idx) : raw).trim(); }
-
-function displayName(item) { const key = commodityKey(item); const canonical = { 'ablative armor plating': 'Ablative Armor Plating', 'energy field equipment': 'Energy Field Equipment', 'gold ore': 'Gold Ore', 'hull panels': 'Hull Panels', 'hydrocarbons': 'Hydrocarbons', 'military salvage': 'Military Salvage', 'mox': 'MOX', 'niobium': 'Niobium', 'super alloy': 'Super Alloy', 'titanium': 'Titanium', 'multi-mode focusing chamber': 'Multi-Mode Focusing Chamber', 'multi-mode focusing chambers': 'Multi-Mode Focusing Chamber', 'superstructure systems': 'Superstructure Systems', 'reactor systems': 'Reactor Systems', 'gold': 'Gold', 'prototype components': 'Prototype Components', 'basic alloy': 'Basic Alloy', 'food rations': 'Food Rations', 'consumer goods': 'Consumer Goods' }; return canonical[key] || itemName(item); }
-
-function quantity(item) { return Number(item.quantity ?? item.amount ?? item.stock ?? 0); }
-
-function minStock(item) { return Number(item.min_stock ?? item.min ?? 0); }
-
-function needAmount(item) { return Math.max(0, minStock(item) - quantity(item)); }
-
-function stockState(item) { const q = quantity(item); const nm = commodityKey(item); const custom = CUSTOM_ALERTS[nm];
-
-if (custom) { if (q < custom.red) return 'critical'; if (q < custom.yellow) return 'low'; return 'ok'; }
-
-if (PROCUREMENT.includes(nm)) return 'ok';
-
-const min = minStock(item); if (min > 0 && q <= min * 0.25) return 'critical'; if (min > 0 && q < min) return 'low'; return 'ok'; }
-
-function assetRole(item) { const nm = commodityKey(item); if (EXPORTS.includes(nm)) return 'export'; if (MAINTENANCE.includes(nm)) return 'maintenance'; if (PROCUREMENT.includes(nm)) return 'procurement'; return 'other'; }
-
-function operationalItems() { const seen = new Set(); return items.filter(item => { const role = assetRole(item); if (role === 'other') return false; const key = role + ':' + commodityKey(item); if (seen.has(key)) return false; seen.add(key); return true; }); }
-
-function roleLabel(role) { if (role === 'maintenance') return 'FACILITY'; if (role === 'export') return 'EXPORT'; return 'PROCUREMENT'; }
-
-function statusLabel(state) { if (state === 'critical') return 'CRITICAL'; if (state === 'low') return 'LOW'; return 'STABLE'; }
-
-function rolePill(role) { const cls = role === 'export' ? 'both' : role === 'maintenance' ? 'sell' : 'buy'; return <span class="pill ${cls}">${roleLabel(role)}</span>; }
-
-function statusPill(state) { return <span class="pill ${state}">${statusLabel(state)}</span>; }
-
-function priceSell(item) { return item.price_to_sell_to_base ?? item.sell_price ?? item.price_sell ?? item.price; }
-
-function priceBuy(item) { return item.price_to_buy_from_base ?? item.buy_price ?? item.price_buy ?? item.price; }
-
-function findCommodity(name) { const key = keyFromName(name); return operationalItems().find(item => commodityKey(item) === key) || items.find(item => commodityKey(item) === key) || null; }
-
-function stockFor(name) { const item = findCommodity(name); return item ? quantity(item) : 0; }
-
-function displayRecipeName(name) { return displayName({ name }); }
-
-function renderProductionModules() { const grid = document.getElementById('productionGrid'); if (!grid) return;
-
-if (!Array.isArray(RECIPES) || !RECIPES.length) { grid.innerHTML = '<div class="production-card"><div class="production-title">No recipes configured</div></div>'; return; }
-
-grid.innerHTML = RECIPES.map(recipe => { const productItem = findCommodity(recipe.product); const productStock = productItem ? quantity(productItem) : 0;
-
-const ingredientData = recipe.ingredients.map(pair => {
-  const ingredientName = pair[0];
-  const required = pair[1];
-  const stock = stockFor(ingredientName);
-  const cycles = required > 0 ? Math.floor(stock / required) : 0;
-  return { name: ingredientName, required, stock, cycles };
-});
-
-const possibleCycles = ingredientData.length ? Math.min(...ingredientData.map(i => i.cycles)) : 0;
-const possibleOutput = possibleCycles * recipe.output;
-const bottleneck = ingredientData.length ? ingredientData.reduce((lowest, current) => current.cycles < lowest.cycles ? current : lowest) : null;
-const cardState = possibleCycles <= 0 ? 'critical' : possibleCycles < 10 ? 'low' : 'ok';
-
-const ingredientRows = ingredientData.map(item => {
-  const isBottleneck = bottleneck && item.name === bottleneck.name;
-  return `<li class="${isBottleneck ? 'bottleneck' : ''}">
-    <span>${displayRecipeName(item.name)}</span>
-    <small>Req ${number(item.required)}</small>
-    <strong>${number(item.stock)}</strong>
-  </li>`;
-}).join('');
-
-return `<div class="production-card ${cardState}">
-  <div class="production-top">
-    <div>
-      <div class="production-title">${displayRecipeName(recipe.product)}</div>
-      <div class="production-sub">Output per cycle: ${number(recipe.output)}</div>
-    </div>
-    ${statusPill(cardState)}
-  </div>
-  <div class="production-stats">
-    <div class="production-stat"><small>Stock</small><strong>${number(productStock)}</strong></div>
-    <div class="production-stat"><small>Cycles</small><strong>${number(possibleCycles)}</strong></div>
-    <div class="production-stat"><small>Output</small><strong>${number(possibleOutput)}</strong></div>
-  </div>
-  <div class="footnote" style="margin-bottom:8px;">Bottleneck: <strong>${bottleneck ? displayRecipeName(bottleneck.name) : '–'}</strong></div>
-  <ul class="recipe-list">${ingredientRows}</ul>
-</div>`;
-
-}).join(''); }
-
-function renderList(target, list, emptyText) { if (!list.length) { target.innerHTML = <li><span>${emptyText}<small>No immediate action required.</small></span><strong>✓</strong></li>; return; }
-
-target.innerHTML = list.slice(0, 8).map(item => { const role = assetRole(item); const state = stockState(item); const need = needAmount(item); const detail = role === 'export' ? Stock available: ${number(quantity(item))} : state === 'ok' ? 'Operational stock level stable.' : Required to minimum: ${number(need)};
-
-return `<li class="alert-${state}"><span>${displayName(item)}<small>${detail}</small></span><strong>${number(quantity(item))}</strong></li>`;
-
-}).join(''); }
-
-function render() { const query = normalize(els.search.value); const roleFilter = els.roleFilter.value;
-
-const sourceItems = operationalItems();
-
-const visible = sourceItems .filter(item => { const role = assetRole(item); return (!query || normalize(itemName(item)).includes(query)) && (roleFilter === 'all' || role === roleFilter); }) .sort((a, b) => displayName(a).localeCompare(displayName(b)));
-
-const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort((a, b) => displayName(a).localeCompare(displayName(b))); const exports = sourceItems.filter(item => assetRole(item) === 'export').sort((a, b) => displayName(a).localeCompare(displayName(b))); els.maintenanceCount.textContent = maintenance.length; els.exportCount.textContent = exports.length;
-
-renderList(els.maintenanceList, maintenance, 'Maintenance reserves stable'); renderList(els.exportList, exports, 'No export inventory detected'); renderProductionModules();
-
-els.itemsBody.innerHTML = visible.map(item => { const role = assetRole(item); const state = stockState(item); const need = needAmount(item);
-
-return `<tr>
-  <td><strong>${displayName(item)}</strong></td>
-  <td>${rolePill(role)}</td>
-  <td>${statusPill(state)}</td>
-  <td>${number(quantity(item))}</td>
-  <td>${need ? number(need) : '–'}</td>
-  <td>${number(priceSell(item))}</td>
-  <td>${number(priceBuy(item))}</td>
-</tr>`;
-
-}).join('');
-
-const syncTime = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE') : '–'; els.statusText.textContent = ${visible.length} assets displayed · Last sync: ${syncTime} · Auto refresh: ${AUTO_REFRESH_MS / 1000}s; }
-
-async function loadData() { els.errorBox.style.display = 'none'; els.liveStatus.textContent = 'SYNCING…';
-
-try { const response = await fetch(API_URL, { method: 'POST', headers: { 'Accept': 'application/json' } });
-
-if (!response.ok) throw new Error(`Darkstat API returned HTTP ${response.status}`);
-
-const data = await response.json();
-rhwBase = data.find(base => normalize(base.name) === BASE_NAME || normalize(base.nickname) === BASE_NAME);
-
-if (!rhwBase) {
-  throw new Error('Resolution Heavy Works was not found in the Darkstat POB list.');
+function escapeHTML(str) {
+  return String(str).replace(/[&<>'"]/g, match => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  }[match]));
 }
 
-items = Array.isArray(rhwBase.shop_items) ? rhwBase.shop_items : [];
-lastLoaded = new Date();
+function normalize(value) {
+  return String(value || '').trim().toLowerCase();
+}
 
-els.systemName.textContent = rhwBase.system_name || '–';
-els.itemCount.textContent = operationalItems().length;
-els.liveStatus.textContent = 'LIVE SYNC ACTIVE';
+function number(value) {
+  const x = Number(value);
+  return Number.isFinite(x) ? x.toLocaleString('de-DE') : '–';
+}
 
-render();
+function itemName(item) {
+  return item.name || item.item_name || item.nickname || String(item.id || 'Unknown Asset');
+}
 
-} catch (error) { console.error(error); els.liveStatus.textContent = 'SYNC ERROR'; els.errorBox.style.display = 'block'; els.errorBox.textContent = 'Telemetry failure: ' + error.message; els.statusText.textContent = 'No telemetry loaded.'; } }
+function commodityKey(item) {
+  return normalize(itemName(item))
+    .replace(/\s*\([^)]*\)\s*$/g, '')
+    .trim();
+}
 
-els.search.addEventListener('input', render); els.roleFilter.addEventListener('change', render); els.refreshBtn.addEventListener('click', loadData);
+function displayName(item) {
+  const key = commodityKey(item);
+  const canonical = {
+    'ablative armor plating': 'Ablative Armor Plating',
+    'energy field equipment': 'Energy Field Equipment',
+    'gold ore': 'Gold Ore',
+    'hull panels': 'Hull Panels',
+    'hydrocarbons': 'Hydrocarbons',
+    'military salvage': 'Military Salvage',
+    'mox': 'MOX',
+    'niobium': 'Niobium',
+    'super alloy': 'Super Alloy',
+    'titanium': 'Titanium',
+    'multi-mode focusing chamber': 'Multi-Mode Focusing Chamber',
+    'multi-mode focusing chambers': 'Multi-Mode Focusing Chamber',
+    'superstructure systems': 'Superstructure Systems',
+    'reactor systems': 'Reactor Systems',
+    'gold': 'Gold',
+    'prototype components': 'Prototype Components',
+    'basic alloy': 'Basic Alloy',
+    'food rations': 'Food Rations',
+    'consumer goods': 'Consumer Goods'
+  };
+  return canonical[key] || itemName(item);
+}
 
-loadData(); setInterval(loadData, AUTO_REFRESH_MS); </script>
+function quantity(item) {
+  return Number(item.quantity ?? item.amount ?? item.stock ?? 0);
+}
 
+function minStock(item) {
+  return Number(item.min_stock ?? item.min ?? 0);
+}
+
+function needAmount(item) {
+  return Math.max(0, minStock(item) - quantity(item));
+}
+
+function stockState(item) {
+  const q = quantity(item);
+  const nm = commodityKey(item);
+  const custom = CUSTOM_ALERTS[nm];
+
+  if (custom) {
+    if (q < custom.red) return 'critical';
+    if (q < custom.yellow) return 'low';
+    return 'ok';
+  }
+
+  if (PROCUREMENT.includes(nm)) return 'ok';
+
+  const min = minStock(item);
+  if (min > 0 && q <= min * 0.25) return 'critical';
+  if (min > 0 && q < min) return 'low';
+  return 'ok';
+}
+
+function assetRole(item) {
+  const nm = commodityKey(item);
+  if (EXPORTS.includes(nm)) return 'export';
+  if (MAINTENANCE.includes(nm)) return 'maintenance';
+  if (PROCUREMENT.includes(nm)) return 'procurement';
+  return 'other';
+}
+
+function operationalItems() {
+  const seen = new Set();
+  return items.filter(item => {
+    const role = assetRole(item);
+    if (role === 'other') return false;
+    const key = role + ':' + commodityKey(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function roleLabel(role) {
+  if (role === 'maintenance') return 'FACILITY';
+  if (role === 'export') return 'EXPORT';
+  return 'PROCUREMENT';
+}
+
+function statusLabel(state) {
+  if (state === 'critical') return 'CRITICAL';
+  if (state === 'low') return 'LOW';
+  return 'STABLE';
+}
+
+function rolePill(role) {
+  const cls = role === 'export' ? 'both' : role === 'maintenance' ? 'sell' : 'buy';
+  return `<span class="pill ${cls}">${roleLabel(role)}</span>`;
+}
+
+function statusPill(state) {
+  return `<span class="pill ${state}">${statusLabel(state)}</span>`;
+}
+
+function priceSell(item) {
+  return item.price_to_sell_to_base ?? item.sell_price ?? item.price_sell ?? item.price ?? 0;
+}
+
+function priceBuy(item) {
+  return item.price_to_buy_from_base ?? item.buy_price ?? item.price_buy ?? item.price ?? 0;
+}
+
+function handleSort(e) {
+  const th = e.target.closest('th');
+  if (!th || !th.dataset.sort) return;
+  const col = th.dataset.sort;
+  if (sortCol === col) sortAsc = !sortAsc;
+  else {
+    sortCol = col;
+    sortAsc = true;
+  }
+  render();
+}
+
+function updateSortArrows() {
+  els.tableHeaders.forEach(th => {
+    let text = th.textContent.replace(/ [▲▼]/, '');
+    if (th.dataset.sort === sortCol) text += sortAsc ? ' ▲' : ' ▼';
+    th.textContent = text;
+  });
+}
+
+function renderList(target, list, emptyText) {
+  if (!list.length) {
+    target.innerHTML = `<li><span>${escapeHTML(emptyText)}<small>No immediate action required.</small></span><strong>✓</strong></li>`;
+    return;
+  }
+
+  target.innerHTML = list.slice(0, 10).map(item => {
+    const role = assetRole(item);
+    const state = stockState(item);
+    const need = needAmount(item);
+    const detail = role === 'export'
+      ? `Stock available: ${number(quantity(item))}`
+      : role === 'maintenance'
+        ? state === 'ok' ? 'Crew/station reserves stable.' : `Required to minimum: ${number(need)}`
+        : 'Production input tracked.';
+
+    return `<li class="alert-${state}"><span>${escapeHTML(displayName(item))}<small>${detail}</small></span><strong>${number(quantity(item))}</strong></li>`;
+  }).join('');
+}
+
+function sortValue(item, col) {
+  const weight = { critical: 1, low: 2, ok: 3 };
+  if (col === 'name') return displayName(item).toLowerCase();
+  if (col === 'role') return assetRole(item);
+  if (col === 'status') return weight[stockState(item)] || 99;
+  if (col === 'quantity') return quantity(item);
+  if (col === 'need') return needAmount(item);
+  if (col === 'sell') return Number(priceSell(item)) || 0;
+  if (col === 'buy') return Number(priceBuy(item)) || 0;
+  return displayName(item).toLowerCase();
+}
+
+function render() {
+  const query = normalize(els.search.value);
+  const roleFilter = els.roleFilter.value;
+  const sourceItems = operationalItems();
+
+  const sortByName = (a, b) => displayName(a).localeCompare(displayName(b));
+
+  const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort(sortByName);
+  const exports = sourceItems.filter(item => assetRole(item) === 'export').sort(sortByName);
+  const procurement = sourceItems.filter(item => assetRole(item) === 'procurement').sort(sortByName);
+
+  els.maintenanceCount.textContent = maintenance.length;
+  els.exportCount.textContent = exports.length;
+  els.criticalCount.textContent = procurement.length;
+
+  renderList(els.maintenanceList, maintenance, 'Maintenance reserves stable');
+  renderList(els.exportList, exports, 'No export inventory detected');
+  renderList(els.criticalList, procurement, 'Industrial procurement stable');
+
+  const visible = sourceItems.filter(item => {
+    const role = assetRole(item);
+    return (!query || normalize(displayName(item)).includes(query) || normalize(itemName(item)).includes(query)) &&
+      (roleFilter === 'all' || role === roleFilter);
+  });
+
+  visible.sort((a, b) => {
+    const valA = sortValue(a, sortCol);
+    const valB = sortValue(b, sortCol);
+    let result = 0;
+    if (typeof valA === 'string' || typeof valB === 'string') result = String(valA).localeCompare(String(valB));
+    else result = valA - valB;
+    return sortAsc ? result : -result;
+  });
+
+  updateSortArrows();
+
+  els.itemsBody.innerHTML = visible.map(item => {
+    const role = assetRole(item);
+    const state = stockState(item);
+    const need = role === 'maintenance' || role === 'export' ? needAmount(item) : 0;
+
+    return `<tr>
+      <td><strong>${escapeHTML(displayName(item))}</strong></td>
+      <td>${rolePill(role)}</td>
+      <td>${statusPill(state)}</td>
+      <td>${number(quantity(item))}</td>
+      <td>${need ? number(need) : '–'}</td>
+      <td>${number(priceSell(item))}</td>
+      <td>${number(priceBuy(item))}</td>
+    </tr>`;
+  }).join('');
+
+  els.itemsBody.style.opacity = '1';
+  const syncTime = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE') : '–';
+  els.statusText.textContent = `${visible.length} assets displayed · Last sync: ${syncTime} · Auto refresh: ${AUTO_REFRESH_MS / 1000}s`;
+}
+
+async function loadData() {
+  if (isLoading) return;
+  isLoading = true;
+  els.errorBox.style.display = 'none';
+  els.liveStatus.textContent = 'SYNCING…';
+  els.itemsBody.style.opacity = '0.4';
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error(`Darkstat API returned HTTP ${response.status}`);
+
+    const data = await response.json();
+    rhwBase = data.find(base => normalize(base.name) === BASE_NAME || normalize(base.nickname) === BASE_NAME);
+
+    if (!rhwBase) throw new Error('Resolution Heavy Works was not found in the Darkstat POB list.');
+
+    items = Array.isArray(rhwBase.shop_items) ? rhwBase.shop_items : [];
+    lastLoaded = new Date();
+
+    els.systemName.textContent = rhwBase.system_name || '–';
+    els.itemCount.textContent = operationalItems().length;
+    els.liveStatus.textContent = 'LIVE SYNC ACTIVE';
+
+    render();
+  } catch (error) {
+    console.error(error);
+    els.liveStatus.textContent = 'SYNC ERROR';
+    els.errorBox.style.display = 'block';
+    els.errorBox.textContent = 'Telemetry failure: ' + error.message;
+    els.statusText.textContent = 'No telemetry loaded.';
+    els.itemsBody.style.opacity = '1';
+  } finally {
+    isLoading = false;
+  }
+}
+
+els.search.addEventListener('input', render);
+els.roleFilter.addEventListener('change', render);
+els.refreshBtn.addEventListener('click', loadData);
+els.tableHeaders.forEach(th => th.addEventListener('click', handleSort));
+
+loadData();
+setInterval(loadData, AUTO_REFRESH_MS);
+</script>
 </body>
 </html>
