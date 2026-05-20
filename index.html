@@ -576,7 +576,7 @@ const CUSTOM_ALERTS = { 'basic alloy': { red: 2500, yellow: 15000 }, 'food ratio
 
 let items = []; let lastLoaded = null; let rhwBase = null;
 
-const els = { liveStatus: document.getElementById('liveStatus'), systemName: document.getElementById('systemName'), itemCount: document.getElementById('itemCount'), maintenanceList: document.getElementById('maintenanceList'), criticalList: document.getElementById('criticalList'), exportList: document.getElementById('exportList'), maintenanceCount: document.getElementById('maintenanceCount'), criticalCount: document.getElementById('criticalCount'), exportCount: document.getElementById('exportCount'), itemsBody: document.getElementById('itemsBody'), statusText: document.getElementById('statusText'), errorBox: document.getElementById('errorBox'), search: document.getElementById('search'), roleFilter: document.getElementById('roleFilter'), refreshBtn: document.getElementById('refreshBtn'), productionGrid: document.getElementById('productionGrid') };
+const els = { liveStatus: document.getElementById('liveStatus'), systemName: document.getElementById('systemName'), itemCount: document.getElementById('itemCount'), maintenanceList: document.getElementById('maintenanceList'), exportList: document.getElementById('exportList'), maintenanceCount: document.getElementById('maintenanceCount'), exportCount: document.getElementById('exportCount'), itemsBody: document.getElementById('itemsBody'), statusText: document.getElementById('statusText'), errorBox: document.getElementById('errorBox'), search: document.getElementById('search'), roleFilter: document.getElementById('roleFilter'), refreshBtn: document.getElementById('refreshBtn'), productionGrid: document.getElementById('productionGrid') };
 
 function normalize(value) { return String(value || '').trim().toLowerCase(); }
 
@@ -676,9 +676,7 @@ const sourceItems = operationalItems();
 
 const visible = sourceItems .filter(item => { const role = assetRole(item); return (!query || normalize(itemName(item)).includes(query)) && (roleFilter === 'all' || role === roleFilter); }) .sort((a, b) => displayName(a).localeCompare(displayName(b)));
 
-const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort((a, b) => displayName(a).localeCompare(displayName(b))); const exports = sourceItems.filter(item => assetRole(item) === 'export').sort((a, b) => displayName(a).localeCompare(displayName(b))); const procurementAlerts = sourceItems .filter(item => assetRole(item) === 'procurement') .sort((a, b) => displayName(a).localeCompare(displayName(b)));
-
-els.maintenanceCount.textContent = maintenance.length; els.exportCount.textContent = exports.length; els.criticalCount.textContent = procurementAlerts.length;
+const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort((a, b) => displayName(a).localeCompare(displayName(b))); const exports = sourceItems.filter(item => assetRole(item) === 'export').sort((a, b) => displayName(a).localeCompare(displayName(b))); els.maintenanceCount.textContent = maintenance.length; els.exportCount.textContent = exports.length;
 
 renderList(els.maintenanceList, maintenance, 'Maintenance reserves stable'); renderList(els.exportList, exports, 'No export inventory detected'); renderProductionModules();
 
