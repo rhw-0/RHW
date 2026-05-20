@@ -1,1 +1,798 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RHW Command Dashboard · V3</title>
+  <style>
+    :root {
+      --bg: #07090b;
+      --panel: #12171d;
+      --panel-soft: #171e26;
+      --panel-hard: #0c1015;
+      --line: #2d3846;
+      --line-soft: rgba(45, 56, 70, 0.62);
+      --text: #eef4fb;
+      --muted: #98a8b9;
+      --blue: #2f80ed;
+      --blue-soft: rgba(47, 128, 237, 0.16);
+      --gold: #d2ad67;
+      --danger: #e05656;
+      --danger-soft: rgba(224, 86, 86, 0.16);
+      --warn: #e6a33d;
+      --warn-soft: rgba(230, 163, 61, 0.16);
+      --good: #53bd86;
+      --good-soft: rgba(83, 189, 134, 0.15);
+    }
 
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(47,128,237,0.15), transparent 34%),
+        radial-gradient(circle at 85% 8%, rgba(210,173,103,0.10), transparent 32%),
+        linear-gradient(180deg, #090d12 0%, var(--bg) 55%, #040506 100%);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    header {
+      position: relative;
+      overflow: hidden;
+      padding: 26px 32px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(7, 9, 11, 0.86);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(10px);
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .topline {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-top: 7px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 36px;
+      line-height: 1;
+    }
+
+    .hero-left {
+      display:flex;
+      align-items:center;
+      gap:22px;
+    }
+    .crest {
+      width:120px;
+      height:auto;
+      filter: drop-shadow(0 0 18px rgba(180,130,40,0.15));
+      flex-shrink:0;
+    }
+    .crest-watermark {
+      position:absolute;
+      right:-40px;
+      top:-20px;
+      width:420px;
+      height:420px;
+      background-image:url('https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png');
+      background-size:contain;
+      background-repeat:no-repeat;
+      opacity:0.035;
+      pointer-events:none;
+      z-index:1;
+      filter: grayscale(20%);
+    }
+    .subtitle {
+      margin-top: 9px;
+      color: var(--muted);
+      max-width: 920px;
+      line-height: 1.45;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(83,189,134,0.45);
+      background: var(--good-soft);
+      color: #ccefdc;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 16px var(--good);
+    }
+
+    main {
+      padding: 24px 32px 40px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 14px;
+    }
+
+    .card, .panel, .alert-card {
+      background: linear-gradient(180deg, rgba(23, 30, 38, 0.98), rgba(12, 16, 21, 0.98));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.30);
+    }
+
+    .card {
+      background: linear-gradient(135deg, rgba(8,16,28,0.96), rgba(14,22,36,0.96));
+      border: 1px solid rgba(182,140,60,0.22);
+      box-shadow: inset 0 1px 0 rgba(255,220,150,0.03); padding: 18px; }
+
+    .label {
+      color: #b7d7ff;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    .value {
+      margin-top: 8px;
+      font-size: 25px;
+      font-weight: 900;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1.1fr 1fr;
+      gap: 14px;
+    }
+
+    .alert-card {
+      padding: 16px;
+      min-height: 160px;
+    }
+
+    .alert-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+      font-weight: 900;
+    }
+
+    .alert-title span:first-child {
+      color: var(--gold);
+      text-transform: uppercase;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+    }
+
+    .count-badge {
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--line);
+      font-size: 12px;
+    }
+
+    .alert-list {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      max-height: 210px;
+      overflow: auto;
+    }
+
+    .alert-list li {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 9px 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.025);
+    }
+
+    .alert-list li.alert-critical {
+      border-color: rgba(224, 86, 86, 0.62);
+      background: linear-gradient(90deg, rgba(224,86,86,0.13), rgba(255,255,255,0.025));
+    }
+
+    .alert-list li.alert-low {
+      border-color: rgba(230, 163, 61, 0.58);
+      background: linear-gradient(90deg, rgba(230,163,61,0.12), rgba(255,255,255,0.025));
+    }
+
+    .alert-list li.alert-ok {
+      border-color: rgba(83, 189, 134, 0.32);
+    }
+
+    .alert-list small {
+      color: var(--muted);
+      display: block;
+      margin-top: 3px;
+    }
+
+    .panel {
+      border: 1px solid rgba(182,140,60,0.18);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,220,150,0.02); overflow: hidden; 
+    }
+
+    .panel-head {
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .panel-title { font-size: 18px; font-weight: 900; }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    input, select, button {
+      background: #080c10;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus, select:focus { border-color: rgba(47,128,237,0.9); }
+
+    button {
+      cursor: pointer;
+      background: linear-gradient(180deg, #1d5086, #12395f);
+      border-color: #2e72ae;
+      font-weight: 900;
+    }
+
+    button:hover { filter: brightness(1.12); }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 0 16px 14px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(45, 56, 70, 0.8);
+      white-space: nowrap;
+    }
+
+    th {
+      color: #b7d7ff;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: #111821;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    th:hover { color: var(--text); background: #1a2430; }
+    tr:hover td { background: rgba(47, 128, 237, 0.08); }
+
+    .table-wrap {
+      max-height: 66vh;
+      overflow: auto;
+    }
+
+    #itemsBody {
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 900;
+      border: 1px solid var(--line);
+    }
+
+    .critical { color: #ffd4d4; background: var(--danger-soft); border-color: rgba(224, 86, 86, 0.48); }
+    .low { color: #ffe4b8; background: var(--warn-soft); border-color: rgba(230, 163, 61, 0.50); }
+    .ok { color: #ccefdc; background: var(--good-soft); border-color: rgba(83, 189, 134, 0.48); }
+    .buy { color: #d7e9ff; background: var(--blue-soft); border-color: rgba(47, 128, 237, 0.48); }
+    .sell { color: #f3e0b8; background: rgba(210, 173, 103, 0.15); border-color: rgba(210, 173, 103, 0.48); }
+    .both { color: #efe1ff; background: rgba(176, 103, 226, 0.16); border-color: rgba(176, 103, 226, 0.48); }
+
+    .error {
+      padding: 14px 16px;
+      color: #ffd1d1;
+      background: rgba(224, 86, 86, 0.12);
+      border-top: 1px solid rgba(224, 86, 86, 0.35);
+      display: none;
+    }
+
+    .footnote {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1000px) {
+      .cards, .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .cards, .summary-grid { grid-template-columns: 1fr; }
+      header, main { padding-left: 16px; padding-right: 16px; }
+      .panel-head { align-items: stretch; flex-direction: column; }
+      .controls { justify-content: stretch; }
+      input, select, button { width: 100%; }
+      th { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="crest-watermark"></div>
+    <div class="topline">
+      <div class="hero-left">
+        <img class="crest" src="https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png" alt="Thorne Industrial Group Crest" />
+        <div>
+          <div class="eyebrow">Thorne Industrial Group · BMM Chartered Strategic Manufacturing Command</div>
+          <h1>RESOLUTION HEAVY WORKS</h1>
+          <div class="subtitle">Internal logistics telemetry, procurement oversight and export command interface · New London operational theater.</div>
+        </div>
+      </div>
+      <div>
+        <div class="live-pill"><span class="dot"></span><span id="liveStatus">LIVE SYNC ACTIVE</span></div>
+        <div class="footnote" style="margin-top:14px;text-align:right;"><em>“Bretonia needs a fist. We provide the steel.”</em><br>— Alistair Thorne</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="cards">
+      <div class="card"><div class="label">Command Authority</div><div class="value" style="font-size:20px;">Alistair Thorne</div></div>
+      <div class="card"><div class="label">Chartered Authority</div><div class="value" style="font-size:20px;">BMM</div></div>
+      <div class="card"><div class="label">Operational Theater</div><div class="value" id="systemName">–</div></div>
+      <div class="card"><div class="label">Tracked Strategic Assets</div><div class="value" id="itemCount">–</div></div>
+    </section>
+
+    <section class="summary-grid">
+      <div class="alert-card">
+        <div class="alert-title"><span>Facility Maintenance</span><span class="count-badge" id="maintenanceCount">0</span></div>
+        <ul class="alert-list" id="maintenanceList"></ul>
+      </div>
+      <div class="alert-card">
+        <div class="alert-title"><span>Export Inventory</span><span class="count-badge" id="exportCount">0</span></div>
+        <ul class="alert-list" id="exportList"></ul>
+      </div>
+      <div class="alert-card">
+        <div class="alert-title"><span>Industrial Procurement</span><span class="count-badge" id="criticalCount">0</span></div>
+        <ul class="alert-list" id="criticalList"></ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">THORNE LOGISTICS MANIFEST</div>
+          <div class="footnote">Filter by operational role.</div>
+        </div>
+        <div class="controls">
+          <input id="search" type="search" placeholder="Asset lookup…" />
+          <select id="roleFilter">
+            <option value="all">All Assets</option>
+            <option value="maintenance">Facility Maintenance</option>
+            <option value="procurement">Industrial Procurement</option>
+            <option value="export">Export Inventory</option>
+          </select>
+          <button id="refreshBtn">Refresh Telemetry</button>
+        </div>
+      </div>
+      <div class="status" id="statusText"></div>
+      <div class="error" id="errorBox"></div>
+      <div class="table-wrap">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th data-sort="name">Asset</th>
+              <th data-sort="role">Role</th>
+              <th data-sort="status">Status</th>
+              <th data-sort="quantity">Quantity</th>
+              <th data-sort="need">Need</th>
+              <th data-sort="sell">Sell</th>
+              <th data-sort="buy">Buy</th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+<script>
+const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
+const BASE_NAME = 'resolution heavy works';
+const AUTO_REFRESH_MS = 30000;
+
+const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods'];
+const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components'];
+const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'niobium', 'super alloy', 'titanium'];
+
+const CUSTOM_ALERTS = {
+  'basic alloy': { red: 2500, yellow: 15000 },
+  'food rations': { red: 2500, yellow: 15000 },
+  'consumer goods': { red: 2500, yellow: 15000 },
+  'gold': { red: 5000, yellow: 15000 },
+  'reactor systems': { red: 200, yellow: 500 },
+  'superstructure systems': { red: 200, yellow: 500 },
+  'prototype components': { red: 2500, yellow: 5000 },
+  'multi-mode focusing chamber': { red: 500, yellow: 1000 },
+  'multi-mode focusing chambers': { red: 500, yellow: 1000 }
+};
+
+let items = [];
+let lastLoaded = null;
+let rhwBase = null;
+let sortCol = 'name';
+let sortAsc = true;
+
+const els = {
+  liveStatus: document.getElementById('liveStatus'),
+  systemName: document.getElementById('systemName'),
+  itemCount: document.getElementById('itemCount'),
+  maintenanceList: document.getElementById('maintenanceList'),
+  criticalList: document.getElementById('criticalList'),
+  exportList: document.getElementById('exportList'),
+  maintenanceCount: document.getElementById('maintenanceCount'),
+  criticalCount: document.getElementById('criticalCount'),
+  exportCount: document.getElementById('exportCount'),
+  itemsBody: document.getElementById('itemsBody'),
+  statusText: document.getElementById('statusText'),
+  errorBox: document.getElementById('errorBox'),
+  search: document.getElementById('search'),
+  roleFilter: document.getElementById('roleFilter'),
+  refreshBtn: document.getElementById('refreshBtn'),
+  tableHeaders: document.querySelectorAll('#dataTable th[data-sort]')
+};
+
+// XSS Protection Helper
+function escapeHTML(str) {
+  return String(str).replace(/[&<>'"]/g, match => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  }[match]));
+}
+
+function normalize(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function number(value) {
+  const x = Number(value);
+  return Number.isFinite(x) ? x.toLocaleString('de-DE') : '–';
+}
+
+function itemName(item) {
+  return item.name || item.item_name || item.nickname || String(item.id || 'Unknown Asset');
+}
+
+function commodityKey(item) {
+  return normalize(itemName(item));
+}
+
+function displayName(item) {
+  const key = commodityKey(item);
+  const canonical = {
+    'ablative armor plating': 'Ablative Armor Plating',
+    'energy field equipment': 'Energy Field Equipment',
+    'gold ore': 'Gold Ore',
+    'hull panels': 'Hull Panels',
+    'hydrocarbons': 'Hydrocarbons',
+    'military salvage': 'Military Salvage',
+    'mox': 'MOX',
+    'niobium': 'Niobium',
+    'super alloy': 'Super Alloy',
+    'titanium': 'Titanium',
+    'multi-mode focusing chamber': 'Multi-Mode Focusing Chamber',
+    'multi-mode focusing chambers': 'Multi-Mode Focusing Chamber',
+    'superstructure systems': 'Superstructure Systems',
+    'reactor systems': 'Reactor Systems',
+    'gold': 'Gold',
+    'prototype components': 'Prototype Components',
+    'basic alloy': 'Basic Alloy',
+    'food rations': 'Food Rations',
+    'consumer goods': 'Consumer Goods'
+  };
+  return canonical[key] || itemName(item);
+}
+
+function quantity(item) {
+  return Number(item.quantity ?? item.amount ?? item.stock ?? 0);
+}
+
+function minStock(item) {
+  return Number(item.min_stock ?? item.min ?? 0);
+}
+
+function needAmount(item) {
+  return Math.max(0, minStock(item) - quantity(item));
+}
+
+function stockState(item) {
+  const q = quantity(item);
+  const nm = commodityKey(item);
+  const custom = CUSTOM_ALERTS[nm];
+
+  if (custom) {
+    if (q < custom.red) return 'critical';
+    if (q < custom.yellow) return 'low';
+    return 'ok';
+  }
+
+  if (PROCUREMENT.includes(nm)) return 'ok';
+
+  const min = minStock(item);
+  if (min > 0 && q <= min * 0.25) return 'critical';
+  if (min > 0 && q < min) return 'low';
+  return 'ok';
+}
+
+function assetRole(item) {
+  const nm = commodityKey(item);
+  if (EXPORTS.includes(nm)) return 'export';
+  if (MAINTENANCE.includes(nm)) return 'maintenance';
+  if (PROCUREMENT.includes(nm)) return 'procurement';
+  return 'other';
+}
+
+function operationalItems() {
+  const seen = new Set();
+  return items.filter(item => {
+    const role = assetRole(item);
+    if (role === 'other') return false;
+    const key = role + ':' + commodityKey(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function roleLabel(role) {
+  if (role === 'maintenance') return 'FACILITY';
+  if (role === 'export') return 'EXPORT';
+  return 'PROCUREMENT';
+}
+
+function statusLabel(state) {
+  if (state === 'critical') return 'CRITICAL';
+  if (state === 'low') return 'LOW';
+  return 'STABLE';
+}
+
+function rolePill(role) {
+  const cls = role === 'export' ? 'both' : role === 'maintenance' ? 'sell' : 'buy';
+  return `<span class="pill ${cls}">${roleLabel(role)}</span>`;
+}
+
+function statusPill(state) {
+  return `<span class="pill ${state}">${statusLabel(state)}</span>`;
+}
+
+function priceSell(item) {
+  return item.price_to_sell_to_base ?? item.sell_price ?? item.price_sell ?? item.price ?? 0;
+}
+
+function priceBuy(item) {
+  return item.price_to_buy_from_base ?? item.buy_price ?? item.price_buy ?? item.price ?? 0;
+}
+
+function handleSort(e) {
+  const th = e.target.closest('th');
+  if (!th || !th.dataset.sort) return;
+  const col = th.dataset.sort;
+  if (sortCol === col) {
+    sortAsc = !sortAsc;
+  } else {
+    sortCol = col;
+    sortAsc = true;
+  }
+  render();
+}
+
+function updateSortArrows() {
+  els.tableHeaders.forEach(th => {
+    let text = th.textContent.replace(/ [▲▼]/, '');
+    if (th.dataset.sort === sortCol) {
+      text += sortAsc ? ' ▲' : ' ▼';
+    }
+    th.textContent = text;
+  });
+}
+
+function renderList(target, list, emptyText) {
+  if (!list.length) {
+    target.innerHTML = `<li><span>${emptyText}<small>No immediate action required.</small></span><strong>✓</strong></li>`;
+    return;
+  }
+
+  target.innerHTML = list.slice(0, 8).map(item => {
+    const role = assetRole(item);
+    const state = stockState(item);
+    const need = needAmount(item);
+    const detail = role === 'export'
+      ? `Stock available: ${number(quantity(item))}`
+      : state === 'ok'
+        ? 'Operational stock level stable.'
+        : `Required to minimum: ${number(need)}`;
+
+    return `<li class="alert-${state}"><span>${escapeHTML(displayName(item))}<small>${detail}</small></span><strong>${number(quantity(item))}</strong></li>`;
+  }).join('');
+}
+
+function render() {
+  const query = normalize(els.search.value);
+  const roleFilter = els.roleFilter.value;
+  const sourceItems = operationalItems();
+
+  // DRY Sort Function for the top lists
+  const sortByName = (a, b) => displayName(a).localeCompare(displayName(b));
+
+  const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort(sortByName);
+  const exports = sourceItems.filter(item => assetRole(item) === 'export').sort(sortByName);
+  const procurementAlerts = sourceItems
+    .filter(item => assetRole(item) === 'procurement')
+    .sort(sortByName);
+
+  els.maintenanceCount.textContent = maintenance.length;
+  els.exportCount.textContent = exports.length;
+  els.criticalCount.textContent = procurementAlerts.length;
+
+  renderList(els.maintenanceList, maintenance, 'Maintenance reserves stable');
+  renderList(els.exportList, exports, 'No export inventory detected');
+  renderList(els.criticalList, procurementAlerts, 'Industrial procurement stable');
+
+  // Main Table Filtering and Dynamic Sorting
+  const visible = sourceItems.filter(item => {
+    const role = assetRole(item);
+    return (!query || normalize(itemName(item)).includes(query)) && (roleFilter === 'all' || role === roleFilter);
+  });
+
+  visible.sort((a, b) => {
+    let valA, valB;
+    if (sortCol === 'name') { valA = displayName(a); valB = displayName(b); }
+    else if (sortCol === 'role') { valA = assetRole(a); valB = assetRole(b); }
+    else if (sortCol === 'status') { 
+      const weight = { critical: 1, low: 2, ok: 3 };
+      valA = weight[stockState(a)]; valB = weight[stockState(b)]; 
+    }
+    else if (sortCol === 'quantity') { valA = quantity(a); valB = quantity(b); }
+    else if (sortCol === 'need') { valA = needAmount(a); valB = needAmount(b); }
+    else if (sortCol === 'sell') { valA = priceSell(a); valB = priceSell(b); }
+    else if (sortCol === 'buy') { valA = priceBuy(a); valB = priceBuy(b); }
+
+    if (valA < valB) return sortAsc ? -1 : 1;
+    if (valA > valB) return sortAsc ? 1 : -1;
+    return 0;
+  });
+
+  updateSortArrows();
+
+  els.itemsBody.innerHTML = visible.map(item => {
+    const role = assetRole(item);
+    const state = stockState(item);
+    const need = needAmount(item);
+
+    return `<tr>
+      <td><strong>${escapeHTML(displayName(item))}</strong></td>
+      <td>${rolePill(role)}</td>
+      <td>${statusPill(state)}</td>
+      <td>${number(quantity(item))}</td>
+      <td>${need ? number(need) : '–'}</td>
+      <td>${number(priceSell(item))}</td>
+      <td>${number(priceBuy(item))}</td>
+    </tr>`;
+  }).join('');
+
+  els.itemsBody.style.opacity = '1';
+
+  const syncTime = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE') : '–';
+  els.statusText.textContent = `${visible.length} assets displayed · Last sync: ${syncTime} · Auto refresh: ${AUTO_REFRESH_MS / 1000}s`;
+}
+
+async function loadData() {
+  els.errorBox.style.display = 'none';
+  els.liveStatus.textContent = 'SYNCING…';
+  els.itemsBody.style.opacity = '0.4';
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error(`Darkstat API returned HTTP ${response.status}`);
+
+    const data = await response.json();
+    rhwBase = data.find(base => normalize(base.name) === BASE_NAME || normalize(base.nickname) === BASE_NAME);
+
+    if (!rhwBase) {
+      throw new Error('Resolution Heavy Works was not found in the Darkstat POB list.');
+    }
+
+    items = Array.isArray(rhwBase.shop_items) ? rhwBase.shop_items : [];
+    lastLoaded = new Date();
+
+    els.systemName.textContent = escapeHTML(rhwBase.system_name || '–');
+    els.itemCount.textContent = operationalItems().length;
+    els.liveStatus.textContent = 'LIVE SYNC ACTIVE';
+
+    render();
+  } catch (error) {
+    console.error(error);
+    els.liveStatus.textContent = 'SYNC ERROR';
+    els.errorBox.style.display = 'block';
+    els.errorBox.textContent = 'Telemetry failure: ' + escapeHTML(error.message);
+    els.statusText.textContent = 'No telemetry loaded.';
+    els.itemsBody.style.opacity = '1';
+  } finally {
+    setTimeout(loadData, AUTO_REFRESH_MS);
+  }
+}
+
+// Event Listeners
+els.search.addEventListener('input', render);
+els.roleFilter.addEventListener('change', render);
+els.refreshBtn.addEventListener('click', loadData);
+els.tableHeaders.forEach(th => th.addEventListener('click', handleSort));
+
+// Initial Load
+loadData();
+</script>
+</body>
+</html>
