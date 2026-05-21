@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V5.8 Stable</title>
+  <title>RHW Command Dashboard · V1.0 Release</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -341,7 +341,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V5.8 STABLE) - REVIEW CLEANUP
+   RHW DASHBOARD LOGIC (V1.0 RELEASE) - STABLE
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -445,7 +445,21 @@ function displayName(item) {
 
 function quantity(item) { return Number(item.quantity ?? item.amount ?? item.stock ?? 0); }
 function minStock(item) { return Number(item.min_stock ?? item.min ?? 0); }
-function needAmount(item) { return Math.max(0, minStock(item) - quantity(item)); }
+function needAmount(item) { 
+  const nm = commodityKey(item);
+  const custom = CUSTOM_ALERTS[nm];
+  const q = quantity(item);
+
+  if (custom && custom.type === 'max') {
+    return Math.max(0, q - custom.yellow);
+  }
+
+  if (custom && custom.type === 'min') {
+    return Math.max(0, custom.yellow - q);
+  }
+
+  return Math.max(0, minStock(item) - q); 
+}
 
 function stockState(item) { 
   const q = quantity(item); const nm = commodityKey(item); const custom = CUSTOM_ALERTS[nm]; 
