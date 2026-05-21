@@ -3,459 +3,328 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V3</title>
+  <title>RHW Command Dashboard · V5.8 Stable</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg: #07090b;
-      --panel: #12171d;
-      --panel-soft: #171e26;
-      --panel-hard: #0c1015;
-      --line: #2d3846;
-      --line-soft: rgba(45, 56, 70, 0.62);
-      --text: #eef4fb;
-      --muted: #98a8b9;
-      --blue: #2f80ed;
+      --bg: #030405;
+      --panel: #0a0c0f;
+      --line: #333333;
+      --line-soft: rgba(51, 51, 51, 0.6);
+      --text: #E0E0E0;
+      --muted: #808080;
+      --gold: #d4af37;
+      --gold-soft: rgba(212, 175, 55, 0.1);
+      --danger: #A52A2A; 
+      --danger-soft: rgba(165, 42, 42, 0.15);
+      --warn: #c28722;
+      --good: #4a8f62;
+      --good-soft: rgba(74, 143, 98, 0.15);
       --blue-soft: rgba(47, 128, 237, 0.16);
-      --gold: #d2ad67;
-      --danger: #e05656;
-      --danger-soft: rgba(224, 86, 86, 0.16);
-      --warn: #e6a33d;
-      --warn-soft: rgba(230, 163, 61, 0.16);
-      --good: #53bd86;
-      --good-soft: rgba(83, 189, 134, 0.15);
+      --waste: #a89f91;
+      --waste-soft: rgba(168, 159, 145, 0.15);
+      
+      --font-main: Tahoma, Arial, sans-serif;
+      --font-title: 'Agency FB', 'Teko', sans-serif;
+      --font-tech: 'Consolas', 'Share Tech Mono', monospace;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      background:
-        radial-gradient(circle at 20% 0%, rgba(47,128,237,0.15), transparent 34%),
-        radial-gradient(circle at 85% 8%, rgba(210,173,103,0.10), transparent 32%),
-        linear-gradient(180deg, #090d12 0%, var(--bg) 55%, #040506 100%);
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.03), transparent 50%),
+        linear-gradient(180deg, #050608 0%, var(--bg) 100%);
       color: var(--text);
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: var(--font-main);
     }
 
+    /* --- RP HEADER SECTION --- */
     header {
-      position: relative;
-      overflow: hidden;
-      padding: 26px 32px 18px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(7, 9, 11, 0.86);
-      z-index: 20;
-      backdrop-filter: blur(10px);
+      padding: 40px 20px 20px;
+      text-align: center;
     }
 
-    .eyebrow {
-      color: var(--gold);
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .topline {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
-      gap: 18px;
-      flex-wrap: wrap;
-      margin-top: 7px;
+    .crest {
+      width: 140px;
+      height: auto;
+      margin-bottom: 15px;
+      filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.15));
     }
 
     h1 {
       margin: 0;
-      font-size: 36px;
-      line-height: 1;
-    }
-
-    .hero-left {
-      display:flex;
-      align-items:center;
-      gap:22px;
-    }
-
-    .crest {
-      width:120px;
-      height:auto;
-      filter: drop-shadow(0 0 18px rgba(180,130,40,0.15));
-      flex-shrink:0;
-    }
-
-    .crest-watermark {
-      position:absolute;
-      right:-40px;
-      top:-20px;
-      width:420px;
-      height:420px;
-      background-image:url('https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png');
-      background-size:contain;
-      background-repeat:no-repeat;
-      opacity:0.035;
-      pointer-events:none;
-      z-index:1;
-      filter: grayscale(20%);
+      font-family: var(--font-title);
+      color: var(--gold);
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
     .subtitle {
-      margin-top: 9px;
+      font-family: var(--font-tech);
       color: var(--muted);
-      max-width: 920px;
-      line-height: 1.45;
+      font-size: 14px;
+      margin-top: 5px;
+      letter-spacing: 0.05em;
     }
 
-    .live-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid rgba(83,189,134,0.45);
-      background: var(--good-soft);
-      color: #ccefdc;
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 13px;
-      font-weight: 800;
-      white-space: nowrap;
+    .hrc-gold {
+      border: 0;
+      height: 1px;
+      background: var(--gold);
+      margin: 25px auto;
+      width: 80%;
+      max-width: 800px;
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
     }
 
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--good);
-      box-shadow: 0 0 16px var(--good);
+    .hrc-dark {
+      border: 0;
+      height: 1px;
+      background: var(--line);
+      margin: 40px auto 20px;
+      width: 90%;
     }
 
+    /* --- RP METADATA TABLE --- */
+    .rp-meta {
+      display: table;
+      margin: 0 auto;
+      text-align: left;
+      font-family: var(--font-tech);
+      font-size: 14px;
+      border-collapse: separate;
+      border-spacing: 15px 8px;
+    }
+
+    .rp-meta-row { display: table-row; }
+    .rp-meta-lbl { 
+      display: table-cell; 
+      color: var(--gold); 
+      font-weight: bold; 
+      text-transform: uppercase;
+    }
+    .rp-meta-val { display: table-cell; color: var(--text); }
+    .encryption-val { color: var(--danger); font-weight: bold; }
+
+    /* --- MAIN DASHBOARD LAYOUT --- */
     main {
-      padding: 24px 32px 40px;
+      padding: 0 32px 40px;
       display: grid;
-      gap: 18px;
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
     }
 
     .cards {
       display: grid;
-      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 14px;
     }
 
     .card, .panel, .alert-card {
-      background: linear-gradient(180deg, rgba(23, 30, 38, 0.98), rgba(12, 16, 21, 0.98));
+      background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 16px;
-      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.30);
+      border-radius: 4px;
     }
 
-    .card {
-      background: linear-gradient(135deg, rgba(8,16,28,0.96), rgba(14,22,36,0.96));
-      border: 1px solid rgba(182,140,60,0.22);
-      box-shadow: inset 0 1px 0 rgba(255,220,150,0.03);
-      padding: 18px;
-    }
+    .card { padding: 16px; border-top: 2px solid var(--gold-soft); }
+    .label { color: var(--muted); font-family: var(--font-tech); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .value { margin-top: 6px; font-family: var(--font-title); font-size: 28px; color: var(--gold); letter-spacing: 0.05em; }
 
-    .label {
-      color: #b7d7ff;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-    }
-
-    .value {
-      margin-top: 8px;
-      font-size: 25px;
-      font-weight: 900;
-    }
-
-    .summary-grid {
-      display: grid;
-      grid-template-columns: 1.1fr 1.1fr 1fr;
-      gap: 14px;
-    }
-
-    .alert-card {
-      padding: 16px;
-      min-height: 160px;
-    }
+    /* --- ALERTS & PRODUCTION --- */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .alert-card { padding: 16px; }
 
     .alert-title {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 12px;
-      font-weight: 900;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; font-family: var(--font-title); color: var(--gold);
+      font-size: 22px; letter-spacing: 0.05em; border-bottom: 1px solid var(--line); padding-bottom: 8px;
     }
+    .count-badge { font-family: var(--font-tech); font-size: 14px; color: var(--muted); }
 
-    .alert-title span:first-child {
-      color: var(--gold);
-      text-transform: uppercase;
-      font-size: 13px;
-      letter-spacing: 0.12em;
-    }
+    .alert-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .alert-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--line); font-size: 13px; }
+    .alert-list li.alert-critical { border-left-color: var(--danger); }
+    .alert-list li.alert-low { border-left-color: var(--warn); }
+    .alert-list li.alert-ok { border-left-color: var(--good); }
+    .alert-list small { color: var(--muted); display: block; margin-top: 2px; }
 
-    .count-badge {
-      border-radius: 999px;
-      padding: 4px 10px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--line);
-      font-size: 12px;
-    }
+    /* --- PANELS --- */
+    .panel-head { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); background: rgba(0,0,0,0.2); }
+    .panel-title { font-family: var(--font-title); font-size: 24px; color: var(--gold); letter-spacing: 0.05em; }
+    .footnote { color: var(--muted); font-size: 11px; font-family: var(--font-tech); }
 
-    .alert-list {
-      display: grid;
-      gap: 9px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      max-height: 210px;
-      overflow: auto;
-    }
+    /* --- PRODUCTION MODULES --- */
+    .production-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 20px; }
+    .production-card { border: 1px solid var(--line); background: #080a0c; padding: 16px; position: relative; }
+    .production-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--line); }
+    .production-card.critical::before { background: var(--danger); }
+    .production-card.low::before { background: var(--warn); }
+    .production-card.ok::before { background: var(--good); }
 
-    .alert-list li {
-      position: relative;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      padding: 9px 10px;
-      border: 1px solid var(--line-soft);
-      border-radius: 12px;
-      background: rgba(255,255,255,0.025);
-    }
+    .production-title { font-family: var(--font-title); color: var(--gold); font-size: 22px; letter-spacing: 0.05em; }
+    .production-stats { display: flex; gap: 10px; margin: 12px 0; font-family: var(--font-tech); }
+    .production-stat { flex: 1; border: 1px solid var(--line-soft); padding: 8px; text-align: center; }
+    .production-stat small { color: var(--muted); font-size: 10px; display: block; }
+    .production-stat strong { font-size: 16px; color: var(--text); }
 
-    .alert-list li.alert-critical {
-      border-color: rgba(224, 86, 86, 0.62);
-      background: linear-gradient(90deg, rgba(224,86,86,0.13), rgba(255,255,255,0.025));
-    }
+    .recipe-list { margin: 0; padding: 0; list-style: none; }
+    .recipe-list li { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px dashed var(--line-soft); }
+    .recipe-list li.bottleneck { color: var(--danger); font-weight: bold; }
+    .recipe-list small { color: var(--muted); }
 
-    .alert-list li.alert-low {
-      border-color: rgba(230, 163, 61, 0.58);
-      background: linear-gradient(90deg, rgba(230,163,61,0.12), rgba(255,255,255,0.025));
-    }
+    /* --- TABLE --- */
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+    input, select, button { background: #000; color: var(--text); border: 1px solid var(--line); padding: 8px 12px; font-family: var(--font-tech); font-size: 13px; outline: none; }
+    input:focus, select:focus { border-color: var(--gold); }
+    button { cursor: pointer; color: var(--gold); font-weight: bold; transition: 0.2s; }
+    button:hover { background: var(--gold-soft); }
+    button:disabled { opacity: 0.45; cursor: wait; }
 
-    .alert-list li.alert-ok {
-      border-color: rgba(83, 189, 134, 0.32);
-    }
+    .table-wrap { overflow: auto; max-height: 600px; }
+    table { width: 100%; border-collapse: collapse; font-family: var(--font-tech); font-size: 13px; }
+    th, td { text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--line-soft); white-space: nowrap; }
+    th { color: var(--gold); cursor: pointer; user-select: none; background: #000; }
+    th:hover { background: #111; }
+    tr:hover td { background: rgba(212, 175, 55, 0.05); }
 
-    .alert-list small {
-      color: var(--muted);
-      display: block;
-      margin-top: 3px;
-    }
-
-    .panel {
-      border: 1px solid rgba(182,140,60,0.18);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,220,150,0.02);
-      overflow: hidden;
-    }
-
-    .panel-head {
-      padding: 16px;
-      display: flex;
-      gap: 12px;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.025);
-    }
-
-    .panel-title { font-size: 18px; font-weight: 900; }
-
-    .controls {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    input, select, button {
-      background: #080c10;
-      color: var(--text);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 14px;
-      outline: none;
-    }
-
-    input:focus, select:focus { border-color: rgba(47,128,237,0.9); }
-
-    button {
-      cursor: pointer;
-      background: linear-gradient(180deg, #1d5086, #12395f);
-      border-color: #2e72ae;
-      font-weight: 900;
-    }
-
-    button:hover { filter: brightness(1.12); }
-
-    .status {
-      color: var(--muted);
-      font-size: 13px;
-      padding: 0 16px 14px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-
-    th, td {
-      text-align: left;
-      padding: 11px 12px;
-      border-bottom: 1px solid rgba(45, 56, 70, 0.8);
-      white-space: nowrap;
-    }
-
-    th {
-      color: #b7d7ff;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      background: #111821;
-      cursor: pointer;
-      user-select: none;
-      transition: background 0.2s;
-    }
-
-    th:hover { color: var(--text); background: #1a2430; }
-    tr:hover td { background: rgba(47, 128, 237, 0.08); }
-
-    .table-wrap {
-      max-height: 66vh;
-      overflow: auto;
-    }
-
-    #itemsBody {
-      transition: opacity 0.2s ease-in-out;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      padding: 4px 9px;
-      font-size: 12px;
-      font-weight: 900;
-      border: 1px solid var(--line);
-    }
-
-    .critical { color: #ffd4d4; background: var(--danger-soft); border-color: rgba(224, 86, 86, 0.48); }
-    .low { color: #ffe4b8; background: var(--warn-soft); border-color: rgba(230, 163, 61, 0.50); }
-    .ok { color: #ccefdc; background: var(--good-soft); border-color: rgba(83, 189, 134, 0.48); }
+    .pill { padding: 2px 6px; font-size: 11px; border: 1px solid var(--line); border-radius: 2px; }
+    .critical { color: var(--danger); border-color: var(--danger); }
+    .low { color: var(--warn); border-color: var(--warn); }
+    .ok { color: var(--good); border-color: var(--good); }
+    .waste { color: var(--waste); border-color: var(--waste); background: var(--waste-soft); }
     .buy { color: #d7e9ff; background: var(--blue-soft); border-color: rgba(47, 128, 237, 0.48); }
     .sell { color: #f3e0b8; background: rgba(210, 173, 103, 0.15); border-color: rgba(210, 173, 103, 0.48); }
     .both { color: #efe1ff; background: rgba(176, 103, 226, 0.16); border-color: rgba(176, 103, 226, 0.48); }
 
-    .error {
-      padding: 14px 16px;
-      color: #ffd1d1;
-      background: rgba(224, 86, 86, 0.12);
-      border-top: 1px solid rgba(224, 86, 86, 0.35);
+    #itemsBody, #productionGrid { transition: opacity 0.2s; }
+
+    .error-box {
       display: none;
-    }
-
-    .footnote {
-      color: var(--muted);
+      margin: 0;
+      padding: 10px 20px;
+      border-bottom: 1px solid rgba(165, 42, 42, 0.55);
+      background: rgba(165, 42, 42, 0.12);
+      color: #ffbdbd;
+      font-family: var(--font-tech);
       font-size: 12px;
-      line-height: 1.45;
     }
 
-    @media (max-width: 1000px) {
-      .cards, .summary-grid { grid-template-columns: repeat(2, 1fr); }
-    }
+    /* --- RP FOOTER --- */
+    footer { text-align: center; font-family: var(--font-tech); font-size: 12px; color: #555555; padding: 10px 20px 40px; }
 
-    @media (max-width: 700px) {
+    @media (max-width: 1100px) {
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 900px) {
       .cards, .summary-grid { grid-template-columns: 1fr; }
-      header, main { padding-left: 16px; padding-right: 16px; }
-      .topline, .hero-left { align-items: flex-start; }
-      .hero-left { flex-direction: column; gap: 14px; }
-      .crest { width: 92px; }
-      h1 { font-size: 30px; }
-      .panel-head { align-items: stretch; flex-direction: column; }
-      .controls { justify-content: stretch; }
-      input, select, button { width: 100%; }
+      .rp-meta { font-size: 12px; }
+      h1 { font-size: 32px; }
     }
   </style>
 </head>
 <body>
+
   <header>
-    <div class="crest-watermark"></div>
-    <div class="topline">
-      <div class="hero-left">
-        <img class="crest" src="https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png" alt="Thorne Industrial Group Crest" />
-        <div>
-          <div class="eyebrow">Thorne Industrial Group · BMM Chartered Strategic Manufacturing Command</div>
-          <h1>RESOLUTION HEAVY WORKS</h1>
-          <div class="subtitle">Internal logistics telemetry, procurement oversight and export command interface · New London operational theater.</div>
-        </div>
+    <img class="crest" src="https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png" alt="RHW Crest" />
+    <h1>RESOLUTION HEAVY WORKS</h1>
+    <div class="subtitle">INDUSTRIAL MANUFACTURING HUB | NEW LONDON</div>
+    
+    <hr class="hrc-gold">
+
+    <div class="rp-meta">
+      <div class="rp-meta-row">
+        <div class="rp-meta-lbl">SENDER ID:</div>
+        <div class="rp-meta-val">Alistair Thorne</div>
       </div>
-      <div>
-        <div class="live-pill"><span class="dot"></span><span id="liveStatus">LIVE SYNC ACTIVE</span></div>
-        <div class="footnote" style="margin-top:14px;text-align:right;"><em>“Bretonia needs a fist. We provide the steel.”</em><br>— Alistair Thorne</div>
+      <div class="rp-meta-row">
+        <div class="rp-meta-lbl">LOCATION:</div>
+        <div class="rp-meta-val" id="systemName">Resolution Heavy Works, New London</div>
+      </div>
+      <div class="rp-meta-row">
+        <div class="rp-meta-lbl">ENCRYPTION:</div>
+        <div class="rp-meta-val encryption-val">Belfast-RHW-424</div>
+      </div>
+      <div class="rp-meta-row">
+        <div class="rp-meta-lbl">UPLINK STATUS:</div>
+        <div class="rp-meta-val" id="liveStatus" style="color: #4a8f62;">SYNCING TELEMETRY...</div>
       </div>
     </div>
+
+    <hr class="hrc-gold">
   </header>
 
   <main>
     <section class="cards">
-      <div class="card"><div class="label">Command Authority</div><div class="value" style="font-size:20px;">Alistair Thorne</div></div>
-      <div class="card"><div class="label">Chartered Authority</div><div class="value" style="font-size:20px;">BMM</div></div>
-      <div class="card"><div class="label">Operational Theater</div><div class="value" id="systemName">–</div></div>
-      <div class="card"><div class="label">Tracked Strategic Assets</div><div class="value" id="itemCount">–</div></div>
+      <div class="card"><div class="label">Chartered Authority</div><div class="value">BMM</div></div>
+      <div class="card"><div class="label">Tracked Assets</div><div class="value" id="itemCount">0</div></div>
+      <div class="card"><div class="label">Latest Sync</div><div class="value" id="syncTimeVal">–</div></div>
     </section>
 
     <section class="summary-grid">
-      <div class="alert-card">
+      <div class="alert-card panel">
         <div class="alert-title"><span>Facility Maintenance</span><span class="count-badge" id="maintenanceCount">0</span></div>
         <ul class="alert-list" id="maintenanceList"></ul>
       </div>
-      <div class="alert-card">
+      <div class="alert-card panel">
         <div class="alert-title"><span>Export Inventory</span><span class="count-badge" id="exportCount">0</span></div>
         <ul class="alert-list" id="exportList"></ul>
       </div>
-      <div class="alert-card">
-        <div class="alert-title"><span>Industrial Procurement</span><span class="count-badge" id="criticalCount">0</span></div>
-        <ul class="alert-list" id="criticalList"></ul>
+      <div class="alert-card panel">
+        <div class="alert-title"><span>Waste Management</span><span class="count-badge" id="byproductCount">0</span></div>
+        <ul class="alert-list" id="byproductList"></ul>
       </div>
     </section>
 
     <section class="panel">
       <div class="panel-head">
         <div>
-          <div class="panel-title">THORNE LOGISTICS MANIFEST</div>
-          <div class="footnote">Filter by operational role. Click table headers to sort.</div>
-        </div>
-        <div class="controls">
-          <input id="search" type="search" placeholder="Asset lookup…" />
-          <select id="roleFilter">
-            <option value="all">All Assets</option>
-            <option value="maintenance">Facility Maintenance</option>
-            <option value="procurement">Industrial Procurement</option>
-            <option value="export">Export Inventory</option>
-          </select>
-          <button id="refreshBtn">Refresh Telemetry</button>
+          <div class="panel-title">PRODUCTION MODULES</div>
+          <div class="footnote">INTERNAL RECIPE VIEW // BASED ON LIVE RHW STOCK</div>
         </div>
       </div>
-      <div class="status" id="statusText"></div>
-      <div class="error" id="errorBox"></div>
+      <div class="production-grid" id="productionGrid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head" style="flex-wrap: wrap; gap: 15px;">
+        <div>
+          <div class="panel-title">THORNE LOGISTICS MANIFEST</div>
+          <div class="footnote">ASSET LOOKUP AND OVERSIGHT</div>
+        </div>
+        <div class="controls">
+          <input id="search" type="search" placeholder="Query asset..." />
+          <select id="roleFilter">
+            <option value="all">ALL ASSETS</option>
+            <option value="maintenance">MAINTENANCE</option>
+            <option value="procurement">PROCUREMENT</option>
+            <option value="export">EXPORT</option>
+            <option value="byproduct">WASTE / BYPROD</option>
+          </select>
+          <button id="refreshBtn">FORCE UPLINK</button>
+        </div>
+      </div>
+      <div class="error-box" id="errorBox"></div>
       <div class="table-wrap">
         <table id="dataTable">
           <thead>
             <tr>
-              <th data-sort="name">Asset</th>
-              <th data-sort="role">Role</th>
-              <th data-sort="status">Status</th>
-              <th data-sort="quantity">Quantity</th>
-              <th data-sort="need">Need</th>
-              <th data-sort="sell">Sell</th>
-              <th data-sort="buy">Buy</th>
+              <th data-sort="name">ASSET</th>
+              <th data-sort="role">ROLE</th>
+              <th data-sort="status">STATUS</th>
+              <th data-sort="quantity">QTY</th>
+              <th data-sort="need">NEED</th>
+              <th data-sort="sell">SELL (CR)</th>
+              <th data-sort="buy">BUY (CR)</th>
             </tr>
           </thead>
           <tbody id="itemsBody"></tbody>
@@ -464,340 +333,353 @@
     </section>
   </main>
 
+  <footer>
+    <hr class="hrc-dark">
+    CONNECTION SECURE /// GLORY TO THE QUEEN<br>
+    [RHW] SYSTEM TIME: <span id="rpFooterTime"></span>
+  </footer>
+
 <script>
+/* ==========================================================================
+   RHW DASHBOARD LOGIC (V5.8 STABLE) - REVIEW CLEANUP
+   ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
-const AUTO_REFRESH_MS = 30000;
+const AUTO_REFRESH_MS = 60000; 
 
-const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods'];
-const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components'];
-const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'niobium', 'super alloy', 'titanium'];
+const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods']; 
+const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components', 'niobium']; 
+const BYPRODUCTS = ['toxic waste', 'scrap metal'];
+const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore'];
 
-const CUSTOM_ALERTS = {
-  'basic alloy': { red: 2500, yellow: 15000 },
-  'food rations': { red: 2500, yellow: 15000 },
-  'consumer goods': { red: 2500, yellow: 15000 },
-  'gold': { red: 5000, yellow: 15000 },
-  'reactor systems': { red: 200, yellow: 500 },
-  'superstructure systems': { red: 200, yellow: 500 },
-  'prototype components': { red: 2500, yellow: 5000 },
-  'multi-mode focusing chamber': { red: 500, yellow: 1000 },
-  'multi-mode focusing chambers': { red: 500, yellow: 1000 }
+const EXPORT_ORDER = ['Reactor Systems', 'Superstructure Systems', 'Multi-Mode Focusing Chamber', 'Prototype Components', 'Gold', 'Niobium'];
+
+const RECIPES = [ 
+  { product: 'Reactor Systems', output: 1, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] }, 
+  { product: 'Superstructure Systems', output: 1, byproducts: [], ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] }, 
+  { product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] }, 
+  { product: 'Prototype Components', output: 25, byproducts: [], ingredients: [['Military Salvage',255]] }, 
+  { product: 'Gold', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Gold Ore',425], ['MOX',170], ['Industrial Materials',85]] }, 
+  { product: 'Niobium', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Niobium Ore',425], ['MOX',170], ['Industrial Materials',85]] }
+];
+
+const CUSTOM_ALERTS = { 
+  'basic alloy': { type: 'min', red: 2500, yellow: 15000 }, 
+  'food rations': { type: 'min', red: 2500, yellow: 15000 }, 
+  'consumer goods': { type: 'min', red: 2500, yellow: 15000 }, 
+  'gold': { type: 'min', red: 5000, yellow: 15000 }, 
+  'reactor systems': { type: 'min', red: 200, yellow: 500 }, 
+  'superstructure systems': { type: 'min', red: 200, yellow: 500 }, 
+  'prototype components': { type: 'min', red: 2500, yellow: 5000 }, 
+  'multi-mode focusing chamber': { type: 'min', red: 500, yellow: 1000 }, 
+  'multi-mode focusing chambers': { type: 'min', red: 500, yellow: 1000 },
+  
+  /* Max-Alarme für Waste */
+  'scrap metal': { type: 'max', yellow: 10000, red: 15000 },
+  'toxic waste': { type: 'max', yellow: 10000, red: 15000 }
 };
 
-let items = [];
-let lastLoaded = null;
-let rhwBase = null;
-let sortCol = 'name';
-let sortAsc = true;
+let items = []; let lastLoaded = null; let rhwBase = null;
+let sortCol = 'name'; let sortAsc = true;
+let refreshTimer = null;
 let isLoading = false;
 
-const els = {
-  liveStatus: document.getElementById('liveStatus'),
-  systemName: document.getElementById('systemName'),
-  itemCount: document.getElementById('itemCount'),
-  maintenanceList: document.getElementById('maintenanceList'),
-  criticalList: document.getElementById('criticalList'),
-  exportList: document.getElementById('exportList'),
-  maintenanceCount: document.getElementById('maintenanceCount'),
-  criticalCount: document.getElementById('criticalCount'),
-  exportCount: document.getElementById('exportCount'),
-  itemsBody: document.getElementById('itemsBody'),
-  statusText: document.getElementById('statusText'),
+const els = { 
+  liveStatus: document.getElementById('liveStatus'), 
+  itemCount: document.getElementById('itemCount'), 
+  syncTimeVal: document.getElementById('syncTimeVal'),
+  maintenanceList: document.getElementById('maintenanceList'), 
+  exportList: document.getElementById('exportList'), 
+  byproductList: document.getElementById('byproductList'), 
+  maintenanceCount: document.getElementById('maintenanceCount'), 
+  exportCount: document.getElementById('exportCount'), 
+  byproductCount: document.getElementById('byproductCount'), 
+  itemsBody: document.getElementById('itemsBody'), 
   errorBox: document.getElementById('errorBox'),
-  search: document.getElementById('search'),
-  roleFilter: document.getElementById('roleFilter'),
-  refreshBtn: document.getElementById('refreshBtn'),
-  tableHeaders: document.querySelectorAll('#dataTable th[data-sort]')
+  search: document.getElementById('search'), 
+  roleFilter: document.getElementById('roleFilter'), 
+  refreshBtn: document.getElementById('refreshBtn'), 
+  productionGrid: document.getElementById('productionGrid'), 
+  tableHeaders: document.querySelectorAll('#dataTable th[data-sort]'),
+  rpFooterTime: document.getElementById('rpFooterTime')
 };
 
-function escapeHTML(str) {
-  return String(str).replace(/[&<>'"]/g, match => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-  }[match]));
+setInterval(() => {
+  const now = new Date();
+  els.rpFooterTime.textContent = now.toLocaleDateString('de-DE') + ' ' + now.toLocaleTimeString('de-DE');
+}, 1000);
+
+function escapeHTML(str) { return String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])); }
+function normalize(value) { return String(value || '').trim().toLowerCase(); }
+function number(value) { const x = Number(value); return Number.isFinite(x) ? x.toLocaleString('de-DE') : '–'; }
+function itemName(item) { return item.name || item.item_name || item.nickname || String(item.id || 'Unknown Asset'); }
+const COMMODITY_ALIASES = {
+  'super alloys': 'super alloy',
+  'multi-mode focusing chambers': 'multi-mode focusing chamber'
+};
+
+function cleanCommodityKey(rawName) {
+  const raw = normalize(rawName);
+  const idx = raw.indexOf('(');
+  const cleaned = (idx >= 0 ? raw.slice(0, idx) : raw).trim();
+  return COMMODITY_ALIASES[cleaned] || cleaned;
 }
 
-function normalize(value) {
-  return String(value || '').trim().toLowerCase();
+function commodityKey(item) { return cleanCommodityKey(itemName(item)); }
+function keyFromName(name) { return cleanCommodityKey(name); }
+
+function displayName(item) { 
+  const key = commodityKey(item); 
+  const canonical = { 
+    'ablative armor plating': 'Ablative Armor Plating', 'energy field equipment': 'Energy Field Equipment', 
+    'gold ore': 'Gold Ore', 'hull panels': 'Hull Panels', 'hydrocarbons': 'Hydrocarbons', 
+    'military salvage': 'Military Salvage', 'mox': 'MOX', 'niobium': 'Niobium', 
+    'super alloy': 'Super Alloy', 'titanium': 'Titanium', 'multi-mode focusing chamber': 'Multi-Mode Focusing Chamber', 
+    'multi-mode focusing chambers': 'Multi-Mode Focusing Chamber', 'superstructure systems': 'Superstructure Systems', 
+    'reactor systems': 'Reactor Systems', 'gold': 'Gold', 'prototype components': 'Prototype Components', 
+    'basic alloy': 'Basic Alloy', 'food rations': 'Food Rations', 'consumer goods': 'Consumer Goods',
+    'industrial materials': 'Industrial Materials', 'niobium ore': 'Niobium Ore', 'toxic waste': 'Toxic Waste', 'scrap metal': 'Scrap Metal'
+  }; 
+  return canonical[key] || itemName(item); 
 }
 
-function number(value) {
-  const x = Number(value);
-  return Number.isFinite(x) ? x.toLocaleString('de-DE') : '–';
+function quantity(item) { return Number(item.quantity ?? item.amount ?? item.stock ?? 0); }
+function minStock(item) { return Number(item.min_stock ?? item.min ?? 0); }
+function needAmount(item) { return Math.max(0, minStock(item) - quantity(item)); }
+
+function stockState(item) { 
+  const q = quantity(item); const nm = commodityKey(item); const custom = CUSTOM_ALERTS[nm]; 
+  if (custom) { 
+    if (custom.type === 'max') {
+      if (q >= custom.red) return 'critical';
+      if (q >= custom.yellow) return 'low';
+      return 'ok';
+    } else {
+      if (q < custom.red) return 'critical'; 
+      if (q < custom.yellow) return 'low'; 
+      return 'ok'; 
+    }
+  } 
+  
+  if (PROCUREMENT.includes(nm) || BYPRODUCTS.includes(nm)) return 'ok'; 
+  const min = minStock(item); 
+  if (min > 0 && q <= min * 0.25) return 'critical'; 
+  if (min > 0 && q < min) return 'low'; return 'ok'; 
 }
 
-function itemName(item) {
-  return item.name || item.item_name || item.nickname || String(item.id || 'Unknown Asset');
+function assetRole(item) { 
+  const nm = commodityKey(item); 
+  if (EXPORTS.includes(nm)) return 'export'; 
+  if (BYPRODUCTS.includes(nm)) return 'byproduct'; 
+  if (MAINTENANCE.includes(nm)) return 'maintenance'; 
+  if (PROCUREMENT.includes(nm)) return 'procurement'; 
+  return 'other'; 
 }
 
-function commodityKey(item) {
-  return normalize(itemName(item))
-    .replace(/\s*\([^)]*\)\s*$/g, '')
-    .trim();
-}
+function operationalItems() { const seen = new Set(); return items.filter(item => { const role = assetRole(item); if (role === 'other') return false; const key = role + ':' + commodityKey(item); if (seen.has(key)) return false; seen.add(key); return true; }); }
+function roleLabel(role) { if (role === 'maintenance') return 'FACILITY'; if (role === 'export') return 'EXPORT'; if (role === 'byproduct') return 'WASTE'; return 'PROCUREMENT'; }
 
-function displayName(item) {
-  const key = commodityKey(item);
-  const canonical = {
-    'ablative armor plating': 'Ablative Armor Plating',
-    'energy field equipment': 'Energy Field Equipment',
-    'gold ore': 'Gold Ore',
-    'hull panels': 'Hull Panels',
-    'hydrocarbons': 'Hydrocarbons',
-    'military salvage': 'Military Salvage',
-    'mox': 'MOX',
-    'niobium': 'Niobium',
-    'super alloy': 'Super Alloy',
-    'titanium': 'Titanium',
-    'multi-mode focusing chamber': 'Multi-Mode Focusing Chamber',
-    'multi-mode focusing chambers': 'Multi-Mode Focusing Chamber',
-    'superstructure systems': 'Superstructure Systems',
-    'reactor systems': 'Reactor Systems',
-    'gold': 'Gold',
-    'prototype components': 'Prototype Components',
-    'basic alloy': 'Basic Alloy',
-    'food rations': 'Food Rations',
-    'consumer goods': 'Consumer Goods'
-  };
-  return canonical[key] || itemName(item);
-}
-
-function quantity(item) {
-  return Number(item.quantity ?? item.amount ?? item.stock ?? 0);
-}
-
-function minStock(item) {
-  return Number(item.min_stock ?? item.min ?? 0);
-}
-
-function needAmount(item) {
-  return Math.max(0, minStock(item) - quantity(item));
-}
-
-function stockState(item) {
-  const q = quantity(item);
-  const nm = commodityKey(item);
-  const custom = CUSTOM_ALERTS[nm];
-
-  if (custom) {
-    if (q < custom.red) return 'critical';
-    if (q < custom.yellow) return 'low';
-    return 'ok';
+/* NEU: Die Status-Schildchen passen sich jetzt der Art der Fracht an! */
+function statusLabel(state, role) { 
+  if (role === 'byproduct') {
+    if (state === 'critical') return 'OVERFLOW'; 
+    if (state === 'low') return 'WARN'; 
+    return 'STABLE';
   }
-
-  if (PROCUREMENT.includes(nm)) return 'ok';
-
-  const min = minStock(item);
-  if (min > 0 && q <= min * 0.25) return 'critical';
-  if (min > 0 && q < min) return 'low';
-  return 'ok';
+  if (state === 'critical') return 'CRITICAL'; 
+  if (state === 'low') return 'LOW'; 
+  return 'STABLE'; 
 }
 
-function assetRole(item) {
-  const nm = commodityKey(item);
-  if (EXPORTS.includes(nm)) return 'export';
-  if (MAINTENANCE.includes(nm)) return 'maintenance';
-  if (PROCUREMENT.includes(nm)) return 'procurement';
-  return 'other';
+function rolePill(role) { 
+  let cls = 'buy'; 
+  if (role === 'export') cls = 'both'; 
+  if (role === 'maintenance') cls = 'sell'; 
+  if (role === 'byproduct') cls = 'waste'; 
+  return `<span class="pill ${cls}">${roleLabel(role)}</span>`; 
 }
 
-function operationalItems() {
-  const seen = new Set();
-  return items.filter(item => {
+function statusPill(state, role) { return `<span class="pill ${state}">${statusLabel(state, role)}</span>`; }
+
+function priceSell(item) { return item.price_to_sell_to_base ?? item.sell_price ?? item.price_sell ?? item.price ?? 0; }
+function priceBuy(item) { return item.price_to_buy_from_base ?? item.buy_price ?? item.price_buy ?? item.price ?? 0; }
+function findCommodity(name) { const key = keyFromName(name); return operationalItems().find(item => commodityKey(item) === key) || items.find(item => commodityKey(item) === key) || null; }
+function stockFor(name) { const item = findCommodity(name); return item ? quantity(item) : 0; }
+function displayRecipeName(name) { return displayName({ name }); }
+
+function handleSort(e) { const th = e.target.closest('th'); if (!th || !th.dataset.sort) return; const col = th.dataset.sort; if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; } render(); }
+function updateSortArrows() { els.tableHeaders.forEach(th => { let text = th.textContent.replace(/ [▲▼]/, ''); if (th.dataset.sort === sortCol) { text += sortAsc ? ' ▲' : ' ▼'; } th.textContent = text; }); }
+
+function renderProductionModules() { 
+  const grid = document.getElementById('productionGrid'); if (!grid) return; 
+  if (!Array.isArray(RECIPES) || !RECIPES.length) { grid.innerHTML = '<div class="production-card"><div class="production-title">No recipes configured</div></div>'; return; }
+
+  grid.innerHTML = RECIPES.map(recipe => { 
+    const productItem = findCommodity(recipe.product); const productStock = productItem ? quantity(productItem) : 0; 
+    const ingredientData = recipe.ingredients.map(pair => { 
+      const ingredientName = pair[0]; const required = pair[1]; const stock = stockFor(ingredientName); 
+      const cycles = required > 0 ? Math.floor(stock / required) : 0; 
+      return { name: ingredientName, required, stock, cycles }; 
+    }); 
+    
+    const possibleCycles = ingredientData.length ? Math.min(...ingredientData.map(i => i.cycles)) : 0; 
+    const possibleOutput = possibleCycles * recipe.output; 
+    const bottleneck = ingredientData.length ? ingredientData.reduce((lowest, current) => current.cycles < lowest.cycles ? current : lowest) : null; 
+    const cardState = possibleCycles <= 0 ? 'critical' : possibleCycles < 10 ? 'low' : 'ok'; 
+    
+    const ingredientRows = ingredientData.map(item => { 
+      const isBottleneck = bottleneck && item.name === bottleneck.name; 
+      return `<li class="${isBottleneck ? 'bottleneck' : ''}"><span>${escapeHTML(displayRecipeName(item.name))}</span><span><small>Req ${number(item.required)}</small> <strong>${number(item.stock)}</strong></span></li>`; 
+    }).join(''); 
+    
+    const byproductsText = recipe.byproducts && recipe.byproducts.length 
+      ? `<div class="footnote" style="margin-top: 10px; color: var(--gold); border-top: 1px dashed var(--line-soft); padding-top: 6px;">+ BYPROD/CYCLE: ${recipe.byproducts.map(bp => `${number(bp[1])} ${escapeHTML(displayRecipeName(bp[0]))}`).join(' / ')}</div>` 
+      : '';
+    
+    return `<div class="production-card ${cardState}">
+              <div class="production-title">${escapeHTML(displayRecipeName(recipe.product))}</div>
+              <div class="footnote">YIELD PER CYCLE: ${number(recipe.output)}</div>
+              <div class="production-stats">
+                <div class="production-stat"><small>IN STOCK</small><strong>${number(productStock)}</strong></div>
+                <div class="production-stat"><small>MAX CYCLES</small><strong>${number(possibleCycles)}</strong></div>
+                <div class="production-stat"><small>EST. YIELD</small><strong>${number(possibleOutput)}</strong></div>
+              </div>
+              <ul class="recipe-list">${ingredientRows}</ul>
+              ${byproductsText}
+            </div>`; 
+  }).join(''); 
+}
+
+function renderList(target, list, emptyText) { 
+  if (!list.length) { target.innerHTML = `<li><span>${emptyText}</span><span class="pill ok">SECURE</span></li>`; return; } 
+  target.innerHTML = list.map(item => { 
+    const state = stockState(item); 
     const role = assetRole(item);
-    if (role === 'other') return false;
-    const key = role + ':' + commodityKey(item);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+    const need = needAmount(item); 
+    const q = quantity(item);
+    
+    let detail = state === 'ok' ? 'NOMINAL' : `DEFICIT: ${number(need)}`; 
+    
+    /* Umgekehrte Logik für Abfallprodukte */
+    if (role === 'byproduct') {
+      if (state === 'ok') detail = 'NOMINAL';
+      else if (state === 'low') detail = 'WARNING: HIGH VOLUME';
+      else detail = 'CRITICAL OVERFLOW';
+    }
+    
+    return `<li class="alert-${state}">
+              <span><strong>${escapeHTML(displayName(item))}</strong><small>${detail}</small></span>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <strong style="font-size:16px; font-family: var(--font-tech);">${number(q)}</strong>
+                ${statusPill(state, role)}
+              </div>
+            </li>`; 
+  }).join(''); 
 }
 
-function roleLabel(role) {
-  if (role === 'maintenance') return 'FACILITY';
-  if (role === 'export') return 'EXPORT';
-  return 'PROCUREMENT';
-}
+function render() { 
+  const query = normalize(els.search.value); const roleFilter = els.roleFilter.value; const sourceItems = operationalItems(); 
+  const sortByName = (a, b) => displayName(a).localeCompare(displayName(b)); 
+  
+  const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort(sortByName); 
+  
+  const exports = sourceItems.filter(item => assetRole(item) === 'export').sort((a, b) => {
+    let idxA = EXPORT_ORDER.indexOf(displayName(a));
+    let idxB = EXPORT_ORDER.indexOf(displayName(b));
+    if (idxA === -1) idxA = 999;
+    if (idxB === -1) idxB = 999;
+    if (idxA !== idxB) return idxA - idxB;
+    return sortByName(a, b);
+  }); 
 
-function statusLabel(state) {
-  if (state === 'critical') return 'CRITICAL';
-  if (state === 'low') return 'LOW';
-  return 'STABLE';
-}
-
-function rolePill(role) {
-  const cls = role === 'export' ? 'both' : role === 'maintenance' ? 'sell' : 'buy';
-  return `<span class="pill ${cls}">${roleLabel(role)}</span>`;
-}
-
-function statusPill(state) {
-  return `<span class="pill ${state}">${statusLabel(state)}</span>`;
-}
-
-function priceSell(item) {
-  return item.price_to_sell_to_base ?? item.sell_price ?? item.price_sell ?? item.price ?? 0;
-}
-
-function priceBuy(item) {
-  return item.price_to_buy_from_base ?? item.buy_price ?? item.price_buy ?? item.price ?? 0;
-}
-
-function handleSort(e) {
-  const th = e.target.closest('th');
-  if (!th || !th.dataset.sort) return;
-  const col = th.dataset.sort;
-  if (sortCol === col) sortAsc = !sortAsc;
-  else {
-    sortCol = col;
-    sortAsc = true;
-  }
-  render();
-}
-
-function updateSortArrows() {
-  els.tableHeaders.forEach(th => {
-    let text = th.textContent.replace(/ [▲▼]/, '');
-    if (th.dataset.sort === sortCol) text += sortAsc ? ' ▲' : ' ▼';
-    th.textContent = text;
-  });
-}
-
-function renderList(target, list, emptyText) {
-  if (!list.length) {
-    target.innerHTML = `<li><span>${escapeHTML(emptyText)}<small>No immediate action required.</small></span><strong>✓</strong></li>`;
-    return;
-  }
-
-  target.innerHTML = list.slice(0, 10).map(item => {
-    const role = assetRole(item);
-    const state = stockState(item);
-    const need = needAmount(item);
-    const detail = role === 'export'
-      ? `Stock available: ${number(quantity(item))}`
-      : role === 'maintenance'
-        ? state === 'ok' ? 'Crew/station reserves stable.' : `Required to minimum: ${number(need)}`
-        : 'Production input tracked.';
-
-    return `<li class="alert-${state}"><span>${escapeHTML(displayName(item))}<small>${detail}</small></span><strong>${number(quantity(item))}</strong></li>`;
-  }).join('');
-}
-
-function sortValue(item, col) {
-  const weight = { critical: 1, low: 2, ok: 3 };
-  if (col === 'name') return displayName(item).toLowerCase();
-  if (col === 'role') return assetRole(item);
-  if (col === 'status') return weight[stockState(item)] || 99;
-  if (col === 'quantity') return quantity(item);
-  if (col === 'need') return needAmount(item);
-  if (col === 'sell') return Number(priceSell(item)) || 0;
-  if (col === 'buy') return Number(priceBuy(item)) || 0;
-  return displayName(item).toLowerCase();
-}
-
-function render() {
-  const query = normalize(els.search.value);
-  const roleFilter = els.roleFilter.value;
-  const sourceItems = operationalItems();
-
-  const sortByName = (a, b) => displayName(a).localeCompare(displayName(b));
-
-  const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort(sortByName);
-  const exports = sourceItems.filter(item => assetRole(item) === 'export').sort(sortByName);
-  const procurement = sourceItems.filter(item => assetRole(item) === 'procurement').sort(sortByName);
-
-  els.maintenanceCount.textContent = maintenance.length;
-  els.exportCount.textContent = exports.length;
-  els.criticalCount.textContent = procurement.length;
-
-  renderList(els.maintenanceList, maintenance, 'Maintenance reserves stable');
-  renderList(els.exportList, exports, 'No export inventory detected');
-  renderList(els.criticalList, procurement, 'Industrial procurement stable');
-
-  const visible = sourceItems.filter(item => {
-    const role = assetRole(item);
-    return (!query || normalize(displayName(item)).includes(query) || normalize(itemName(item)).includes(query)) &&
-      (roleFilter === 'all' || role === roleFilter);
-  });
-
-  visible.sort((a, b) => {
-    const valA = sortValue(a, sortCol);
-    const valB = sortValue(b, sortCol);
-    let result = 0;
-    if (typeof valA === 'string' || typeof valB === 'string') result = String(valA).localeCompare(String(valB));
-    else result = valA - valB;
-    return sortAsc ? result : -result;
-  });
-
-  updateSortArrows();
-
-  els.itemsBody.innerHTML = visible.map(item => {
-    const role = assetRole(item);
-    const state = stockState(item);
-    const need = role === 'maintenance' || role === 'export' ? needAmount(item) : 0;
-
-    return `<tr>
-      <td><strong>${escapeHTML(displayName(item))}</strong></td>
-      <td>${rolePill(role)}</td>
-      <td>${statusPill(state)}</td>
-      <td>${number(quantity(item))}</td>
-      <td>${need ? number(need) : '–'}</td>
-      <td>${number(priceSell(item))}</td>
-      <td>${number(priceBuy(item))}</td>
-    </tr>`;
-  }).join('');
-
-  els.itemsBody.style.opacity = '1';
-  const syncTime = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE') : '–';
-  els.statusText.textContent = `${visible.length} assets displayed · Last sync: ${syncTime} · Auto refresh: ${AUTO_REFRESH_MS / 1000}s`;
+  const byproducts = sourceItems.filter(item => assetRole(item) === 'byproduct').sort(sortByName);
+  
+  els.maintenanceCount.textContent = maintenance.length; 
+  els.exportCount.textContent = exports.length; 
+  els.byproductCount.textContent = byproducts.length; 
+  
+  renderList(els.maintenanceList, maintenance, 'FACILITY RESERVES STABLE'); 
+  renderList(els.exportList, exports, 'NO EXPORT ASSETS DETECTED'); 
+  renderList(els.byproductList, byproducts, 'NO WASTE DETECTED'); 
+  renderProductionModules(); 
+  
+  const visible = sourceItems.filter(item => { const role = assetRole(item); return (!query || normalize(itemName(item)).includes(query)) && (roleFilter === 'all' || role === roleFilter); }); 
+  visible.sort((a, b) => { 
+    let valA, valB; 
+    if (sortCol === 'name') { valA = displayName(a); valB = displayName(b); } 
+    else if (sortCol === 'role') { valA = assetRole(a); valB = assetRole(b); } 
+    else if (sortCol === 'status') { const weight = { critical: 1, low: 2, ok: 3 }; valA = weight[stockState(a)]; valB = weight[stockState(b)]; } 
+    else if (sortCol === 'quantity') { valA = quantity(a); valB = quantity(b); } 
+    else if (sortCol === 'need') { valA = needAmount(a); valB = needAmount(b); } 
+    else if (sortCol === 'sell') { valA = priceSell(a); valB = priceSell(b); } 
+    else if (sortCol === 'buy') { valA = priceBuy(a); valB = priceBuy(b); } 
+    if (valA < valB) return sortAsc ? -1 : 1; if (valA > valB) return sortAsc ? 1 : -1; return 0; 
+  }); 
+  updateSortArrows(); 
+  
+  els.itemsBody.innerHTML = visible.map(item => { 
+    const role = assetRole(item); const state = stockState(item); const need = needAmount(item); 
+    const needDisplay = role === 'byproduct' ? '–' : (need ? number(need) : '–');
+    return `<tr><td><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td>${number(quantity(item))}</td><td>${needDisplay}</td><td>${number(priceSell(item))}</td><td>${number(priceBuy(item))}</td></tr>`; 
+  }).join(''); 
+  
+  els.itemsBody.style.opacity = '1'; els.productionGrid.style.opacity = '1'; 
+  const syncTime = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE') : '–'; 
+  els.syncTimeVal.textContent = syncTime;
 }
 
 async function loadData() {
   if (isLoading) return;
   isLoading = true;
-  els.errorBox.style.display = 'none';
-  els.liveStatus.textContent = 'SYNCING…';
+
+  if (refreshTimer) {
+    clearTimeout(refreshTimer);
+    refreshTimer = null;
+  }
+
+  els.liveStatus.textContent = 'UPLINK IN PROGRESS...';
+  els.liveStatus.style.color = '#c28722';
+  if (els.errorBox) {
+    els.errorBox.style.display = 'none';
+    els.errorBox.textContent = '';
+  }
+  if (els.refreshBtn) els.refreshBtn.disabled = true;
   els.itemsBody.style.opacity = '0.4';
+  els.productionGrid.style.opacity = '0.4';
 
   try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Accept': 'application/json' }
-    });
-
-    if (!response.ok) throw new Error(`Darkstat API returned HTTP ${response.status}`);
+    const response = await fetch(API_URL, { method: 'POST', headers: { 'Accept': 'application/json' } });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
     rhwBase = data.find(base => normalize(base.name) === BASE_NAME || normalize(base.nickname) === BASE_NAME);
-
-    if (!rhwBase) throw new Error('Resolution Heavy Works was not found in the Darkstat POB list.');
+    if (!rhwBase) throw new Error('RHW NOT FOUND IN DATASTREAM.');
 
     items = Array.isArray(rhwBase.shop_items) ? rhwBase.shop_items : [];
     lastLoaded = new Date();
-
-    els.systemName.textContent = rhwBase.system_name || '–';
     els.itemCount.textContent = operationalItems().length;
-    els.liveStatus.textContent = 'LIVE SYNC ACTIVE';
-
+    els.liveStatus.textContent = 'CONNECTION SECURE';
+    els.liveStatus.style.color = '#4a8f62';
     render();
   } catch (error) {
     console.error(error);
-    els.liveStatus.textContent = 'SYNC ERROR';
-    els.errorBox.style.display = 'block';
-    els.errorBox.textContent = 'Telemetry failure: ' + error.message;
-    els.statusText.textContent = 'No telemetry loaded.';
+    els.liveStatus.textContent = 'UPLINK FAILED';
+    els.liveStatus.style.color = '#A52A2A';
+    if (els.errorBox) {
+      els.errorBox.textContent = `TELEMETRY ERROR: ${error.message}`;
+      els.errorBox.style.display = 'block';
+    }
     els.itemsBody.style.opacity = '1';
+    els.productionGrid.style.opacity = '1';
   } finally {
     isLoading = false;
+    if (els.refreshBtn) els.refreshBtn.disabled = false;
+    refreshTimer = setTimeout(loadData, AUTO_REFRESH_MS);
   }
 }
 
-els.search.addEventListener('input', render);
-els.roleFilter.addEventListener('change', render);
-els.refreshBtn.addEventListener('click', loadData);
-els.tableHeaders.forEach(th => th.addEventListener('click', handleSort));
-
+els.search.addEventListener('input', render); els.roleFilter.addEventListener('change', render); els.refreshBtn.addEventListener('click', loadData); els.tableHeaders.forEach(th => th.addEventListener('click', handleSort)); 
 loadData();
-setInterval(loadData, AUTO_REFRESH_MS);
 </script>
 </body>
 </html>
