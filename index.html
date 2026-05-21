@@ -158,6 +158,19 @@
     .alert-list li.alert-ok { border-left-color: var(--good); }
     .alert-list small { color: var(--muted); display: block; margin-top: 2px; }
 
+
+    .next-gap {
+      margin: 10px 0;
+      padding: 8px 10px;
+      border: 1px dashed var(--line-soft);
+      color: var(--muted);
+      font-family: var(--font-tech);
+      font-size: 12px;
+      background: rgba(255,255,255,0.015);
+    }
+
+    .next-gap strong { color: var(--gold); }
+
     /* --- PANELS --- */
     .panel-head { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); background: rgba(0,0,0,0.2); }
     .panel-title { font-family: var(--font-title); font-size: 24px; color: var(--gold); letter-spacing: 0.05em; }
@@ -524,32 +537,55 @@ function displayRecipeName(name) { return displayName({ name }); }
 function handleSort(e) { const th = e.target.closest('th'); if (!th || !th.dataset.sort) return; const col = th.dataset.sort; if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; } render(); }
 function updateSortArrows() { els.tableHeaders.forEach(th => { let text = th.textContent.replace(/ [▲▼]/, ''); if (th.dataset.sort === sortCol) { text += sortAsc ? ' ▲' : ' ▼'; } th.textContent = text; }); }
 
+function analyzeRecipe(recipe) {
+  const productItem = findCommodity(recipe.product);
+  const productStock = productItem ? quantity(productItem) : 0;
+
+  const ingredientData = recipe.ingredients.map(pair => {
+    const ingredientName = pair[0];
+    const required = pair[1];
+    const stock = stockFor(ingredientName);
+    const cycles = required > 0 ? Math.floor(stock / required) : 0;
+    const currentCycleGap = Math.max(0, required - stock);
+    return { name: ingredientName, required, stock, cycles, currentCycleGap };
+  });
+
+  const possibleCycles = ingredientData.length ? Math.min(...ingredientData.map(i => i.cycles)) : 0;
+  const possibleOutput = possibleCycles * recipe.output;
+  const bottleneck = ingredientData.length ? ingredientData.reduce((lowest, current) => current.cycles < lowest.cycles ? current : lowest) : null;
+  const nextCycleGap = bottleneck ? Math.max(0, ((possibleCycles + 1) * bottleneck.required) - bottleneck.stock) : 0;
+  const cardState = possibleCycles <= 0 ? 'critical' : possibleCycles < 10 ? 'low' : 'ok';
+
+  return { recipe, productItem, productStock, ingredientData, possibleCycles, possibleOutput, bottleneck, nextCycleGap, cardState };
+}
+
 function renderProductionModules() { 
   const grid = document.getElementById('productionGrid'); if (!grid) return; 
   if (!Array.isArray(RECIPES) || !RECIPES.length) { grid.innerHTML = '<div class="production-card"><div class="production-title">No recipes configured</div></div>'; return; }
 
   grid.innerHTML = RECIPES.map(recipe => { 
-    const productItem = findCommodity(recipe.product); const productStock = productItem ? quantity(productItem) : 0; 
-    const ingredientData = recipe.ingredients.map(pair => { 
-      const ingredientName = pair[0]; const required = pair[1]; const stock = stockFor(ingredientName); 
-      const cycles = required > 0 ? Math.floor(stock / required) : 0; 
-      return { name: ingredientName, required, stock, cycles }; 
-    }); 
-    
-    const possibleCycles = ingredientData.length ? Math.min(...ingredientData.map(i => i.cycles)) : 0; 
-    const possibleOutput = possibleCycles * recipe.output; 
-    const bottleneck = ingredientData.length ? ingredientData.reduce((lowest, current) => current.cycles < lowest.cycles ? current : lowest) : null; 
-    const cardState = possibleCycles <= 0 ? 'critical' : possibleCycles < 10 ? 'low' : 'ok'; 
-    
+    const analysis = analyzeRecipe(recipe);
+    const productStock = analysis.productStock;
+    const ingredientData = analysis.ingredientData;
+    const possibleCycles = analysis.possibleCycles;
+    const possibleOutput = analysis.possibleOutput;
+    const bottleneck = analysis.bottleneck;
+    const cardState = analysis.cardState;
+
     const ingredientRows = ingredientData.map(item => { 
       const isBottleneck = bottleneck && item.name === bottleneck.name; 
-      return `<li class="${isBottleneck ? 'bottleneck' : ''}"><span>${escapeHTML(displayRecipeName(item.name))}</span><span><small>Req ${number(item.required)}</small> <strong>${number(item.stock)}</strong></span></li>`; 
+      const immediateGap = item.currentCycleGap > 0 ? ` / Missing ${number(item.currentCycleGap)}` : '';
+      return `<li class="${isBottleneck ? 'bottleneck' : ''}"><span>${escapeHTML(displayRecipeName(item.name))}</span><span><small>Req ${number(item.required)}${immediateGap}</small> <strong>${number(item.stock)}</strong></span></li>`; 
     }).join(''); 
-    
+
+    const nextGapText = bottleneck
+      ? `<div class="next-gap">NEXT +1 CYCLE: <strong>${escapeHTML(displayRecipeName(bottleneck.name))} +${number(analysis.nextCycleGap)}</strong></div>`
+      : '';
+
     const byproductsText = recipe.byproducts && recipe.byproducts.length 
       ? `<div class="footnote" style="margin-top: 10px; color: var(--gold); border-top: 1px dashed var(--line-soft); padding-top: 6px;">+ BYPROD/CYCLE: ${recipe.byproducts.map(bp => `${number(bp[1])} ${escapeHTML(displayRecipeName(bp[0]))}`).join(' / ')}</div>` 
       : '';
-    
+
     return `<div class="production-card ${cardState}">
               <div class="production-title">${escapeHTML(displayRecipeName(recipe.product))}</div>
               <div class="footnote">YIELD PER CYCLE: ${number(recipe.output)}</div>
@@ -558,6 +594,7 @@ function renderProductionModules() {
                 <div class="production-stat"><small>MAX CYCLES</small><strong>${number(possibleCycles)}</strong></div>
                 <div class="production-stat"><small>EST. YIELD</small><strong>${number(possibleOutput)}</strong></div>
               </div>
+              ${nextGapText}
               <ul class="recipe-list">${ingredientRows}</ul>
               ${byproductsText}
             </div>`; 
