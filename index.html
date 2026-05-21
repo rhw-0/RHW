@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V5.4</title>
+  <title>RHW Command Dashboard · V5.5</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -327,7 +327,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V5.4) - 3 SPALTEN & CUSTOM EXPORT SORT
+   RHW DASHBOARD LOGIC (V5.5) - MAX ALERTS FÜR WASTE GEFIXT
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -338,7 +338,6 @@ const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 
 const BYPRODUCTS = ['toxic waste', 'scrap metal'];
 const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore'];
 
-/* GEWÜNSCHTE SORTIERUNG FÜR DEN EXPORT-BLOCK */
 const EXPORT_ORDER = ['Reactor Systems', 'Superstructure Systems', 'Multi-Mode Focusing Chamber', 'Prototype Components', 'Gold', 'Niobium'];
 
 const RECIPES = [ 
@@ -350,7 +349,21 @@ const RECIPES = [
   { product: 'Niobium', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Niobium Ore',425], ['MOX',170], ['Industrial Materials',85]] }
 ];
 
-const CUSTOM_ALERTS = { 'basic alloy': { red: 2500, yellow: 15000 }, 'food rations': { red: 2500, yellow: 15000 }, 'consumer goods': { red: 2500, yellow: 15000 }, 'gold': { red: 5000, yellow: 15000 }, 'reactor systems': { red: 200, yellow: 500 }, 'superstructure systems': { red: 200, yellow: 500 }, 'prototype components': { red: 2500, yellow: 5000 }, 'multi-mode focusing chamber': { red: 500, yellow: 1000 }, 'multi-mode focusing chambers': { red: 500, yellow: 1000 } };
+const CUSTOM_ALERTS = { 
+  'basic alloy': { type: 'min', red: 2500, yellow: 15000 }, 
+  'food rations': { type: 'min', red: 2500, yellow: 15000 }, 
+  'consumer goods': { type: 'min', red: 2500, yellow: 15000 }, 
+  'gold': { type: 'min', red: 5000, yellow: 15000 }, 
+  'reactor systems': { type: 'min', red: 200, yellow: 500 }, 
+  'superstructure systems': { type: 'min', red: 200, yellow: 500 }, 
+  'prototype components': { type: 'min', red: 2500, yellow: 5000 }, 
+  'multi-mode focusing chamber': { type: 'min', red: 500, yellow: 1000 }, 
+  'multi-mode focusing chambers': { type: 'min', red: 500, yellow: 1000 },
+  
+  /* NEU: Max-Alarme für Waste */
+  'scrap metal': { type: 'max', yellow: 10000, red: 15000 },
+  'toxic waste': { type: 'max', yellow: 10000, red: 15000 }
+};
 
 let items = []; let lastLoaded = null; let rhwBase = null;
 let sortCol = 'name'; let sortAsc = true;
@@ -407,7 +420,18 @@ function needAmount(item) { return Math.max(0, minStock(item) - quantity(item));
 
 function stockState(item) { 
   const q = quantity(item); const nm = commodityKey(item); const custom = CUSTOM_ALERTS[nm]; 
-  if (custom) { if (q < custom.red) return 'critical'; if (q < custom.yellow) return 'low'; return 'ok'; } 
+  if (custom) { 
+    if (custom.type === 'max') {
+      if (q >= custom.red) return 'critical';
+      if (q >= custom.yellow) return 'low';
+      return 'ok';
+    } else {
+      if (q < custom.red) return 'critical'; 
+      if (q < custom.yellow) return 'low'; 
+      return 'ok'; 
+    }
+  } 
+  
   if (PROCUREMENT.includes(nm) || BYPRODUCTS.includes(nm)) return 'ok'; 
   const min = minStock(item); 
   if (min > 0 && q <= min * 0.25) return 'critical'; 
@@ -492,7 +516,13 @@ function renderList(target, list, emptyText) {
     const q = quantity(item);
     
     let detail = state === 'ok' ? 'NOMINAL' : `DEFICIT: ${number(need)}`; 
-    if (role === 'byproduct') detail = `CONTAINED: ${number(q)} UNITS`;
+    
+    /* Umgekehrte Logik für Abfallprodukte */
+    if (role === 'byproduct') {
+      if (state === 'ok') detail = 'NOMINAL';
+      else if (state === 'low') detail = 'WARNING: HIGH VOLUME';
+      else detail = 'CRITICAL OVERFLOW';
+    }
     
     return `<li class="alert-${state}">
               <span><strong>${escapeHTML(displayName(item))}</strong><small>${detail}</small></span>
@@ -510,7 +540,6 @@ function render() {
   
   const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort(sortByName); 
   
-  // Custom Export Sort
   const exports = sourceItems.filter(item => assetRole(item) === 'export').sort((a, b) => {
     let idxA = EXPORT_ORDER.indexOf(displayName(a));
     let idxB = EXPORT_ORDER.indexOf(displayName(b));
