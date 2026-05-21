@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V1.0 Release</title>
+  <title>RHW Command Dashboard · V1.1 Visual Polish</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,23 +39,66 @@
       margin: 0;
       background-color: var(--bg);
       background-image: 
-        radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.03), transparent 50%),
+        radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.045), transparent 48%),
+        radial-gradient(circle at 50% 18%, rgba(47, 128, 237, 0.025), transparent 34%),
         linear-gradient(180deg, #050608 0%, var(--bg) 100%);
       color: var(--text);
       font-family: var(--font-main);
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      background:
+        repeating-linear-gradient(180deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 1px, transparent 1px, transparent 5px),
+        radial-gradient(circle at 50% 0%, rgba(212,175,55,0.018), transparent 42%);
+      mix-blend-mode: screen;
+      opacity: 0.22;
     }
 
     /* --- RP HEADER SECTION --- */
     header {
       padding: 40px 20px 20px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      inset: -220px 0 auto 0;
+      height: 420px;
+      background:
+        radial-gradient(circle at 50% 48%, rgba(255, 178, 70, 0.13), transparent 8%),
+        radial-gradient(circle at 50% 48%, rgba(47, 128, 237, 0.08), transparent 16%),
+        radial-gradient(circle at 50% 48%, rgba(212, 175, 55, 0.10), transparent 32%);
+      filter: blur(2px);
+      animation: corePulse 7s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    @keyframes corePulse {
+      0%, 100% { opacity: 0.72; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.03); }
     }
 
     .crest {
       width: 140px;
       height: auto;
       margin-bottom: 15px;
-      filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.15));
+      filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.18));
+      transition: filter 0.25s ease, transform 0.25s ease;
+    }
+
+    .crest:hover {
+      transform: translateY(-1px);
+      filter: drop-shadow(0 0 28px rgba(212, 175, 55, 0.30));
     }
 
     h1 {
@@ -139,6 +182,27 @@
     .card { padding: 16px; border-top: 2px solid var(--gold-soft); }
     .label { color: var(--muted); font-family: var(--font-tech); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; }
     .value { margin-top: 6px; font-family: var(--font-title); font-size: 28px; color: var(--gold); letter-spacing: 0.05em; }
+    .sync-countdown { margin-top: 4px; font-family: var(--font-tech); font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+
+    .command-strip {
+      max-width: 1400px;
+      margin: -4px auto 22px;
+      padding: 9px 32px;
+      border-top: 1px solid rgba(212,175,55,0.24);
+      border-bottom: 1px solid rgba(212,175,55,0.16);
+      color: var(--muted);
+      font-family: var(--font-tech);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      background: linear-gradient(90deg, transparent, rgba(212,175,55,0.035), transparent);
+    }
+
+    .command-strip strong { color: var(--gold); font-weight: normal; }
 
     /* --- ALERTS & PRODUCTION --- */
     .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -152,21 +216,69 @@
     .count-badge { font-family: var(--font-tech); font-size: 14px; color: var(--muted); }
 
     .alert-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-    .alert-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--line); font-size: 13px; }
+    .alert-list li { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--line); font-size: 13px; }
     .alert-list li.alert-critical { border-left-color: var(--danger); }
     .alert-list li.alert-low { border-left-color: var(--warn); }
     .alert-list li.alert-ok { border-left-color: var(--good); }
     .alert-list small { color: var(--muted); display: block; margin-top: 2px; }
 
+    .progress-wrap {
+      margin-top: 7px;
+      width: 100%;
+      height: 4px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--good);
+      box-shadow: 0 0 10px rgba(74,143,98,0.35);
+      transition: width 0.35s ease;
+    }
+
+    .progress-fill.low { background: var(--warn); box-shadow: 0 0 10px rgba(194,135,34,0.35); }
+    .progress-fill.critical { background: var(--danger); box-shadow: 0 0 10px rgba(165,42,42,0.35); }
+    .progress-fill.waste { background: var(--waste); box-shadow: 0 0 10px rgba(168,159,145,0.25); }
+
+    .waste-panel { border-color: rgba(168,159,145,0.28); }
+    .waste-panel .alert-title span:first-child { color: var(--waste); }
+    .waste-panel .alert-list li { background: linear-gradient(90deg, rgba(168,159,145,0.055), rgba(255,255,255,0.015)); }
+
+    .readiness {
+      display: inline-block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-family: var(--font-tech);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
 
     .next-gap {
       margin: 10px 0;
-      padding: 8px 10px;
-      border: 1px dashed var(--line-soft);
+      padding: 9px 10px;
+      border: 1px dashed rgba(212,175,55,0.28);
       color: var(--muted);
       font-family: var(--font-tech);
       font-size: 12px;
-      background: rgba(255,255,255,0.015);
+      background: linear-gradient(90deg, rgba(212,175,55,0.055), rgba(255,255,255,0.012));
+      position: relative;
+    }
+
+    .next-gap::before {
+      content: 'SUPPLY TARGET';
+      position: absolute;
+      right: 8px;
+      top: -7px;
+      padding: 0 5px;
+      background: var(--panel);
+      color: rgba(212,175,55,0.72);
+      font-size: 9px;
+      letter-spacing: 0.08em;
     }
 
     .next-gap strong { color: var(--gold); }
@@ -178,12 +290,13 @@
 
     /* --- PRODUCTION MODULES --- */
     .production-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 20px; }
-    .production-card { border: 1px solid var(--line); background: #080a0c; padding: 16px; position: relative; }
+    .production-card { border: 1px solid var(--line); background: linear-gradient(180deg, #080a0c, #050607); padding: 16px; position: relative; box-shadow: inset 0 0 22px rgba(212,175,55,0.018); }
     .production-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--line); }
     .production-card.critical::before { background: var(--danger); }
     .production-card.low::before { background: var(--warn); }
     .production-card.ok::before { background: var(--good); }
 
+    .production-kicker { font-family: var(--font-tech); color: var(--muted); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 4px; }
     .production-title { font-family: var(--font-title); color: var(--gold); font-size: 22px; letter-spacing: 0.05em; }
     .production-stats { display: flex; gap: 10px; margin: 12px 0; font-family: var(--font-tech); }
     .production-stat { flex: 1; border: 1px solid var(--line-soft); padding: 8px; text-align: center; }
@@ -193,6 +306,7 @@
     .recipe-list { margin: 0; padding: 0; list-style: none; }
     .recipe-list li { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px dashed var(--line-soft); }
     .recipe-list li.bottleneck { color: var(--danger); font-weight: bold; }
+    .recipe-list li.bottleneck span:first-child::before { content: '◆ '; font-size: 9px; }
     .recipe-list small { color: var(--muted); }
 
     /* --- TABLE --- */
@@ -232,6 +346,39 @@
       font-size: 12px;
     }
 
+    .manifest-panel { position: relative; overflow: hidden; }
+    .manifest-panel::after {
+      content: '';
+      position: absolute;
+      left: -20%;
+      right: -20%;
+      top: -30%;
+      height: 90px;
+      background: linear-gradient(180deg, transparent, rgba(212,175,55,0.12), transparent);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-120%);
+    }
+
+    body.syncing .manifest-panel::after {
+      opacity: 1;
+      animation: uplinkSweep 1.15s linear infinite;
+    }
+
+    body.syncing #liveStatus {
+      animation: uplinkBlink 0.85s ease-in-out infinite;
+    }
+
+    @keyframes uplinkSweep {
+      from { transform: translateY(-120%); }
+      to { transform: translateY(720%); }
+    }
+
+    @keyframes uplinkBlink {
+      0%, 100% { opacity: 0.55; }
+      50% { opacity: 1; }
+    }
+
     /* --- RP FOOTER --- */
     footer { text-align: center; font-family: var(--font-tech); font-size: 12px; color: #555555; padding: 10px 20px 40px; }
 
@@ -239,9 +386,18 @@
       .summary-grid { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 900px) {
+      main { padding-left: 16px; padding-right: 16px; gap: 16px; }
+      header { padding: 28px 14px 16px; }
+      .crest { width: 112px; }
       .cards, .summary-grid { grid-template-columns: 1fr; }
-      .rp-meta { font-size: 12px; }
+      .rp-meta { font-size: 12px; border-spacing: 10px 7px; }
       h1 { font-size: 32px; }
+      .panel-head { align-items: stretch; flex-direction: column; }
+      .controls { flex-direction: column; }
+      input, select, button { width: 100%; min-height: 42px; }
+      .production-grid { grid-template-columns: 1fr; padding: 14px; }
+      .production-stats { gap: 7px; }
+      .command-strip { margin-top: -2px; padding: 8px 16px; justify-content: flex-start; }
     }
   </style>
 </head>
@@ -276,23 +432,33 @@
     <hr class="hrc-gold">
   </header>
 
+  <div class="command-strip">
+    <span>CONNECTION <strong>SECURE</strong></span>
+    <span>//</span>
+    <span>DARKSTAT TELEMETRY <strong>LIVE</strong></span>
+    <span>//</span>
+    <span>BMM CHARTER <strong>ACTIVE</strong></span>
+    <span>//</span>
+    <span>REFRESH <strong>60S</strong></span>
+  </div>
+
   <main>
     <section class="cards">
       <div class="card"><div class="label">Chartered Authority</div><div class="value">BMM</div></div>
       <div class="card"><div class="label">Tracked Assets</div><div class="value" id="itemCount">0</div></div>
-      <div class="card"><div class="label">Latest Sync</div><div class="value" id="syncTimeVal">–</div></div>
+      <div class="card"><div class="label">Latest Sync</div><div class="value" id="syncTimeVal">–</div><div class="sync-countdown" id="syncCountdown">Next sync: –</div></div>
     </section>
 
     <section class="summary-grid">
-      <div class="alert-card panel">
+      <div class="alert-card panel maintenance-panel">
         <div class="alert-title"><span>Facility Maintenance</span><span class="count-badge" id="maintenanceCount">0</span></div>
         <ul class="alert-list" id="maintenanceList"></ul>
       </div>
-      <div class="alert-card panel">
+      <div class="alert-card panel export-panel">
         <div class="alert-title"><span>Export Inventory</span><span class="count-badge" id="exportCount">0</span></div>
         <ul class="alert-list" id="exportList"></ul>
       </div>
-      <div class="alert-card panel">
+      <div class="alert-card panel waste-panel">
         <div class="alert-title"><span>Waste Management</span><span class="count-badge" id="byproductCount">0</span></div>
         <ul class="alert-list" id="byproductList"></ul>
       </div>
@@ -308,7 +474,7 @@
       <div class="production-grid" id="productionGrid"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel manifest-panel">
       <div class="panel-head" style="flex-wrap: wrap; gap: 15px;">
         <div>
           <div class="panel-title">THORNE LOGISTICS MANIFEST</div>
@@ -354,7 +520,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V1.0 RELEASE) - STABLE
+   RHW DASHBOARD LOGIC (V1.1 VISUAL POLISH) - DARKSTAT MAX STOCK BARS
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -392,15 +558,29 @@ const CUSTOM_ALERTS = {
   'toxic waste': { type: 'max', yellow: 10000, red: 15000 }
 };
 
+const BAR_MAX_FALLBACKS = {
+  'basic alloy': 45000,
+  'food rations': 45000,
+  'consumer goods': 45000,
+  'reactor systems': 1000,
+  'superstructure systems': 1000,
+  'multi-mode focusing chamber': 2000,
+  'prototype components': 25000,
+  'gold': 60000,
+  'niobium': 30000
+};
+
 let items = []; let lastLoaded = null; let rhwBase = null;
 let sortCol = 'name'; let sortAsc = true;
 let refreshTimer = null;
 let isLoading = false;
+let nextSyncAt = null;
 
 const els = { 
   liveStatus: document.getElementById('liveStatus'), 
   itemCount: document.getElementById('itemCount'), 
   syncTimeVal: document.getElementById('syncTimeVal'),
+  syncCountdown: document.getElementById('syncCountdown'),
   maintenanceList: document.getElementById('maintenanceList'), 
   exportList: document.getElementById('exportList'), 
   byproductList: document.getElementById('byproductList'), 
@@ -420,6 +600,7 @@ const els = {
 setInterval(() => {
   const now = new Date();
   els.rpFooterTime.textContent = now.toLocaleDateString('de-DE') + ' ' + now.toLocaleTimeString('de-DE');
+  updateSyncCountdown();
 }, 1000);
 
 function escapeHTML(str) { return String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])); }
@@ -472,6 +653,76 @@ function needAmount(item) {
   }
 
   return Math.max(0, minStock(item) - q); 
+}
+
+function maxStock(item) {
+  const value = item.max_stock ?? item.max ?? item.maxStock ?? item.max_quantity ?? item.maxQuantity ?? 0;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function barMaxFor(item) {
+  const nm = commodityKey(item);
+  const role = assetRole(item);
+  const custom = CUSTOM_ALERTS[nm];
+
+  // Waste is intentionally scaled to RHW's operational overflow threshold,
+  // because the current POB waste max values are intentionally not meaningful yet.
+  if (role === 'byproduct') {
+    return custom?.red || 15000;
+  }
+
+  // For Facility + Export, Darkstat / POB max_stock is the source of truth.
+  // If RHW changes the POB max stock, the bars update on the next telemetry sync.
+  return maxStock(item) || BAR_MAX_FALLBACKS[nm] || 1;
+}
+
+function progressMeta(item) {
+  const role = assetRole(item);
+  const q = quantity(item);
+  const max = barMaxFor(item);
+  const percent = max > 0 ? Math.min(100, (q / max) * 100) : 0;
+  const state = stockState(item);
+  const cls = role === 'byproduct' ? 'waste' : state;
+  return { percent: Math.max(0, Math.round(percent)), cls, max };
+}
+
+function renderProgress(item) {
+  const meta = progressMeta(item);
+  return `<div class="progress-wrap" title="${meta.percent}% of scale ${number(meta.max)}"><div class="progress-fill ${meta.cls}" style="width:${meta.percent}%"></div></div>`;
+}
+
+function readinessText(state, role) {
+  if (role === 'byproduct') {
+    if (state === 'critical') return 'CONTAINMENT CRITICAL';
+    if (state === 'low') return 'DISPOSAL WATCH';
+    return 'CONTAINMENT STABLE';
+  }
+  if (role === 'export') {
+    if (state === 'critical') return 'EXPORT RESERVE CRITICAL';
+    if (state === 'low') return 'LOW EXPORT RESERVE';
+    return 'EXPORT READY';
+  }
+  if (role === 'maintenance') {
+    if (state === 'critical') return 'FACILITY RISK';
+    if (state === 'low') return 'RESERVE WATCH';
+    return 'FACILITY STABLE';
+  }
+  return 'TRACKED';
+}
+
+function updateSyncCountdown() {
+  if (!els.syncCountdown) return;
+  if (isLoading) {
+    els.syncCountdown.textContent = 'Next sync: syncing now';
+    return;
+  }
+  if (!nextSyncAt) {
+    els.syncCountdown.textContent = 'Next sync: –';
+    return;
+  }
+  const remaining = Math.max(0, Math.ceil((nextSyncAt - Date.now()) / 1000));
+  els.syncCountdown.textContent = `Next sync: ${remaining}s`;
 }
 
 function stockState(item) { 
@@ -563,7 +814,7 @@ function renderProductionModules() {
   const grid = document.getElementById('productionGrid'); if (!grid) return; 
   if (!Array.isArray(RECIPES) || !RECIPES.length) { grid.innerHTML = '<div class="production-card"><div class="production-title">No recipes configured</div></div>'; return; }
 
-  grid.innerHTML = RECIPES.map(recipe => { 
+  grid.innerHTML = RECIPES.map((recipe, index) => { 
     const analysis = analyzeRecipe(recipe);
     const productStock = analysis.productStock;
     const ingredientData = analysis.ingredientData;
@@ -587,6 +838,7 @@ function renderProductionModules() {
       : '';
 
     return `<div class="production-card ${cardState}">
+              <div class="production-kicker">MODULE-${String(index + 1).padStart(2, '0')} // ${statusLabel(cardState, 'production')}</div>
               <div class="production-title">${escapeHTML(displayRecipeName(recipe.product))}</div>
               <div class="footnote">YIELD PER CYCLE: ${number(recipe.output)}</div>
               <div class="production-stats">
@@ -608,18 +860,19 @@ function renderList(target, list, emptyText) {
     const role = assetRole(item);
     const need = needAmount(item); 
     const q = quantity(item);
+    const readiness = readinessText(state, role);
+    const progress = renderProgress(item);
     
-    let detail = state === 'ok' ? 'NOMINAL' : `DEFICIT: ${number(need)}`; 
+    let detail = state === 'ok' ? readiness : `DEFICIT: ${number(need)}`; 
     
-    /* Umgekehrte Logik für Abfallprodukte */
     if (role === 'byproduct') {
-      if (state === 'ok') detail = 'NOMINAL';
+      if (state === 'ok') detail = readiness;
       else if (state === 'low') detail = 'WARNING: HIGH VOLUME';
       else detail = 'CRITICAL OVERFLOW';
     }
     
     return `<li class="alert-${state}">
-              <span><strong>${escapeHTML(displayName(item))}</strong><small>${detail}</small></span>
+              <span><strong>${escapeHTML(displayName(item))}</strong><small>${detail}</small>${progress}</span>
               <div style="display:flex; align-items:center; gap:12px;">
                 <strong style="font-size:16px; font-family: var(--font-tech);">${number(q)}</strong>
                 ${statusPill(state, role)}
@@ -688,8 +941,10 @@ async function loadData() {
     refreshTimer = null;
   }
 
+  document.body.classList.add('syncing');
   els.liveStatus.textContent = 'UPLINK IN PROGRESS...';
   els.liveStatus.style.color = '#c28722';
+  updateSyncCountdown();
   if (els.errorBox) {
     els.errorBox.style.display = 'none';
     els.errorBox.textContent = '';
@@ -724,7 +979,10 @@ async function loadData() {
     els.productionGrid.style.opacity = '1';
   } finally {
     isLoading = false;
+    document.body.classList.remove('syncing');
     if (els.refreshBtn) els.refreshBtn.disabled = false;
+    nextSyncAt = Date.now() + AUTO_REFRESH_MS;
+    updateSyncCountdown();
     refreshTimer = setTimeout(loadData, AUTO_REFRESH_MS);
   }
 }
