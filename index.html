@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V1.0 Release</title>
+  <title>RHW Command Dashboard · V1.1 Logistics Intelligence</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -158,6 +158,66 @@
     .alert-list li.alert-ok { border-left-color: var(--good); }
     .alert-list small { color: var(--muted); display: block; margin-top: 2px; }
 
+    /* --- PRIORITY LOGISTICS DIRECTIVE --- */
+    .priority-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      padding: 20px;
+    }
+
+    .priority-card {
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--gold);
+      background: #080a0c;
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .priority-card.critical { border-left-color: var(--danger); }
+    .priority-card.low { border-left-color: var(--warn); }
+    .priority-card.ok { border-left-color: var(--good); }
+
+    .priority-rank {
+      font-family: var(--font-tech);
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+
+    .priority-title {
+      font-family: var(--font-title);
+      color: var(--gold);
+      font-size: 22px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .priority-meta {
+      display: grid;
+      gap: 4px;
+      font-family: var(--font-tech);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .priority-meta strong { color: var(--text); }
+
+    .next-gap {
+      margin: 10px 0;
+      padding: 8px 10px;
+      border: 1px dashed var(--line-soft);
+      color: var(--muted);
+      font-family: var(--font-tech);
+      font-size: 12px;
+      background: rgba(255,255,255,0.015);
+    }
+
+    .next-gap strong { color: var(--gold); }
+
+
     /* --- PANELS --- */
     .panel-head { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); background: rgba(0,0,0,0.2); }
     .panel-title { font-family: var(--font-title); font-size: 24px; color: var(--gold); letter-spacing: 0.05em; }
@@ -206,7 +266,7 @@
     .sell { color: #f3e0b8; background: rgba(210, 173, 103, 0.15); border-color: rgba(210, 173, 103, 0.48); }
     .both { color: #efe1ff; background: rgba(176, 103, 226, 0.16); border-color: rgba(176, 103, 226, 0.48); }
 
-    #itemsBody, #productionGrid { transition: opacity 0.2s; }
+    #itemsBody, #productionGrid, #priorityGrid { transition: opacity 0.2s; }
 
     .error-box {
       display: none;
@@ -283,6 +343,16 @@
         <div class="alert-title"><span>Waste Management</span><span class="count-badge" id="byproductCount">0</span></div>
         <ul class="alert-list" id="byproductList"></ul>
       </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">PRIORITY LOGISTICS DIRECTIVE</div>
+          <div class="footnote">AUTOMATED DELIVERY PRIORITY // BASED ON CURRENT RECIPE BOTTLENECKS</div>
+        </div>
+      </div>
+      <div class="priority-grid" id="priorityGrid"></div>
     </section>
 
     <section class="panel">
@@ -399,7 +469,8 @@ const els = {
   search: document.getElementById('search'), 
   roleFilter: document.getElementById('roleFilter'), 
   refreshBtn: document.getElementById('refreshBtn'), 
-  productionGrid: document.getElementById('productionGrid'), 
+  productionGrid: document.getElementById('productionGrid'),
+  priorityGrid: document.getElementById('priorityGrid'), 
   tableHeaders: document.querySelectorAll('#dataTable th[data-sort]'),
   rpFooterTime: document.getElementById('rpFooterTime')
 };
@@ -524,32 +595,122 @@ function displayRecipeName(name) { return displayName({ name }); }
 function handleSort(e) { const th = e.target.closest('th'); if (!th || !th.dataset.sort) return; const col = th.dataset.sort; if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; } render(); }
 function updateSortArrows() { els.tableHeaders.forEach(th => { let text = th.textContent.replace(/ [▲▼]/, ''); if (th.dataset.sort === sortCol) { text += sortAsc ? ' ▲' : ' ▼'; } th.textContent = text; }); }
 
+
+function analyzeRecipe(recipe) {
+  const productItem = findCommodity(recipe.product);
+  const productStock = productItem ? quantity(productItem) : 0;
+
+  const ingredientData = recipe.ingredients.map(pair => {
+    const ingredientName = pair[0];
+    const required = pair[1];
+    const stock = stockFor(ingredientName);
+    const cycles = required > 0 ? Math.floor(stock / required) : 0;
+    const currentCycleGap = Math.max(0, required - stock);
+    return { name: ingredientName, required, stock, cycles, currentCycleGap };
+  });
+
+  const possibleCycles = ingredientData.length ? Math.min(...ingredientData.map(i => i.cycles)) : 0;
+  const possibleOutput = possibleCycles * recipe.output;
+  const bottleneck = ingredientData.length ? ingredientData.reduce((lowest, current) => current.cycles < lowest.cycles ? current : lowest) : null;
+  const nextCycleGap = bottleneck ? Math.max(0, ((possibleCycles + 1) * bottleneck.required) - bottleneck.stock) : 0;
+  const cardState = possibleCycles <= 0 ? 'critical' : possibleCycles < 10 ? 'low' : 'ok';
+
+  return { recipe, productItem, productStock, ingredientData, possibleCycles, possibleOutput, bottleneck, nextCycleGap, cardState };
+}
+
+function renderPriorityBoard() {
+  const grid = document.getElementById('priorityGrid');
+  if (!grid) return;
+
+  if (!Array.isArray(RECIPES) || !RECIPES.length) {
+    grid.innerHTML = '<div class="priority-card"><div class="priority-title">No logistics directives</div></div>';
+    return;
+  }
+
+  const grouped = new Map();
+
+  RECIPES.forEach(recipe => {
+    const analysis = analyzeRecipe(recipe);
+    if (!analysis.bottleneck) return;
+
+    const key = keyFromName(analysis.bottleneck.name);
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        name: analysis.bottleneck.name,
+        stock: stockFor(analysis.bottleneck.name),
+        products: [],
+        minCycles: analysis.possibleCycles,
+        totalGap: 0,
+        state: analysis.cardState
+      });
+    }
+
+    const entry = grouped.get(key);
+    entry.products.push(recipe.product);
+    entry.minCycles = Math.min(entry.minCycles, analysis.possibleCycles);
+    entry.totalGap += analysis.nextCycleGap;
+    if (analysis.cardState === 'critical') entry.state = 'critical';
+    else if (analysis.cardState === 'low' && entry.state !== 'critical') entry.state = 'low';
+  });
+
+  const directives = Array.from(grouped.values())
+    .sort((a, b) => {
+      const stateWeight = { critical: 0, low: 1, ok: 2 };
+      if (stateWeight[a.state] !== stateWeight[b.state]) return stateWeight[a.state] - stateWeight[b.state];
+      if (a.minCycles !== b.minCycles) return a.minCycles - b.minCycles;
+      if (b.products.length !== a.products.length) return b.products.length - a.products.length;
+      return a.totalGap - b.totalGap;
+    })
+    .slice(0, 6);
+
+  if (!directives.length) {
+    grid.innerHTML = '<div class="priority-card ok"><div class="priority-title">Supply chain stable</div><div class="priority-meta">No active recipe bottlenecks detected.</div></div>';
+    return;
+  }
+
+  grid.innerHTML = directives.map((entry, index) => {
+    const productList = entry.products.map(displayRecipeName).join(' / ');
+    return `<div class="priority-card ${entry.state}">
+      <div class="priority-rank">DIRECTIVE ${String(index + 1).padStart(2, '0')}</div>
+      <div class="priority-title">${escapeHTML(displayRecipeName(entry.name))}</div>
+      <div class="priority-meta">
+        <span>Current stock: <strong>${number(entry.stock)}</strong></span>
+        <span>Lowest production floor: <strong>${number(entry.minCycles)} cycles</strong></span>
+        <span>Minimum +1-cycle gap: <strong>${number(entry.totalGap)}</strong></span>
+        <span>Affected modules: <strong>${escapeHTML(productList)}</strong></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
 function renderProductionModules() { 
   const grid = document.getElementById('productionGrid'); if (!grid) return; 
   if (!Array.isArray(RECIPES) || !RECIPES.length) { grid.innerHTML = '<div class="production-card"><div class="production-title">No recipes configured</div></div>'; return; }
 
   grid.innerHTML = RECIPES.map(recipe => { 
-    const productItem = findCommodity(recipe.product); const productStock = productItem ? quantity(productItem) : 0; 
-    const ingredientData = recipe.ingredients.map(pair => { 
-      const ingredientName = pair[0]; const required = pair[1]; const stock = stockFor(ingredientName); 
-      const cycles = required > 0 ? Math.floor(stock / required) : 0; 
-      return { name: ingredientName, required, stock, cycles }; 
-    }); 
-    
-    const possibleCycles = ingredientData.length ? Math.min(...ingredientData.map(i => i.cycles)) : 0; 
-    const possibleOutput = possibleCycles * recipe.output; 
-    const bottleneck = ingredientData.length ? ingredientData.reduce((lowest, current) => current.cycles < lowest.cycles ? current : lowest) : null; 
-    const cardState = possibleCycles <= 0 ? 'critical' : possibleCycles < 10 ? 'low' : 'ok'; 
-    
+    const analysis = analyzeRecipe(recipe);
+    const productStock = analysis.productStock;
+    const ingredientData = analysis.ingredientData;
+    const possibleCycles = analysis.possibleCycles;
+    const possibleOutput = analysis.possibleOutput;
+    const bottleneck = analysis.bottleneck;
+    const cardState = analysis.cardState;
+
     const ingredientRows = ingredientData.map(item => { 
       const isBottleneck = bottleneck && item.name === bottleneck.name; 
-      return `<li class="${isBottleneck ? 'bottleneck' : ''}"><span>${escapeHTML(displayRecipeName(item.name))}</span><span><small>Req ${number(item.required)}</small> <strong>${number(item.stock)}</strong></span></li>`; 
+      const immediateGap = item.currentCycleGap > 0 ? ` / Missing ${number(item.currentCycleGap)}` : '';
+      return `<li class="${isBottleneck ? 'bottleneck' : ''}"><span>${escapeHTML(displayRecipeName(item.name))}</span><span><small>Req ${number(item.required)}${immediateGap}</small> <strong>${number(item.stock)}</strong></span></li>`; 
     }).join(''); 
-    
+
+    const nextGapText = bottleneck
+      ? `<div class="next-gap">NEXT +1 CYCLE: <strong>${escapeHTML(displayRecipeName(bottleneck.name))} +${number(analysis.nextCycleGap)}</strong></div>`
+      : '';
+
     const byproductsText = recipe.byproducts && recipe.byproducts.length 
       ? `<div class="footnote" style="margin-top: 10px; color: var(--gold); border-top: 1px dashed var(--line-soft); padding-top: 6px;">+ BYPROD/CYCLE: ${recipe.byproducts.map(bp => `${number(bp[1])} ${escapeHTML(displayRecipeName(bp[0]))}`).join(' / ')}</div>` 
       : '';
-    
+
     return `<div class="production-card ${cardState}">
               <div class="production-title">${escapeHTML(displayRecipeName(recipe.product))}</div>
               <div class="footnote">YIELD PER CYCLE: ${number(recipe.output)}</div>
@@ -558,6 +719,7 @@ function renderProductionModules() {
                 <div class="production-stat"><small>MAX CYCLES</small><strong>${number(possibleCycles)}</strong></div>
                 <div class="production-stat"><small>EST. YIELD</small><strong>${number(possibleOutput)}</strong></div>
               </div>
+              ${nextGapText}
               <ul class="recipe-list">${ingredientRows}</ul>
               ${byproductsText}
             </div>`; 
@@ -615,7 +777,8 @@ function render() {
   renderList(els.maintenanceList, maintenance, 'FACILITY RESERVES STABLE'); 
   renderList(els.exportList, exports, 'NO EXPORT ASSETS DETECTED'); 
   renderList(els.byproductList, byproducts, 'NO WASTE DETECTED'); 
-  renderProductionModules(); 
+  renderProductionModules();
+  renderPriorityBoard(); 
   
   const visible = sourceItems.filter(item => { const role = assetRole(item); return (!query || normalize(itemName(item)).includes(query)) && (roleFilter === 'all' || role === roleFilter); }); 
   visible.sort((a, b) => { 
@@ -637,7 +800,7 @@ function render() {
     return `<tr><td><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td>${number(quantity(item))}</td><td>${needDisplay}</td><td>${number(priceSell(item))}</td><td>${number(priceBuy(item))}</td></tr>`; 
   }).join(''); 
   
-  els.itemsBody.style.opacity = '1'; els.productionGrid.style.opacity = '1'; 
+  els.itemsBody.style.opacity = '1'; els.productionGrid.style.opacity = '1'; if (els.priorityGrid) els.priorityGrid.style.opacity = '1'; 
   const syncTime = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE') : '–'; 
   els.syncTimeVal.textContent = syncTime;
 }
@@ -660,6 +823,7 @@ async function loadData() {
   if (els.refreshBtn) els.refreshBtn.disabled = true;
   els.itemsBody.style.opacity = '0.4';
   els.productionGrid.style.opacity = '0.4';
+  if (els.priorityGrid) els.priorityGrid.style.opacity = '0.4';
 
   try {
     const response = await fetch(API_URL, { method: 'POST', headers: { 'Accept': 'application/json' } });
@@ -685,6 +849,7 @@ async function loadData() {
     }
     els.itemsBody.style.opacity = '1';
     els.productionGrid.style.opacity = '1';
+    if (els.priorityGrid) els.priorityGrid.style.opacity = '1';
   } finally {
     isLoading = false;
     if (els.refreshBtn) els.refreshBtn.disabled = false;
