@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V1.4 Base Telemetry</title>
+  <title>RHW Command Dashboard · V1.5 Header Telemetry</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -571,6 +571,28 @@
       white-space: nowrap;
     }
 
+
+    .mini-telemetry-card.health-good {
+      border-color: rgba(74,143,98,0.55);
+      background: linear-gradient(180deg, rgba(74,143,98,0.10), rgba(0,0,0,0.22));
+    }
+
+    .mini-telemetry-card.health-good strong { color: var(--good); }
+
+    .mini-telemetry-card.health-warn {
+      border-color: rgba(194,135,34,0.58);
+      background: linear-gradient(180deg, rgba(194,135,34,0.10), rgba(0,0,0,0.22));
+    }
+
+    .mini-telemetry-card.health-warn strong { color: var(--warn); }
+
+    .mini-telemetry-card.health-critical {
+      border-color: rgba(165,42,42,0.65);
+      background: linear-gradient(180deg, rgba(165,42,42,0.12), rgba(0,0,0,0.22));
+    }
+
+    .mini-telemetry-card.health-critical strong { color: var(--danger); }
+
     .command-status-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(145px, 1fr));
@@ -674,14 +696,14 @@
         <div class="brand-copy">
           <div class="eyebrow">BMM CHARTERED STRATEGIC MANUFACTURING FACILITY</div>
           <h1>RESOLUTION HEAVY WORKS</h1>
-          <div class="subtitle">INDUSTRIAL MANUFACTURING HUB · NEW LONDON</div>
+          <div class="subtitle">INDUSTRIAL MANUFACTURING HUB</div>
           <div class="transmission-line">
             <span>AUTHORITY: ALISTAIR THORNE</span>
             <span>TX-ID: BELFAST-RHW-424</span>
             <span>CHARTER: ACTIVE</span>
           </div>
           <div class="facility-telemetry">
-            <div class="mini-telemetry-card">
+            <div class="mini-telemetry-card health-telemetry" id="baseHealthCard">
               <small>STRUCTURAL INTEGRITY</small>
               <strong id="baseHealthVal">–</strong>
             </div>
@@ -725,12 +747,10 @@
     </div>
   </header>
 
-  <div class="command-strip" id="commandStrip">
-    <span>CONNECTION <strong id="stripConnection">SECURE</strong></span>
+  <div class="command-strip location-strip" id="commandStrip">
+    <span id="stripRegion">REGION <strong>BRETONIA</strong></span>
     <span>//</span>
-    <span>DARKSTAT TELEMETRY <strong id="stripTelemetry">LIVE</strong></span>
-    <span>//</span>
-    <span id="stripLocation">SYSTEM <strong>NEW LONDON</strong> // REGION <strong>BRETONIA</strong></span>
+    <span id="stripSystem">SYSTEM <strong>NEW LONDON</strong></span>
     <span>//</span>
     <span id="stripCoords">SECTOR <strong>C-6</strong></span>
     <span>//</span>
@@ -810,7 +830,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V1.4 BASE TELEMETRY) - COMMAND HEADER + DARKSTAT BARS
+   RHW DASHBOARD LOGIC (V1.5 HEADER TELEMETRY) - COMMAND HEADER + DARKSTAT BARS
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -875,11 +895,13 @@ const els = {
   syncCountdown: document.getElementById('syncCountdown'),
   stripConnection: document.getElementById('stripConnection'),
   stripTelemetry: document.getElementById('stripTelemetry'),
-  stripLocation: document.getElementById('stripLocation'),
+  stripRegion: document.getElementById('stripRegion'),
+  stripSystem: document.getElementById('stripSystem'),
   stripCoords: document.getElementById('stripCoords'),
   stripPosition: document.getElementById('stripPosition'),
   telemetryStateVal: document.getElementById('telemetryStateVal'),
   baseHealthVal: document.getElementById('baseHealthVal'),
+  baseHealthCard: document.getElementById('baseHealthCard'),
   baseMoneyVal: document.getElementById('baseMoneyVal'),
   baseStorageVal: document.getElementById('baseStorageVal'),
   maintenanceList: document.getElementById('maintenanceList'), 
@@ -1033,16 +1055,28 @@ function updateBaseTelemetry() {
   const cargo = rhwBase.cargospace ?? rhwBase.cargo_space ?? rhwBase.cargo_space_left ?? rhwBase.storage_free;
   const health = rhwBase.health ?? rhwBase.base_health;
 
+  const healthDisplay = formatBaseHealth(health);
   if (els.baseMoneyVal) els.baseMoneyVal.textContent = formatCredits(money);
   if (els.baseStorageVal) els.baseStorageVal.textContent = formatStorage(cargo);
-  if (els.baseHealthVal) els.baseHealthVal.textContent = formatBaseHealth(health);
+  if (els.baseHealthVal) els.baseHealthVal.textContent = healthDisplay;
+
+  if (els.baseHealthCard) {
+    const healthNumber = parseFloat(String(healthDisplay).replace(',', '.'));
+    els.baseHealthCard.classList.remove('health-good', 'health-warn', 'health-critical');
+    if (Number.isFinite(healthNumber)) {
+      if (healthNumber < 25) els.baseHealthCard.classList.add('health-critical');
+      else if (healthNumber < 75) els.baseHealthCard.classList.add('health-warn');
+      else els.baseHealthCard.classList.add('health-good');
+    }
+  }
 
   const system = rhwBase.system_name || 'New London';
   const region = rhwBase.region_name || 'BRETONIA';
   const sector = rhwBase.sector_coord || 'C-6';
   const pos = formatPosition(rhwBase.pos ?? rhwBase.base_pos);
 
-  if (els.stripLocation) els.stripLocation.innerHTML = `SYSTEM <strong>${escapeHTML(system)}</strong> // REGION <strong>${escapeHTML(region)}</strong>`;
+  if (els.stripRegion) els.stripRegion.innerHTML = `REGION <strong>${escapeHTML(region)}</strong>`;
+  if (els.stripSystem) els.stripSystem.innerHTML = `SYSTEM <strong>${escapeHTML(system)}</strong>`;
   if (els.stripCoords) els.stripCoords.innerHTML = `SECTOR <strong>${escapeHTML(sector)}</strong>`;
   if (els.stripPosition) els.stripPosition.innerHTML = `POS <strong>${escapeHTML(pos)}</strong>`;
 }
@@ -1087,8 +1121,8 @@ function setStripValue(el, value, cls = '') {
 }
 
 function setTelemetryStrip(connection, telemetry, cls = '') {
-  setStripValue(els.stripConnection, connection, cls);
-  setStripValue(els.stripTelemetry, telemetry, cls);
+  // The location strip now shows only navigation data.
+  // Live connection state lives in the header telemetry tile.
   setStripValue(els.telemetryStateVal, telemetry, cls);
 }
 
