@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V5.3</title>
+  <title>RHW Command Dashboard · V5.4</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +24,8 @@
       --warn: #c28722;
       --good: #4a8f62;
       --good-soft: rgba(74, 143, 98, 0.15);
+      --waste: #a89f91;
+      --waste-soft: rgba(168, 159, 145, 0.15);
       
       --font-main: Tahoma, Arial, sans-serif;
       --font-title: 'Agency FB', 'Teko', sans-serif;
@@ -138,7 +140,7 @@
     .value { margin-top: 6px; font-family: var(--font-title); font-size: 28px; color: var(--gold); letter-spacing: 0.05em; }
 
     /* --- ALERTS & PRODUCTION --- */
-    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
     .alert-card { padding: 16px; }
 
     .alert-title {
@@ -197,12 +199,19 @@
     .critical { color: var(--danger); border-color: var(--danger); }
     .low { color: var(--warn); border-color: var(--warn); }
     .ok { color: var(--good); border-color: var(--good); }
+    .waste { color: var(--waste); border-color: var(--waste); background: var(--waste-soft); }
+    .buy { color: #d7e9ff; background: var(--blue-soft); border-color: rgba(47, 128, 237, 0.48); }
+    .sell { color: #f3e0b8; background: rgba(210, 173, 103, 0.15); border-color: rgba(210, 173, 103, 0.48); }
+    .both { color: #efe1ff; background: rgba(176, 103, 226, 0.16); border-color: rgba(176, 103, 226, 0.48); }
 
     #itemsBody, #productionGrid { transition: opacity 0.2s; }
 
     /* --- RP FOOTER --- */
     footer { text-align: center; font-family: var(--font-tech); font-size: 12px; color: #555555; padding: 10px 20px 40px; }
 
+    @media (max-width: 1100px) {
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+    }
     @media (max-width: 900px) {
       .cards, .summary-grid { grid-template-columns: 1fr; }
       .rp-meta { font-size: 12px; }
@@ -257,6 +266,10 @@
         <div class="alert-title"><span>Export Inventory</span><span class="count-badge" id="exportCount">0</span></div>
         <ul class="alert-list" id="exportList"></ul>
       </div>
+      <div class="alert-card panel">
+        <div class="alert-title"><span>Waste Management</span><span class="count-badge" id="byproductCount">0</span></div>
+        <ul class="alert-list" id="byproductList"></ul>
+      </div>
     </section>
 
     <section class="panel">
@@ -282,6 +295,7 @@
             <option value="maintenance">MAINTENANCE</option>
             <option value="procurement">PROCUREMENT</option>
             <option value="export">EXPORT</option>
+            <option value="byproduct">WASTE / BYPROD</option>
           </select>
           <button id="refreshBtn">FORCE UPLINK</button>
         </div>
@@ -313,17 +327,20 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V5.3) - SORTIERT & OUTPUT GEFIXT
+   RHW DASHBOARD LOGIC (V5.4) - 3 SPALTEN & CUSTOM EXPORT SORT
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
 const AUTO_REFRESH_MS = 60000; 
 
 const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods']; 
-const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components', 'toxic waste', 'scrap metal', 'niobium']; 
+const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components', 'niobium']; 
+const BYPRODUCTS = ['toxic waste', 'scrap metal'];
 const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore'];
 
-/* REZEPTE SORTIERT NACH WUNSCH (Reaktoren -> Niobium) */
+/* GEWÜNSCHTE SORTIERUNG FÜR DEN EXPORT-BLOCK */
+const EXPORT_ORDER = ['Reactor Systems', 'Superstructure Systems', 'Multi-Mode Focusing Chamber', 'Prototype Components', 'Gold', 'Niobium'];
+
 const RECIPES = [ 
   { product: 'Reactor Systems', output: 1, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] }, 
   { product: 'Superstructure Systems', output: 1, byproducts: [], ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] }, 
@@ -344,8 +361,10 @@ const els = {
   syncTimeVal: document.getElementById('syncTimeVal'),
   maintenanceList: document.getElementById('maintenanceList'), 
   exportList: document.getElementById('exportList'), 
+  byproductList: document.getElementById('byproductList'), 
   maintenanceCount: document.getElementById('maintenanceCount'), 
   exportCount: document.getElementById('exportCount'), 
+  byproductCount: document.getElementById('byproductCount'), 
   itemsBody: document.getElementById('itemsBody'), 
   search: document.getElementById('search'), 
   roleFilter: document.getElementById('roleFilter'), 
@@ -389,17 +408,31 @@ function needAmount(item) { return Math.max(0, minStock(item) - quantity(item));
 function stockState(item) { 
   const q = quantity(item); const nm = commodityKey(item); const custom = CUSTOM_ALERTS[nm]; 
   if (custom) { if (q < custom.red) return 'critical'; if (q < custom.yellow) return 'low'; return 'ok'; } 
-  if (PROCUREMENT.includes(nm)) return 'ok'; 
+  if (PROCUREMENT.includes(nm) || BYPRODUCTS.includes(nm)) return 'ok'; 
   const min = minStock(item); 
   if (min > 0 && q <= min * 0.25) return 'critical'; 
   if (min > 0 && q < min) return 'low'; return 'ok'; 
 }
 
-function assetRole(item) { const nm = commodityKey(item); if (EXPORTS.includes(nm)) return 'export'; if (MAINTENANCE.includes(nm)) return 'maintenance'; if (PROCUREMENT.includes(nm)) return 'procurement'; return 'other'; }
+function assetRole(item) { 
+  const nm = commodityKey(item); 
+  if (EXPORTS.includes(nm)) return 'export'; 
+  if (BYPRODUCTS.includes(nm)) return 'byproduct'; 
+  if (MAINTENANCE.includes(nm)) return 'maintenance'; 
+  if (PROCUREMENT.includes(nm)) return 'procurement'; 
+  return 'other'; 
+}
+
 function operationalItems() { const seen = new Set(); return items.filter(item => { const role = assetRole(item); if (role === 'other') return false; const key = role + ':' + commodityKey(item); if (seen.has(key)) return false; seen.add(key); return true; }); }
-function roleLabel(role) { if (role === 'maintenance') return 'FACILITY'; if (role === 'export') return 'EXPORT'; return 'PROCUREMENT'; }
+function roleLabel(role) { if (role === 'maintenance') return 'FACILITY'; if (role === 'export') return 'EXPORT'; if (role === 'byproduct') return 'WASTE'; return 'PROCUREMENT'; }
 function statusLabel(state) { if (state === 'critical') return 'CRITICAL'; if (state === 'low') return 'LOW'; return 'STABLE'; }
-function rolePill(role) { const cls = role === 'export' ? 'both' : role === 'maintenance' ? 'sell' : 'buy'; return `<span class="pill ${cls}">${roleLabel(role)}</span>`; }
+function rolePill(role) { 
+  let cls = 'buy'; 
+  if (role === 'export') cls = 'both'; 
+  if (role === 'maintenance') cls = 'sell'; 
+  if (role === 'byproduct') cls = 'waste'; 
+  return `<span class="pill ${cls}">${roleLabel(role)}</span>`; 
+}
 function statusPill(state) { return `<span class="pill ${state}">${statusLabel(state)}</span>`; }
 function priceSell(item) { return item.price_to_sell_to_base ?? item.sell_price ?? item.price_sell ?? item.price ?? 0; }
 function priceBuy(item) { return item.price_to_buy_from_base ?? item.buy_price ?? item.price_buy ?? item.price ?? 0; }
@@ -452,12 +485,14 @@ function renderProductionModules() {
 
 function renderList(target, list, emptyText) { 
   if (!list.length) { target.innerHTML = `<li><span>${emptyText}</span><span class="pill ok">SECURE</span></li>`; return; } 
-  target.innerHTML = list.slice(0, 8).map(item => { 
+  target.innerHTML = list.map(item => { 
     const state = stockState(item); 
+    const role = assetRole(item);
     const need = needAmount(item); 
     const q = quantity(item);
     
-    const detail = state === 'ok' ? 'NOMINAL' : `DEFICIT: ${number(need)}`; 
+    let detail = state === 'ok' ? 'NOMINAL' : `DEFICIT: ${number(need)}`; 
+    if (role === 'byproduct') detail = `CONTAINED: ${number(q)} UNITS`;
     
     return `<li class="alert-${state}">
               <span><strong>${escapeHTML(displayName(item))}</strong><small>${detail}</small></span>
@@ -472,12 +507,28 @@ function renderList(target, list, emptyText) {
 function render() { 
   const query = normalize(els.search.value); const roleFilter = els.roleFilter.value; const sourceItems = operationalItems(); 
   const sortByName = (a, b) => displayName(a).localeCompare(displayName(b)); 
-  const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort(sortByName); 
-  const exports = sourceItems.filter(item => assetRole(item) === 'export').sort(sortByName); 
   
-  els.maintenanceCount.textContent = maintenance.length; els.exportCount.textContent = exports.length; 
+  const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort(sortByName); 
+  
+  // Custom Export Sort
+  const exports = sourceItems.filter(item => assetRole(item) === 'export').sort((a, b) => {
+    let idxA = EXPORT_ORDER.indexOf(displayName(a));
+    let idxB = EXPORT_ORDER.indexOf(displayName(b));
+    if (idxA === -1) idxA = 999;
+    if (idxB === -1) idxB = 999;
+    if (idxA !== idxB) return idxA - idxB;
+    return sortByName(a, b);
+  }); 
+
+  const byproducts = sourceItems.filter(item => assetRole(item) === 'byproduct').sort(sortByName);
+  
+  els.maintenanceCount.textContent = maintenance.length; 
+  els.exportCount.textContent = exports.length; 
+  els.byproductCount.textContent = byproducts.length; 
+  
   renderList(els.maintenanceList, maintenance, 'FACILITY RESERVES STABLE'); 
   renderList(els.exportList, exports, 'NO EXPORT ASSETS DETECTED'); 
+  renderList(els.byproductList, byproducts, 'NO WASTE DETECTED'); 
   renderProductionModules(); 
   
   const visible = sourceItems.filter(item => { const role = assetRole(item); return (!query || normalize(itemName(item)).includes(query)) && (roleFilter === 'all' || role === roleFilter); }); 
@@ -496,7 +547,8 @@ function render() {
   
   els.itemsBody.innerHTML = visible.map(item => { 
     const role = assetRole(item); const state = stockState(item); const need = needAmount(item); 
-    return `<tr><td><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state)}</td><td>${number(quantity(item))}</td><td>${need ? number(need) : '–'}</td><td>${number(priceSell(item))}</td><td>${number(priceBuy(item))}</td></tr>`; 
+    const needDisplay = role === 'byproduct' ? '–' : (need ? number(need) : '–');
+    return `<tr><td><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state)}</td><td>${number(quantity(item))}</td><td>${needDisplay}</td><td>${number(priceSell(item))}</td><td>${number(priceBuy(item))}</td></tr>`; 
   }).join(''); 
   
   els.itemsBody.style.opacity = '1'; els.productionGrid.style.opacity = '1'; 
