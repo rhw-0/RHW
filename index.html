@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V1.1 Visual Polish</title>
+  <title>RHW Command Dashboard · V1.2 Command Header</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -399,37 +399,280 @@
       .production-stats { gap: 7px; }
       .command-strip { margin-top: -2px; padding: 8px 16px; justify-content: flex-start; }
     }
+  
+
+    /* --- V1.2 COMMAND HEADER --- */
+    .command-header {
+      position: relative;
+      overflow: hidden;
+      padding: 28px 32px;
+      text-align: left;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.28);
+      background:
+        radial-gradient(circle at 12% 50%, rgba(212,175,55,0.10), transparent 28%),
+        radial-gradient(circle at 92% 0%, rgba(74,143,98,0.08), transparent 30%),
+        linear-gradient(135deg, rgba(3,4,5,0.98), rgba(9,12,15,0.98));
+      box-shadow: inset 0 -1px 0 rgba(255,255,255,0.03);
+    }
+
+    .command-header::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(212,175,55,0.75), transparent);
+      opacity: 0.75;
+    }
+
+    .header-watermark {
+      position: absolute;
+      right: -70px;
+      top: -100px;
+      width: 460px;
+      height: 460px;
+      background-image: url('https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      opacity: 0.035;
+      pointer-events: none;
+      filter: grayscale(20%);
+    }
+
+    .command-header-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(330px, 360px);
+      gap: 32px;
+      align-items: center;
+    }
+
+    .command-brand {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      min-width: 0;
+    }
+
+    .crest-frame {
+      position: relative;
+      width: 168px;
+      min-width: 168px;
+      display: grid;
+      place-items: center;
+    }
+
+    .crest-frame::before {
+      content: '';
+      position: absolute;
+      width: 142px;
+      height: 142px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(212,175,55,0.22), rgba(194,135,34,0.06) 44%, transparent 68%);
+      animation: corePulse 4s ease-in-out infinite;
+    }
+
+    .command-header .crest {
+      position: relative;
+      z-index: 2;
+      width: 152px;
+      height: auto;
+      margin: 0;
+      filter: drop-shadow(0 0 22px rgba(212, 175, 55, 0.16));
+    }
+
+    .brand-copy { min-width: 0; }
+
+    .eyebrow {
+      color: var(--gold);
+      font-family: var(--font-tech);
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .command-header h1 {
+      margin: 0;
+      font-family: var(--font-title);
+      color: var(--gold);
+      font-size: clamp(42px, 4.6vw, 66px);
+      font-weight: 700;
+      line-height: 0.92;
+      letter-spacing: 0.055em;
+      text-transform: uppercase;
+      text-shadow: 0 0 18px rgba(212,175,55,0.12);
+    }
+
+    .command-header .subtitle {
+      font-family: var(--font-tech);
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .transmission-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin-top: 13px;
+      color: var(--muted);
+      font-family: var(--font-tech);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .transmission-line span {
+      padding-left: 12px;
+      border-left: 1px solid rgba(212,175,55,0.42);
+    }
+
+    .transmission-line span:first-child { padding-left: 0; border-left: 0; }
+
+    .command-status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(145px, 1fr));
+      gap: 10px;
+      width: 100%;
+    }
+
+    .status-chip {
+      border: 1px solid rgba(212,175,55,0.22);
+      background: rgba(0,0,0,0.28);
+      padding: 10px 12px;
+      min-height: 58px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+
+    .status-chip small {
+      display: block;
+      color: var(--muted);
+      font-family: var(--font-tech);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .status-chip strong {
+      color: var(--gold);
+      font-family: var(--font-tech);
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .uplink-chip {
+      grid-column: span 2;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 10px;
+      border-color: rgba(74,143,98,0.45);
+      background: rgba(74,143,98,0.08);
+    }
+
+    .live-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 14px rgba(74,143,98,0.9);
+      flex: 0 0 auto;
+      animation: dotPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { opacity: 0.65; transform: scale(0.92); }
+      50% { opacity: 1; transform: scale(1.12); }
+    }
+
+    @media (max-width: 1100px) {
+      .command-header-inner { grid-template-columns: 1fr; gap: 18px; }
+      .command-status-grid { max-width: 520px; }
+    }
+
+    @media (max-width: 900px) {
+      .command-header { padding: 22px 16px; }
+      .command-brand { align-items: flex-start; gap: 14px; }
+      .crest-frame { width: 116px; min-width: 116px; }
+      .crest-frame::before { width: 98px; height: 98px; }
+      .command-header .crest { width: 108px; }
+      .eyebrow { font-size: 10px; letter-spacing: 0.12em; }
+      .command-header h1 { font-size: 38px; }
+      .command-header .subtitle { font-size: 11px; }
+      .transmission-line { font-size: 10px; gap: 6px 10px; }
+      .command-status-grid { grid-template-columns: 1fr 1fr; }
+      .status-chip strong { font-size: 13px; }
+    }
+
+    @media (max-width: 520px) {
+      .command-brand { flex-direction: column; align-items: center; text-align: center; }
+      .transmission-line { justify-content: center; }
+      .transmission-line span { border-left: 0; padding-left: 0; }
+      .command-status-grid { grid-template-columns: 1fr; }
+      .uplink-chip { grid-column: auto; }
+    }
+
   </style>
 </head>
 <body>
 
-  <header>
-    <img class="crest" src="https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png" alt="RHW Crest" />
-    <h1>RESOLUTION HEAVY WORKS</h1>
-    <div class="subtitle">INDUSTRIAL MANUFACTURING HUB | NEW LONDON</div>
-    
-    <hr class="hrc-gold">
+  <header class="command-header">
+    <div class="header-watermark" aria-hidden="true"></div>
+    <div class="command-header-inner">
+      <div class="command-brand">
+        <div class="crest-frame">
+          <img class="crest" src="https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png" alt="RHW Crest" />
+        </div>
+        <div class="brand-copy">
+          <div class="eyebrow">BMM CHARTERED STRATEGIC MANUFACTURING FACILITY</div>
+          <h1>RESOLUTION HEAVY WORKS</h1>
+          <div class="subtitle">INDUSTRIAL MANUFACTURING HUB · NEW LONDON</div>
+          <div class="transmission-line">
+            <span>AUTHORITY: ALISTAIR THORNE</span>
+            <span>TX-ID: BELFAST-RHW-424</span>
+            <span>CHARTER: ACTIVE</span>
+          </div>
+        </div>
+      </div>
 
-    <div class="rp-meta">
-      <div class="rp-meta-row">
-        <div class="rp-meta-lbl">SENDER ID:</div>
-        <div class="rp-meta-val">Alistair Thorne</div>
-      </div>
-      <div class="rp-meta-row">
-        <div class="rp-meta-lbl">LOCATION:</div>
-        <div class="rp-meta-val" id="systemName">Resolution Heavy Works, New London</div>
-      </div>
-      <div class="rp-meta-row">
-        <div class="rp-meta-lbl">ENCRYPTION:</div>
-        <div class="rp-meta-val encryption-val">Belfast-RHW-424</div>
-      </div>
-      <div class="rp-meta-row">
-        <div class="rp-meta-lbl">UPLINK STATUS:</div>
-        <div class="rp-meta-val" id="liveStatus" style="color: #4a8f62;">SYNCING TELEMETRY...</div>
+      <div class="command-status-grid">
+        <div class="status-chip uplink-chip">
+          <span class="live-dot"></span>
+          <div>
+            <small>UPLINK STATUS</small>
+            <strong id="liveStatus">SYNCING TELEMETRY...</strong>
+          </div>
+        </div>
+        <div class="status-chip">
+          <small>LATEST SYNC</small>
+          <strong id="syncTimeVal">–</strong>
+        </div>
+        <div class="status-chip">
+          <small>NEXT SYNC</small>
+          <strong id="syncCountdown">–</strong>
+        </div>
+        <div class="status-chip">
+          <small>OPERATIONS</small>
+          <strong>DARKSTAT LIVE</strong>
+        </div>
+        <div class="status-chip">
+          <small>REFRESH CYCLE</small>
+          <strong>60S</strong>
+        </div>
       </div>
     </div>
-
-    <hr class="hrc-gold">
   </header>
 
   <div class="command-strip">
@@ -443,11 +686,6 @@
   </div>
 
   <main>
-    <section class="cards">
-      <div class="card"><div class="label">Chartered Authority</div><div class="value">BMM</div></div>
-      <div class="card"><div class="label">Tracked Assets</div><div class="value" id="itemCount">0</div></div>
-      <div class="card"><div class="label">Latest Sync</div><div class="value" id="syncTimeVal">–</div><div class="sync-countdown" id="syncCountdown">Next sync: –</div></div>
-    </section>
 
     <section class="summary-grid">
       <div class="alert-card panel maintenance-panel">
@@ -520,7 +758,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V1.1 VISUAL POLISH) - DARKSTAT MAX STOCK BARS
+   RHW DASHBOARD LOGIC (V1.2 COMMAND HEADER) - VISUAL POLISH + DARKSTAT BARS
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -714,15 +952,15 @@ function readinessText(state, role) {
 function updateSyncCountdown() {
   if (!els.syncCountdown) return;
   if (isLoading) {
-    els.syncCountdown.textContent = 'Next sync: syncing now';
+    els.syncCountdown.textContent = 'SYNCING';
     return;
   }
   if (!nextSyncAt) {
-    els.syncCountdown.textContent = 'Next sync: –';
+    els.syncCountdown.textContent = '–';
     return;
   }
   const remaining = Math.max(0, Math.ceil((nextSyncAt - Date.now()) / 1000));
-  els.syncCountdown.textContent = `Next sync: ${remaining}s`;
+  els.syncCountdown.textContent = `${remaining}s`;
 }
 
 function stockState(item) { 
@@ -963,7 +1201,7 @@ async function loadData() {
 
     items = Array.isArray(rhwBase.shop_items) ? rhwBase.shop_items : [];
     lastLoaded = new Date();
-    els.itemCount.textContent = operationalItems().length;
+    if (els.itemCount) els.itemCount.textContent = operationalItems().length;
     els.liveStatus.textContent = 'CONNECTION SECURE';
     els.liveStatus.style.color = '#4a8f62';
     render();
