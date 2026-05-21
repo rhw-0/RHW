@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V5.5</title>
+  <title>RHW Command Dashboard · V5.6</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -327,7 +327,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V5.5) - MAX ALERTS FÜR WASTE GEFIXT
+   RHW DASHBOARD LOGIC (V5.6) - STATUS PILL FIX FÜR WASTE
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -360,7 +360,7 @@ const CUSTOM_ALERTS = {
   'multi-mode focusing chamber': { type: 'min', red: 500, yellow: 1000 }, 
   'multi-mode focusing chambers': { type: 'min', red: 500, yellow: 1000 },
   
-  /* NEU: Max-Alarme für Waste */
+  /* Max-Alarme für Waste */
   'scrap metal': { type: 'max', yellow: 10000, red: 15000 },
   'toxic waste': { type: 'max', yellow: 10000, red: 15000 }
 };
@@ -449,7 +449,19 @@ function assetRole(item) {
 
 function operationalItems() { const seen = new Set(); return items.filter(item => { const role = assetRole(item); if (role === 'other') return false; const key = role + ':' + commodityKey(item); if (seen.has(key)) return false; seen.add(key); return true; }); }
 function roleLabel(role) { if (role === 'maintenance') return 'FACILITY'; if (role === 'export') return 'EXPORT'; if (role === 'byproduct') return 'WASTE'; return 'PROCUREMENT'; }
-function statusLabel(state) { if (state === 'critical') return 'CRITICAL'; if (state === 'low') return 'LOW'; return 'STABLE'; }
+
+/* NEU: Die Status-Schildchen passen sich jetzt der Art der Fracht an! */
+function statusLabel(state, role) { 
+  if (role === 'byproduct') {
+    if (state === 'critical') return 'OVERFLOW'; 
+    if (state === 'low') return 'WARN'; 
+    return 'STABLE';
+  }
+  if (state === 'critical') return 'CRITICAL'; 
+  if (state === 'low') return 'LOW'; 
+  return 'STABLE'; 
+}
+
 function rolePill(role) { 
   let cls = 'buy'; 
   if (role === 'export') cls = 'both'; 
@@ -457,7 +469,9 @@ function rolePill(role) {
   if (role === 'byproduct') cls = 'waste'; 
   return `<span class="pill ${cls}">${roleLabel(role)}</span>`; 
 }
-function statusPill(state) { return `<span class="pill ${state}">${statusLabel(state)}</span>`; }
+
+function statusPill(state, role) { return `<span class="pill ${state}">${statusLabel(state, role)}</span>`; }
+
 function priceSell(item) { return item.price_to_sell_to_base ?? item.sell_price ?? item.price_sell ?? item.price ?? 0; }
 function priceBuy(item) { return item.price_to_buy_from_base ?? item.buy_price ?? item.price_buy ?? item.price ?? 0; }
 function findCommodity(name) { const key = keyFromName(name); return operationalItems().find(item => commodityKey(item) === key) || items.find(item => commodityKey(item) === key) || null; }
@@ -528,7 +542,7 @@ function renderList(target, list, emptyText) {
               <span><strong>${escapeHTML(displayName(item))}</strong><small>${detail}</small></span>
               <div style="display:flex; align-items:center; gap:12px;">
                 <strong style="font-size:16px; font-family: var(--font-tech);">${number(q)}</strong>
-                ${statusPill(state)}
+                ${statusPill(state, role)}
               </div>
             </li>`; 
   }).join(''); 
@@ -577,7 +591,7 @@ function render() {
   els.itemsBody.innerHTML = visible.map(item => { 
     const role = assetRole(item); const state = stockState(item); const need = needAmount(item); 
     const needDisplay = role === 'byproduct' ? '–' : (need ? number(need) : '–');
-    return `<tr><td><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state)}</td><td>${number(quantity(item))}</td><td>${needDisplay}</td><td>${number(priceSell(item))}</td><td>${number(priceBuy(item))}</td></tr>`; 
+    return `<tr><td><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td>${number(quantity(item))}</td><td>${needDisplay}</td><td>${number(priceSell(item))}</td><td>${number(priceBuy(item))}</td></tr>`; 
   }).join(''); 
   
   els.itemsBody.style.opacity = '1'; els.productionGrid.style.opacity = '1'; 
