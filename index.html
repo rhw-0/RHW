@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V5.1</title>
+  <title>RHW Command Dashboard · V5.2</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,7 +11,6 @@
 
   <style>
     :root {
-      /* Matching the exact BBCode Colors */
       --bg: #030405;
       --panel: #0a0c0f;
       --line: #333333;
@@ -26,7 +25,6 @@
       --good: #4a8f62;
       --good-soft: rgba(74, 143, 98, 0.15);
       
-      /* Typography */
       --font-main: Tahoma, Arial, sans-serif;
       --font-title: 'Agency FB', 'Teko', sans-serif;
       --font-tech: 'Consolas', 'Share Tech Mono', monospace;
@@ -111,10 +109,7 @@
       font-weight: bold; 
       text-transform: uppercase;
     }
-    .rp-meta-val { 
-      display: table-cell; 
-      color: var(--text); 
-    }
+    .rp-meta-val { display: table-cell; color: var(--text); }
     .encryption-val { color: var(--danger); font-weight: bold; }
 
     /* --- MAIN DASHBOARD LAYOUT --- */
@@ -135,175 +130,58 @@
     .card, .panel, .alert-card {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 4px; /* Sharper edges */
+      border-radius: 4px;
     }
 
-    .card {
-      padding: 16px;
-      border-top: 2px solid var(--gold-soft);
-    }
-
-    .label {
-      color: var(--muted);
-      font-family: var(--font-tech);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .value {
-      margin-top: 6px;
-      font-family: var(--font-title);
-      font-size: 28px;
-      color: var(--gold);
-      letter-spacing: 0.05em;
-    }
+    .card { padding: 16px; border-top: 2px solid var(--gold-soft); }
+    .label { color: var(--muted); font-family: var(--font-tech); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .value { margin-top: 6px; font-family: var(--font-title); font-size: 28px; color: var(--gold); letter-spacing: 0.05em; }
 
     /* --- ALERTS & PRODUCTION --- */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .alert-card { padding: 16px; }
 
     .alert-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      font-family: var(--font-title);
-      color: var(--gold);
-      font-size: 22px;
-      letter-spacing: 0.05em;
-      border-bottom: 1px solid var(--line);
-      padding-bottom: 8px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; font-family: var(--font-title); color: var(--gold);
+      font-size: 22px; letter-spacing: 0.05em; border-bottom: 1px solid var(--line); padding-bottom: 8px;
     }
+    .count-badge { font-family: var(--font-tech); font-size: 14px; color: var(--muted); }
 
-    .count-badge {
-      font-family: var(--font-tech);
-      font-size: 14px;
-      color: var(--muted);
-    }
-
-    .alert-list {
-      display: grid;
-      gap: 8px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .alert-list li {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-      background: rgba(255,255,255,0.02);
-      border-left: 2px solid var(--line);
-      font-size: 13px;
-    }
-
+    .alert-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .alert-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--line); font-size: 13px; }
     .alert-list li.alert-critical { border-left-color: var(--danger); }
     .alert-list li.alert-low { border-left-color: var(--warn); }
     .alert-list li.alert-ok { border-left-color: var(--good); }
     .alert-list small { color: var(--muted); display: block; margin-top: 2px; }
 
     /* --- PANELS --- */
-    .panel-head {
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--line);
-      background: rgba(0,0,0,0.2);
-    }
-
-    .panel-title { 
-      font-family: var(--font-title); 
-      font-size: 24px; 
-      color: var(--gold); 
-      letter-spacing: 0.05em;
-    }
-
-    .footnote {
-      color: var(--muted);
-      font-size: 11px;
-      font-family: var(--font-tech);
-    }
+    .panel-head { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); background: rgba(0,0,0,0.2); }
+    .panel-title { font-family: var(--font-title); font-size: 24px; color: var(--gold); letter-spacing: 0.05em; }
+    .footnote { color: var(--muted); font-size: 11px; font-family: var(--font-tech); }
 
     /* --- PRODUCTION MODULES --- */
-    .production-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 16px;
-      padding: 20px;
-    }
-
-    .production-card {
-      border: 1px solid var(--line);
-      background: #080a0c;
-      padding: 16px;
-      position: relative;
-    }
-
-    .production-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 2px;
-      background: var(--line);
-    }
+    .production-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 20px; }
+    .production-card { border: 1px solid var(--line); background: #080a0c; padding: 16px; position: relative; }
+    .production-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--line); }
     .production-card.critical::before { background: var(--danger); }
     .production-card.low::before { background: var(--warn); }
     .production-card.ok::before { background: var(--good); }
 
-    .production-title {
-      font-family: var(--font-title);
-      color: var(--gold);
-      font-size: 22px;
-      letter-spacing: 0.05em;
-    }
-
-    .production-stats {
-      display: flex;
-      gap: 10px;
-      margin: 12px 0;
-      font-family: var(--font-tech);
-    }
-
-    .production-stat {
-      flex: 1;
-      border: 1px solid var(--line-soft);
-      padding: 8px;
-      text-align: center;
-    }
-
+    .production-title { font-family: var(--font-title); color: var(--gold); font-size: 22px; letter-spacing: 0.05em; }
+    .production-stats { display: flex; gap: 10px; margin: 12px 0; font-family: var(--font-tech); }
+    .production-stat { flex: 1; border: 1px solid var(--line-soft); padding: 8px; text-align: center; }
     .production-stat small { color: var(--muted); font-size: 10px; display: block; }
     .production-stat strong { font-size: 16px; color: var(--text); }
 
     .recipe-list { margin: 0; padding: 0; list-style: none; }
-    .recipe-list li {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      padding: 6px 0;
-      border-bottom: 1px dashed var(--line-soft);
-    }
+    .recipe-list li { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px dashed var(--line-soft); }
     .recipe-list li.bottleneck { color: var(--danger); font-weight: bold; }
     .recipe-list small { color: var(--muted); }
 
     /* --- TABLE --- */
     .controls { display: flex; gap: 10px; flex-wrap: wrap; }
-    input, select, button {
-      background: #000;
-      color: var(--text);
-      border: 1px solid var(--line);
-      padding: 8px 12px;
-      font-family: var(--font-tech);
-      font-size: 13px;
-      outline: none;
-    }
+    input, select, button { background: #000; color: var(--text); border: 1px solid var(--line); padding: 8px 12px; font-family: var(--font-tech); font-size: 13px; outline: none; }
     input:focus, select:focus { border-color: var(--gold); }
     button { cursor: pointer; color: var(--gold); font-weight: bold; transition: 0.2s; }
     button:hover { background: var(--gold-soft); }
@@ -315,12 +193,7 @@
     th:hover { background: #111; }
     tr:hover td { background: rgba(212, 175, 55, 0.05); }
 
-    .pill {
-      padding: 2px 6px;
-      font-size: 11px;
-      border: 1px solid var(--line);
-      border-radius: 2px;
-    }
+    .pill { padding: 2px 6px; font-size: 11px; border: 1px solid var(--line); border-radius: 2px; }
     .critical { color: var(--danger); border-color: var(--danger); }
     .low { color: var(--warn); border-color: var(--warn); }
     .ok { color: var(--good); border-color: var(--good); }
@@ -328,13 +201,7 @@
     #itemsBody, #productionGrid { transition: opacity 0.2s; }
 
     /* --- RP FOOTER --- */
-    footer {
-      text-align: center;
-      font-family: var(--font-tech);
-      font-size: 12px;
-      color: #555555;
-      padding: 10px 20px 40px;
-    }
+    footer { text-align: center; font-family: var(--font-tech); font-size: 12px; color: #555555; padding: 10px 20px 40px; }
 
     @media (max-width: 900px) {
       .cards, .summary-grid { grid-template-columns: 1fr; }
@@ -446,22 +313,23 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V5.1)
+   RHW DASHBOARD LOGIC (V5.2) - INKL. BYPRODUCTS & NEUEN REZEPTEN
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
 const AUTO_REFRESH_MS = 60000; 
 
 const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods']; 
-const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components']; 
-const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'niobium', 'super alloy', 'titanium'];
+const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components', 'toxic waste', 'scrap metal', 'niobium']; 
+const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore'];
 
 const RECIPES = [ 
-  { product: 'Multi-Mode Focusing Chamber', output: 10, ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] }, 
-  { product: 'Reactor Systems', output: 1, ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] }, 
-  { product: 'Superstructure Systems', output: 1, ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] }, 
-  { product: 'Gold', output: 1, ingredients: [['Gold Ore',425], ['MOX',170]] }, 
-  { product: 'Prototype Components', output: 1, ingredients: [['Military Salvage',255]] } 
+  { product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] }, 
+  { product: 'Reactor Systems', output: 1, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] }, 
+  { product: 'Superstructure Systems', output: 1, byproducts: [], ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] }, 
+  { product: 'Gold', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Gold Ore',425], ['MOX',170], ['Industrial Materials',85]] }, 
+  { product: 'Niobium', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Niobium Ore',425], ['MOX',170], ['Industrial Materials',85]] },
+  { product: 'Prototype Components', output: 1, byproducts: [], ingredients: [['Military Salvage',255]] } 
 ];
 
 const CUSTOM_ALERTS = { 'basic alloy': { red: 2500, yellow: 15000 }, 'food rations': { red: 2500, yellow: 15000 }, 'consumer goods': { red: 2500, yellow: 15000 }, 'gold': { red: 5000, yellow: 15000 }, 'reactor systems': { red: 200, yellow: 500 }, 'superstructure systems': { red: 200, yellow: 500 }, 'prototype components': { red: 2500, yellow: 5000 }, 'multi-mode focusing chamber': { red: 500, yellow: 1000 }, 'multi-mode focusing chambers': { red: 500, yellow: 1000 } };
@@ -486,23 +354,30 @@ const els = {
   rpFooterTime: document.getElementById('rpFooterTime')
 };
 
-// Start Footer Clock
 setInterval(() => {
   const now = new Date();
   els.rpFooterTime.textContent = now.toLocaleDateString('de-DE') + ' ' + now.toLocaleTimeString('de-DE');
 }, 1000);
 
-function escapeHTML(str) {
-  return String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match]));
-}
+function escapeHTML(str) { return String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])); }
 function normalize(value) { return String(value || '').trim().toLowerCase(); }
 function number(value) { const x = Number(value); return Number.isFinite(x) ? x.toLocaleString('de-DE') : '–'; }
 function itemName(item) { return item.name || item.item_name || item.nickname || String(item.id || 'Unknown Asset'); }
 function commodityKey(item) { const raw = normalize(itemName(item)); const idx = raw.indexOf('('); return (idx >= 0 ? raw.slice(0, idx) : raw).trim(); }
 function keyFromName(name) { const raw = normalize(name); const idx = raw.indexOf('('); return (idx >= 0 ? raw.slice(0, idx) : raw).trim(); }
+
 function displayName(item) { 
   const key = commodityKey(item); 
-  const canonical = { 'ablative armor plating': 'Ablative Armor Plating', 'energy field equipment': 'Energy Field Equipment', 'gold ore': 'Gold Ore', 'hull panels': 'Hull Panels', 'hydrocarbons': 'Hydrocarbons', 'military salvage': 'Military Salvage', 'mox': 'MOX', 'niobium': 'Niobium', 'super alloy': 'Super Alloy', 'titanium': 'Titanium', 'multi-mode focusing chamber': 'Multi-Mode Focusing Chamber', 'multi-mode focusing chambers': 'Multi-Mode Focusing Chamber', 'superstructure systems': 'Superstructure Systems', 'reactor systems': 'Reactor Systems', 'gold': 'Gold', 'prototype components': 'Prototype Components', 'basic alloy': 'Basic Alloy', 'food rations': 'Food Rations', 'consumer goods': 'Consumer Goods' }; 
+  const canonical = { 
+    'ablative armor plating': 'Ablative Armor Plating', 'energy field equipment': 'Energy Field Equipment', 
+    'gold ore': 'Gold Ore', 'hull panels': 'Hull Panels', 'hydrocarbons': 'Hydrocarbons', 
+    'military salvage': 'Military Salvage', 'mox': 'MOX', 'niobium': 'Niobium', 
+    'super alloy': 'Super Alloy', 'titanium': 'Titanium', 'multi-mode focusing chamber': 'Multi-Mode Focusing Chamber', 
+    'multi-mode focusing chambers': 'Multi-Mode Focusing Chamber', 'superstructure systems': 'Superstructure Systems', 
+    'reactor systems': 'Reactor Systems', 'gold': 'Gold', 'prototype components': 'Prototype Components', 
+    'basic alloy': 'Basic Alloy', 'food rations': 'Food Rations', 'consumer goods': 'Consumer Goods',
+    'industrial materials': 'Industrial Materials', 'niobium ore': 'Niobium Ore', 'toxic waste': 'Toxic Waste', 'scrap metal': 'Scrap Metal'
+  }; 
   return canonical[key] || itemName(item); 
 }
 
@@ -545,14 +420,20 @@ function renderProductionModules() {
       const cycles = required > 0 ? Math.floor(stock / required) : 0; 
       return { name: ingredientName, required, stock, cycles }; 
     }); 
+    
     const possibleCycles = ingredientData.length ? Math.min(...ingredientData.map(i => i.cycles)) : 0; 
     const possibleOutput = possibleCycles * recipe.output; 
     const bottleneck = ingredientData.length ? ingredientData.reduce((lowest, current) => current.cycles < lowest.cycles ? current : lowest) : null; 
     const cardState = possibleCycles <= 0 ? 'critical' : possibleCycles < 10 ? 'low' : 'ok'; 
+    
     const ingredientRows = ingredientData.map(item => { 
       const isBottleneck = bottleneck && item.name === bottleneck.name; 
       return `<li class="${isBottleneck ? 'bottleneck' : ''}"><span>${escapeHTML(displayRecipeName(item.name))}</span><span><small>Req ${number(item.required)}</small> <strong>${number(item.stock)}</strong></span></li>`; 
     }).join(''); 
+    
+    const byproductsText = recipe.byproducts && recipe.byproducts.length 
+      ? `<div class="footnote" style="margin-top: 10px; color: var(--gold); border-top: 1px dashed var(--line-soft); padding-top: 6px;">+ BYPROD/CYCLE: ${recipe.byproducts.map(bp => `${number(bp[1])} ${escapeHTML(displayRecipeName(bp[0]))}`).join(' / ')}</div>` 
+      : '';
     
     return `<div class="production-card ${cardState}">
               <div class="production-title">${escapeHTML(displayRecipeName(recipe.product))}</div>
@@ -563,6 +444,7 @@ function renderProductionModules() {
                 <div class="production-stat"><small>EST. YIELD</small><strong>${number(possibleOutput)}</strong></div>
               </div>
               <ul class="recipe-list">${ingredientRows}</ul>
+              ${byproductsText}
             </div>`; 
   }).join(''); 
 }
