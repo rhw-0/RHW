@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V5.2</title>
+  <title>RHW Command Dashboard · V5.3</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -313,7 +313,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V5.2) - INKL. BYPRODUCTS & NEUEN REZEPTEN
+   RHW DASHBOARD LOGIC (V5.3) - SORTIERT & OUTPUT GEFIXT
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -323,13 +323,14 @@ const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods'];
 const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components', 'toxic waste', 'scrap metal', 'niobium']; 
 const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore'];
 
+/* REZEPTE SORTIERT NACH WUNSCH (Reaktoren -> Niobium) */
 const RECIPES = [ 
-  { product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] }, 
-  { product: 'Reactor Systems', output: 25, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] }, 
+  { product: 'Reactor Systems', output: 1, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] }, 
   { product: 'Superstructure Systems', output: 1, byproducts: [], ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] }, 
+  { product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] }, 
+  { product: 'Prototype Components', output: 25, byproducts: [], ingredients: [['Military Salvage',255]] }, 
   { product: 'Gold', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Gold Ore',425], ['MOX',170], ['Industrial Materials',85]] }, 
-  { product: 'Niobium', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Niobium Ore',425], ['MOX',170], ['Industrial Materials',85]] },
-  { product: 'Prototype Components', output: 1, byproducts: [], ingredients: [['Military Salvage',255]] } 
+  { product: 'Niobium', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Niobium Ore',425], ['MOX',170], ['Industrial Materials',85]] }
 ];
 
 const CUSTOM_ALERTS = { 'basic alloy': { red: 2500, yellow: 15000 }, 'food rations': { red: 2500, yellow: 15000 }, 'consumer goods': { red: 2500, yellow: 15000 }, 'gold': { red: 5000, yellow: 15000 }, 'reactor systems': { red: 200, yellow: 500 }, 'superstructure systems': { red: 200, yellow: 500 }, 'prototype components': { red: 2500, yellow: 5000 }, 'multi-mode focusing chamber': { red: 500, yellow: 1000 }, 'multi-mode focusing chambers': { red: 500, yellow: 1000 } };
