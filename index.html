@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V1.3 Stability Pass</title>
+  <title>RHW Command Dashboard · V1.4 Base Telemetry</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -538,6 +538,39 @@
 
     .transmission-line span:first-child { padding-left: 0; border-left: 0; }
 
+    .facility-telemetry {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(118px, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+      max-width: 660px;
+    }
+
+    .mini-telemetry-card {
+      border: 1px solid rgba(212,175,55,0.18);
+      background: linear-gradient(180deg, rgba(0,0,0,0.28), rgba(255,255,255,0.012));
+      padding: 8px 10px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.025);
+    }
+
+    .mini-telemetry-card small {
+      display: block;
+      color: var(--muted);
+      font-family: var(--font-tech);
+      font-size: 9px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .mini-telemetry-card strong {
+      color: var(--gold);
+      font-family: var(--font-tech);
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
     .command-status-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(145px, 1fr));
@@ -614,6 +647,7 @@
       .command-header h1 { font-size: 38px; }
       .command-header .subtitle { font-size: 11px; }
       .transmission-line { font-size: 10px; gap: 6px 10px; }
+      .facility-telemetry { grid-template-columns: 1fr; max-width: none; }
       .command-status-grid { grid-template-columns: 1fr 1fr; }
       .status-chip strong { font-size: 13px; }
     }
@@ -646,6 +680,20 @@
             <span>TX-ID: BELFAST-RHW-424</span>
             <span>CHARTER: ACTIVE</span>
           </div>
+          <div class="facility-telemetry">
+            <div class="mini-telemetry-card">
+              <small>STRUCTURAL INTEGRITY</small>
+              <strong id="baseHealthVal">–</strong>
+            </div>
+            <div class="mini-telemetry-card">
+              <small>BASE CREDITS</small>
+              <strong id="baseMoneyVal">–</strong>
+            </div>
+            <div class="mini-telemetry-card">
+              <small>FREE STORAGE</small>
+              <strong id="baseStorageVal">–</strong>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -666,8 +714,8 @@
           <strong id="syncCountdown">–</strong>
         </div>
         <div class="status-chip">
-          <small>OPERATIONS</small>
-          <strong>DARKSTAT LIVE</strong>
+          <small>TELEMETRY</small>
+          <strong id="telemetryStateVal">POLLING</strong>
         </div>
         <div class="status-chip">
           <small>REFRESH CYCLE</small>
@@ -677,14 +725,16 @@
     </div>
   </header>
 
-  <div class="command-strip">
+  <div class="command-strip" id="commandStrip">
     <span>CONNECTION <strong id="stripConnection">SECURE</strong></span>
     <span>//</span>
     <span>DARKSTAT TELEMETRY <strong id="stripTelemetry">LIVE</strong></span>
     <span>//</span>
-    <span>BMM CHARTER <strong>ACTIVE</strong></span>
+    <span id="stripLocation">SYSTEM <strong>NEW LONDON</strong> // REGION <strong>BRETONIA</strong></span>
     <span>//</span>
-    <span>REFRESH <strong>60S</strong></span>
+    <span id="stripCoords">SECTOR <strong>C-6</strong></span>
+    <span>//</span>
+    <span id="stripPosition">POS <strong>–</strong></span>
   </div>
 
   <main>
@@ -760,7 +810,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V1.3 STABILITY PASS) - COMMAND HEADER + DARKSTAT BARS
+   RHW DASHBOARD LOGIC (V1.4 BASE TELEMETRY) - COMMAND HEADER + DARKSTAT BARS
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -825,6 +875,13 @@ const els = {
   syncCountdown: document.getElementById('syncCountdown'),
   stripConnection: document.getElementById('stripConnection'),
   stripTelemetry: document.getElementById('stripTelemetry'),
+  stripLocation: document.getElementById('stripLocation'),
+  stripCoords: document.getElementById('stripCoords'),
+  stripPosition: document.getElementById('stripPosition'),
+  telemetryStateVal: document.getElementById('telemetryStateVal'),
+  baseHealthVal: document.getElementById('baseHealthVal'),
+  baseMoneyVal: document.getElementById('baseMoneyVal'),
+  baseStorageVal: document.getElementById('baseStorageVal'),
   maintenanceList: document.getElementById('maintenanceList'), 
   exportList: document.getElementById('exportList'), 
   byproductList: document.getElementById('byproductList'), 
@@ -936,6 +993,60 @@ function renderProgress(item) {
   return `<div class="progress-wrap" title="${meta.percent}% of scale ${number(meta.max)}"><div class="progress-fill ${meta.cls}" style="width:${meta.percent}%"></div></div>`;
 }
 
+function formatCredits(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '–';
+  return `${n.toLocaleString('de-DE')} CR`;
+}
+
+function formatStorage(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '–';
+  return n.toLocaleString('de-DE');
+}
+
+function formatBaseHealth(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '–';
+  if (n <= 100) return `${n.toFixed(n % 1 ? 1 : 0)}%`;
+  const pct = Math.max(0, Math.min(100, (n / 24000000) * 100));
+  return `${pct.toFixed(pct % 1 ? 1 : 0)}%`;
+}
+
+function formatPosition(value) {
+  if (!value) return '–';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    const x = value.x ?? value.X;
+    const y = value.y ?? value.Y;
+    const z = value.z ?? value.Z;
+    if ([x, y, z].every(v => v !== undefined && v !== null)) {
+      return `${x}, ${y}, ${z}`;
+    }
+  }
+  return String(value);
+}
+
+function updateBaseTelemetry() {
+  if (!rhwBase) return;
+  const money = rhwBase.money ?? rhwBase.credits ?? rhwBase.base_money;
+  const cargo = rhwBase.cargospace ?? rhwBase.cargo_space ?? rhwBase.cargo_space_left ?? rhwBase.storage_free;
+  const health = rhwBase.health ?? rhwBase.base_health;
+
+  if (els.baseMoneyVal) els.baseMoneyVal.textContent = formatCredits(money);
+  if (els.baseStorageVal) els.baseStorageVal.textContent = formatStorage(cargo);
+  if (els.baseHealthVal) els.baseHealthVal.textContent = formatBaseHealth(health);
+
+  const system = rhwBase.system_name || 'New London';
+  const region = rhwBase.region_name || 'BRETONIA';
+  const sector = rhwBase.sector_coord || 'C-6';
+  const pos = formatPosition(rhwBase.pos ?? rhwBase.base_pos);
+
+  if (els.stripLocation) els.stripLocation.innerHTML = `SYSTEM <strong>${escapeHTML(system)}</strong> // REGION <strong>${escapeHTML(region)}</strong>`;
+  if (els.stripCoords) els.stripCoords.innerHTML = `SECTOR <strong>${escapeHTML(sector)}</strong>`;
+  if (els.stripPosition) els.stripPosition.innerHTML = `POS <strong>${escapeHTML(pos)}</strong>`;
+}
+
 function readinessText(state, role) {
   if (role === 'byproduct') {
     if (state === 'critical') return 'CONTAINMENT CRITICAL';
@@ -978,6 +1089,7 @@ function setStripValue(el, value, cls = '') {
 function setTelemetryStrip(connection, telemetry, cls = '') {
   setStripValue(els.stripConnection, connection, cls);
   setStripValue(els.stripTelemetry, telemetry, cls);
+  setStripValue(els.telemetryStateVal, telemetry, cls);
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
@@ -1177,6 +1289,7 @@ function render() {
   renderList(els.exportList, exports, 'NO EXPORT ASSETS DETECTED'); 
   renderList(els.byproductList, byproducts, 'NO WASTE DETECTED'); 
   renderProductionModules(); 
+  updateBaseTelemetry();
   
   const visible = sourceItems.filter(item => { const role = assetRole(item); return (!query || normalize(itemName(item)).includes(query)) && (roleFilter === 'all' || role === roleFilter); }); 
   visible.sort((a, b) => { 
