@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V1.2 Command Header</title>
+  <title>RHW Command Dashboard · V1.3 Stability Pass</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -203,6 +203,8 @@
     }
 
     .command-strip strong { color: var(--gold); font-weight: normal; }
+    .command-strip strong.warn { color: var(--warn); }
+    .command-strip strong.danger { color: var(--danger); }
 
     /* --- ALERTS & PRODUCTION --- */
     .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -676,9 +678,9 @@
   </header>
 
   <div class="command-strip">
-    <span>CONNECTION <strong>SECURE</strong></span>
+    <span>CONNECTION <strong id="stripConnection">SECURE</strong></span>
     <span>//</span>
-    <span>DARKSTAT TELEMETRY <strong>LIVE</strong></span>
+    <span>DARKSTAT TELEMETRY <strong id="stripTelemetry">LIVE</strong></span>
     <span>//</span>
     <span>BMM CHARTER <strong>ACTIVE</strong></span>
     <span>//</span>
@@ -758,11 +760,12 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V1.2 COMMAND HEADER) - VISUAL POLISH + DARKSTAT BARS
+   RHW DASHBOARD LOGIC (V1.3 STABILITY PASS) - COMMAND HEADER + DARKSTAT BARS
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
-const AUTO_REFRESH_MS = 60000; 
+const AUTO_REFRESH_MS = 60000;
+const FETCH_TIMEOUT_MS = 18000; 
 
 const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods']; 
 const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components', 'niobium']; 
@@ -785,6 +788,7 @@ const CUSTOM_ALERTS = {
   'food rations': { type: 'min', red: 2500, yellow: 15000 }, 
   'consumer goods': { type: 'min', red: 2500, yellow: 15000 }, 
   'gold': { type: 'min', red: 5000, yellow: 15000 }, 
+  'niobium': { type: 'min', red: 5000, yellow: 10000 }, 
   'reactor systems': { type: 'min', red: 200, yellow: 500 }, 
   'superstructure systems': { type: 'min', red: 200, yellow: 500 }, 
   'prototype components': { type: 'min', red: 2500, yellow: 5000 }, 
@@ -819,6 +823,8 @@ const els = {
   itemCount: document.getElementById('itemCount'), 
   syncTimeVal: document.getElementById('syncTimeVal'),
   syncCountdown: document.getElementById('syncCountdown'),
+  stripConnection: document.getElementById('stripConnection'),
+  stripTelemetry: document.getElementById('stripTelemetry'),
   maintenanceList: document.getElementById('maintenanceList'), 
   exportList: document.getElementById('exportList'), 
   byproductList: document.getElementById('byproductList'), 
@@ -961,6 +967,33 @@ function updateSyncCountdown() {
   }
   const remaining = Math.max(0, Math.ceil((nextSyncAt - Date.now()) / 1000));
   els.syncCountdown.textContent = `${remaining}s`;
+}
+
+function setStripValue(el, value, cls = '') {
+  if (!el) return;
+  el.textContent = value;
+  el.className = cls;
+}
+
+function setTelemetryStrip(connection, telemetry, cls = '') {
+  setStripValue(els.stripConnection, connection, cls);
+  setStripValue(els.stripTelemetry, telemetry, cls);
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error(`TELEMETRY TIMEOUT AFTER ${Math.round(timeoutMs / 1000)}S`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function stockState(item) { 
@@ -1180,6 +1213,7 @@ async function loadData() {
   }
 
   document.body.classList.add('syncing');
+  setTelemetryStrip('SYNCING', 'POLLING', 'warn');
   els.liveStatus.textContent = 'UPLINK IN PROGRESS...';
   els.liveStatus.style.color = '#c28722';
   updateSyncCountdown();
@@ -1192,7 +1226,7 @@ async function loadData() {
   els.productionGrid.style.opacity = '0.4';
 
   try {
-    const response = await fetch(API_URL, { method: 'POST', headers: { 'Accept': 'application/json' } });
+    const response = await fetchWithTimeout(API_URL, { method: 'POST', headers: { 'Accept': 'application/json' } });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
@@ -1202,11 +1236,13 @@ async function loadData() {
     items = Array.isArray(rhwBase.shop_items) ? rhwBase.shop_items : [];
     lastLoaded = new Date();
     if (els.itemCount) els.itemCount.textContent = operationalItems().length;
+    setTelemetryStrip('SECURE', 'LIVE');
     els.liveStatus.textContent = 'CONNECTION SECURE';
     els.liveStatus.style.color = '#4a8f62';
     render();
   } catch (error) {
     console.error(error);
+    setTelemetryStrip('FAILED', 'ERROR', 'danger');
     els.liveStatus.textContent = 'UPLINK FAILED';
     els.liveStatus.style.color = '#A52A2A';
     if (els.errorBox) {
