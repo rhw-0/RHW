@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V1.7.2 Feedstock Progress</title>
+  <title>RHW Command Dashboard · V1.8 Cleanup Pass</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -60,73 +60,10 @@
       opacity: 0.22;
     }
 
-    /* --- RP HEADER SECTION --- */
-    header {
-      padding: 40px 20px 20px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      isolation: isolate;
-    }
-
-    header::before {
-      content: '';
-      position: absolute;
-      inset: -220px 0 auto 0;
-      height: 420px;
-      background:
-        radial-gradient(circle at 50% 48%, rgba(255, 178, 70, 0.13), transparent 8%),
-        radial-gradient(circle at 50% 48%, rgba(47, 128, 237, 0.08), transparent 16%),
-        radial-gradient(circle at 50% 48%, rgba(212, 175, 55, 0.10), transparent 32%);
-      filter: blur(2px);
-      animation: corePulse 7s ease-in-out infinite;
-      z-index: -1;
-    }
-
+    /* --- GLOBAL ANIMATIONS / FOOTER RULES --- */
     @keyframes corePulse {
       0%, 100% { opacity: 0.72; transform: scale(1); }
       50% { opacity: 1; transform: scale(1.03); }
-    }
-
-    .crest {
-      width: 140px;
-      height: auto;
-      margin-bottom: 15px;
-      filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.18));
-      transition: filter 0.25s ease, transform 0.25s ease;
-    }
-
-    .crest:hover {
-      transform: translateY(-1px);
-      filter: drop-shadow(0 0 28px rgba(212, 175, 55, 0.30));
-    }
-
-    h1 {
-      margin: 0;
-      font-family: var(--font-title);
-      color: var(--gold);
-      font-size: 42px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-
-    .subtitle {
-      font-family: var(--font-tech);
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: 5px;
-      letter-spacing: 0.05em;
-    }
-
-    .hrc-gold {
-      border: 0;
-      height: 1px;
-      background: var(--gold);
-      margin: 25px auto;
-      width: 80%;
-      max-width: 800px;
-      box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
     }
 
     .hrc-dark {
@@ -137,27 +74,6 @@
       width: 90%;
     }
 
-    /* --- RP METADATA TABLE --- */
-    .rp-meta {
-      display: table;
-      margin: 0 auto;
-      text-align: left;
-      font-family: var(--font-tech);
-      font-size: 14px;
-      border-collapse: separate;
-      border-spacing: 15px 8px;
-    }
-
-    .rp-meta-row { display: table-row; }
-    .rp-meta-lbl { 
-      display: table-cell; 
-      color: var(--gold); 
-      font-weight: bold; 
-      text-transform: uppercase;
-    }
-    .rp-meta-val { display: table-cell; color: var(--text); }
-    .encryption-val { color: var(--danger); font-weight: bold; }
-
     /* --- MAIN DASHBOARD LAYOUT --- */
     main {
       padding: 0 32px 40px;
@@ -167,22 +83,11 @@
       margin: 0 auto;
     }
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-
-    .card, .panel, .alert-card {
+    .panel, .alert-card {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 4px;
     }
-
-    .card { padding: 16px; border-top: 2px solid var(--gold-soft); }
-    .label { color: var(--muted); font-family: var(--font-tech); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; }
-    .value { margin-top: 6px; font-family: var(--font-title); font-size: 28px; color: var(--gold); letter-spacing: 0.05em; }
-    .sync-countdown { margin-top: 4px; font-family: var(--font-tech); font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
 
     .command-strip {
       max-width: 1400px;
@@ -225,6 +130,18 @@
     .alert-list li.alert-low { border-left-color: var(--warn); }
     .alert-list li.alert-ok { border-left-color: var(--good); }
     .alert-list small { color: var(--muted); display: block; margin-top: 2px; }
+
+    .overview-row-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .overview-row-qty {
+      font-size: 16px;
+      font-family: var(--font-tech);
+      white-space: nowrap;
+    }
 
     .progress-wrap {
       margin-top: 7px;
@@ -424,11 +341,7 @@
     }
     @media (max-width: 900px) {
       main { padding-left: 16px; padding-right: 16px; gap: 16px; }
-      header { padding: 28px 14px 16px; }
-      .crest { width: 112px; }
-      .cards, .summary-grid { grid-template-columns: 1fr; }
-      .rp-meta { font-size: 12px; border-spacing: 10px 7px; }
-      h1 { font-size: 32px; }
+      .summary-grid { grid-template-columns: 1fr; }
       .panel-head { align-items: stretch; flex-direction: column; }
       .controls { flex-direction: column; }
       input, select, button { width: 100%; min-height: 42px; }
@@ -438,7 +351,7 @@
     }
   
 
-    /* --- V1.2 COMMAND HEADER --- */
+    /* --- COMMAND HEADER --- */
     .command-header {
       position: relative;
       overflow: hidden;
@@ -865,7 +778,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V1.7.2 FEEDSTOCK PROGRESS) - COMMAND HEADER + DARKSTAT BARS
+   RHW DASHBOARD LOGIC (V1.8 CLEANUP PASS) - COMMAND HEADER + UNIFIED OVERVIEW ROWS
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -1324,6 +1237,33 @@ function feedstockAnalysis(item) {
   return { key, rule, quantity: q, cycles, state };
 }
 
+function renderOverviewRow({ state, role, name, detail = '', quantityValue = 0, progress = '', extraClass = '' }) {
+  const rowClass = `alert-${state}${extraClass ? ` ${extraClass}` : ''}`;
+  const safeDetail = detail ? `<small>${escapeHTML(detail)}</small>` : '';
+
+  return `<li class="${rowClass}">
+            <span><strong>${escapeHTML(name)}</strong>${safeDetail}${progress}</span>
+            <div class="overview-row-meta">
+              <strong class="overview-row-qty">${number(quantityValue)}</strong>
+              ${statusPill(state, role)}
+            </div>
+          </li>`;
+}
+
+function renderOverviewEmptyRow(text, statusText = 'SECURE') {
+  return `<li><span>${escapeHTML(text)}</span><span class="pill ok">${escapeHTML(statusText)}</span></li>`;
+}
+
+function overviewDetail(item, state, role) {
+  if (role === 'byproduct') {
+    if (state === 'ok') return readinessText(state, role);
+    if (state === 'low') return 'WARNING: HIGH VOLUME';
+    return 'CRITICAL OVERFLOW';
+  }
+
+  return state === 'ok' ? readinessText(state, role) : `DEFICIT: ${number(needAmount(item))}`;
+}
+
 function renderFeedstockRows() {
   const rows = FEEDSTOCK.map(name => {
     const item = findCommodity(name);
@@ -1331,23 +1271,27 @@ function renderFeedstockRows() {
     const fallbackKey = keyFromName(name);
 
     if (!item) {
-      return `<li class="alert-critical feedstock-row">
-                <span><strong>${escapeHTML(display)}</strong><small>0 CYCLES AVAILABLE</small>${renderFeedstockProgress(null, 'critical', fallbackKey)}</span>
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <strong style="font-size:16px; font-family: var(--font-tech);">0</strong>
-                  ${statusPill('critical', 'feedstock')}
-                </div>
-              </li>`;
+      return renderOverviewRow({
+        state: 'critical',
+        role: 'feedstock',
+        name: display,
+        detail: '0 CYCLES AVAILABLE',
+        quantityValue: 0,
+        progress: renderFeedstockProgress(null, 'critical', fallbackKey),
+        extraClass: 'feedstock-row'
+      });
     }
 
     const analysis = feedstockAnalysis(item);
-    return `<li class="alert-${analysis.state} feedstock-row">
-              <span><strong>${escapeHTML(displayName(item))}</strong><small>${number(analysis.cycles)} CYCLES AVAILABLE</small>${renderFeedstockProgress(item, analysis.state, fallbackKey)}</span>
-              <div style="display:flex; align-items:center; gap:12px;">
-                <strong style="font-size:16px; font-family: var(--font-tech);">${number(analysis.quantity)}</strong>
-                ${statusPill(analysis.state, 'feedstock')}
-              </div>
-            </li>`;
+    return renderOverviewRow({
+      state: analysis.state,
+      role: 'feedstock',
+      name: displayName(item),
+      detail: `${number(analysis.cycles)} CYCLES AVAILABLE`,
+      quantityValue: analysis.quantity,
+      progress: renderFeedstockProgress(item, analysis.state, fallbackKey),
+      extraClass: 'feedstock-row'
+    });
   }).join('');
 
   return `<li class="feedstock-divider"><span>Industrial Feedstock</span><span class="count-badge">${FEEDSTOCK.length}</span></li>${rows}`;
@@ -1355,57 +1299,46 @@ function renderFeedstockRows() {
 
 function renderFacilityList(target, maintenance, emptyText) {
   if (!maintenance.length) {
-    target.innerHTML = `<li><span>${emptyText}</span><span class="pill ok">SECURE</span></li>${renderFeedstockRows()}`;
+    target.innerHTML = renderOverviewEmptyRow(emptyText) + renderFeedstockRows();
     return;
   }
 
   const maintenanceRows = maintenance.map(item => {
     const state = stockState(item);
     const role = assetRole(item);
-    const need = needAmount(item);
-    const q = quantity(item);
-    const readiness = readinessText(state, role);
-    const progress = renderProgress(item);
-    const detail = state === 'ok' ? readiness : `DEFICIT: ${number(need)}`;
 
-    return `<li class="alert-${state}">
-              <span><strong>${escapeHTML(displayName(item))}</strong><small>${detail}</small>${progress}</span>
-              <div style="display:flex; align-items:center; gap:12px;">
-                <strong style="font-size:16px; font-family: var(--font-tech);">${number(q)}</strong>
-                ${statusPill(state, role)}
-              </div>
-            </li>`;
+    return renderOverviewRow({
+      state,
+      role,
+      name: displayName(item),
+      detail: overviewDetail(item, state, role),
+      quantityValue: quantity(item),
+      progress: renderProgress(item)
+    });
   }).join('');
 
   target.innerHTML = maintenanceRows + renderFeedstockRows();
 }
 
-function renderList(target, list, emptyText) { 
-  if (!list.length) { target.innerHTML = `<li><span>${emptyText}</span><span class="pill ok">SECURE</span></li>`; return; } 
-  target.innerHTML = list.map(item => { 
-    const state = stockState(item); 
+function renderList(target, list, emptyText) {
+  if (!list.length) {
+    target.innerHTML = renderOverviewEmptyRow(emptyText);
+    return;
+  }
+
+  target.innerHTML = list.map(item => {
+    const state = stockState(item);
     const role = assetRole(item);
-    const need = needAmount(item); 
-    const q = quantity(item);
-    const readiness = readinessText(state, role);
-    const progress = renderProgress(item);
-    
-    let detail = state === 'ok' ? readiness : `DEFICIT: ${number(need)}`; 
-    
-    if (role === 'byproduct') {
-      if (state === 'ok') detail = readiness;
-      else if (state === 'low') detail = 'WARNING: HIGH VOLUME';
-      else detail = 'CRITICAL OVERFLOW';
-    }
-    
-    return `<li class="alert-${state}">
-              <span><strong>${escapeHTML(displayName(item))}</strong><small>${detail}</small>${progress}</span>
-              <div style="display:flex; align-items:center; gap:12px;">
-                <strong style="font-size:16px; font-family: var(--font-tech);">${number(q)}</strong>
-                ${statusPill(state, role)}
-              </div>
-            </li>`; 
-  }).join(''); 
+
+    return renderOverviewRow({
+      state,
+      role,
+      name: displayName(item),
+      detail: overviewDetail(item, state, role),
+      quantityValue: quantity(item),
+      progress: renderProgress(item)
+    });
+  }).join('');
 }
 
 function render() { 
