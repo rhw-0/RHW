@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V1.5 Header Telemetry</title>
+  <title>RHW Command Dashboard · V1.6 Cleanup Pass</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -205,6 +205,8 @@
     .command-strip strong { color: var(--gold); font-weight: normal; }
     .command-strip strong.warn { color: var(--warn); }
     .command-strip strong.danger { color: var(--danger); }
+    .status-chip strong.warn { color: var(--warn); }
+    .status-chip strong.danger { color: var(--danger); }
 
     /* --- ALERTS & PRODUCTION --- */
     .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -830,7 +832,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V1.5 HEADER TELEMETRY) - COMMAND HEADER + DARKSTAT BARS
+   RHW DASHBOARD LOGIC (V1.6 CLEANUP PASS) - COMMAND HEADER + DARKSTAT BARS
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -890,11 +892,8 @@ let nextSyncAt = null;
 
 const els = { 
   liveStatus: document.getElementById('liveStatus'), 
-  itemCount: document.getElementById('itemCount'), 
   syncTimeVal: document.getElementById('syncTimeVal'),
   syncCountdown: document.getElementById('syncCountdown'),
-  stripConnection: document.getElementById('stripConnection'),
-  stripTelemetry: document.getElementById('stripTelemetry'),
   stripRegion: document.getElementById('stripRegion'),
   stripSystem: document.getElementById('stripSystem'),
   stripCoords: document.getElementById('stripCoords'),
@@ -922,7 +921,9 @@ const els = {
 
 setInterval(() => {
   const now = new Date();
-  els.rpFooterTime.textContent = now.toLocaleDateString('de-DE') + ' ' + now.toLocaleTimeString('de-DE');
+  if (els.rpFooterTime) {
+    els.rpFooterTime.textContent = now.toLocaleDateString('de-DE') + ' ' + now.toLocaleTimeString('de-DE');
+  }
   updateSyncCountdown();
 }, 1000);
 
@@ -1114,16 +1115,10 @@ function updateSyncCountdown() {
   els.syncCountdown.textContent = `${remaining}s`;
 }
 
-function setStripValue(el, value, cls = '') {
-  if (!el) return;
-  el.textContent = value;
-  el.className = cls;
-}
-
-function setTelemetryStrip(connection, telemetry, cls = '') {
-  // The location strip now shows only navigation data.
-  // Live connection state lives in the header telemetry tile.
-  setStripValue(els.telemetryStateVal, telemetry, cls);
+function setTelemetryState(telemetry, cls = '') {
+  if (!els.telemetryStateVal) return;
+  els.telemetryStateVal.textContent = telemetry;
+  els.telemetryStateVal.className = cls;
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
@@ -1325,7 +1320,7 @@ function render() {
   renderProductionModules(); 
   updateBaseTelemetry();
   
-  const visible = sourceItems.filter(item => { const role = assetRole(item); return (!query || normalize(itemName(item)).includes(query)) && (roleFilter === 'all' || role === roleFilter); }); 
+  const visible = sourceItems.filter(item => { const role = assetRole(item); return (!query || normalize(displayName(item)).includes(query) || normalize(itemName(item)).includes(query)) && (roleFilter === 'all' || role === roleFilter); }); 
   visible.sort((a, b) => { 
     let valA, valB; 
     if (sortCol === 'name') { valA = displayName(a); valB = displayName(b); } 
@@ -1341,7 +1336,7 @@ function render() {
   
   els.itemsBody.innerHTML = visible.map(item => { 
     const role = assetRole(item); const state = stockState(item); const need = needAmount(item); 
-    const needDisplay = role === 'byproduct' ? '–' : (need ? number(need) : '–');
+    const needDisplay = (role === 'byproduct' || role === 'procurement') ? '–' : (need ? number(need) : '–');
     return `<tr><td><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td>${number(quantity(item))}</td><td>${needDisplay}</td><td>${number(priceSell(item))}</td><td>${number(priceBuy(item))}</td></tr>`; 
   }).join(''); 
   
@@ -1360,7 +1355,7 @@ async function loadData() {
   }
 
   document.body.classList.add('syncing');
-  setTelemetryStrip('SYNCING', 'POLLING', 'warn');
+  setTelemetryState('POLLING', 'warn');
   els.liveStatus.textContent = 'UPLINK IN PROGRESS...';
   els.liveStatus.style.color = '#c28722';
   updateSyncCountdown();
@@ -1382,14 +1377,13 @@ async function loadData() {
 
     items = Array.isArray(rhwBase.shop_items) ? rhwBase.shop_items : [];
     lastLoaded = new Date();
-    if (els.itemCount) els.itemCount.textContent = operationalItems().length;
-    setTelemetryStrip('SECURE', 'LIVE');
+    setTelemetryState('LIVE');
     els.liveStatus.textContent = 'CONNECTION SECURE';
     els.liveStatus.style.color = '#4a8f62';
     render();
   } catch (error) {
     console.error(error);
-    setTelemetryStrip('FAILED', 'ERROR', 'danger');
+    setTelemetryState('ERROR', 'danger');
     els.liveStatus.textContent = 'UPLINK FAILED';
     els.liveStatus.style.color = '#A52A2A';
     if (els.errorBox) {
