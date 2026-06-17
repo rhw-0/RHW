@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V1.9.1 Corrected Overview</title>
+  <title>RHW Command Dashboard · V2.0 Core Refactor</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,10 +20,8 @@
       --gold: #d4af37;
       --gold-soft: rgba(212, 175, 55, 0.1);
       --danger: #A52A2A; 
-      --danger-soft: rgba(165, 42, 42, 0.15);
       --warn: #c28722;
       --good: #4a8f62;
-      --good-soft: rgba(74, 143, 98, 0.15);
       --blue-soft: rgba(47, 128, 237, 0.16);
       --waste: #a89f91;
       --waste-soft: rgba(168, 159, 145, 0.15);
@@ -108,8 +106,6 @@
     }
 
     .command-strip strong { color: var(--gold); font-weight: normal; }
-    .command-strip strong.warn { color: var(--warn); }
-    .command-strip strong.danger { color: var(--danger); }
     .status-chip strong.warn { color: var(--warn); }
     .status-chip strong.danger { color: var(--danger); }
 
@@ -189,25 +185,7 @@
       background: linear-gradient(90deg, rgba(212,175,55,0.045), rgba(255,255,255,0.015));
     }
 
-    .feedstock-cycle-note {
-      color: var(--muted);
-      display: block;
-      margin-top: 2px;
-      font-family: var(--font-tech);
-      font-size: 10px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
 
-    .readiness {
-      display: inline-block;
-      margin-top: 4px;
-      color: var(--muted);
-      font-family: var(--font-tech);
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
 
 
     .next-gap {
@@ -776,7 +754,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V1.9.1 CORRECTED OVERVIEW) - COMMAND HEADER + UNIFIED OVERVIEW ROWS
+   RHW DASHBOARD LOGIC (V2.0 CORE REFACTOR) - CACHED DATA + MODULAR RENDERING
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -788,11 +766,6 @@ const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 
 const BYPRODUCTS = ['toxic waste', 'scrap metal'];
 const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore'];
 const FEEDSTOCK = ['gold ore', 'niobium ore', 'military salvage'];
-const FEEDSTOCK_RULES = {
-  'gold ore': { required: 425, feeds: 'Gold Refining' },
-  'niobium ore': { required: 425, feeds: 'Niobium Refining' },
-  'military salvage': { required: 255, feeds: 'Prototype Components' }
-};
 
 const EXPORT_ORDER = ['Reactor Systems', 'Superstructure Systems', 'Multi-Mode Focusing Chamber', 'Prototype Components', 'Gold', 'Niobium'];
 
@@ -838,6 +811,8 @@ const BAR_MAX_FALLBACKS = {
 };
 
 let items = []; let lastLoaded = null; let rhwBase = null;
+let itemsByKey = new Map();
+let operationalItemsCache = [];
 let sortCol = 'name'; let sortAsc = true;
 let refreshTimer = null;
 let isLoading = false;
@@ -1126,7 +1101,28 @@ function assetRole(item) {
   return 'other'; 
 }
 
-function operationalItems() { const seen = new Set(); return items.filter(item => { const role = assetRole(item); if (role === 'other') return false; const key = role + ':' + commodityKey(item); if (seen.has(key)) return false; seen.add(key); return true; }); }
+function rebuildItemCaches() {
+  itemsByKey = new Map();
+  operationalItemsCache = [];
+  const seenOperational = new Set();
+
+  for (const item of items) {
+    const key = commodityKey(item);
+    if (!itemsByKey.has(key)) itemsByKey.set(key, item);
+
+    const role = assetRole(item);
+    if (role === 'other') continue;
+
+    const uniqueKey = `${role}:${key}`;
+    if (seenOperational.has(uniqueKey)) continue;
+    seenOperational.add(uniqueKey);
+    operationalItemsCache.push(item);
+  }
+}
+
+function operationalItems() {
+  return operationalItemsCache;
+}
 function roleLabel(role) { if (role === 'maintenance') return 'FACILITY'; if (role === 'export') return 'EXPORT'; if (role === 'byproduct') return 'WASTE'; return 'PROCUREMENT'; }
 
 /* NEU: Die Status-Schildchen passen sich jetzt der Art der Fracht an! */
@@ -1153,11 +1149,11 @@ function statusPill(state, role) { return `<span class="pill ${state}">${statusL
 
 function priceSell(item) { return item.price_to_sell_to_base ?? item.sell_price ?? item.price_sell ?? item.price ?? 0; }
 function priceBuy(item) { return item.price_to_buy_from_base ?? item.buy_price ?? item.price_buy ?? item.price ?? 0; }
-function findCommodity(name) { const key = keyFromName(name); return operationalItems().find(item => commodityKey(item) === key) || items.find(item => commodityKey(item) === key) || null; }
+function findCommodity(name) { return itemsByKey.get(keyFromName(name)) || null; }
 function stockFor(name) { const item = findCommodity(name); return item ? quantity(item) : 0; }
 function displayRecipeName(name) { return displayName({ name }); }
 
-function handleSort(e) { const th = e.target.closest('th'); if (!th || !th.dataset.sort) return; const col = th.dataset.sort; if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; } render(); }
+function handleSort(e) { const th = e.target.closest('th'); if (!th || !th.dataset.sort) return; const col = th.dataset.sort; if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; } renderManifest(); }
 function updateSortArrows() { els.tableHeaders.forEach(th => { let text = th.textContent.replace(/ [▲▼]/, ''); if (th.dataset.sort === sortCol) { text += sortAsc ? ' ▲' : ' ▼'; } th.textContent = text; }); }
 
 function analyzeRecipe(recipe) {
@@ -1226,13 +1222,24 @@ function renderProductionModules() {
 }
 
 
+function feedstockRequirement(name) {
+  const key = keyFromName(name);
+
+  for (const recipe of RECIPES) {
+    const ingredient = recipe.ingredients.find(([ingredientName]) => keyFromName(ingredientName) === key);
+    if (ingredient) return Number(ingredient[1]) || 0;
+  }
+
+  return 0;
+}
+
 function feedstockAnalysis(item) {
   const key = commodityKey(item);
-  const rule = FEEDSTOCK_RULES[key];
+  const required = feedstockRequirement(key);
   const q = quantity(item);
-  const cycles = rule && rule.required > 0 ? Math.floor(q / rule.required) : 0;
+  const cycles = required > 0 ? Math.floor(q / required) : 0;
   const state = cycles <= 0 ? 'critical' : cycles < 10 ? 'low' : 'ok';
-  return { key, rule, quantity: q, cycles, state };
+  return { key, required, quantity: q, cycles, state };
 }
 
 function renderOverviewRow({ state, role, name, detail = '', quantityValue = 0, progress = '', extraClass = '' }) {
@@ -1339,56 +1346,95 @@ function renderList(target, list, emptyText) {
   }).join('');
 }
 
-function render() { 
-  const query = normalize(els.search.value); const roleFilter = els.roleFilter.value; const sourceItems = operationalItems(); 
-  const sortByName = (a, b) => displayName(a).localeCompare(displayName(b)); 
-  
-  const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort(sortByName); 
-  
-  const exports = sourceItems.filter(item => assetRole(item) === 'export').sort((a, b) => {
-    let idxA = EXPORT_ORDER.indexOf(displayName(a));
-    let idxB = EXPORT_ORDER.indexOf(displayName(b));
-    if (idxA === -1) idxA = 999;
-    if (idxB === -1) idxB = 999;
-    if (idxA !== idxB) return idxA - idxB;
-    return sortByName(a, b);
-  }); 
+function renderOverview() {
+  const sourceItems = operationalItems();
+  const sortByName = (a, b) => displayName(a).localeCompare(displayName(b));
 
-  const byproducts = sourceItems.filter(item => assetRole(item) === 'byproduct').sort(sortByName);
-  
-  els.maintenanceCount.textContent = maintenance.length; 
-  els.exportCount.textContent = exports.length; 
-  els.byproductCount.textContent = byproducts.length; 
-  
-  renderFacilityList(els.maintenanceList, maintenance, 'FACILITY RESERVES STABLE'); 
-  renderList(els.exportList, exports, 'NO EXPORT ASSETS DETECTED'); 
-  renderList(els.byproductList, byproducts, 'NO WASTE DETECTED'); 
-  renderProductionModules(); 
+  const maintenance = sourceItems
+    .filter(item => assetRole(item) === 'maintenance')
+    .sort(sortByName);
+
+  const exports = sourceItems
+    .filter(item => assetRole(item) === 'export')
+    .sort((a, b) => {
+      let idxA = EXPORT_ORDER.indexOf(displayName(a));
+      let idxB = EXPORT_ORDER.indexOf(displayName(b));
+      if (idxA === -1) idxA = 999;
+      if (idxB === -1) idxB = 999;
+      if (idxA !== idxB) return idxA - idxB;
+      return sortByName(a, b);
+    });
+
+  const byproducts = sourceItems
+    .filter(item => assetRole(item) === 'byproduct')
+    .sort(sortByName);
+
+  els.maintenanceCount.textContent = maintenance.length;
+  els.exportCount.textContent = exports.length;
+  els.byproductCount.textContent = byproducts.length;
+
+  renderFacilityList(els.maintenanceList, maintenance, 'FACILITY RESERVES STABLE');
+  renderList(els.exportList, exports, 'NO EXPORT ASSETS DETECTED');
+  renderList(els.byproductList, byproducts, 'NO WASTE DETECTED');
+}
+
+function renderManifest() {
+  const query = normalize(els.search.value);
+  const roleFilter = els.roleFilter.value;
+
+  const visible = operationalItems().filter(item => {
+    const role = assetRole(item);
+    const matchesQuery = !query
+      || normalize(displayName(item)).includes(query)
+      || normalize(itemName(item)).includes(query);
+    return matchesQuery && (roleFilter === 'all' || role === roleFilter);
+  });
+
+  visible.sort((a, b) => {
+    let valA;
+    let valB;
+
+    if (sortCol === 'name') { valA = displayName(a); valB = displayName(b); }
+    else if (sortCol === 'role') { valA = assetRole(a); valB = assetRole(b); }
+    else if (sortCol === 'status') {
+      const weight = { critical: 1, low: 2, ok: 3 };
+      valA = weight[stockState(a)];
+      valB = weight[stockState(b)];
+    }
+    else if (sortCol === 'quantity') { valA = quantity(a); valB = quantity(b); }
+    else if (sortCol === 'need') { valA = needAmount(a); valB = needAmount(b); }
+    else if (sortCol === 'sell') { valA = priceSell(a); valB = priceSell(b); }
+    else if (sortCol === 'buy') { valA = priceBuy(a); valB = priceBuy(b); }
+
+    if (valA < valB) return sortAsc ? -1 : 1;
+    if (valA > valB) return sortAsc ? 1 : -1;
+    return 0;
+  });
+
+  updateSortArrows();
+
+  els.itemsBody.innerHTML = visible.map(item => {
+    const role = assetRole(item);
+    const state = stockState(item);
+    const need = needAmount(item);
+    const needDisplay = (role === 'byproduct' || role === 'procurement')
+      ? '–'
+      : (need ? number(need) : '–');
+
+    return `<tr><td><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td>${number(quantity(item))}</td><td>${needDisplay}</td><td>${number(priceSell(item))}</td><td>${number(priceBuy(item))}</td></tr>`;
+  }).join('');
+
+  els.itemsBody.style.opacity = '1';
+}
+
+function renderAll() {
+  renderOverview();
+  renderProductionModules();
+  renderManifest();
   updateBaseTelemetry();
-  
-  const visible = sourceItems.filter(item => { const role = assetRole(item); return (!query || normalize(displayName(item)).includes(query) || normalize(itemName(item)).includes(query)) && (roleFilter === 'all' || role === roleFilter); }); 
-  visible.sort((a, b) => { 
-    let valA, valB; 
-    if (sortCol === 'name') { valA = displayName(a); valB = displayName(b); } 
-    else if (sortCol === 'role') { valA = assetRole(a); valB = assetRole(b); } 
-    else if (sortCol === 'status') { const weight = { critical: 1, low: 2, ok: 3 }; valA = weight[stockState(a)]; valB = weight[stockState(b)]; } 
-    else if (sortCol === 'quantity') { valA = quantity(a); valB = quantity(b); } 
-    else if (sortCol === 'need') { valA = needAmount(a); valB = needAmount(b); } 
-    else if (sortCol === 'sell') { valA = priceSell(a); valB = priceSell(b); } 
-    else if (sortCol === 'buy') { valA = priceBuy(a); valB = priceBuy(b); } 
-    if (valA < valB) return sortAsc ? -1 : 1; if (valA > valB) return sortAsc ? 1 : -1; return 0; 
-  }); 
-  updateSortArrows(); 
-  
-  els.itemsBody.innerHTML = visible.map(item => { 
-    const role = assetRole(item); const state = stockState(item); const need = needAmount(item); 
-    const needDisplay = (role === 'byproduct' || role === 'procurement') ? '–' : (need ? number(need) : '–');
-    return `<tr><td><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td>${number(quantity(item))}</td><td>${needDisplay}</td><td>${number(priceSell(item))}</td><td>${number(priceBuy(item))}</td></tr>`; 
-  }).join(''); 
-  
-  els.itemsBody.style.opacity = '1'; els.productionGrid.style.opacity = '1'; 
-  const syncTime = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE') : '–'; 
-  els.syncTimeVal.textContent = syncTime;
+
+  els.productionGrid.style.opacity = '1';
+  els.syncTimeVal.textContent = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE') : '–';
 }
 
 async function loadData() {
@@ -1418,15 +1464,19 @@ async function loadData() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
-    rhwBase = data.find(base => normalize(base.name) === BASE_NAME || normalize(base.nickname) === BASE_NAME);
-    if (!rhwBase) throw new Error('RHW NOT FOUND IN DATASTREAM.');
+    if (!Array.isArray(data)) throw new Error('INVALID TELEMETRY RESPONSE.');
 
-    items = Array.isArray(rhwBase.shop_items) ? rhwBase.shop_items : [];
+    rhwBase = data.find(base => normalize(base?.name) === BASE_NAME || normalize(base?.nickname) === BASE_NAME);
+    if (!rhwBase || typeof rhwBase !== 'object') throw new Error('RHW NOT FOUND IN DATASTREAM.');
+    if (!Array.isArray(rhwBase.shop_items)) throw new Error('INVALID RHW SHOP DATA.');
+
+    items = rhwBase.shop_items;
+    rebuildItemCaches();
     lastLoaded = new Date();
     setTelemetryState('LIVE');
     els.liveStatus.textContent = 'CONNECTION SECURE';
     els.liveStatus.style.color = '#4a8f62';
-    render();
+    renderAll();
   } catch (error) {
     console.error(error);
     setTelemetryState('ERROR', 'danger');
@@ -1448,7 +1498,7 @@ async function loadData() {
   }
 }
 
-els.search.addEventListener('input', render); els.roleFilter.addEventListener('change', render); els.refreshBtn.addEventListener('click', loadData); els.tableHeaders.forEach(th => th.addEventListener('click', handleSort)); 
+els.search.addEventListener('input', renderManifest); els.roleFilter.addEventListener('change', renderManifest); els.refreshBtn.addEventListener('click', loadData); els.tableHeaders.forEach(th => th.addEventListener('click', handleSort)); 
 loadData();
 </script>
 </body>
