@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V1.8 Cleanup Pass</title>
+  <title>RHW Command Dashboard · V1.9.1 Corrected Overview</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -168,23 +168,21 @@
     .waste-panel .alert-title span:first-child { color: var(--waste); }
     .waste-panel .alert-list li { background: linear-gradient(90deg, rgba(168,159,145,0.055), rgba(255,255,255,0.015)); }
 
-    .feedstock-divider {
-      margin: 13px 0 0;
-      padding: 11px 0 3px;
+    .alert-list li.feedstock-divider {
+      margin: 13px 0 12px;
+      padding: 11px 0 8px;
+      border-left: 0;
       border-top: 1px solid rgba(212,175,55,0.20);
+      border-bottom: 1px solid var(--line);
+      background: transparent;
       display: flex;
       justify-content: space-between;
       align-items: center;
       color: var(--gold);
-      font-family: var(--font-tech);
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .feedstock-divider .count-badge {
-      font-size: 11px;
-      color: var(--muted);
+      font-family: var(--font-title);
+      font-size: 22px;
+      letter-spacing: 0.05em;
+      text-transform: none;
     }
 
     .alert-list li.feedstock-row {
@@ -778,7 +776,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V1.8 CLEANUP PASS) - COMMAND HEADER + UNIFIED OVERVIEW ROWS
+   RHW DASHBOARD LOGIC (V1.9.1 CORRECTED OVERVIEW) - COMMAND HEADER + UNIFIED OVERVIEW ROWS
    ========================================================================== */
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
@@ -802,7 +800,7 @@ const RECIPES = [
   { product: 'Reactor Systems', output: 1, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] }, 
   { product: 'Superstructure Systems', output: 1, byproducts: [], ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] }, 
   { product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] }, 
-  { product: 'Prototype Components', output: 25, byproducts: [], ingredients: [['Military Salvage',255]] }, 
+  { product: 'Prototype Components', output: 25, byproducts: [['Scrap Metal', 450]], ingredients: [['Military Salvage',255]] }, 
   { product: 'Gold', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Gold Ore',425], ['MOX',170], ['Industrial Materials',85]] }, 
   { product: 'Niobium', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Niobium Ore',425], ['MOX',170], ['Industrial Materials',85]] }
 ];
@@ -981,7 +979,7 @@ function renderFeedstockProgress(item, state, fallbackKey) {
 function formatCredits(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return '–';
-  return `${n.toLocaleString('de-DE')} CR`;
+  return `$${n.toLocaleString('de-DE')}`;
 }
 
 function formatStorage(value) {
