@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V3.0 Stable Release</title>
+  <title>RHW Command Dashboard · V3.0.1 Stable Release</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -91,11 +91,11 @@
 
     .hrc-dark { border: 0; height: 1px; background: var(--line); margin: 40px auto 20px; width: 90%; }
 
-    /* --- LORE TICKER UPDATED (WITH GRADIENT FADES) --- */
+    /* --- LORE TICKER FIX --- */
     .ticker-wrap {
       width: 100%; background: rgba(0,0,0,0.85); border-bottom: 1px solid rgba(212,175,55,0.3);
       padding: 6px 0; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.7); margin-bottom: 20px;
-      position: relative; display: flex;
+      position: relative; display: flex; white-space: nowrap;
     }
     .ticker-wrap::before, .ticker-wrap::after {
       content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; pointer-events: none;
@@ -103,8 +103,16 @@
     .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent); }
     .ticker-wrap::after { right: 0; background: linear-gradient(-90deg, var(--bg), transparent); }
     
-    .ticker { display: flex; width: max-content; animation: tickerAnim 120s linear infinite; }
-    .ticker span { padding-right: 50px; font-family: var(--font-tech); font-size: 12px; color: rgba(212,175,55,0.8); letter-spacing: 0.15em; text-transform: uppercase; }
+    /* FIX: white-space: nowrap zwingt den Text in EINE Zeile! */
+    .ticker { 
+      display: flex; width: max-content; white-space: nowrap; 
+      /* Langsamere Animation, da der Text jetzt extrem lang ist */
+      animation: tickerAnim 300s linear infinite; 
+    }
+    .ticker span { 
+      flex-shrink: 0; white-space: nowrap; padding-right: 50px; font-family: var(--font-tech); font-size: 12px; 
+      color: rgba(212,175,55,0.8); letter-spacing: 0.15em; text-transform: uppercase; 
+    }
     @keyframes tickerAnim { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
     main { padding: 0 32px 40px; display: grid; gap: 24px; max-width: 1400px; margin: 0 auto; }
@@ -260,7 +268,6 @@
     @keyframes uplinkSweep { from { transform: translateY(-120%); } to { transform: translateY(720%); } }
     @keyframes uplinkBlink { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; text-shadow: 0 0 10px var(--warn); } }
 
-    /* --- HOLOGRAPHIC TOOLTIP --- */
     #holoTooltip {
       position: fixed; pointer-events: none; background: rgba(10, 12, 15, 0.95); border: 1px solid var(--gold);
       color: var(--gold); padding: 6px 10px; font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em;
@@ -472,10 +479,10 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V3.0 STABLE) 
+   RHW DASHBOARD LOGIC (V3.0.1 STABLE) 
    ========================================================================== */
 
-/* --- RP LORE TICKER TEXTE (Hier einfach Sätze hinzufügen oder ändern!) --- */
+/* --- RP LORE TICKER TEXTE - JETZT MASSIV ERWEITERT --- */
 const LORE_MESSAGES = [
   "BMM SECURE CHANNEL ACTIVE",
   "RHW ACTUAL: ALL SYSTEMS NOMINAL",
@@ -485,17 +492,24 @@ const LORE_MESSAGES = [
   "MARKET UPDATE: NIOBIUM ORE DEMAND EXCEEDS QUARTERLY QUOTA BY 14%",
   "SECURITY ALERT: MOLLY REBELS SUSPECTED IN LOCAL SECTOR - REPORT ANOMALIES TO BPA",
   "MAINTENANCE: COOLANT FLUSH IN REACTOR BAY 2 SCHEDULED FOR 0800 HOURS",
+  "BPA ADVISORY: CONTRABAND SEARCHES INCREASED AT ALL JUMP GATES",
+  "HR DEPT: MANDATORY DOUBLE SHIFTS APPROVED FOR SECTOR 4 MANUFACTORIES",
+  "TRADE NETWORK: GOLD ORE SPOT PRICES SURGING DUE TO SUPPLY CHAIN DISRUPTIONS",
+  "FLEET COMMS: BRETONIA ARMED FORCES PATROL 'VANGUARD' ENTERING SECTOR",
+  "SENSOR SWEEP: MINOR METEOR SHOWER DETECTED IN QUADRANT 7 - SHIELDS AT MAX",
+  "LOGISTICS: FREIGHTER 'ALBATROSS' DOCKED AT PIER 4 - OFFLOADING SCRAP METAL",
+  "HAZMAT WARNING: TOXIC WASTE CONTAINMENT NEARING THRESHOLD IN SILO B",
+  "BMM SHAREHOLDER REPORT: Q3 PROFITS EXCEED EXPECTATIONS BY 7.2%",
+  "SYS-ADMIN: DECRYPTING LATEST NAV-DATA FOR NEW LONDON TRADELANES",
   "GLORY TO THE QUEEN"
 ];
 
-// Initialisiert das Laufband (Fügt den String 2x ein für einen nahtlosen Endlos-Loop)
 const tickerContainer = document.getElementById('tickerContainer');
 if (tickerContainer) {
   const fullText = LORE_MESSAGES.join(' /// ') + ' /// ';
   tickerContainer.innerHTML = `<span>${escapeHTML(fullText)}</span><span>${escapeHTML(fullText)}</span>`;
 }
 
-// --- HOLOGRAPHIC TOOLTIP LOGIC ---
 const holoTooltip = document.getElementById('holoTooltip');
 document.addEventListener('mousemove', e => {
   const target = e.target.closest('[data-tooltip]');
@@ -603,7 +617,6 @@ const els = {
   rpFooterTime: document.getElementById('rpFooterTime')
 };
 
-// --- FIX: MATRIX SCRAMBLE LÄSST KOMMAS/PUNKTE INTAKT ---
 function scrambleText(el, finalStr, duration = 500) {
   if(!el) return;
   finalStr = String(finalStr);
@@ -636,7 +649,6 @@ function debounce(func, wait) {
   return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func(...args), wait); };
 }
 
-// SCI-FI SYSTEMUHR MIT BLINKENDEM DOPPELPUNKT
 setInterval(() => {
   const now = new Date();
   if (els.rpFooterTime) {
@@ -699,7 +711,6 @@ function progressMeta(item) {
   return { percent: Math.max(0, Math.round(percent)), cls, max };
 }
 
-// FIX: title="..." wurde zu data-tooltip="..." für das Holografische Tooltip!
 function renderProgress(item) {
   const meta = progressMeta(item);
   return `<div class="progress-wrap" data-tooltip="${meta.percent}% of max ${number(meta.max)}"><div class="progress-fill ${meta.cls}" style="width:${meta.percent}%"></div></div>`;
@@ -799,7 +810,6 @@ function updateSyncCountdown() {
   const remaining = Math.max(0, Math.ceil((nextSyncAt - Date.now()) / 1000));
   els.syncCountdown.textContent = `${remaining}s`;
   
-  // Rote Warnung wenn Daten-Sync unmittelbar bevorsteht!
   if (remaining <= 10) els.syncCountdown.style.color = 'var(--warn)';
   else els.syncCountdown.style.color = 'var(--gold)';
 }
@@ -1079,9 +1089,8 @@ function renderManifest() {
     return matchesQuery && (roleFilter === 'all' || role === roleFilter);
   });
 
-  // NO MATCHING ASSETS FIX
   if (visible.length === 0) {
-    els.itemsBody.innerHTML = `<tr class="empty-table-row"><td colspan="7">NO ASSETS MATCHING QUERY</td></tr>`;
+    els.itemsBody.innerHTML = `<tr><td colspan="7" class="empty-state">NO ASSETS MATCHING QUERY IN LOCAL DATABANKS</td></tr>`;
     return;
   }
 
