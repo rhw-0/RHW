@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V3.1 Sci-Fi Terminal</title>
+  <title>RHW Command Dashboard · V3.0 Stable Release</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,30 +53,32 @@
       overflow-x: hidden;
     }
 
+    /* Subtiles Flackern (Stromschwankungen) */
+    @keyframes bgFlicker {
+      0%, 98%, 100% { opacity: 0.3; }
+      99% { opacity: 0.15; }
+    }
+
     body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 9999;
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9998;
       background:
         repeating-linear-gradient(180deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 4px),
         radial-gradient(circle at 50% 0%, rgba(212,175,55,0.02), transparent 45%);
       mix-blend-mode: screen;
       opacity: 0.3;
+      animation: bgFlicker 12s infinite;
     }
 
     @keyframes corePulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
+    @keyframes slowBreathe { 0%, 100% { opacity: 0.035; transform: scale(1); } 50% { opacity: 0.055; transform: scale(1.02); } }
     @keyframes bootUp {
       0% { opacity: 0; transform: translateY(15px) scale(0.99); filter: blur(5px) brightness(1.5); }
       50% { filter: blur(0px) brightness(1.2); }
       100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
     }
     @keyframes hazardMove { 0% { background-position: 0 0; } 100% { background-position: 28px 0; } }
-    @keyframes bracketBlink {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 1; text-shadow: 0 0 8px var(--gold); }
-    }
+    @keyframes bracketBlink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; text-shadow: 0 0 8px var(--gold); } }
+    @keyframes blink { 50% { opacity: 0; } }
 
     .anim-boot { opacity: 0; animation: bootUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .delay-1 { animation-delay: 0.05s; }
@@ -84,38 +86,37 @@
     .delay-3 { animation-delay: 0.25s; }
     .delay-4 { animation-delay: 0.35s; }
     .delay-5 { animation-delay: 0.45s; }
+    
+    .blink-colon { animation: blink 1s step-start infinite; }
 
     .hrc-dark { border: 0; height: 1px; background: var(--line); margin: 40px auto 20px; width: 90%; }
 
+    /* --- LORE TICKER UPDATED (WITH GRADIENT FADES) --- */
     .ticker-wrap {
-      width: 100%;
-      background: rgba(0,0,0,0.8);
-      border-bottom: 1px solid rgba(212,175,55,0.3);
-      padding: 6px 0;
-      overflow: hidden;
-      box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
-      margin-bottom: 20px;
-      display: flex;
+      width: 100%; background: rgba(0,0,0,0.85); border-bottom: 1px solid rgba(212,175,55,0.3);
+      padding: 6px 0; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.7); margin-bottom: 20px;
+      position: relative; display: flex;
     }
-    .ticker { display: flex; white-space: nowrap; animation: tickerAnim 40s linear infinite; }
+    .ticker-wrap::before, .ticker-wrap::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; pointer-events: none;
+    }
+    .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent); }
+    .ticker-wrap::after { right: 0; background: linear-gradient(-90deg, var(--bg), transparent); }
+    
+    .ticker { display: flex; width: max-content; animation: tickerAnim 120s linear infinite; }
     .ticker span { padding-right: 50px; font-family: var(--font-tech); font-size: 12px; color: rgba(212,175,55,0.8); letter-spacing: 0.15em; text-transform: uppercase; }
     @keyframes tickerAnim { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
     main { padding: 0 32px 40px; display: grid; gap: 24px; max-width: 1400px; margin: 0 auto; }
 
     .panel, .alert-card {
-      background-color: var(--panel);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.05);
-      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+      background-color: var(--panel); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.05); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
     }
 
     .command-strip {
-      max-width: 1400px; margin: -4px auto 22px; padding: 10px 32px;
-      color: var(--muted); font-family: var(--font-tech); font-size: 11px;
-      letter-spacing: 0.1em; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
-      background: linear-gradient(90deg, transparent, rgba(212,175,55,0.04), transparent);
+      max-width: 1400px; margin: -4px auto 22px; padding: 10px 32px; color: var(--muted); font-family: var(--font-tech); font-size: 11px;
+      letter-spacing: 0.1em; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.04), transparent);
     }
     .command-strip strong { color: var(--gold); font-weight: bold; }
 
@@ -129,44 +130,29 @@
     .alert-list li.alert-critical { border-left-color: var(--danger); }
     .alert-list li.alert-low { border-left-color: var(--warn); }
     .alert-list li.alert-ok { border-left-color: var(--good); }
-    
-    /* FIX: Zeilenumbruch für die Untertitel wiederhergestellt */
     .alert-list small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
 
     .overview-row-qty { font-size: 16px; font-family: var(--font-tech); white-space: nowrap; }
 
-    /* --- BUGFIX: LED PROGRESS BARS & HAZARD STRIPES --- */
     .progress-wrap {
-      margin-top: 8px; width: 100%; height: 6px; 
-      /* Leerer Balken (0%) jetzt leicht sichtbar anstatt komplett schwarz */
-      background: rgba(255,255,255,0.07); 
-      position: relative;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
-      border: 1px solid rgba(255,255,255,0.05);
+      margin-top: 8px; width: 100%; height: 6px; background: rgba(255,255,255,0.07); position: relative;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.05); cursor: crosshair !important;
     }
     
     .progress-wrap::after {
       content: ''; position: absolute; inset: 0; pointer-events: none;
-      background: repeating-linear-gradient(90deg, transparent 0, transparent 4px, rgba(10,12,15,0.9) 4px, rgba(10,12,15,0.9) 6px);
-      z-index: 2;
+      background: repeating-linear-gradient(90deg, transparent 0, transparent 4px, rgba(10,12,15,0.9) 4px, rgba(10,12,15,0.9) 6px); z-index: 2;
     }
 
-    .progress-fill { 
-      position: relative; z-index: 1; height: 100%; width: 0%; 
-      transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
-    }
-    
-    /* FIX: Helle Neon-Farben für die Balken (schützt vor den transparenten .pill Klassen) */
+    .progress-fill { position: relative; z-index: 1; height: 100%; width: 0%; transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
     .progress-fill.ok { background-color: #4ade80; box-shadow: 0 0 10px rgba(74,222,128,0.5); }
     .progress-fill.low { background-color: #fbbf24; box-shadow: 0 0 10px rgba(251,191,36,0.5); }
     .progress-fill.critical { background-color: #f87171; box-shadow: 0 0 10px rgba(248,113,113,0.5); }
     .progress-fill.waste { background-color: #d6d3d1; box-shadow: 0 0 10px rgba(214,211,209,0.3); }
 
-    /* Animierte Hazard Stripes für Gefahr/Müll */
     .progress-fill.critical, .progress-fill.waste {
       background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.25), rgba(255,255,255,0.25) 8px, transparent 8px, transparent 16px);
-      background-size: 23px 23px;
-      animation: hazardMove 1s linear infinite;
+      background-size: 23px 23px; animation: hazardMove 1s linear infinite;
     }
 
     .waste-panel { box-shadow: inset 0 0 0 1px rgba(168,159,145,0.15); }
@@ -181,21 +167,17 @@
 
     .production-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; padding: 24px; }
     .production-card { 
-      border: 1px solid rgba(255,255,255,0.05); 
-      background: linear-gradient(180deg, rgba(8,10,12,0.9), rgba(5,6,7,0.9)); 
+      border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(180deg, rgba(8,10,12,0.9), rgba(5,6,7,0.9)); 
       padding: 20px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
       clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px));
     }
     
     .production-card::after {
       content: ''; position: absolute; inset: 0;
-      background-image: 
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
       background-size: 20px 20px; pointer-events: none; z-index: 0;
     }
     .production-card > * { position: relative; z-index: 1; }
-
     .production-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--line); z-index: 2; }
     .production-card.critical::before { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
     .production-card.low::before { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
@@ -240,11 +222,17 @@
     tr { transition: background 0.1s; }
     tr:hover td { background: rgba(212, 175, 55, 0.08); text-shadow: 0 0 5px rgba(212,175,55,0.4); }
     
+    .empty-state { text-align: center; padding: 30px !important; color: var(--warn); font-size: 14px; letter-spacing: 0.15em; font-weight: bold; }
+    .empty-state::before, .empty-state::after { content: ' /// '; opacity: 0.5; }
+
     #itemsBody tr td:first-child { padding-left: 26px; }
     #itemsBody tr td:first-child strong { position: relative; display: inline-block; transition: text-shadow 0.2s, color 0.2s; }
     #itemsBody tr:hover td:first-child strong { text-shadow: 0 0 10px var(--gold); color: #fff; }
-    #itemsBody tr:hover td:first-child strong::before { content: '⌜ '; color: var(--gold); position: absolute; left: -20px; animation: bracketBlink 1s infinite; }
-    #itemsBody tr:hover td:first-child strong::after { content: ' ⌟'; color: var(--gold); position: absolute; right: -20px; animation: bracketBlink 1s infinite; }
+    
+    @media (min-width: 600px) {
+      #itemsBody tr:hover td:first-child strong::before { content: '⌜ '; color: var(--gold); position: absolute; left: -20px; animation: bracketBlink 1s infinite; }
+      #itemsBody tr:hover td:first-child strong::after { content: ' ⌟'; color: var(--gold); position: absolute; right: -20px; animation: bracketBlink 1s infinite; }
+    }
 
     .pill { padding: 3px 8px; font-size: 11px; border: 1px solid var(--line); border-radius: 2px; letter-spacing: 0.05em; font-weight: bold; }
     .critical { color: #ff8b8b; border-color: rgba(165,42,42,0.8); background: rgba(165,42,42,0.15); }
@@ -272,6 +260,14 @@
     @keyframes uplinkSweep { from { transform: translateY(-120%); } to { transform: translateY(720%); } }
     @keyframes uplinkBlink { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; text-shadow: 0 0 10px var(--warn); } }
 
+    /* --- HOLOGRAPHIC TOOLTIP --- */
+    #holoTooltip {
+      position: fixed; pointer-events: none; background: rgba(10, 12, 15, 0.95); border: 1px solid var(--gold);
+      color: var(--gold); padding: 6px 10px; font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em;
+      z-index: 10000; box-shadow: 0 0 15px rgba(212, 175, 55, 0.15); opacity: 0; transition: opacity 0.15s;
+      transform: translate(15px, 15px); clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    }
+
     .command-header {
       position: relative; overflow: hidden; padding: 32px; text-align: left; border-bottom: 1px solid rgba(212, 175, 55, 0.3);
       background: radial-gradient(circle at 12% 50%, rgba(212,175,55,0.08), transparent 30%), linear-gradient(135deg, rgba(3,4,5,0.92), rgba(9,12,15,0.98));
@@ -279,7 +275,7 @@
     }
     .command-header::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.75), transparent); opacity: 0.75; }
 
-    .header-watermark { position: absolute; right: -70px; top: -100px; width: 460px; height: 460px; background-image: url('https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png'); background-size: contain; background-repeat: no-repeat; opacity: 0.035; pointer-events: none; filter: grayscale(20%); }
+    .header-watermark { position: absolute; right: -70px; top: -100px; width: 460px; height: 460px; background-image: url('https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png'); background-size: contain; background-repeat: no-repeat; opacity: 0.035; pointer-events: none; filter: grayscale(20%); animation: slowBreathe 8s ease-in-out infinite; }
 
     .command-header-inner { position: relative; z-index: 2; max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(330px, 360px); gap: 32px; align-items: center; }
     .command-brand { display: flex; align-items: center; gap: 24px; min-width: 0; }
@@ -316,18 +312,20 @@
       clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
     }
     .status-chip small { color: var(--muted); font-family: var(--font-tech); font-size: 10px; letter-spacing: 0.15em; margin-bottom: 4px; text-transform: uppercase; }
-    .status-chip strong { color: var(--gold); font-family: var(--font-tech); font-size: 15px; letter-spacing: 0.05em; }
+    .status-chip strong { color: var(--gold); font-family: var(--font-tech); font-size: 15px; letter-spacing: 0.05em; transition: color 0.3s; }
 
     .uplink-chip { grid-column: span 2; flex-direction: row; justify-content: flex-start; align-items: center; gap: 12px; background: rgba(74,143,98,0.1); box-shadow: inset 0 0 0 1px rgba(74,143,98,0.3); }
     .live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--good); box-shadow: 0 0 12px var(--good); animation: corePulse 2s infinite; flex: 0 0 auto; }
 
-    footer { text-align: center; font-family: var(--font-tech); font-size: 12px; color: #555555; padding: 20px 20px 40px; }
+    footer { text-align: center; font-family: var(--font-tech); font-size: 12px; color: #555555; padding: 20px 20px 40px; letter-spacing: 0.05em; }
 
     @media (max-width: 1100px) { .summary-grid { grid-template-columns: 1fr 1fr; } .command-header-inner { grid-template-columns: 1fr; gap: 20px; } }
     @media (max-width: 900px) { main { padding: 0 16px 40px; gap: 16px; } .summary-grid, .production-grid, .facility-telemetry { grid-template-columns: 1fr; } .panel-head, .controls { flex-direction: column; align-items: stretch; } input, select, button { width: 100%; min-height: 44px; } .command-status-grid { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body>
+
+  <div id="holoTooltip"></div>
 
   <header class="command-header anim-boot delay-1">
     <div class="header-watermark" aria-hidden="true"></div>
@@ -391,10 +389,8 @@
   </header>
 
   <div class="ticker-wrap anim-boot delay-2">
-    <div class="ticker">
-      <span>/// BMM SECURE CHANNEL /// RHW ACTUAL: ALL SYSTEMS NOMINAL /// WARNING: INCREASED PIRATE ACTIVITY DETECTED IN SECTOR C-6 /// REMINDER: UNAUTHORIZED EXPORT PUNITIVE ACTION AUTHORIZED /// GLORY TO THE QUEEN /// </span>
-      <span>/// BMM SECURE CHANNEL /// RHW ACTUAL: ALL SYSTEMS NOMINAL /// WARNING: INCREASED PIRATE ACTIVITY DETECTED IN SECTOR C-6 /// REMINDER: UNAUTHORIZED EXPORT PUNITIVE ACTION AUTHORIZED /// GLORY TO THE QUEEN /// </span>
-    </div>
+    <div class="ticker" id="tickerContainer">
+      </div>
   </div>
 
   <div class="command-strip anim-boot delay-3" id="commandStrip">
@@ -471,13 +467,48 @@
   <footer>
     <hr class="hrc-dark">
     CONNECTION SECURE /// GLORY TO THE QUEEN<br>
-    [RHW] SYSTEM TIME: <span id="rpFooterTime"></span>
+    <div style="margin-top: 6px; color: var(--gold); font-family: var(--font-tech);" id="rpFooterTime"></div>
   </footer>
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V3.1 SCI-FI CORE REFACTOR) 
+   RHW DASHBOARD LOGIC (V3.0 STABLE) 
    ========================================================================== */
+
+/* --- RP LORE TICKER TEXTE (Hier einfach Sätze hinzufügen oder ändern!) --- */
+const LORE_MESSAGES = [
+  "BMM SECURE CHANNEL ACTIVE",
+  "RHW ACTUAL: ALL SYSTEMS NOMINAL",
+  "WARNING: INCREASED CORSAIR ACTIVITY DETECTED IN OMEGA BORDER WORLDS",
+  "REMINDER: UNAUTHORIZED EXPORT PUNITIVE ACTION AUTHORIZED",
+  "LOGISTICS: THORNE CONVOY 'OMEGA-7' ETA DELAYED BY ION STORM",
+  "MARKET UPDATE: NIOBIUM ORE DEMAND EXCEEDS QUARTERLY QUOTA BY 14%",
+  "SECURITY ALERT: MOLLY REBELS SUSPECTED IN LOCAL SECTOR - REPORT ANOMALIES TO BPA",
+  "MAINTENANCE: COOLANT FLUSH IN REACTOR BAY 2 SCHEDULED FOR 0800 HOURS",
+  "GLORY TO THE QUEEN"
+];
+
+// Initialisiert das Laufband (Fügt den String 2x ein für einen nahtlosen Endlos-Loop)
+const tickerContainer = document.getElementById('tickerContainer');
+if (tickerContainer) {
+  const fullText = LORE_MESSAGES.join(' /// ') + ' /// ';
+  tickerContainer.innerHTML = `<span>${escapeHTML(fullText)}</span><span>${escapeHTML(fullText)}</span>`;
+}
+
+// --- HOLOGRAPHIC TOOLTIP LOGIC ---
+const holoTooltip = document.getElementById('holoTooltip');
+document.addEventListener('mousemove', e => {
+  const target = e.target.closest('[data-tooltip]');
+  if(target) {
+    holoTooltip.textContent = target.dataset.tooltip;
+    holoTooltip.style.opacity = '1';
+    holoTooltip.style.left = (e.clientX + 15) + 'px';
+    holoTooltip.style.top = (e.clientY + 15) + 'px';
+  } else {
+    holoTooltip.style.opacity = '0';
+  }
+});
+
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
 const AUTO_REFRESH_MS = 60000;
@@ -572,6 +603,7 @@ const els = {
   rpFooterTime: document.getElementById('rpFooterTime')
 };
 
+// --- FIX: MATRIX SCRAMBLE LÄSST KOMMAS/PUNKTE INTAKT ---
 function scrambleText(el, finalStr, duration = 500) {
   if(!el) return;
   finalStr = String(finalStr);
@@ -584,7 +616,7 @@ function scrambleText(el, finalStr, duration = 500) {
   const interval = setInterval(() => {
     let result = '';
     for(let i = 0; i < finalStr.length; i++) {
-      if (finalStr[i] === ' ' || finalStr[i] === '$' || finalStr[i] === '%' || finalStr[i] === '–') {
+      if ([' ', '$', '%', '–', ',', '.', ':'].includes(finalStr[i])) {
         result += finalStr[i];
       } else if (step / steps > i / finalStr.length) {
         result += finalStr[i];
@@ -604,9 +636,15 @@ function debounce(func, wait) {
   return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func(...args), wait); };
 }
 
+// SCI-FI SYSTEMUHR MIT BLINKENDEM DOPPELPUNKT
 setInterval(() => {
   const now = new Date();
-  if (els.rpFooterTime) els.rpFooterTime.textContent = now.toLocaleDateString('en-GB') + ' ' + now.toLocaleTimeString('en-GB');
+  if (els.rpFooterTime) {
+    const hours = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    const secs = String(now.getSeconds()).padStart(2, '0');
+    els.rpFooterTime.innerHTML = `SYS-CLOCK: ${now.toLocaleDateString('en-GB')} [${hours}<span class="blink-colon">:</span>${mins}<span class="blink-colon">:</span>${secs}Z]`;
+  }
   updateSyncCountdown();
 }, 1000);
 
@@ -661,16 +699,17 @@ function progressMeta(item) {
   return { percent: Math.max(0, Math.round(percent)), cls, max };
 }
 
+// FIX: title="..." wurde zu data-tooltip="..." für das Holografische Tooltip!
 function renderProgress(item) {
   const meta = progressMeta(item);
-  return `<div class="progress-wrap" title="${meta.percent}% of scale ${number(meta.max)}"><div class="progress-fill ${meta.cls}" style="width:${meta.percent}%"></div></div>`;
+  return `<div class="progress-wrap" data-tooltip="${meta.percent}% of max ${number(meta.max)}"><div class="progress-fill ${meta.cls}" style="width:${meta.percent}%"></div></div>`;
 }
 
 function renderFeedstockProgress(item, state, fallbackKey) {
   const q = item ? quantity(item) : 0;
   const max = item ? barMaxFor(item) : (BAR_MAX_FALLBACKS[fallbackKey] || 1);
   const percent = max > 0 ? Math.min(100, (q / max) * 100) : 0;
-  return `<div class="progress-wrap" title="${Math.round(percent)}% of max ${number(max)}"><div class="progress-fill ${state}" style="width:${Math.max(0, Math.round(percent))}%"></div></div>`;
+  return `<div class="progress-wrap" data-tooltip="${Math.round(percent)}% of max ${number(max)}"><div class="progress-fill ${state}" style="width:${Math.max(0, Math.round(percent))}%"></div></div>`;
 }
 
 function formatBaseHealth(value) {
@@ -746,10 +785,23 @@ function readinessText(state, role) {
 
 function updateSyncCountdown() {
   if (!els.syncCountdown) return;
-  if (isLoading) { els.syncCountdown.textContent = 'SYNCING'; return; }
-  if (!nextSyncAt) { els.syncCountdown.textContent = '–'; return; }
+  if (isLoading) { 
+    els.syncCountdown.textContent = 'SYNCING'; 
+    els.syncCountdown.style.color = 'var(--warn)';
+    return; 
+  }
+  if (!nextSyncAt) { 
+    els.syncCountdown.textContent = '–'; 
+    els.syncCountdown.style.color = 'var(--gold)';
+    return; 
+  }
+  
   const remaining = Math.max(0, Math.ceil((nextSyncAt - Date.now()) / 1000));
   els.syncCountdown.textContent = `${remaining}s`;
+  
+  // Rote Warnung wenn Daten-Sync unmittelbar bevorsteht!
+  if (remaining <= 10) els.syncCountdown.style.color = 'var(--warn)';
+  else els.syncCountdown.style.color = 'var(--gold)';
 }
 
 function setTelemetryState(telemetry, cls = '') {
@@ -1027,6 +1079,12 @@ function renderManifest() {
     return matchesQuery && (roleFilter === 'all' || role === roleFilter);
   });
 
+  // NO MATCHING ASSETS FIX
+  if (visible.length === 0) {
+    els.itemsBody.innerHTML = `<tr class="empty-table-row"><td colspan="7">NO ASSETS MATCHING QUERY</td></tr>`;
+    return;
+  }
+
   visible.sort((a, b) => {
     let valA, valB;
     if (sortCol === 'name') { valA = displayName(a); valB = displayName(b); }
@@ -1059,7 +1117,6 @@ function renderAll() {
   renderProductionModules();
   renderManifest();
   updateBaseTelemetry();
-  if(lastLoaded && els.syncTimeVal) scrambleText(els.syncTimeVal, lastLoaded.toLocaleTimeString('en-GB'));
 }
 
 async function loadData() {
@@ -1131,6 +1188,12 @@ async function loadData() {
     isLoading = false;
     document.body.classList.remove('syncing');
     if (els.refreshBtn) els.refreshBtn.disabled = false;
+    
+    if (lastLoaded && els.syncTimeVal) {
+      const timeString = lastLoaded.toISOString().replace('T', ' ').substring(0, 19);
+      scrambleText(els.syncTimeVal, timeString + 'Z');
+    }
+
     nextSyncAt = Date.now() + AUTO_REFRESH_MS;
     updateSyncCountdown();
     refreshTimer = setTimeout(loadData, AUTO_REFRESH_MS);
