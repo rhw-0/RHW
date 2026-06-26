@@ -31,7 +31,15 @@
       --font-tech: 'Consolas', 'Share Tech Mono', monospace;
     }
 
-    * { box-sizing: border-box; }
+    * { 
+      box-sizing: border-box; 
+      scrollbar-width: thin;
+      scrollbar-color: var(--gold) rgba(0, 0, 0, 0.5);
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after { animation: none !important; transition: none !important; }
+    }
     
     body, a, button, input, select, th { cursor: crosshair !important; }
 
@@ -91,7 +99,6 @@
 
     .hrc-dark { border: 0; height: 1px; background: var(--line); margin: 40px auto 20px; width: 90%; }
 
-    /* --- LORE TICKER FIX --- */
     .ticker-wrap {
       width: 100%; background: rgba(0,0,0,0.85); border-bottom: 1px solid rgba(212,175,55,0.3);
       padding: 6px 0; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.7); margin-bottom: 20px;
@@ -103,10 +110,8 @@
     .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent); }
     .ticker-wrap::after { right: 0; background: linear-gradient(-90deg, var(--bg), transparent); }
     
-    /* FIX: white-space: nowrap zwingt den Text in EINE Zeile! */
     .ticker { 
       display: flex; width: max-content; white-space: nowrap; 
-      /* Langsamere Animation, da der Text jetzt extrem lang ist */
       animation: tickerAnim 300s linear infinite; 
     }
     .ticker span { 
@@ -172,6 +177,68 @@
 
     .panel-head { padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.4); }
     .panel-title { font-family: var(--font-title); font-size: 24px; color: var(--gold); letter-spacing: 0.08em; text-shadow: 0 0 10px rgba(212,175,55,0.2); }
+
+    /* --- LISHEEN RADAR STYLES (Ultra-Sleek & Zentriert) --- */
+    .supplier-grid { 
+      display: flex; 
+      justify-content: center; /* Symmetrisch in der Mitte! */
+      flex-wrap: wrap; 
+      gap: 24px; 
+      padding: 24px; 
+      background: radial-gradient(circle at 50% 0%, rgba(107, 164, 255, 0.05), transparent 60%);
+    }
+    
+    .supplier-card { 
+      width: 100%;
+      max-width: 380px; /* Keine riesigen Werbetafeln mehr! xDD */
+      flex: 1 1 300px; 
+      border: 1px solid rgba(255,255,255,0.05); 
+      background: linear-gradient(180deg, rgba(8,12,18,0.95), rgba(5,7,10,0.98)); 
+      padding: 20px; 
+      position: relative; 
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 0 20px rgba(107, 164, 255, 0.03); 
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+      overflow: hidden; 
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .supplier-card::after {
+      content: ''; position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(107, 164, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(107, 164, 255, 0.03) 1px, transparent 1px);
+      background-size: 20px 20px; pointer-events: none; z-index: 0;
+    }
+    .supplier-card > * { position: relative; z-index: 1; }
+    
+    .supplier-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; z-index: 2; transition: background 0.3s; }
+    .supplier-card.critical::before { background: var(--danger); box-shadow: 0 0 12px var(--danger); }
+    .supplier-card.low::before { background: var(--warn); box-shadow: 0 0 12px var(--warn); }
+    .supplier-card.ok::before { background: var(--good); box-shadow: 0 0 12px var(--good); }
+
+    .supplier-scanline {
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: rgba(107, 164, 255, 0.5);
+      box-shadow: 0 0 15px 2px rgba(107, 164, 255, 0.4);
+      animation: radarScan 3s linear infinite;
+      z-index: 3; pointer-events: none;
+    }
+    @keyframes radarScan { 0% { top: -10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 110%; opacity: 0; } }
+
+    .supplier-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px dashed rgba(107, 164, 255, 0.15); padding-bottom: 12px; }
+    .supplier-kicker { font-family: var(--font-tech); color: #8cb4ff; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px; }
+    .supplier-title { font-family: var(--font-title); color: #e0eaff; font-size: 26px; letter-spacing: 0.05em; text-shadow: 0 0 10px rgba(107, 164, 255, 0.3); margin: 0; line-height: 1; }
+    
+    .supplier-stats { display: flex; gap: 10px; font-family: var(--font-tech); margin-top: auto; }
+    .supplier-stat { flex: 1; border: 1px solid rgba(107, 164, 255, 0.15); background: rgba(107, 164, 255, 0.05); padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .supplier-stat small { color: #8cb4ff; font-size: 10px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .supplier-stat strong { font-size: 18px; color: var(--text); }
+    
+    .supplier-progress-wrap { margin-top: 14px; width: 100%; height: 4px; background: rgba(107, 164, 255, 0.1); position: relative; overflow: hidden; }
+    .supplier-progress-fill { height: 100%; position: absolute; left: 0; top: 0; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .supplier-progress-fill.ok { background: var(--good); box-shadow: 0 0 8px var(--good); }
+    .supplier-progress-fill.low { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+    .supplier-progress-fill.critical { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+    /* ---------------------------------------------------- */
 
     .production-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; padding: 24px; }
     .production-card { 
@@ -251,8 +318,8 @@
     .sell { color: #f3e0b8; background: rgba(210, 173, 103, 0.15); border-color: rgba(210, 173, 103, 0.48); }
     .both { color: #efe1ff; background: rgba(176, 103, 226, 0.16); border-color: rgba(176, 103, 226, 0.48); }
 
-    #itemsBody, #productionGrid { transition: opacity 0.3s ease, filter 0.3s ease; }
-    body.syncing #itemsBody, body.syncing #productionGrid { opacity: 0.3; filter: blur(4px) grayscale(50%); pointer-events: none; }
+    #itemsBody, #productionGrid, #supplierGrid { transition: opacity 0.3s ease, filter 0.3s ease; }
+    body.syncing #itemsBody, body.syncing #productionGrid, body.syncing #supplierGrid { opacity: 0.3; filter: blur(4px) grayscale(50%); pointer-events: none; }
 
     .error-box { display: none; padding: 10px 20px; border-bottom: 1px solid rgba(165, 42, 42, 0.55); background: rgba(165, 42, 42, 0.12); color: #ffbdbd; font-family: var(--font-tech); font-size: 12px; margin: 0; }
 
@@ -327,7 +394,13 @@
     footer { text-align: center; font-family: var(--font-tech); font-size: 12px; color: #555555; padding: 20px 20px 40px; letter-spacing: 0.05em; }
 
     @media (max-width: 1100px) { .summary-grid { grid-template-columns: 1fr 1fr; } .command-header-inner { grid-template-columns: 1fr; gap: 20px; } }
-    @media (max-width: 900px) { main { padding: 0 16px 40px; gap: 16px; } .summary-grid, .production-grid, .facility-telemetry { grid-template-columns: 1fr; } .panel-head, .controls { flex-direction: column; align-items: stretch; } input, select, button { width: 100%; min-height: 44px; } .command-status-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 900px) { 
+      main { padding: 0 16px 40px; gap: 16px; } 
+      .summary-grid, .production-grid, .facility-telemetry, .supplier-grid { grid-template-columns: 1fr; } 
+      .panel-head, .controls { flex-direction: column; align-items: stretch; } 
+      input, select, button { width: 100%; min-height: 44px; } 
+      .command-status-grid { grid-template-columns: 1fr 1fr; } 
+    }
   </style>
 </head>
 <body>
@@ -423,6 +496,20 @@
       </div>
     </section>
 
+    <section class="panel anim-boot delay-4" style="border-color: rgba(107, 164, 255, 0.2);">
+      <div class="panel-head" style="background: linear-gradient(90deg, rgba(107, 164, 255, 0.1), transparent); border-bottom: 1px solid rgba(107, 164, 255, 0.2); align-items: center;">
+        <div>
+          <div class="panel-title" style="color: #8cb4ff; text-shadow: 0 0 10px rgba(107, 164, 255, 0.3);">EXTERNAL LOGISTICS UPLINK</div>
+          <div class="footnote" style="color: #a3c4ff;">TARGET: LISHEEN LOGISTIC DEPOT // SYSTEM: DUBLIN // PROCUREMENT RADAR</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: rgba(107, 164, 255, 0.05); border: 1px solid rgba(107,164,255,0.2); clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));">
+           <span style="width: 8px; height: 8px; border-radius: 50%; background: #8cb4ff; box-shadow: 0 0 10px #8cb4ff; animation: corePulse 1.5s infinite;"></span>
+           <span style="color: #8cb4ff; font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em; font-weight: bold;">SAT-LINK ACTIVE</span>
+        </div>
+      </div>
+      <div class="supplier-grid" id="supplierGrid"></div>
+    </section>
+
     <section class="panel anim-boot delay-4">
       <div class="panel-head">
         <div>
@@ -479,10 +566,9 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V3.0.1 STABLE) 
+   RHW DASHBOARD LOGIC (V3.0.1 STABLE) - THE SECRET EDITION 🤫
    ========================================================================== */
 
-/* --- RP LORE TICKER TEXTE - JETZT MASSIV ERWEITERT --- */
 const LORE_MESSAGES = [
   "BMM SECURE CHANNEL ACTIVE",
   "RHW ACTUAL: ALL SYSTEMS NOMINAL",
@@ -579,7 +665,7 @@ const CANONICAL_NAMES = {
   'industrial materials': 'Industrial Materials', 'niobium ore': 'Niobium Ore', 'toxic waste': 'Toxic Waste', 'scrap metal': 'Scrap Metal'
 }; 
 
-let items = []; let lastLoaded = null; let rhwBase = null;
+let items = []; let lastLoaded = null; let rhwBase = null; let lisheenBase = null;
 let itemsByKey = new Map();
 let operationalItemsCache = [];
 let sortCol = 'name'; let sortAsc = true;
@@ -962,6 +1048,71 @@ function renderProductionModules() {
   }).join(''); 
 }
 
+function renderSupplier() {
+  const supplierGrid = document.getElementById('supplierGrid');
+  if (!supplierGrid) return;
+
+  if (!lisheenBase || !Array.isArray(lisheenBase.shop_items)) {
+    supplierGrid.innerHTML = `
+      <div class="supplier-card critical" style="width: 100%; max-width: none;">
+        <div class="supplier-header-row">
+          <div>
+             <div class="supplier-kicker" style="color: #ff8b8b;">COMM-LINK FAILED</div>
+             <div class="supplier-title" style="color: var(--danger);">LISHEEN UPLINK LOST</div>
+          </div>
+        </div>
+        <div class="footnote" style="font-family: var(--font-tech); font-size: 12px; color: var(--muted);">DATABANKS UNREACHABLE / SIGNAL LOST</div>
+      </div>`;
+    return;
+  }
+
+  const targets = ['gold', 'gold ore'];
+  
+  supplierGrid.innerHTML = targets.map(targetName => {
+    const item = lisheenBase.shop_items.find(i => keyFromName(i.name || i.nickname || '') === targetName);
+    const q = item ? quantity(item) : 0;
+    const price = item ? priceBuy(item) : 0; 
+    
+    const state = q > 5000 ? 'ok' : (q > 0 ? 'low' : 'critical');
+    const stateText = q > 5000 ? 'SUPPLY STABLE' : (q > 0 ? 'SUPPLY LOW' : 'DEPLETED');
+    const title = CANONICAL_NAMES[targetName] || targetName.toUpperCase();
+    const dotColor = state === 'ok' ? 'var(--good)' : (state === 'low' ? 'var(--warn)' : 'var(--danger)');
+    
+    const maxStockAssumed = targetName === 'gold' ? 60000 : 50000;
+    const fillPct = Math.min(100, Math.max(0, (q / maxStockAssumed) * 100));
+
+    return `
+      <div class="supplier-card ${state}">
+        <div class="supplier-scanline"></div>
+        <div class="supplier-header-row">
+          <div>
+            <div class="supplier-kicker">REMOTE SCAN // <span style="color: ${dotColor};">${stateText}</span></div>
+            <div class="supplier-title">${title}</div>
+          </div>
+          <div class="pill ${state}" style="font-size: 11px; padding: 4px 10px; height: fit-content;">${state.toUpperCase()}</div>
+        </div>
+        
+        <div class="supplier-stats">
+          <div class="supplier-stat">
+            <small>AVAILABLE STOCK</small>
+            <strong class="scramble-supplier" data-val="${number(q)}"></strong>
+          </div>
+          <div class="supplier-stat">
+            <small>UNIT BUY PRICE</small>
+            <strong class="scramble-supplier" data-val="${price > 0 ? '$' + number(price) : 'N/A'}"></strong>
+          </div>
+        </div>
+
+        <div class="supplier-progress-wrap" data-tooltip="${fillPct.toFixed(0)}% EST. CAPACITY">
+          <div class="supplier-progress-fill ${state}" style="width: ${fillPct}%;"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  supplierGrid.querySelectorAll('.scramble-supplier').forEach(el => scrambleText(el, el.dataset.val));
+}
+
 function feedstockRequirement(name) {
   const key = keyFromName(name);
   for (const recipe of RECIPES) {
@@ -1123,6 +1274,7 @@ function renderManifest() {
 
 function renderAll() {
   renderOverview();
+  renderSupplier();
   renderProductionModules();
   renderManifest();
   updateBaseTelemetry();
@@ -1159,6 +1311,15 @@ async function loadData() {
     if (!Array.isArray(data)) throw new Error('INVALID TELEMETRY RESPONSE.');
 
     rhwBase = data.find(base => normalize(base?.name) === BASE_NAME || normalize(base?.nickname) === BASE_NAME);
+    
+    // --- LISHEEN ABFANGEN (FEHLERTOLERANT) ---
+    lisheenBase = data.find(base => {
+      const n = normalize(base?.name);
+      const nn = normalize(base?.nickname);
+      return n.includes('lisheen') || nn.includes('lisheen');
+    });
+    // ----------------------------------------
+
     if (!rhwBase || typeof rhwBase !== 'object') throw new Error('RHW NOT FOUND IN DATASTREAM.');
     if (!Array.isArray(rhwBase.shop_items)) throw new Error('INVALID RHW SHOP DATA.');
 
