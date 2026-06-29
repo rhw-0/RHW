@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Resolution Heavy Works live logistics and production command dashboard." />
-  <title>RHW Command Dashboard · V3.0.3 Stability & Consistency</title>
+  <title>RHW Command Dashboard · V3.1 Recipe Color Consistency Patch</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -172,7 +172,6 @@
     .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent); }
     .ticker-wrap::after { right: 0; background: linear-gradient(-90deg, var(--bg), transparent); }
     .ticker { display: flex; width: max-content; white-space: nowrap; animation: tickerAnim 300s linear infinite; }
-    .ticker span { flex-shrink: 0; white-space: nowrap; padding-right: 50px; font-family: var(--font-tech); font-size: 12px; color: rgba(212,175,55,0.8); letter-spacing: 0.15em; text-transform: uppercase; }
     @keyframes tickerAnim { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
     main { padding: 0 32px 40px; display: grid; gap: 24px; max-width: 1400px; margin: 0 auto; }
@@ -355,6 +354,521 @@
       .transmission-line { justify-content: center; }
       th { position: static; }
     }
+
+
+    /* =========================================
+       V3.1 VISUAL REFINEMENT
+       ========================================= */
+    :root {
+      --danger: #9b4242;
+      --warn: #b88637;
+      --good: #4f8965;
+      --remote: #7da7ea;
+      --remote-soft: rgba(125, 167, 234, 0.10);
+      --panel-strong: rgba(8, 10, 13, 0.88);
+    }
+
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+
+    .command-header { padding: 32px 32px 30px; }
+    .command-header-inner { align-items: center; }
+    .command-brand { gap: 26px; }
+    .crest-frame { width: 132px; }
+    .crest-frame::before { width: 112px; height: 112px; }
+    .crest { width: 122px; }
+    h1 { margin-bottom: 10px; }
+
+    .transmission-line { margin-bottom: 18px; }
+    .transmission-line strong { color: var(--text); }
+    .channel-chip {
+      width: fit-content;
+      padding: 3px 8px;
+      border: 1px solid rgba(79,137,101,0.38);
+      background: rgba(79,137,101,0.08);
+      color: #83b895;
+    }
+    .channel-chip i {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 8px rgba(79,137,101,0.72);
+    }
+    .channel-chip::after { display: none !important; }
+
+    .base-telemetry-bar { padding: 10px 18px; gap: 16px; }
+    .base-telemetry-stat strong { font-size: 17px; }
+    .uplink-label {
+      display: block;
+      color: var(--muted);
+      font-family: var(--font-tech);
+      font-size: 9px;
+      letter-spacing: 0.13em;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .uplink-value {
+      color: var(--text);
+      font-family: var(--font-tech);
+      font-size: 14px;
+      letter-spacing: 0.04em;
+    }
+
+    .ticker-wrap {
+      padding: 5px 0;
+      margin-bottom: 16px;
+      opacity: 0.72;
+      border-bottom-color: rgba(212,175,55,0.18);
+    }
+    .ticker { animation-duration: 420s; }
+
+    .summary-grid { align-items: stretch; }
+    .summary-grid > .alert-card { height: 100%; display: flex; flex-direction: column; }
+    .summary-grid .alert-list { flex: 1; align-content: start; }
+    .alert-card { transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease; }
+    .alert-card:hover { transform: translateY(-2px); border-color: rgba(212,175,55,0.18); box-shadow: 0 12px 28px rgba(0,0,0,0.28); }
+    .alert-title > span:first-child { display: inline-flex; align-items: center; gap: 9px; }
+    .section-index {
+      font-family: var(--font-tech);
+      font-size: 9px;
+      font-weight: normal;
+      color: rgba(212,175,55,0.55);
+      border: 1px solid rgba(212,175,55,0.18);
+      padding: 2px 4px;
+      letter-spacing: 0.08em;
+    }
+
+    .progress-fill.ok { background-color: #5a9a70; box-shadow: 0 0 8px rgba(90,154,112,0.34); }
+    .progress-fill.low { background-color: #c08c3b; box-shadow: 0 0 8px rgba(192,140,59,0.34); }
+    .progress-fill.critical { background-color: #a94d4d; box-shadow: 0 0 8px rgba(169,77,77,0.34); }
+    .progress-fill.critical, .progress-fill.waste { animation-duration: 1.8s; }
+
+    .panel { transition: border-color 0.22s ease, box-shadow 0.22s ease; }
+    .panel:hover { border-color: rgba(255,255,255,0.09); box-shadow: 0 14px 34px rgba(0,0,0,0.22); }
+    .panel-heading-copy { min-width: 0; }
+    .section-kicker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 3px;
+      color: var(--muted);
+      font-family: var(--font-tech);
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .section-kicker span { color: var(--gold); }
+
+    .remote-panel { border-color: rgba(125,167,234,0.18); }
+    .remote-panel:hover { border-color: rgba(125,167,234,0.32); }
+    .remote-panel-head {
+      background: linear-gradient(90deg, rgba(125,167,234,0.09), rgba(0,0,0,0.18) 60%, transparent);
+      border-bottom-color: rgba(125,167,234,0.16);
+      align-items: center;
+    }
+    .remote-panel-title { color: var(--remote); text-shadow: 0 0 10px rgba(125,167,234,0.22); }
+    .remote-route { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 5px; }
+    .remote-route span { display: flex; gap: 6px; align-items: baseline; font-family: var(--font-tech); }
+    .remote-route small { color: rgba(125,167,234,0.58); font-size: 8px; letter-spacing: 0.13em; }
+    .remote-route strong { color: #b9cdf0; font-size: 10px; letter-spacing: 0.08em; font-weight: normal; }
+
+    .supplier-grid { gap: 18px; padding: 20px; }
+    .supplier-card {
+      max-width: 420px;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(8,12,18,0.9), rgba(5,7,10,0.96));
+      transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+    }
+    .supplier-card:hover { transform: translateY(-2px); border-color: rgba(125,167,234,0.2); box-shadow: 0 14px 30px rgba(0,0,0,0.34), inset 0 0 20px rgba(125,167,234,0.03); }
+    .supplier-scanline { opacity: 0.48; animation-duration: 6s; }
+    .remote-card-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 7px; }
+    .remote-badge {
+      padding: 2px 6px;
+      border: 1px solid rgba(125,167,234,0.2);
+      color: rgba(185,205,240,0.78);
+      background: rgba(125,167,234,0.05);
+      font-family: var(--font-tech);
+      font-size: 8px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+    .supplier-state { font-family: var(--font-tech); font-size: 9px; letter-spacing: 0.12em; }
+    .supplier-title { font-size: 28px; }
+    .supplier-state.ok, .supplier-state.low, .supplier-state.critical { border: 0; background: transparent; padding: 0; }
+    .supplier-state.ok { color: #78ad8a; }
+    .supplier-state.low { color: #c99a53; }
+    .supplier-state.critical { color: #c46c6c; }
+    .manifest-panel-head { flex-wrap: wrap; gap: 15px; }
+
+    .supplier-stat { min-height: 72px; text-align: left; }
+    .supplier-stat.stock strong { font-size: 22px; color: #eef4ff; }
+    .supplier-stat.price strong { color: var(--remote); }
+    .supplier-pill { height: fit-content; padding: 4px 10px; font-size: 10px; }
+    .supplier-card.remote-error { max-width: none; }
+    .supplier-kicker.error { color: #d78b8b; }
+    .supplier-title.error { color: var(--danger); }
+
+    .production-grid { gap: 16px; padding: 20px; }
+    .production-card { padding: 18px; transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, opacity 0.22s ease; }
+    .production-card:hover { transform: translateY(-2px); border-color: rgba(212,175,55,0.18); box-shadow: 0 14px 30px rgba(0,0,0,0.32); }
+    .production-card.critical { background: linear-gradient(180deg, rgba(10,9,10,0.82), rgba(5,6,7,0.92)); }
+    .production-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .module-state {
+      padding: 3px 7px;
+      border: 1px solid currentColor;
+      font-family: var(--font-tech);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+    .module-state.ok { color: #78ad8a; }
+    .module-state.low { color: #c99a53; }
+    .module-state.critical { color: #c46c6c; }
+    .production-stock-primary strong { color: var(--gold); font-size: 22px; }
+    .next-gap.ok { border-color: rgba(79,137,101,0.3); }
+    .next-gap.low { border-color: rgba(184,134,55,0.34); }
+    .next-gap.critical { border-color: rgba(155,66,66,0.4); background: rgba(155,66,66,0.045); }
+    .recipe-list li.bottleneck { background: rgba(155,66,66,0.055); margin-inline: -8px; padding-inline: 8px; border-bottom-color: rgba(155,66,66,0.18); }
+    .recipe-list li.bottleneck::after {
+      content: 'BOTTLENECK';
+      margin-left: 8px;
+      color: rgba(196,108,108,0.72);
+      font-family: var(--font-tech);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+    }
+    .byproduct-strip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 11px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(255,255,255,0.06);
+      font-family: var(--font-tech);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .byproduct-strip > span:first-child { color: var(--waste); }
+    .byproduct-tag { padding: 3px 6px; border: 1px solid rgba(168,159,145,0.24); background: rgba(168,159,145,0.06); color: #c7c0b5; }
+
+    .manifest-panel .panel-head { gap: 18px; flex-wrap: wrap; }
+    .manifest-controls { align-items: center; }
+    .search-control { position: relative; display: block; min-width: 210px; }
+    .search-control input { width: 100%; padding-left: 36px; }
+    .search-icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      width: 12px;
+      height: 12px;
+      border: 1px solid var(--muted);
+      border-radius: 50%;
+      transform: translateY(-58%);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .search-icon::after { content: ''; position: absolute; width: 5px; height: 1px; background: var(--muted); right: -4px; bottom: -2px; transform: rotate(45deg); }
+    .role-segments { display: flex; padding: 2px; border: 1px solid var(--line-soft); background: rgba(0,0,0,0.48); }
+    .role-segment {
+      min-height: 34px;
+      padding: 7px 9px;
+      border: 0;
+      border-right: 1px solid rgba(255,255,255,0.04);
+      clip-path: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 10px;
+    }
+    .role-segment:last-child { border-right: 0; }
+    .role-segment:hover { background: rgba(212,175,55,0.05); color: var(--text); box-shadow: none; }
+    .role-segment.active { background: rgba(212,175,55,0.12); color: var(--gold); }
+    .uplink-button { min-height: 38px; }
+
+    #dataTable th:first-child, #dataTable td:first-child { min-width: 250px; }
+    #dataTable th:nth-child(n+4), #dataTable td:nth-child(n+4) { text-align: right; }
+    #dataTable th[data-dir] { color: #fff; background: rgba(212,175,55,0.075); }
+    .numeric-cell { font-variant-numeric: tabular-nums; }
+    .price-cell { color: #b9c6d8; }
+    .buy-price { color: #b8cfee; }
+    .sell-price { color: #ddc58f; }
+    tbody tr:focus-visible { outline: 1px solid rgba(212,175,55,0.55); outline-offset: -1px; }
+    #itemsBody tr:hover td:first-child strong::before,
+    #itemsBody tr:hover td:first-child strong::after { animation: none; opacity: 0.72; }
+
+    .footer-clock { margin-top: 6px; color: var(--gold); font-family: var(--font-tech); }
+
+    @media (max-width: 900px) {
+      .command-header { padding: 24px 16px; }
+      .crest-frame { width: 104px; }
+      .crest-frame::before { width: 90px; height: 90px; }
+      .crest { width: 98px; }
+      .base-telemetry-bar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+        padding: 10px 12px;
+        gap: 10px 14px;
+        align-items: start;
+      }
+      .base-telemetry-stat:first-child { grid-column: span 2; }
+      .ticker-wrap { display: none; }
+      .command-strip { margin-top: 0; }
+      .remote-panel-head { align-items: stretch; }
+      .sat-link-badge { width: fit-content; }
+      .production-grid { padding: 14px; }
+      .production-card { padding: 15px; }
+      .production-stats { gap: 6px; }
+      .role-segments { width: 100%; overflow-x: auto; }
+      .role-segment { flex: 1 0 auto; }
+      .search-control { width: 100%; }
+      .table-wrap { overflow-x: auto; }
+      #dataTable th:first-child, #dataTable td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 4;
+        background: rgba(6,7,9,0.97);
+        box-shadow: 1px 0 0 rgba(212,175,55,0.12);
+      }
+      #dataTable th:first-child { z-index: 12; }
+    }
+
+    @media (max-width: 520px) {
+      .base-telemetry-bar { grid-template-columns: 1fr; }
+      .base-telemetry-stat:first-child { grid-column: auto; }
+      .supplier-stats { flex-direction: column; }
+      .remote-route { display: grid; grid-template-columns: 1fr; }
+      .production-stats { display: grid; grid-template-columns: repeat(3, 1fr); }
+      .production-stat { padding: 8px 5px; }
+      .production-stat strong { font-size: 15px; }
+      .production-stock-primary strong { font-size: 18px; }
+    }
+
+
+    /* --- PRODUCTION RECIPE LEDGER: MATERIAL / REQUIRED / CURRENT STOCK --- */
+    .recipe-column-head,
+    .recipe-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 104px 112px;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .recipe-column-head {
+      margin: 3px 0 0;
+      padding: 0 0 7px;
+      border-bottom: 1px solid rgba(212,175,55,0.12);
+      color: #827d72;
+      font-family: var(--font-tech);
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.105em;
+      text-transform: uppercase;
+    }
+
+    .recipe-column-head span:nth-child(2),
+    .recipe-column-head span:nth-child(3) { text-align: right; }
+
+    .recipe-list li {
+      justify-content: initial;
+      min-height: 37px;
+      margin-inline: -8px;
+      padding: 8px;
+      color: #d6d0c3;
+      font-weight: 400;
+      text-shadow: none;
+      opacity: 1;
+      background: linear-gradient(90deg, rgba(3,4,5,0.58), rgba(3,4,5,0.34));
+      border-bottom-color: rgba(255,255,255,0.045);
+    }
+
+    .recipe-name {
+      min-width: 0;
+      color: #d6d0c3;
+      overflow-wrap: anywhere;
+    }
+
+    .production-card .recipe-list li:not(.bottleneck),
+    .production-card.critical .recipe-list li:not(.bottleneck),
+    .production-card.low .recipe-list li:not(.bottleneck),
+    .production-card.ok .recipe-list li:not(.bottleneck) {
+      opacity: 1;
+    }
+
+    .production-card .recipe-name {
+      color: #d6d0c3;
+    }
+
+    .recipe-required,
+    .recipe-stock {
+      font-family: var(--font-tech);
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .recipe-required {
+      color: #d7b85b;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.015em;
+    }
+
+    .recipe-stock {
+      color: #ece4d3;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.015em;
+    }
+
+    .recipe-short {
+      display: block;
+      margin-top: 2px;
+      color: #df7474;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.075em;
+      text-transform: uppercase;
+    }
+
+    .recipe-list li.bottleneck {
+      color: inherit;
+      font-weight: 400;
+      text-shadow: none;
+      background: linear-gradient(90deg, rgba(72,20,22,0.38), rgba(8,5,6,0.58));
+    }
+
+    .recipe-list li.bottleneck::after { content: none; display: none; }
+    .recipe-list li.bottleneck .recipe-name { color: #df7474; font-weight: 700; }
+    .recipe-list li.bottleneck .recipe-name::after {
+      content: 'BOTTLENECK';
+      display: block;
+      margin-top: 2px;
+      color: rgba(223,116,116,0.70);
+      font-family: var(--font-tech);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+    }
+
+    .recipe-list li.bottleneck .recipe-required { color: #d7b85b; }
+    .recipe-list li.bottleneck .recipe-stock { color: #df7474; }
+
+    @media (max-width: 520px) {
+      .recipe-column-head,
+      .recipe-list li {
+        grid-template-columns: minmax(0, 1fr) 88px 96px;
+        gap: 9px;
+      }
+      .recipe-column-head { font-size: 7.5px; letter-spacing: 0.08em; }
+      .recipe-required { font-size: 10px; }
+      .recipe-stock { font-size: 11px; }
+    }
+
+    @media (max-width: 390px) {
+      .recipe-column-head,
+      .recipe-list li {
+        grid-template-columns: minmax(0, 1fr) 72px 78px;
+        gap: 6px;
+      }
+      .recipe-column-head span:nth-child(2) { font-size: 0; }
+      .recipe-column-head span:nth-child(2)::after { content: 'REQ / CYCLE'; font-size: 7px; }
+      .recipe-column-head span:nth-child(3) { font-size: 0; }
+      .recipe-column-head span:nth-child(3)::after { content: 'ON HAND'; font-size: 7px; }
+    }
+
+    /* =========================================
+       V3.1 INDUSTRIAL NEWSWIRE
+       ========================================= */
+    .ticker-wrap {
+      display: flex;
+      align-items: stretch;
+      width: 100%;
+      min-height: 42px;
+      padding: 0;
+      margin-bottom: 18px;
+      opacity: 1;
+      overflow: hidden;
+      background: rgba(0,0,0,0.88);
+      border-top: 1px solid rgba(212,175,55,0.12);
+      border-bottom: 1px solid rgba(212,175,55,0.30);
+      box-shadow: inset 0 2px 12px rgba(0,0,0,0.72);
+    }
+    .ticker-wrap::before, .ticker-wrap::after { display: none; }
+    .ticker-label {
+      position: relative; z-index: 5; flex: 0 0 auto; min-width: 215px;
+      display: flex; align-items: center; gap: 10px; padding: 7px 18px 7px 22px;
+      border-right: 1px solid rgba(212,175,55,0.32);
+      background: linear-gradient(90deg, rgba(212,175,55,0.13), rgba(10,12,15,0.98));
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+      font-family: var(--font-tech); white-space: nowrap;
+    }
+    .ticker-label strong { display: block; color: var(--gold); font-size: 11px; line-height: 1.05; letter-spacing: 0.12em; }
+    .ticker-label small { display: block; margin-top: 3px; color: rgba(224,224,224,0.52); font-size: 8px; line-height: 1; letter-spacing: 0.11em; }
+    .ticker-live-dot {
+      width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%;
+      background: var(--good); box-shadow: 0 0 10px rgba(79,137,101,0.92);
+      animation: corePulse 2.2s ease-in-out infinite;
+    }
+    .ticker-viewport { position: relative; min-width: 0; flex: 1; overflow: hidden; display: flex; align-items: center; }
+    .ticker-viewport::before, .ticker-viewport::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 46px; z-index: 3; pointer-events: none;
+    }
+    .ticker-viewport::before { left: 0; background: linear-gradient(90deg, rgba(5,6,8,0.98), transparent); }
+    .ticker-viewport::after { right: 0; background: linear-gradient(-90deg, rgba(5,6,8,0.98), transparent); }
+    .ticker {
+      display: flex; align-items: center; width: max-content; min-width: max-content; white-space: nowrap;
+      will-change: transform; animation: tickerAnim var(--ticker-duration, 280s) linear infinite;
+    }
+    .ticker-wrap:hover .ticker, .ticker-wrap:focus-within .ticker { animation-play-state: paused; }
+    .ticker-sequence { display: flex; align-items: center; flex: 0 0 auto; white-space: nowrap; }
+    .ticker .ticker-item {
+      display: inline-flex; align-items: center; gap: 8px; padding: 0 12px;
+      color: rgba(224,224,224,0.86); font-family: var(--font-tech); font-size: 13px;
+      line-height: 42px; letter-spacing: 0.065em; text-transform: uppercase;
+      text-shadow: 0 0 8px rgba(255,255,255,0.025);
+    }
+    .ticker .ticker-tag { padding-right: 0; color: var(--gold); font-weight: bold; letter-spacing: 0.085em; }
+    .ticker .ticker-item.good .ticker-tag { color: #78b98e; }
+    .ticker .ticker-item.warn .ticker-tag { color: #d2a04d; }
+    .ticker .ticker-item.danger .ticker-tag { color: #c96868; }
+    .ticker .ticker-item.remote .ticker-tag { color: #8cb4ff; }
+    .ticker .ticker-item.lore .ticker-tag { color: rgba(212,175,55,0.78); }
+    .ticker .ticker-item.muted .ticker-tag { color: var(--muted); }
+    .ticker .ticker-item.warn .ticker-message { color: rgba(238,215,173,0.90); }
+    .ticker .ticker-item.danger .ticker-message { color: rgba(244,184,184,0.92); }
+    .ticker .ticker-item.remote .ticker-message { color: rgba(202,219,251,0.90); }
+    .ticker .ticker-item.lore .ticker-message { color: rgba(224,224,224,0.72); }
+    .ticker .ticker-message { padding-right: 0; }
+    .ticker .ticker-separator { padding-right: 0; color: rgba(212,175,55,0.34); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.14em; padding: 0 4px; }
+    @media (max-width: 900px) {
+      .ticker-wrap { display: flex; min-height: 38px; margin-bottom: 12px; }
+      .ticker-label { min-width: auto; padding: 6px 14px; }
+      .ticker-label strong { font-size: 9px; }
+      .ticker-label small { display: none; }
+      .ticker .ticker-item { font-size: 11px; line-height: 38px; padding: 0 9px; }
+      .ticker-viewport::before, .ticker-viewport::after { width: 26px; }
+    }
+    @media (max-width: 560px) {
+      .ticker-label { display: none; }
+      .ticker .ticker-item { font-size: 10px; letter-spacing: 0.045em; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ticker { animation: none !important; transform: none !important; }
+      .ticker-sequence[data-ticker-copy="1"] { display: none; }
+      .ticker-viewport { overflow-x: auto; scrollbar-width: thin; }
+    }
+
   </style>
 </head>
 <body>
@@ -372,9 +886,9 @@
           <div class="eyebrow">BMM CHARTERED STRATEGIC MANUFACTURING FACILITY</div>
           <h1>RESOLUTION HEAVY WORKS</h1>
           <div class="transmission-line">
-            <span>AUTHORITY: ALISTAIR THORNE</span>
-            <span>CHARTER: ACTIVE</span>
-            <span>SECURE CHANNEL</span>
+            <span>AUTHORITY <strong>ALISTAIR THORNE</strong></span>
+            <span>CHARTER <strong>ACTIVE</strong></span>
+            <span class="channel-chip"><i></i> SECURE CHANNEL</span>
           </div>
 
           <div class="base-telemetry-bar">
@@ -400,34 +914,43 @@
         <div class="uplink-header">
           <span class="live-dot" id="liveDot"></span>
           <div>
-            <small style="color:var(--muted); font-size:9px; letter-spacing:0.15em; display:block; margin-bottom:2px;">UPLINK STATUS</small>
-            <strong class="scramble" id="liveStatus" aria-live="polite" style="color:var(--good); font-size:14px; letter-spacing:0.05em;">SYNCING TELEMETRY...</strong>
+            <small class="uplink-label">UPLINK STATUS</small>
+            <strong class="scramble uplink-value" id="liveStatus" aria-live="polite">SYNCING TELEMETRY...</strong>
           </div>
         </div>
         <div class="uplink-grid">
           <div class="uplink-stat">
-            <small style="color:var(--muted); font-size:9px; letter-spacing:0.1em; margin-bottom:4px;">LATEST SYNC</small>
-            <strong id="syncTimeVal" style="color:var(--text); font-size:14px; font-family:var(--font-tech);">–</strong>
+            <small class="uplink-label">LATEST SYNC</small>
+            <strong class="uplink-value" id="syncTimeVal">–</strong>
           </div>
           <div class="uplink-stat">
-            <small style="color:var(--muted); font-size:9px; letter-spacing:0.1em; margin-bottom:4px;">NEXT SYNC</small>
-            <strong id="syncCountdown" style="color:var(--text); font-size:14px; font-family:var(--font-tech);">–</strong>
+            <small class="uplink-label">NEXT SYNC</small>
+            <strong class="uplink-value" id="syncCountdown">–</strong>
           </div>
           <div class="uplink-stat">
-            <small style="color:var(--muted); font-size:9px; letter-spacing:0.1em; margin-bottom:4px;">DATALINK</small>
-            <strong class="scramble" id="telemetryStateVal" aria-live="polite" style="color:var(--warn); font-size:14px; font-family:var(--font-tech);">POLLING</strong>
+            <small class="uplink-label">DATALINK</small>
+            <strong class="scramble uplink-value" id="telemetryStateVal" aria-live="polite">POLLING</strong>
           </div>
           <div class="uplink-stat">
-            <small style="color:var(--muted); font-size:9px; letter-spacing:0.1em; margin-bottom:4px;">REFRESH CYCLE</small>
-            <strong style="color:var(--text); font-size:14px; font-family:var(--font-tech);">60S</strong>
+            <small class="uplink-label">REFRESH CYCLE</small>
+            <strong class="uplink-value">60S</strong>
           </div>
         </div>
       </div>
     </div>
   </header>
 
-  <div class="ticker-wrap anim-boot delay-2" aria-label="BMM network feed">
-    <div class="ticker" id="tickerContainer"></div>
+  <div class="ticker-wrap anim-boot delay-2" aria-label="BMM Industrial Newswire">
+    <div class="ticker-label" aria-hidden="true">
+      <span class="ticker-live-dot"></span>
+      <span>
+        <strong>BMM INDUSTRIAL NEWSWIRE</strong>
+        <small>MARKETS // REGIONAL BULLETINS</small>
+      </span>
+    </div>
+    <div class="ticker-viewport">
+      <div class="ticker" id="tickerContainer"></div>
+    </div>
   </div>
 
   <div class="command-strip anim-boot delay-3" id="commandStrip">
@@ -440,24 +963,29 @@
   <main>
     <section class="summary-grid anim-boot delay-4">
       <div class="alert-card panel maintenance-panel">
-        <div class="alert-title"><span>Facility Maintenance</span><span class="count-badge scramble" id="maintenanceCount">0</span></div>
+        <div class="alert-title"><span><b class="section-index">01</b>Facility Maintenance</span><span class="count-badge scramble" id="maintenanceCount">0</span></div>
         <ul class="alert-list" id="maintenanceList"></ul>
       </div>
       <div class="alert-card panel export-panel">
-        <div class="alert-title"><span>Export Inventory</span><span class="count-badge scramble" id="exportCount">0</span></div>
+        <div class="alert-title"><span><b class="section-index">02</b>Export Inventory</span><span class="count-badge scramble" id="exportCount">0</span></div>
         <ul class="alert-list" id="exportList"></ul>
       </div>
       <div class="alert-card panel waste-panel">
-        <div class="alert-title"><span>Waste Management</span><span class="count-badge scramble" id="byproductCount">0</span></div>
+        <div class="alert-title"><span><b class="section-index">03</b>Waste Management</span><span class="count-badge scramble" id="byproductCount">0</span></div>
         <ul class="alert-list" id="byproductList"></ul>
       </div>
     </section>
 
-    <section class="panel anim-boot delay-4" style="border-color: rgba(107, 164, 255, 0.2);">
-      <div class="panel-head" style="background: linear-gradient(90deg, rgba(107, 164, 255, 0.1), transparent); border-bottom: 1px solid rgba(107, 164, 255, 0.2); align-items: center;">
-        <div>
-          <div class="panel-title" style="color: #8cb4ff; text-shadow: 0 0 10px rgba(107, 164, 255, 0.3);">EXTERNAL LOGISTICS UPLINK</div>
-          <div class="footnote" style="color: #a3c4ff;">TARGET: LISHEEN LOGISTIC DEPOT // SYSTEM: DUBLIN // PROCUREMENT RADAR</div>
+    <section class="panel remote-panel anim-boot delay-4">
+      <div class="panel-head remote-panel-head">
+        <div class="panel-heading-copy">
+          <div class="section-kicker"><span>04</span> REMOTE FACILITY</div>
+          <div class="panel-title remote-panel-title">EXTERNAL LOGISTICS UPLINK</div>
+          <div class="remote-route">
+            <span><small>TARGET</small><strong>LISHEEN LOGISTIC DEPOT</strong></span>
+            <span><small>SYSTEM</small><strong>DUBLIN</strong></span>
+            <span><small>MODE</small><strong>PROCUREMENT RADAR</strong></span>
+          </div>
         </div>
         <div class="sat-link-badge polling" id="supplierLinkBadge">
           <span class="sat-link-dot"></span>
@@ -469,30 +997,42 @@
 
     <section class="panel anim-boot delay-4">
       <div class="panel-head">
-        <div>
+        <div class="panel-heading-copy">
+          <div class="section-kicker"><span>05</span> INTERNAL SYSTEMS</div>
           <div class="panel-title">PRODUCTION MODULES</div>
-          <div class="footnote">INTERNAL RECIPE VIEW // BASED ON LIVE RHW STOCK</div>
+          <div class="footnote">LIVE RECIPE CAPACITY // BOTTLENECK ANALYSIS</div>
         </div>
       </div>
       <div class="production-grid" id="productionGrid"></div>
     </section>
 
     <section class="panel manifest-panel anim-boot delay-5">
-      <div class="panel-head" style="flex-wrap: wrap; gap: 15px;">
-        <div>
+      <div class="panel-head manifest-panel-head">
+        <div class="panel-heading-copy">
+          <div class="section-kicker"><span>06</span> ASSET CONTROL</div>
           <div class="panel-title">THORNE LOGISTICS MANIFEST</div>
-          <div class="footnote">ASSET LOOKUP AND OVERSIGHT</div>
+          <div class="footnote">SEARCH, FILTER AND SORT LOCAL INVENTORY</div>
         </div>
-        <div class="controls">
-          <input id="search" type="search" placeholder="Query asset..." aria-label="Search assets" />
-          <select id="roleFilter" aria-label="Filter assets by role">
+        <div class="controls manifest-controls">
+          <label class="search-control">
+            <span class="search-icon" aria-hidden="true"></span>
+            <input id="search" type="search" placeholder="Query asset..." aria-label="Search assets" />
+          </label>
+          <div class="role-segments" role="group" aria-label="Filter assets by role">
+            <button class="role-segment active" type="button" data-role="all">ALL</button>
+            <button class="role-segment" type="button" data-role="maintenance">FACILITY</button>
+            <button class="role-segment" type="button" data-role="procurement">PROCURE</button>
+            <button class="role-segment" type="button" data-role="export">EXPORT</button>
+            <button class="role-segment" type="button" data-role="byproduct">WASTE</button>
+          </div>
+          <select id="roleFilter" class="visually-hidden" aria-label="Filter assets by role">
             <option value="all">ALL ASSETS</option>
             <option value="maintenance">MAINTENANCE</option>
             <option value="procurement">PROCUREMENT</option>
             <option value="export">EXPORT</option>
             <option value="byproduct">WASTE / BYPROD</option>
           </select>
-          <button id="refreshBtn" type="button">FORCE UPLINK</button>
+          <button id="refreshBtn" class="uplink-button" type="button"><span>FORCE UPLINK</span></button>
         </div>
       </div>
       <div class="error-box" id="errorBox" aria-live="polite"></div>
@@ -518,44 +1058,156 @@
   <footer>
     <hr class="hrc-dark">
     CONNECTION <span id="footerConnection">SYNCING</span> /// GLORY TO THE QUEEN<br>
-    <div style="margin-top: 6px; color: var(--gold); font-family: var(--font-tech);" id="rpFooterTime"></div>
+    <div class="footer-clock" id="rpFooterTime"></div>
   </footer>
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V3.0.3 STABILITY & CONSISTENCY)
+   RHW DASHBOARD LOGIC (V3.1 RECIPE COLOR CONSISTENCY PATCH)
    ========================================================================== */
 
-const LORE_MESSAGES = [
-  "BMM SECURE CHANNEL ACTIVE",
-  "RHW ACTUAL: ALL SYSTEMS NOMINAL",
-  "WARNING: INCREASED CORSAIR ACTIVITY DETECTED IN OMEGA BORDER WORLDS",
-  "REMINDER: UNAUTHORIZED EXPORT PUNITIVE ACTION AUTHORIZED",
-  "LOGISTICS: THORNE CONVOY 'OMEGA-7' ETA DELAYED BY ION STORM",
-  "MARKET UPDATE: NIOBIUM ORE DEMAND EXCEEDS QUARTERLY QUOTA BY 14%",
-  "SECURITY ALERT: MOLLY REBELS SUSPECTED IN LOCAL SECTOR - REPORT ANOMALIES TO BPA",
-  "MAINTENANCE: COOLANT FLUSH IN REACTOR BAY 2 SCHEDULED FOR 0800 HOURS",
-  "BPA ADVISORY: CONTRABAND SEARCHES INCREASED AT ALL JUMP GATES",
-  "HR DEPT: MANDATORY DOUBLE SHIFTS APPROVED FOR SECTOR 4 MANUFACTORIES",
-  "TRADE NETWORK: GOLD ORE SPOT PRICES SURGING DUE TO SUPPLY CHAIN DISRUPTIONS",
-  "FLEET COMMS: BRETONIA ARMED FORCES PATROL 'VANGUARD' ENTERING SECTOR",
-  "SENSOR SWEEP: MINOR METEOR SHOWER DETECTED IN QUADRANT 7 - SHIELDS AT MAX",
-  "LOGISTICS: FREIGHTER 'ALBATROSS' DOCKED AT PIER 4 - OFFLOADING SCRAP METAL",
-  "HAZMAT WARNING: TOXIC WASTE CONTAINMENT NEARING THRESHOLD IN SILO B",
-  "BMM SHAREHOLDER REPORT: Q3 PROFITS EXCEED EXPECTATIONS BY 7.2%",
-  "SYS-ADMIN: DECRYPTING LATEST NAV-DATA FOR NEW LONDON TRADELANES",
-  "GLORY TO THE QUEEN"
-];
+const TICKER_DYNAMIC_SLOT_COUNT = 10;
+
+const NEWSWIRE_POOLS = {
+  market: [
+    { tag: 'BMM MARKET WATCH', text: 'NIOBIUM CONTRACTS STRENGTHEN AS OMEGA SUPPLY TIGHTENS', tone: 'lore' },
+    { tag: 'NEW LONDON EXCHANGE', text: 'INDUSTRIAL METALS OPEN FIRM ON CONTINUED MANUFACTURING DEMAND', tone: 'lore' },
+    { tag: 'BMM COMMODITIES', text: 'GOLD PREMIUMS HOLD ABOVE THE WEEKLY AVERAGE AHEAD OF THE NEXT FREIGHT WINDOW', tone: 'lore' },
+    { tag: 'BRETONIA TRADE', text: 'BULK FREIGHT BOOKINGS RISE ACROSS THE NEW LONDON INDUSTRIAL CORRIDOR', tone: 'lore' },
+    { tag: 'DUBLIN MARKET', text: 'REFINERY DEMAND CONTINUES TO SUPPORT ORE PRICES ACROSS THE SYSTEM', tone: 'remote' },
+    { tag: 'BMM FINANCE', text: 'INDUSTRIAL CREDIT CONDITIONS REMAIN FAVORABLE FOR CHARTERED FACILITIES', tone: 'lore' },
+    { tag: 'COMMODITIES DESK', text: 'MOX SUPPLY REMAINS THE PRIMARY PRICE DRIVER FOR HEAVY INDUSTRIAL OUTPUT', tone: 'lore' },
+    { tag: 'TRADE NETWORK', text: 'PROTOTYPE COMPONENT ORDERS ADVANCE ON RENEWED DEFENSE-SECTOR DEMAND', tone: 'lore' }
+  ],
+  regional: [
+    { tag: 'NEW LONDON DESK', text: 'FREIGHT VOLUME RISES ALONG THE INDUSTRIAL CORRIDOR', tone: 'lore' },
+    { tag: 'DUBLIN DESK', text: 'LISHEEN DEPOT PREPARES FOR INCREASED REFINED-METAL TRAFFIC', tone: 'remote' },
+    { tag: 'OMEGA BORDER WATCH', text: 'COMMERCIAL CONVOYS REPORT LONGER TRANSIT TIMES NEAR THE BORDER APPROACHES', tone: 'warn' },
+    { tag: 'BRETONIA SHIPPING', text: 'PIER ALLOCATIONS TIGHTEN AHEAD OF THE NEXT BULK-CARGO WINDOW', tone: 'lore' },
+    { tag: 'TRADE LANE REPORT', text: 'NEW LONDON ROUTES REMAIN OPEN WITH MODERATE COMMERCIAL CONGESTION', tone: 'good' },
+    { tag: 'BMM REGIONAL', text: 'CHARTERED FACILITIES REPORT STEADY OUTPUT ACROSS CENTRAL BRETONIA', tone: 'lore' },
+    { tag: 'DUBLIN FREIGHT', text: 'ORE HAULERS RECEIVE PRIORITY CLEARANCE FOR REFINERY DELIVERIES', tone: 'remote' },
+    { tag: 'NEW LONDON PORT', text: 'HEAVY FREIGHT BERTHS OPERATE ABOVE NORMAL WEEKDAY VOLUME', tone: 'lore' }
+  ],
+  security: [
+    { tag: 'BPA SECURITY BRIEF', text: 'RANDOMIZED CARGO INSPECTIONS CONTINUE AT LOCAL JUMP GATES', tone: 'warn' },
+    { tag: 'BAF PATROL REPORT', text: 'VANGUARD GROUP BEGINS A ROUTINE SYSTEM SWEEP', tone: 'lore' },
+    { tag: 'BPA INTELLIGENCE', text: 'MOLLY-LINKED ACTIVITY REPORTED NEAR OUTER TRADE LANES', tone: 'warn' },
+    { tag: 'OMEGA SECURITY', text: 'CORSAIR MOVEMENT REPORTED BEYOND THE BRETONIAN APPROACHES', tone: 'warn' },
+    { tag: 'BMM SECURITY', text: 'ACCESS CONTROLS REMAIN ACTIVE ACROSS ALL MANUFACTURING DECKS', tone: 'good' },
+    { tag: 'DOCK SECURITY', text: 'INBOUND FREIGHTERS SUBJECT TO SECONDARY MANIFEST VERIFICATION', tone: 'warn' },
+    { tag: 'BPA ADVISORY', text: 'UNREGISTERED TRANSPONDER ACTIVITY UNDER REVIEW IN THE LOCAL SECTOR', tone: 'warn' },
+    { tag: 'BAF COMMAND', text: 'COMMERCIAL TRAFFIC ADVISED TO KEEP PRIMARY LANES CLEAR FOR PATROL TRANSIT', tone: 'lore' }
+  ],
+  operations: [
+    { tag: 'RHW DOCKS', text: 'PIER FOUR OPENS FOR THE NEXT BULK FREIGHT WINDOW', tone: 'lore' },
+    { tag: 'RHW ENGINEERING', text: 'REACTOR BAY TWO CLEARED FOR SCHEDULED COOLANT SERVICE', tone: 'good' },
+    { tag: 'RHW LOGISTICS', text: 'OUTBOUND CARGO ALLOCATION UPDATED FOR THE NEXT SHIPPING CYCLE', tone: 'lore' },
+    { tag: 'RHW SHIFT DESK', text: 'DOCK CREWS REPORT READY FOR THE NEXT CARGO WINDOW', tone: 'good' },
+    { tag: 'RHW FABRICATION', text: 'PRODUCTION SCHEDULING PRIORITIZES HIGH-VALUE EXPORT CONTRACTS', tone: 'lore' },
+    { tag: 'RHW MATERIALS', text: 'WAREHOUSE TEAMS BEGIN CONSOLIDATION OF INDUSTRIAL FEEDSTOCK', tone: 'lore' },
+    { tag: 'RHW TRAFFIC', text: 'FREIGHTER ALBATROSS CLEARED FOR APPROACH TO PIER FOUR', tone: 'lore' },
+    { tag: 'RHW CONTROL', text: 'NEXT INTERNAL INVENTORY AUDIT ASSIGNED TO THE NIGHT SHIFT', tone: 'lore' }
+  ],
+  corporate: [
+    { tag: 'BMM CORPORATE', text: 'INDUSTRIAL OUTPUT FORECAST REVISED UPWARD FOR THE CURRENT QUARTER', tone: 'lore' },
+    { tag: 'BMM SHAREHOLDER WIRE', text: 'HEAVY MANUFACTURING REMAINS A CORE DRIVER OF BRETONIAN GROWTH', tone: 'lore' },
+    { tag: 'CROWN BULLETIN', text: 'BRETONIAN INDUSTRY REMAINS OPEN, SECURE AND PRODUCTIVE', tone: 'lore' },
+    { tag: 'BRETONIA INDUSTRY', text: 'ORDER PREVAILS // PRODUCTION ENDURES', tone: 'lore' },
+    { tag: 'BMM CHARTER OFFICE', text: 'STRATEGIC MANUFACTURING FACILITIES RECEIVE RENEWED LOGISTICS PRIORITY', tone: 'lore' },
+    { tag: 'CROWN LOYALTY', text: 'GLORY TO THE QUEEN', tone: 'lore' }
+  ]
+};
+
+const newswireHistory = new Map();
+
+function pickNewswireMessage(category, excludedTexts = []) {
+  const pool = NEWSWIRE_POOLS[category] || [];
+  if (!pool.length) return { tag: 'BMM NEWSWIRE', text: 'EDITORIAL DESK AWAITING BULLETINS', tone: 'muted' };
+
+  const blocked = new Set(excludedTexts);
+  const previous = newswireHistory.get(category);
+  if (previous) blocked.add(previous);
+
+  const candidates = pool.filter(message => !blocked.has(message.text));
+  const source = candidates.length ? candidates : pool;
+  const selected = source[Math.floor(Math.random() * source.length)];
+  newswireHistory.set(category, selected.text);
+  return { ...selected };
+}
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 function escapeHTML(str) { return String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])); }
 
 const tickerContainer = document.getElementById('tickerContainer');
-if (tickerContainer) {
-  const fullText = 'BMM NETWORK FEED // ' + LORE_MESSAGES.join(' /// ') + ' /// ';
-  tickerContainer.innerHTML = `<span>${escapeHTML(fullText)}</span><span>${escapeHTML(fullText)}</span>`;
+
+function tickerItemMarkup(message, slotIndex = null) {
+  const slotAttribute = slotIndex === null ? '' : ` data-ticker-slot="${slotIndex}"`;
+  const tone = ['good', 'warn', 'danger', 'remote', 'lore', 'muted'].includes(message.tone) ? message.tone : 'lore';
+  return `<span class="ticker-item ${tone}"${slotAttribute}><span class="ticker-tag">[${escapeHTML(message.tag)}]</span><span class="ticker-message">${escapeHTML(message.text)}</span></span><span class="ticker-separator" aria-hidden="true">///</span>`;
 }
+
+function buildTickerSequence(copyIndex) {
+  const placeholders = Array.from({ length: TICKER_DYNAMIC_SLOT_COUNT }, (_, index) => tickerItemMarkup({
+    tag: index === 0 ? 'BMM NEWSWIRE' : 'EDITORIAL DESK',
+    text: index === 0 ? 'AWAITING INITIAL TELEMETRY BURST' : 'ASSEMBLING MARKET AND REGIONAL BULLETINS',
+    tone: index === 0 ? 'warn' : 'muted'
+  }, index)).join('');
+  return `<div class="ticker-sequence" data-ticker-copy="${copyIndex}"${copyIndex ? ' aria-hidden="true"' : ''}>${placeholders}</div>`;
+}
+
+const TICKER_SPEED_PX_PER_SECOND = 58;
+const TICKER_MIN_DURATION_SECONDS = 95;
+const TICKER_MAX_DURATION_SECONDS = 150;
+
+function updateTickerSpeed() {
+  if (!tickerContainer || prefersReducedMotion.matches) return;
+
+  requestAnimationFrame(() => {
+    const primarySequence = tickerContainer.querySelector('.ticker-sequence[data-ticker-copy="0"]');
+    if (!primarySequence) return;
+
+    const distance = primarySequence.scrollWidth;
+    const duration = Math.max(
+      TICKER_MIN_DURATION_SECONDS,
+      Math.min(TICKER_MAX_DURATION_SECONDS, distance / TICKER_SPEED_PX_PER_SECOND)
+    );
+
+    tickerContainer.style.setProperty('--ticker-duration', `${duration.toFixed(1)}s`);
+  });
+}
+
+function initializeNetworkFeed() {
+  if (!tickerContainer) return;
+  tickerContainer.innerHTML = buildTickerSequence(0) + buildTickerSequence(1);
+  tickerContainer.style.setProperty('--ticker-duration', '110s');
+  updateTickerSpeed();
+}
+
+function updateTickerSlot(index, message) {
+  if (!tickerContainer || !message || index < 0 || index >= TICKER_DYNAMIC_SLOT_COUNT) return;
+  const tone = ['good', 'warn', 'danger', 'remote', 'lore', 'muted'].includes(message.tone) ? message.tone : 'lore';
+  tickerContainer.querySelectorAll(`[data-ticker-slot="${index}"]`).forEach(item => {
+    item.className = `ticker-item ${tone}`;
+    const tag = item.querySelector('.ticker-tag');
+    const body = item.querySelector('.ticker-message');
+    if (tag) tag.textContent = `[${message.tag}]`;
+    if (body) body.textContent = message.text;
+  });
+}
+
+function updateTickerSlots(messages) {
+  const safeMessages = Array.isArray(messages) ? messages.slice(0, TICKER_DYNAMIC_SLOT_COUNT) : [];
+  while (safeMessages.length < TICKER_DYNAMIC_SLOT_COUNT) {
+    safeMessages.push({ tag: 'BMM NEWSWIRE', text: 'EDITORIAL QUEUE CLEAR // AWAITING NEXT BULLETIN', tone: 'muted' });
+  }
+  safeMessages.forEach((message, index) => updateTickerSlot(index, message));
+  updateTickerSpeed();
+}
+
+initializeNetworkFeed();
+window.addEventListener('resize', debounce(updateTickerSpeed, 180));
 
 const holoTooltip = document.getElementById('holoTooltip');
 document.addEventListener('mousemove', e => {
@@ -665,6 +1317,7 @@ const els = {
   errorBox: document.getElementById('errorBox'),
   search: document.getElementById('search'),
   roleFilter: document.getElementById('roleFilter'),
+  roleSegmentButtons: document.querySelectorAll('.role-segment'),
   refreshBtn: document.getElementById('refreshBtn'),
   productionGrid: document.getElementById('productionGrid'),
   tableHeaders: document.querySelectorAll('#dataTable th[data-sort]'),
@@ -677,6 +1330,9 @@ const els = {
 function scrambleText(el, finalStr, duration = 500) {
   if (!el) return;
   finalStr = String(finalStr);
+
+  if (el.dataset.finalText === finalStr && el.textContent === finalStr) return;
+  el.dataset.finalText = finalStr;
 
   if (prefersReducedMotion.matches || duration <= 0) {
     el.textContent = finalStr;
@@ -903,6 +1559,240 @@ function setSupplierLinkState(state, text) {
   if (els.supplierLinkText) els.supplierLinkText.textContent = text;
 }
 
+
+function tickerStateTone(state) {
+  if (state === 'critical') return 'danger';
+  if (state === 'low') return 'warn';
+  return 'good';
+}
+
+function healthPercentValue(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  if (n <= 100) return Math.max(0, Math.min(100, n));
+  return Math.max(0, Math.min(100, (n / 24000000) * 100));
+}
+
+function worstTrackedState(list) {
+  const rank = { critical: 3, low: 2, ok: 1 };
+  return list.reduce((worst, item) => rank[stockState(item)] > rank[worst] ? stockState(item) : worst, 'ok');
+}
+
+function summarizeTrackedItems(role, nominalText) {
+  const tracked = operationalItems().filter(item => assetRole(item) === role);
+  const alerts = tracked
+    .map(item => ({ item, state: stockState(item) }))
+    .filter(entry => entry.state !== 'ok')
+    .sort((a, b) => ({ critical: 0, low: 1 }[a.state] - ({ critical: 0, low: 1 }[b.state])));
+
+  if (!alerts.length) return { text: nominalText, tone: 'good' };
+  const names = alerts.slice(0, 3).map(entry => `${displayName(entry.item).toUpperCase()} ${statusLabel(entry.state, role)}`);
+  const suffix = alerts.length > 3 ? ` +${alerts.length - 3} MORE` : '';
+  const worst = worstTrackedState(alerts.map(entry => entry.item));
+  return { text: `${names.join(' / ')}${suffix}`, tone: tickerStateTone(worst) };
+}
+
+function priorityToneRank(tone) {
+  return tone === 'danger' ? 3 : (tone === 'warn' ? 2 : 1);
+}
+
+function buildPriorityWire(recipeAnalyses) {
+  const priorities = [];
+  const healthRaw = rhwBase.health ?? rhwBase.base_health;
+  const healthPercent = healthPercentValue(healthRaw);
+
+  if (healthPercent !== null && healthPercent < 75) {
+    priorities.push({
+      tag: 'PRIORITY / STRUCTURAL',
+      text: `FACILITY INTEGRITY ${healthPercent < 25 ? 'CRITICAL' : 'DEGRADED'} AT ${number(healthPercent.toFixed(1))}%`,
+      tone: healthPercent < 25 ? 'danger' : 'warn'
+    });
+  }
+
+  ['maintenance', 'export'].forEach(role => {
+    const tracked = operationalItems()
+      .filter(item => assetRole(item) === role)
+      .map(item => ({ item, state: stockState(item) }))
+      .filter(entry => entry.state !== 'ok')
+      .sort((a, b) => priorityToneRank(tickerStateTone(b.state)) - priorityToneRank(tickerStateTone(a.state)));
+
+    if (!tracked.length) return;
+    const worstTone = tickerStateTone(tracked[0].state);
+    const summary = tracked.slice(0, 3).map(entry => `${displayName(entry.item).toUpperCase()} ${statusLabel(entry.state, role)}`).join(' / ');
+    priorities.push({
+      tag: role === 'maintenance' ? 'PRIORITY / FACILITY' : 'PRIORITY / EXPORT',
+      text: summary,
+      tone: worstTone
+    });
+  });
+
+  const wasteAlerts = operationalItems()
+    .filter(item => assetRole(item) === 'byproduct' && stockState(item) !== 'ok')
+    .sort((a, b) => priorityToneRank(tickerStateTone(stockState(b))) - priorityToneRank(tickerStateTone(stockState(a))));
+
+  if (wasteAlerts.length) {
+    const item = wasteAlerts[0];
+    const percent = Math.round((quantity(item) / Math.max(1, barMaxFor(item))) * 100);
+    priorities.push({
+      tag: 'PRIORITY / HAZMAT',
+      text: `${displayName(item).toUpperCase()} HAS REACHED ${percent}% OF OPERATIONAL CAPACITY`,
+      tone: tickerStateTone(stockState(item))
+    });
+  }
+
+  const blocked = recipeAnalyses.filter(analysis => analysis.possibleCycles <= 0);
+  if (blocked.length) {
+    const blockedNames = blocked.slice(0, 3).map(analysis => displayRecipeName(analysis.recipe.product).toUpperCase());
+    const bottleneckCounts = new Map();
+    blocked.forEach(analysis => {
+      const key = analysis.bottleneck ? displayRecipeName(analysis.bottleneck.name).toUpperCase() : 'UNKNOWN INPUT';
+      bottleneckCounts.set(key, (bottleneckCounts.get(key) || 0) + 1);
+    });
+    const primary = [...bottleneckCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'UNKNOWN INPUT';
+    priorities.push({
+      tag: 'PRIORITY / PRODUCTION',
+      text: `${blockedNames.join(' / ')} OFFLINE // PRIMARY CONSTRAINT ${primary}`,
+      tone: 'danger'
+    });
+  }
+
+  if (!lisheenBase || !Array.isArray(lisheenBase.shop_items)) {
+    priorities.push({
+      tag: 'PRIORITY / DUBLIN LINK',
+      text: 'LISHEEN MARKET DATABANK UNREACHABLE // REMOTE QUOTATIONS UNAVAILABLE',
+      tone: 'warn'
+    });
+  }
+
+  return priorities
+    .sort((a, b) => priorityToneRank(b.tone) - priorityToneRank(a.tone))
+    .slice(0, 2);
+}
+
+function buildFinanceDeskMessage() {
+  const money = rhwBase.money ?? rhwBase.credits ?? rhwBase.base_money;
+  const cargo = rhwBase.cargospace ?? rhwBase.cargo_space ?? rhwBase.cargo_space_left ?? rhwBase.storage_free;
+  return {
+    tag: 'RHW FINANCE DESK',
+    text: `TREASURY STANDS AT ${formatCurrency(money)} // AVAILABLE STORAGE ${Number.isFinite(Number(cargo)) ? number(cargo) : 'UNKNOWN'} UNITS`,
+    tone: 'lore'
+  };
+}
+
+function buildLisheenMarketMessage() {
+  if (!lisheenBase || !Array.isArray(lisheenBase.shop_items)) {
+    return { tag: 'DUBLIN MARKET', text: 'LISHEEN QUOTATION FEED UNAVAILABLE // GOLD MARKET DATA PENDING', tone: 'danger' };
+  }
+
+  const goldItem = lisheenBase.shop_items.find(entry => commodityKey(entry) === 'gold');
+  const oreItem = lisheenBase.shop_items.find(entry => commodityKey(entry) === 'gold ore');
+  const goldQty = goldItem ? quantity(goldItem) : 0;
+  const goldPrice = goldItem ? priceBuy(goldItem) : 0;
+
+  const goldRecipe = RECIPES.find(recipe => keyFromName(recipe.product) === 'gold');
+  const oreIngredient = goldRecipe?.ingredients.find(([name]) => keyFromName(name) === 'gold ore');
+  const orePerCycle = Number(oreIngredient?.[1]) || 425;
+  const goldPerCycle = Number(goldRecipe?.output) || 800;
+  const oreQty = oreItem ? quantity(oreItem) : 0;
+  const refiningRuns = orePerCycle > 0 ? Math.floor(oreQty / orePerCycle) : 0;
+  const potentialOutput = refiningRuns * goldPerCycle;
+
+  const goldPart = goldItem
+    ? `LISHEEN OFFERS ${number(goldQty)} REFINED GOLD${goldPrice > 0 ? ` AT ${formatCurrency(goldPrice)}` : ''}`
+    : 'REFINED GOLD CURRENTLY UNLISTED';
+  const orePart = oreItem
+    ? `ORE RESERVE SUPPORTS ${number(refiningRuns)} REFINING RUNS / ${number(potentialOutput)} UNITS POTENTIAL OUTPUT`
+    : 'ORE CAPACITY DATA UNAVAILABLE';
+
+  return {
+    tag: 'DUBLIN MARKET',
+    text: `${goldPart} // ${orePart}`,
+    tone: goldItem && goldQty > 0 ? 'remote' : 'warn'
+  };
+}
+
+function buildProductionDeskMessage(recipeAnalyses) {
+  const blocked = recipeAnalyses.filter(analysis => analysis.possibleCycles <= 0);
+  const readyCount = recipeAnalyses.length - blocked.length;
+
+  if (blocked.length) {
+    const recovery = blocked
+      .filter(analysis => analysis.bottleneck)
+      .sort((a, b) => a.nextCycleGap - b.nextCycleGap)[0];
+    const recoveryText = recovery?.bottleneck
+      ? `NEXT RECOVERY TARGET ${displayRecipeName(recovery.bottleneck.name).toUpperCase()} +${number(recovery.nextCycleGap)}`
+      : 'RECOVERY INPUT UNDER REVIEW';
+    return {
+      tag: 'RHW PRODUCTION DESK',
+      text: `${readyCount} OF ${recipeAnalyses.length} LINES AVAILABLE // ${recoveryText}`,
+      tone: blocked.length >= Math.ceil(recipeAnalyses.length / 2) ? 'danger' : 'warn'
+    };
+  }
+
+  const lowestReady = recipeAnalyses.reduce((lowest, current) => current.possibleCycles < lowest.possibleCycles ? current : lowest);
+  return {
+    tag: 'RHW PRODUCTION DESK',
+    text: `ALL ${recipeAnalyses.length} LINES READY // LOWEST INPUT RESERVE SUPPORTS ${number(lowestReady.possibleCycles)} CYCLES`,
+    tone: lowestReady.possibleCycles < 10 ? 'warn' : 'good'
+  };
+}
+
+function buildIndustrialNewswireMessages() {
+  if (!rhwBase) {
+    return Array.from({ length: TICKER_DYNAMIC_SLOT_COUNT }, (_, index) => ({
+      tag: index === 0 ? 'BMM NEWSWIRE' : 'EDITORIAL DESK',
+      text: index === 0 ? 'AWAITING INITIAL TELEMETRY BURST' : 'ASSEMBLING MARKET AND REGIONAL BULLETINS',
+      tone: index === 0 ? 'warn' : 'muted'
+    }));
+  }
+
+  const recipeAnalyses = RECIPES.map(analyzeRecipe);
+  const messages = [...buildPriorityWire(recipeAnalyses)];
+  const usedTexts = new Set(messages.map(message => message.text));
+
+  [
+    buildFinanceDeskMessage(),
+    buildLisheenMarketMessage(),
+    buildProductionDeskMessage(recipeAnalyses)
+  ].forEach(message => {
+    messages.push(message);
+    usedTexts.add(message.text);
+  });
+
+  ['market', 'regional', 'security', 'operations', 'corporate'].forEach(category => {
+    const message = pickNewswireMessage(category, [...usedTexts]);
+    messages.push(message);
+    usedTexts.add(message.text);
+  });
+
+  const extraCategories = ['market', 'regional', 'operations', 'security', 'corporate'];
+  let extraIndex = 0;
+  while (messages.length < TICKER_DYNAMIC_SLOT_COUNT) {
+    const category = extraCategories[extraIndex % extraCategories.length];
+    const message = pickNewswireMessage(category, [...usedTexts]);
+    messages.push(message);
+    usedTexts.add(message.text);
+    extraIndex++;
+  }
+
+  return messages.slice(0, TICKER_DYNAMIC_SLOT_COUNT);
+}
+
+function updateNetworkFeed(mode = 'live', errorMessage = '') {
+  if (!tickerContainer) return;
+  if (mode === 'loading') {
+    updateTickerSlot(0, { tag: 'BMM NEWSWIRE', text: 'TELEMETRY BURST IN PROGRESS // MARKET DESKS STANDING BY', tone: 'warn' });
+    return;
+  }
+  if (mode === 'error') {
+    const staleTime = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'NONE';
+    updateTickerSlot(0, { tag: 'PRIORITY / UPLINK', text: `DARKSTAT CONNECTION LOST // ${String(errorMessage || 'UNKNOWN TELEMETRY ERROR').toUpperCase()}`, tone: 'danger' });
+    updateTickerSlot(1, { tag: 'RHW CACHE', text: `DISPLAYING LAST VERIFIED DATA // SYNC ${staleTime}`, tone: lastLoaded ? 'warn' : 'danger' });
+    return;
+  }
+  updateTickerSlots(buildIndustrialNewswireMessages());
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -1027,28 +1917,43 @@ function renderProductionModules() {
     const analysis = analyzeRecipe(recipe);
     const ingredientRows = analysis.ingredientData.map(item => {
       const isBottleneck = analysis.bottleneck && item.name === analysis.bottleneck.name;
-      const immediateGap = item.currentCycleGap > 0 ? ` / Missing ${number(item.currentCycleGap)}` : '';
-      return `<li class="${isBottleneck ? 'bottleneck' : ''}"><span>${escapeHTML(displayRecipeName(item.name))}</span><span><small>Req ${number(item.required)}${immediateGap}</small> <strong>${number(item.stock)}</strong></span></li>`;
+      const shortText = item.currentCycleGap > 0
+        ? `<span class="recipe-short">Short ${number(item.currentCycleGap)}</span>`
+        : '';
+
+      return `<li class="${isBottleneck ? 'bottleneck' : ''}">
+                <span class="recipe-name">${escapeHTML(displayRecipeName(item.name))}</span>
+                <span class="recipe-required">${number(item.required)}</span>
+                <span class="recipe-stock">${number(item.stock)}${shortText}</span>
+              </li>`;
     }).join('');
 
     const nextGapText = analysis.bottleneck
-      ? `<div class="next-gap">NEXT +1 CYCLE: <strong>${escapeHTML(displayRecipeName(analysis.bottleneck.name))} +${number(analysis.nextCycleGap)}</strong></div>`
+      ? `<div class="next-gap ${analysis.cardState}">NEXT +1 CYCLE: <strong>${escapeHTML(displayRecipeName(analysis.bottleneck.name))} +${number(analysis.nextCycleGap)}</strong></div>`
       : '';
 
     const byproductsText = recipe.byproducts && recipe.byproducts.length
-      ? `<div class="footnote" style="margin-top: 10px; color: var(--gold); border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px;">+ BYPROD/CYCLE: ${recipe.byproducts.map(bp => `${number(bp[1])} ${escapeHTML(displayRecipeName(bp[0]))}`).join(' / ')}</div>`
+      ? `<div class="byproduct-strip"><span>BYPRODUCT / CYCLE</span>${recipe.byproducts.map(bp => `<span class="byproduct-tag">${number(bp[1])} ${escapeHTML(displayRecipeName(bp[0]))}</span>`).join('')}</div>`
       : '';
 
     return `<div class="production-card ${analysis.cardState}">
-              <div class="production-kicker">MODULE-${String(index + 1).padStart(2, '0')} // ${statusLabel(analysis.cardState, 'production')}</div>
-              <div class="production-title">${escapeHTML(displayRecipeName(recipe.product))}</div>
-              <div class="footnote">YIELD PER CYCLE: ${number(recipe.output)}</div>
+              <div class="production-card-head">
+                <div>
+                  <div class="production-kicker">MODULE-${String(index + 1).padStart(2, '0')}</div>
+                  <div class="production-title">${escapeHTML(displayRecipeName(recipe.product))}</div>
+                  <div class="footnote">YIELD PER CYCLE: ${number(recipe.output)}</div>
+                </div>
+                <span class="module-state ${analysis.cardState}">${statusLabel(analysis.cardState, 'production')}</span>
+              </div>
               <div class="production-stats">
-                <div class="production-stat"><small>IN STOCK</small><strong>${number(analysis.productStock)}</strong></div>
+                <div class="production-stat production-stock-primary"><small>IN STOCK</small><strong>${number(analysis.productStock)}</strong></div>
                 <div class="production-stat"><small>MAX CYCLES</small><strong>${number(analysis.possibleCycles)}</strong></div>
                 <div class="production-stat"><small>EST. YIELD</small><strong>${number(analysis.possibleOutput)}</strong></div>
               </div>
               ${nextGapText}
+              <div class="recipe-column-head" aria-hidden="true">
+                <span>Material</span><span>Required / Cycle</span><span>Current Stock</span>
+              </div>
               <ul class="recipe-list">${ingredientRows}</ul>
               ${byproductsText}
             </div>`;
@@ -1062,11 +1967,11 @@ function renderSupplier() {
   if (!lisheenBase || !Array.isArray(lisheenBase.shop_items)) {
     setSupplierLinkState('offline', 'SAT-LINK LOST');
     supplierGrid.innerHTML = `
-      <div class="supplier-card critical" style="width: 100%; max-width: none;">
+      <div class="supplier-card critical remote-error">
         <div class="supplier-header-row">
           <div>
-             <div class="supplier-kicker" style="color: #ff8b8b;">COMM-LINK FAILED</div>
-             <div class="supplier-title" style="color: var(--danger);">LISHEEN UPLINK LOST</div>
+             <div class="supplier-kicker error">COMM-LINK FAILED</div>
+             <div class="supplier-title error">LISHEEN UPLINK LOST</div>
           </div>
         </div>
         <div class="footnote">DATABANKS UNREACHABLE / SIGNAL LOST</div>
@@ -1085,7 +1990,6 @@ function renderSupplier() {
     const state = q > 5000 ? 'ok' : (q > 0 ? 'low' : 'critical');
     const stateText = q > 5000 ? 'SUPPLY STABLE' : (q > 0 ? 'SUPPLY LOW' : 'DEPLETED');
     const title = CANONICAL_NAMES[targetName] || targetName.toUpperCase();
-    const dotColor = state === 'ok' ? 'var(--good)' : (state === 'low' ? 'var(--warn)' : 'var(--danger)');
 
     const fallbackMax = BAR_MAX_FALLBACKS[targetName] || (targetName === 'gold' ? 60000 : 50000);
     const supplierMax = item ? (maxStock(item) || fallbackMax) : fallbackMax;
@@ -1094,20 +1998,24 @@ function renderSupplier() {
     return `
       <div class="supplier-card ${state}">
         <div class="supplier-scanline"></div>
+        <div class="remote-card-meta">
+          <span class="remote-badge">REMOTE FACILITY</span>
+          <span class="remote-badge">DUBLIN</span>
+        </div>
         <div class="supplier-header-row">
           <div>
-            <div class="supplier-kicker">REMOTE SCAN // <span style="color: ${dotColor};">${stateText}</span></div>
+            <div class="supplier-kicker">PROCUREMENT SCAN // <span class="supplier-state ${state}">${stateText}</span></div>
             <div class="supplier-title">${escapeHTML(title)}</div>
           </div>
-          <div class="pill ${state}" style="font-size: 11px; padding: 4px 10px; height: fit-content;">${state.toUpperCase()}</div>
+          <div class="pill ${state} supplier-pill">${state.toUpperCase()}</div>
         </div>
 
         <div class="supplier-stats">
-          <div class="supplier-stat">
+          <div class="supplier-stat stock">
             <small>AVAILABLE STOCK</small>
             <strong class="scramble-supplier" data-val="${number(q)}"></strong>
           </div>
-          <div class="supplier-stat">
+          <div class="supplier-stat price">
             <small>UNIT BUY PRICE</small>
             <strong class="scramble-supplier" data-val="${price > 0 ? formatCurrency(price) : 'N/A'}"></strong>
           </div>
@@ -1247,6 +2155,15 @@ function renderOverview() {
   renderList(els.byproductList, byproducts, 'NO WASTE DETECTED');
 }
 
+function updateRoleSegments() {
+  if (!els.roleFilter || !els.roleSegmentButtons) return;
+  els.roleSegmentButtons.forEach(button => {
+    const active = button.dataset.role === els.roleFilter.value;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+}
+
 function renderManifest() {
   if (!els.itemsBody || !els.search || !els.roleFilter) return;
   const query = normalize(els.search.value);
@@ -1289,7 +2206,7 @@ function renderManifest() {
     const state = stockState(item);
     const need = needAmount(item);
     const needDisplay = (role === 'byproduct' || role === 'procurement') ? '–' : (need ? number(need) : '–');
-    return `<tr><td><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td>${number(quantity(item))}</td><td>${needDisplay}</td><td>${formatCurrency(priceSell(item))}</td><td>${formatCurrency(priceBuy(item))}</td></tr>`;
+    return `<tr tabindex="0"><td class="asset-cell"><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td class="numeric-cell">${number(quantity(item))}</td><td class="numeric-cell">${needDisplay}</td><td class="numeric-cell price-cell sell-price">${formatCurrency(priceSell(item))}</td><td class="numeric-cell price-cell buy-price">${formatCurrency(priceBuy(item))}</td></tr>`;
   }).join('');
 }
 
@@ -1314,6 +2231,7 @@ async function loadData() {
   setTelemetryState('POLLING', 'warn');
   setFooterConnection('SYNCING', 'warn');
   setSupplierLinkState('polling', 'SAT-LINK SCANNING');
+  updateNetworkFeed('loading');
 
   if (els.liveStatus) {
     els.liveStatus.style.color = 'var(--warn)';
@@ -1365,12 +2283,14 @@ async function loadData() {
     }
 
     renderAll();
+    updateNetworkFeed('live');
   } catch (error) {
     console.error(error);
     setTelemetryState('ERROR', 'danger');
     setFooterConnection('FAILED', 'danger');
     setSupplierLinkState('offline', 'SAT-LINK LOST');
     renderSupplier();
+    updateNetworkFeed('error', error.message);
 
     if (els.liveStatus) {
       els.liveStatus.style.color = 'var(--danger)';
@@ -1403,9 +2323,16 @@ async function loadData() {
 }
 
 els.search?.addEventListener('input', debounce(renderManifest, 250));
-els.roleFilter?.addEventListener('change', renderManifest);
+els.roleFilter?.addEventListener('change', () => { updateRoleSegments(); renderManifest(); });
+els.roleSegmentButtons.forEach(button => button.addEventListener('click', () => {
+  if (!els.roleFilter) return;
+  els.roleFilter.value = button.dataset.role || 'all';
+  updateRoleSegments();
+  renderManifest();
+}));
 els.refreshBtn?.addEventListener('click', loadData);
 els.tableHeaders.forEach(th => th.addEventListener('click', handleSort));
+updateRoleSegments();
 
 loadData();
 </script>
