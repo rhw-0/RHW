@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V3.0.2 Stable Release</title>
+  <meta name="description" content="Resolution Heavy Works live logistics and production command dashboard." />
+  <title>RHW Command Dashboard · V3.0.3 Stability & Consistency</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,12 +37,19 @@
       scrollbar-width: thin;
       scrollbar-color: var(--gold) rgba(0, 0, 0, 0.5);
     }
-    
+
     @media (prefers-reduced-motion: reduce) {
       *, ::before, ::after { animation: none !important; transition: none !important; }
+      .anim-boot {
+        opacity: 1 !important;
+        transform: none !important;
+        filter: none !important;
+      }
     }
-    
-    body, a, button, input, select, th { cursor: crosshair !important; }
+
+    body { cursor: crosshair; }
+    button, select, th, a { cursor: pointer; }
+    input { cursor: text; }
 
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.5); border-left: 1px solid var(--line-soft); }
@@ -61,7 +69,7 @@
       overflow-x: hidden;
     }
 
-    /* Subtiles Flackern (Stromschwankungen) */
+    /* Subtle power fluctuation */
     @keyframes bgFlicker { 0%, 98%, 100% { opacity: 0.3; } 99% { opacity: 0.15; } }
 
     body::before {
@@ -81,13 +89,14 @@
 
     .anim-boot { opacity: 0; animation: bootUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .delay-1 { animation-delay: 0.05s; } .delay-2 { animation-delay: 0.15s; } .delay-3 { animation-delay: 0.25s; } .delay-4 { animation-delay: 0.35s; } .delay-5 { animation-delay: 0.45s; }
-    
     .blink-colon { animation: blink 1s step-start infinite; }
 
     .hrc-dark { border: 0; height: 1px; background: var(--line); margin: 40px auto 20px; width: 90%; }
+    .footnote { color: var(--muted); font-family: var(--font-tech); font-size: 11px; }
+    .overview-row-meta { display: flex; align-items: center; gap: 12px; }
 
     /* =========================================
-       NEW HUD FUSION HEADER (ZONE I & II) 
+       HUD FUSION HEADER (ZONE I & II)
        ========================================= */
     .command-header {
       position: relative; overflow: hidden; padding: 40px 32px; text-align: left;
@@ -96,21 +105,20 @@
       backdrop-filter: blur(10px); box-shadow: inset 0 -5px 20px rgba(0,0,0,0.5);
     }
     .command-header::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.8), transparent); opacity: 0.8; }
-    
+
     .header-watermark { position: absolute; right: -70px; top: -100px; width: 460px; height: 460px; background-image: url('https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png'); background-size: contain; background-repeat: no-repeat; opacity: 0.035; pointer-events: none; filter: grayscale(20%); animation: slowBreathe 8s ease-in-out infinite; }
 
     .command-header-inner { display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; max-width: 1400px; margin: 0 auto; flex-wrap: wrap; position: relative; z-index: 2; }
-    
-    /* ZONE I: Base Infos */
+
     .command-brand { display: flex; align-items: center; gap: 32px; flex: 1; min-width: 320px; }
     .crest-frame { position: relative; width: 150px; display: grid; place-items: center; flex-shrink: 0; }
     .crest-frame::before { content: ''; position: absolute; width: 130px; height: 130px; border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,0.2), rgba(194,135,34,0.05) 44%, transparent 68%); animation: corePulse 4s ease-in-out infinite; }
     .crest { position: relative; z-index: 2; width: 140px; filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.2)); }
-    
+
     .brand-copy { display: flex; flex-direction: column; width: 100%; }
     .eyebrow { color: var(--gold); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 4px; opacity: 0.8; }
     h1 { margin: 0 0 12px 0; font-family: var(--font-title); color: var(--text); font-size: clamp(38px, 4.5vw, 64px); font-weight: 700; line-height: 0.85; letter-spacing: 0.05em; text-transform: uppercase; text-shadow: 0 0 15px rgba(255,255,255,0.1); }
-    
+
     .transmission-line { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 24px; color: var(--muted); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em; }
     .transmission-line span { display: flex; align-items: center; gap: 12px; }
     .transmission-line span:not(:last-child)::after { content: ''; width: 1px; height: 10px; background: rgba(212,175,55,0.3); }
@@ -126,18 +134,16 @@
     .base-telemetry-stat { display: flex; flex-direction: column; }
     .base-telemetry-stat small { color: var(--muted); font-family: var(--font-tech); font-size: 9px; letter-spacing: 0.15em; margin-bottom: 4px; text-transform: uppercase; }
     .base-telemetry-stat strong { font-family: var(--font-tech); color: var(--text); font-size: 18px; letter-spacing: 0.05em; text-shadow: 0 0 10px rgba(255,255,255,0.1); transition: color 0.3s; }
-    
+
     .base-telemetry-stat.credits strong { color: var(--gold); text-shadow: 0 0 10px rgba(212,175,55,0.3); }
     .base-telemetry-stat.health-good strong { color: var(--good); text-shadow: 0 0 10px rgba(74,143,98,0.3); }
     .base-telemetry-stat.health-warn strong { color: var(--warn); text-shadow: 0 0 10px rgba(194,135,34,0.3); }
     .base-telemetry-stat.health-critical strong { color: var(--danger); text-shadow: 0 0 10px rgba(165,42,42,0.3); }
     .telemetry-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.1); }
 
-    /* ZONE II: Uplink Terminal */
     .uplink-panel {
       background: linear-gradient(180deg, rgba(10,12,15,0.9), rgba(5,6,8,0.95));
-      border: 1px solid rgba(255,255,255,0.05);
-      border-top: 2px solid var(--warn);
+      border: 1px solid rgba(255,255,255,0.05); border-top: 2px solid var(--warn);
       padding: 16px 20px;
       box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(194,135,34,0.05);
       width: 100%; max-width: 340px; flex-shrink: 0;
@@ -151,12 +157,11 @@
     .live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 12px var(--warn); flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s; }
     .uplink-panel.online .live-dot { background: var(--good); box-shadow: 0 0 12px var(--good); }
     .uplink-panel.offline .live-dot { background: var(--danger); box-shadow: 0 0 12px var(--danger); }
-    
+
     .uplink-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
     .uplink-stat { display: flex; flex-direction: column; }
-    
+
     @media (max-width: 1100px) { .command-header-inner { flex-direction: column; align-items: stretch; } .uplink-panel { max-width: 100%; } }
-    /* ========================================= */
 
     .ticker-wrap {
       width: 100%; background: rgba(0,0,0,0.85); border-bottom: 1px solid rgba(212,175,55,0.3);
@@ -166,7 +171,6 @@
     .ticker-wrap::before, .ticker-wrap::after { content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; pointer-events: none; }
     .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent); }
     .ticker-wrap::after { right: 0; background: linear-gradient(-90deg, var(--bg), transparent); }
-    
     .ticker { display: flex; width: max-content; white-space: nowrap; animation: tickerAnim 300s linear infinite; }
     .ticker span { flex-shrink: 0; white-space: nowrap; padding-right: 50px; font-family: var(--font-tech); font-size: 12px; color: rgba(212,175,55,0.8); letter-spacing: 0.15em; text-transform: uppercase; }
     @keyframes tickerAnim { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
@@ -200,20 +204,17 @@
 
     .progress-wrap {
       margin-top: 8px; width: 100%; height: 6px; background: rgba(255,255,255,0.07); position: relative;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.05); cursor: crosshair !important;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.05);
     }
-    
     .progress-wrap::after {
       content: ''; position: absolute; inset: 0; pointer-events: none;
       background: repeating-linear-gradient(90deg, transparent 0, transparent 4px, rgba(10,12,15,0.9) 4px, rgba(10,12,15,0.9) 6px); z-index: 2;
     }
-
     .progress-fill { position: relative; z-index: 1; height: 100%; width: 0%; transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
     .progress-fill.ok { background-color: #4ade80; box-shadow: 0 0 10px rgba(74,222,128,0.5); }
     .progress-fill.low { background-color: #fbbf24; box-shadow: 0 0 10px rgba(251,191,36,0.5); }
     .progress-fill.critical { background-color: #f87171; box-shadow: 0 0 10px rgba(248,113,113,0.5); }
     .progress-fill.waste { background-color: #d6d3d1; box-shadow: 0 0 10px rgba(214,211,209,0.3); }
-
     .progress-fill.critical, .progress-fill.waste {
       background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.25), rgba(255,255,255,0.25) 8px, transparent 8px, transparent 16px);
       background-size: 23px 23px; animation: hazardMove 1s linear infinite;
@@ -229,7 +230,7 @@
     .panel-head { padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.4); }
     .panel-title { font-family: var(--font-title); font-size: 24px; color: var(--gold); letter-spacing: 0.08em; text-shadow: 0 0 10px rgba(212,175,55,0.2); }
 
-    /* LISHEEN RADAR STYLES */
+    /* LISHEEN RADAR */
     .supplier-grid { display: flex; justify-content: center; flex-wrap: wrap; gap: 24px; padding: 24px; background: radial-gradient(circle at 50% 0%, rgba(107, 164, 255, 0.05), transparent 60%); }
     .supplier-card { width: 100%; max-width: 380px; flex: 1 1 300px; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(180deg, rgba(8,12,18,0.95), rgba(5,7,10,0.98)); padding: 20px; position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 0 20px rgba(107, 164, 255, 0.03); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); overflow: hidden; display: flex; flex-direction: column; }
     .supplier-card::after { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(107, 164, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(107, 164, 255, 0.03) 1px, transparent 1px); background-size: 20px 20px; pointer-events: none; z-index: 0; }
@@ -245,17 +246,27 @@
     .supplier-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px dashed rgba(107, 164, 255, 0.15); padding-bottom: 12px; }
     .supplier-kicker { font-family: var(--font-tech); color: #8cb4ff; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px; }
     .supplier-title { font-family: var(--font-title); color: #e0eaff; font-size: 26px; letter-spacing: 0.05em; text-shadow: 0 0 10px rgba(107, 164, 255, 0.3); margin: 0; line-height: 1; }
-    
+
     .supplier-stats { display: flex; gap: 10px; font-family: var(--font-tech); margin-top: auto; }
     .supplier-stat { flex: 1; border: 1px solid rgba(107, 164, 255, 0.15); background: rgba(107, 164, 255, 0.05); padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
     .supplier-stat small { color: #8cb4ff; font-size: 10px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
     .supplier-stat strong { font-size: 18px; color: var(--text); }
-    
+
     .supplier-progress-wrap { margin-top: 14px; width: 100%; height: 4px; background: rgba(107, 164, 255, 0.1); position: relative; overflow: hidden; }
     .supplier-progress-fill { height: 100%; position: absolute; left: 0; top: 0; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
     .supplier-progress-fill.ok { background: var(--good); box-shadow: 0 0 8px var(--good); }
     .supplier-progress-fill.low { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
     .supplier-progress-fill.critical { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+    .sat-link-badge { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: rgba(107, 164, 255, 0.05); border: 1px solid rgba(107,164,255,0.2); clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); }
+    .sat-link-dot { width: 8px; height: 8px; border-radius: 50%; background: #8cb4ff; box-shadow: 0 0 10px #8cb4ff; animation: corePulse 1.5s infinite; }
+    .sat-link-text { color: #8cb4ff; font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em; font-weight: bold; }
+    .sat-link-badge.polling .sat-link-dot { background: var(--warn); box-shadow: 0 0 10px var(--warn); }
+    .sat-link-badge.polling .sat-link-text { color: var(--warn); }
+    .sat-link-badge.online .sat-link-dot { background: var(--good); box-shadow: 0 0 10px var(--good); }
+    .sat-link-badge.online .sat-link-text { color: var(--good); }
+    .sat-link-badge.offline .sat-link-dot { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+    .sat-link-badge.offline .sat-link-text { color: var(--danger); }
 
     /* PRODUCTION */
     .production-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; padding: 24px; }
@@ -319,7 +330,7 @@
     #itemsBody, #productionGrid, #supplierGrid { transition: opacity 0.3s ease, filter 0.3s ease; }
     body.syncing #itemsBody, body.syncing #productionGrid, body.syncing #supplierGrid { opacity: 0.3; filter: blur(4px) grayscale(50%); pointer-events: none; }
     .error-box { display: none; padding: 10px 20px; border-bottom: 1px solid rgba(165, 42, 42, 0.55); background: rgba(165, 42, 42, 0.12); color: #ffbdbd; font-family: var(--font-tech); font-size: 12px; margin: 0; }
-    
+
     .manifest-panel { position: relative; overflow: hidden; }
     .manifest-panel::after { content: ''; position: absolute; left: -20%; right: -20%; top: -30%; height: 90px; background: linear-gradient(180deg, transparent, rgba(212,175,55,0.12), transparent); opacity: 0; pointer-events: none; transform: translateY(-120%); }
     body.syncing .manifest-panel::after { opacity: 1; animation: uplinkSweep 1.15s linear infinite; }
@@ -333,13 +344,16 @@
 
     @media (max-width: 900px) { 
       main { padding: 0 16px 40px; gap: 16px; } 
-      .summary-grid, .production-grid, .supplier-grid { grid-template-columns: 1fr; } 
+      .summary-grid, .production-grid { grid-template-columns: 1fr; } 
+      .supplier-grid { flex-direction: column; align-items: stretch; }
+      .supplier-card { max-width: none; }
       .panel-head, .controls { flex-direction: column; align-items: stretch; } 
       input, select, button { width: 100%; min-height: 44px; } 
       .base-telemetry-bar { flex-direction: column; clip-path: none; align-items: flex-start; }
       .telemetry-divider { display: none; }
       .command-brand { flex-direction: column; text-align: center; } 
-      .transmission-line { justify-content: center; } 
+      .transmission-line { justify-content: center; }
+      th { position: static; }
     }
   </style>
 </head>
@@ -347,12 +361,9 @@
 
   <div id="holoTooltip"></div>
 
-  <!-- HUD FUSION HEADER -->
   <header class="command-header anim-boot delay-1">
     <div class="header-watermark" aria-hidden="true"></div>
     <div class="command-header-inner">
-      
-      <!-- ZONE I: BRANDING & BASE TELEMETRY -->
       <div class="command-brand">
         <div class="crest-frame">
           <img class="crest" src="https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png" alt="RHW Crest" />
@@ -360,7 +371,6 @@
         <div class="brand-copy">
           <div class="eyebrow">BMM CHARTERED STRATEGIC MANUFACTURING FACILITY</div>
           <h1>RESOLUTION HEAVY WORKS</h1>
-          
           <div class="transmission-line">
             <span>AUTHORITY: ALISTAIR THORNE</span>
             <span>CHARTER: ACTIVE</span>
@@ -383,17 +393,15 @@
               <strong class="scramble" id="baseStorageVal">CALCULATING...</strong>
             </div>
           </div>
-
         </div>
       </div>
 
-      <!-- ZONE II: UPLINK CONSOLE -->
       <div class="uplink-panel" id="uplinkPanel">
         <div class="uplink-header">
           <span class="live-dot" id="liveDot"></span>
           <div>
             <small style="color:var(--muted); font-size:9px; letter-spacing:0.15em; display:block; margin-bottom:2px;">UPLINK STATUS</small>
-            <strong class="scramble" id="liveStatus" style="color:var(--good); font-size:14px; letter-spacing:0.05em;">SYNCING TELEMETRY...</strong>
+            <strong class="scramble" id="liveStatus" aria-live="polite" style="color:var(--good); font-size:14px; letter-spacing:0.05em;">SYNCING TELEMETRY...</strong>
           </div>
         </div>
         <div class="uplink-grid">
@@ -407,7 +415,7 @@
           </div>
           <div class="uplink-stat">
             <small style="color:var(--muted); font-size:9px; letter-spacing:0.1em; margin-bottom:4px;">DATALINK</small>
-            <strong class="scramble" id="telemetryStateVal" style="color:var(--warn); font-size:14px; font-family:var(--font-tech);">POLLING</strong>
+            <strong class="scramble" id="telemetryStateVal" aria-live="polite" style="color:var(--warn); font-size:14px; font-family:var(--font-tech);">POLLING</strong>
           </div>
           <div class="uplink-stat">
             <small style="color:var(--muted); font-size:9px; letter-spacing:0.1em; margin-bottom:4px;">REFRESH CYCLE</small>
@@ -415,11 +423,10 @@
           </div>
         </div>
       </div>
-
     </div>
   </header>
 
-  <div class="ticker-wrap anim-boot delay-2">
+  <div class="ticker-wrap anim-boot delay-2" aria-label="BMM network feed">
     <div class="ticker" id="tickerContainer"></div>
   </div>
 
@@ -452,9 +459,9 @@
           <div class="panel-title" style="color: #8cb4ff; text-shadow: 0 0 10px rgba(107, 164, 255, 0.3);">EXTERNAL LOGISTICS UPLINK</div>
           <div class="footnote" style="color: #a3c4ff;">TARGET: LISHEEN LOGISTIC DEPOT // SYSTEM: DUBLIN // PROCUREMENT RADAR</div>
         </div>
-        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: rgba(107, 164, 255, 0.05); border: 1px solid rgba(107,164,255,0.2); clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));">
-           <span style="width: 8px; height: 8px; border-radius: 50%; background: #8cb4ff; box-shadow: 0 0 10px #8cb4ff; animation: corePulse 1.5s infinite;"></span>
-           <span style="color: #8cb4ff; font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em; font-weight: bold;">SAT-LINK ACTIVE</span>
+        <div class="sat-link-badge polling" id="supplierLinkBadge">
+          <span class="sat-link-dot"></span>
+          <span class="sat-link-text" id="supplierLinkText">SAT-LINK SCANNING</span>
         </div>
       </div>
       <div class="supplier-grid" id="supplierGrid"></div>
@@ -477,18 +484,18 @@
           <div class="footnote">ASSET LOOKUP AND OVERSIGHT</div>
         </div>
         <div class="controls">
-          <input id="search" type="search" placeholder="Query asset..." />
-          <select id="roleFilter">
+          <input id="search" type="search" placeholder="Query asset..." aria-label="Search assets" />
+          <select id="roleFilter" aria-label="Filter assets by role">
             <option value="all">ALL ASSETS</option>
             <option value="maintenance">MAINTENANCE</option>
             <option value="procurement">PROCUREMENT</option>
             <option value="export">EXPORT</option>
             <option value="byproduct">WASTE / BYPROD</option>
           </select>
-          <button id="refreshBtn">FORCE UPLINK</button>
+          <button id="refreshBtn" type="button">FORCE UPLINK</button>
         </div>
       </div>
-      <div class="error-box" id="errorBox"></div>
+      <div class="error-box" id="errorBox" aria-live="polite"></div>
       <div class="table-wrap">
         <table id="dataTable">
           <thead>
@@ -498,8 +505,8 @@
               <th data-sort="status">STATUS</th>
               <th data-sort="quantity">QTY</th>
               <th data-sort="need">NEED</th>
-              <th data-sort="sell">SELL (CR)</th>
-              <th data-sort="buy">BUY (CR)</th>
+              <th data-sort="sell">SELL ($)</th>
+              <th data-sort="buy">BUY ($)</th>
             </tr>
           </thead>
           <tbody id="itemsBody"></tbody>
@@ -510,13 +517,13 @@
 
   <footer>
     <hr class="hrc-dark">
-    CONNECTION SECURE /// GLORY TO THE QUEEN<br>
+    CONNECTION <span id="footerConnection">SYNCING</span> /// GLORY TO THE QUEEN<br>
     <div style="margin-top: 6px; color: var(--gold); font-family: var(--font-tech);" id="rpFooterTime"></div>
   </footer>
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V3.0.2 STABLE)
+   RHW DASHBOARD LOGIC (V3.0.3 STABILITY & CONSISTENCY)
    ========================================================================== */
 
 const LORE_MESSAGES = [
@@ -540,16 +547,21 @@ const LORE_MESSAGES = [
   "GLORY TO THE QUEEN"
 ];
 
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+function escapeHTML(str) { return String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])); }
+
 const tickerContainer = document.getElementById('tickerContainer');
 if (tickerContainer) {
-  const fullText = LORE_MESSAGES.join(' /// ') + ' /// ';
+  const fullText = 'BMM NETWORK FEED // ' + LORE_MESSAGES.join(' /// ') + ' /// ';
   tickerContainer.innerHTML = `<span>${escapeHTML(fullText)}</span><span>${escapeHTML(fullText)}</span>`;
 }
 
 const holoTooltip = document.getElementById('holoTooltip');
 document.addEventListener('mousemove', e => {
+  if (!holoTooltip) return;
   const target = e.target.closest('[data-tooltip]');
-  if(target) {
+  if (target) {
     holoTooltip.textContent = target.dataset.tooltip;
     holoTooltip.style.opacity = '1';
     holoTooltip.style.left = (e.clientX + 15) + 'px';
@@ -562,35 +574,35 @@ document.addEventListener('mousemove', e => {
 const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
 const BASE_NAME = 'resolution heavy works';
 const AUTO_REFRESH_MS = 60000;
-const FETCH_TIMEOUT_MS = 18000; 
+const FETCH_TIMEOUT_MS = 18000;
 
-const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods']; 
-const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components', 'niobium']; 
+const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods'];
+const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components', 'niobium'];
 const BYPRODUCTS = ['toxic waste', 'scrap metal'];
 const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore'];
 const FEEDSTOCK = ['gold ore', 'niobium ore', 'military salvage'];
 
 const EXPORT_ORDER = ['Reactor Systems', 'Superstructure Systems', 'Multi-Mode Focusing Chamber', 'Prototype Components', 'Gold', 'Niobium'];
 
-const RECIPES = [ 
-  { product: 'Reactor Systems', output: 1, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] }, 
-  { product: 'Superstructure Systems', output: 1, byproducts: [], ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] }, 
-  { product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] }, 
-  { product: 'Prototype Components', output: 25, byproducts: [['Scrap Metal', 450]], ingredients: [['Military Salvage',255]] }, 
-  { product: 'Gold', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Gold Ore',425], ['MOX',170], ['Industrial Materials',85]] }, 
+const RECIPES = [
+  { product: 'Reactor Systems', output: 1, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] },
+  { product: 'Superstructure Systems', output: 1, byproducts: [], ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] },
+  { product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] },
+  { product: 'Prototype Components', output: 25, byproducts: [['Scrap Metal', 450]], ingredients: [['Military Salvage',255]] },
+  { product: 'Gold', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Gold Ore',425], ['MOX',170], ['Industrial Materials',85]] },
   { product: 'Niobium', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Niobium Ore',425], ['MOX',170], ['Industrial Materials',85]] }
 ];
 
-const CUSTOM_ALERTS = { 
-  'basic alloy': { type: 'min', red: 2500, yellow: 15000 }, 
-  'food rations': { type: 'min', red: 2500, yellow: 15000 }, 
-  'consumer goods': { type: 'min', red: 2500, yellow: 15000 }, 
-  'gold': { type: 'min', red: 5000, yellow: 15000 }, 
-  'niobium': { type: 'min', red: 5000, yellow: 10000 }, 
-  'reactor systems': { type: 'min', red: 200, yellow: 500 }, 
-  'superstructure systems': { type: 'min', red: 200, yellow: 500 }, 
-  'prototype components': { type: 'min', red: 2500, yellow: 5000 }, 
-  'multi-mode focusing chamber': { type: 'min', red: 500, yellow: 1000 }, 
+const CUSTOM_ALERTS = {
+  'basic alloy': { type: 'min', red: 2500, yellow: 15000 },
+  'food rations': { type: 'min', red: 2500, yellow: 15000 },
+  'consumer goods': { type: 'min', red: 2500, yellow: 15000 },
+  'gold': { type: 'min', red: 5000, yellow: 15000 },
+  'niobium': { type: 'min', red: 5000, yellow: 10000 },
+  'reactor systems': { type: 'min', red: 200, yellow: 500 },
+  'superstructure systems': { type: 'min', red: 200, yellow: 500 },
+  'prototype components': { type: 'min', red: 2500, yellow: 5000 },
+  'multi-mode focusing chamber': { type: 'min', red: 500, yellow: 1000 },
   'multi-mode focusing chambers': { type: 'min', red: 500, yellow: 1000 },
   'scrap metal': { type: 'max', yellow: 10000, red: 15000 },
   'toxic waste': { type: 'max', yellow: 10000, red: 15000 }
@@ -603,31 +615,34 @@ const BAR_MAX_FALLBACKS = {
   'gold ore': 50000, 'niobium ore': 50000, 'military salvage': 30000
 };
 
-// Europäische Nummern-Formatierung
-const numFormatter = new Intl.NumberFormat('de-DE'); 
+const numFormatter = new Intl.NumberFormat('de-DE');
 
-const CANONICAL_NAMES = { 
-  'ablative armor plating': 'Ablative Armor Plating', 'energy field equipment': 'Energy Field Equipment', 
-  'gold ore': 'Gold Ore', 'hull panels': 'Hull Panels', 'hydrocarbons': 'Hydrocarbons', 
-  'military salvage': 'Military Salvage', 'mox': 'MOX', 'niobium': 'Niobium', 
-  'super alloy': 'Super Alloy', 'titanium': 'Titanium', 'multi-mode focusing chamber': 'Multi-Mode Focusing Chamber', 
-  'multi-mode focusing chambers': 'Multi-Mode Focusing Chamber', 'superstructure systems': 'Superstructure Systems', 
-  'reactor systems': 'Reactor Systems', 'gold': 'Gold', 'prototype components': 'Prototype Components', 
+const CANONICAL_NAMES = {
+  'ablative armor plating': 'Ablative Armor Plating', 'energy field equipment': 'Energy Field Equipment',
+  'gold ore': 'Gold Ore', 'hull panels': 'Hull Panels', 'hydrocarbons': 'Hydrocarbons',
+  'military salvage': 'Military Salvage', 'mox': 'MOX', 'niobium': 'Niobium',
+  'super alloy': 'Super Alloy', 'titanium': 'Titanium', 'multi-mode focusing chamber': 'Multi-Mode Focusing Chamber',
+  'multi-mode focusing chambers': 'Multi-Mode Focusing Chamber', 'superstructure systems': 'Superstructure Systems',
+  'reactor systems': 'Reactor Systems', 'gold': 'Gold', 'prototype components': 'Prototype Components',
   'basic alloy': 'Basic Alloy', 'food rations': 'Food Rations', 'consumer goods': 'Consumer Goods',
   'industrial materials': 'Industrial Materials', 'niobium ore': 'Niobium Ore', 'toxic waste': 'Toxic Waste', 'scrap metal': 'Scrap Metal'
-}; 
+};
 
-let items = []; let lastLoaded = null; let rhwBase = null; let lisheenBase = null;
+let items = [];
+let lastLoaded = null;
+let rhwBase = null;
+let lisheenBase = null;
 let itemsByKey = new Map();
 let operationalItemsCache = [];
-let sortCol = 'name'; let sortAsc = true;
+let sortCol = 'name';
+let sortAsc = true;
 let refreshTimer = null;
 let isLoading = false;
 let nextSyncAt = null;
 
-const els = { 
+const els = {
   uplinkPanel: document.getElementById('uplinkPanel'),
-  liveStatus: document.getElementById('liveStatus'), 
+  liveStatus: document.getElementById('liveStatus'),
   liveDot: document.getElementById('liveDot'),
   syncTimeVal: document.getElementById('syncTimeVal'),
   syncCountdown: document.getElementById('syncCountdown'),
@@ -640,52 +655,68 @@ const els = {
   baseHealthCard: document.getElementById('baseHealthCard'),
   baseMoneyVal: document.getElementById('baseMoneyVal'),
   baseStorageVal: document.getElementById('baseStorageVal'),
-  maintenanceList: document.getElementById('maintenanceList'), 
-  exportList: document.getElementById('exportList'), 
-  byproductList: document.getElementById('byproductList'), 
-  maintenanceCount: document.getElementById('maintenanceCount'), 
-  exportCount: document.getElementById('exportCount'), 
-  byproductCount: document.getElementById('byproductCount'), 
-  itemsBody: document.getElementById('itemsBody'), 
+  maintenanceList: document.getElementById('maintenanceList'),
+  exportList: document.getElementById('exportList'),
+  byproductList: document.getElementById('byproductList'),
+  maintenanceCount: document.getElementById('maintenanceCount'),
+  exportCount: document.getElementById('exportCount'),
+  byproductCount: document.getElementById('byproductCount'),
+  itemsBody: document.getElementById('itemsBody'),
   errorBox: document.getElementById('errorBox'),
-  search: document.getElementById('search'), 
-  roleFilter: document.getElementById('roleFilter'), 
-  refreshBtn: document.getElementById('refreshBtn'), 
-  productionGrid: document.getElementById('productionGrid'), 
+  search: document.getElementById('search'),
+  roleFilter: document.getElementById('roleFilter'),
+  refreshBtn: document.getElementById('refreshBtn'),
+  productionGrid: document.getElementById('productionGrid'),
   tableHeaders: document.querySelectorAll('#dataTable th[data-sort]'),
-  rpFooterTime: document.getElementById('rpFooterTime')
+  rpFooterTime: document.getElementById('rpFooterTime'),
+  footerConnection: document.getElementById('footerConnection'),
+  supplierLinkBadge: document.getElementById('supplierLinkBadge'),
+  supplierLinkText: document.getElementById('supplierLinkText')
 };
 
 function scrambleText(el, finalStr, duration = 500) {
-  if(!el) return;
+  if (!el) return;
   finalStr = String(finalStr);
+
+  if (prefersReducedMotion.matches || duration <= 0) {
+    el.textContent = finalStr;
+    return;
+  }
+
   const chars = '0123456789@#$X%&*+';
-  const steps = duration / 25; 
+  const steps = Math.max(1, Math.ceil(duration / 25));
   let step = 0;
-  
-  if (el.dataset.scrambleInterval) clearInterval(parseInt(el.dataset.scrambleInterval));
-  
+
+  if (el.dataset.scrambleInterval) clearInterval(Number(el.dataset.scrambleInterval));
+
   const interval = setInterval(() => {
     let result = '';
-    for(let i = 0; i < finalStr.length; i++) {
-      if ([' ', 'C', 'R', '%', '–', ',', '.', ':'].includes(finalStr[i])) {
+    for (let i = 0; i < finalStr.length; i++) {
+      if ([' ', '$', '%', '–', ',', '.', ':', '/', '-'].includes(finalStr[i])) {
         result += finalStr[i];
-      } else if (step / steps > i / finalStr.length) {
+      } else if (step / steps > i / Math.max(1, finalStr.length)) {
         result += finalStr[i];
       } else {
         result += chars[Math.floor(Math.random() * chars.length)];
       }
     }
     el.textContent = result;
-    if (step >= steps) clearInterval(interval);
+    if (step >= steps) {
+      clearInterval(interval);
+      el.textContent = finalStr;
+    }
     step++;
   }, 25);
-  el.dataset.scrambleInterval = interval;
+
+  el.dataset.scrambleInterval = String(interval);
 }
 
 function debounce(func, wait) {
   let timeout;
-  return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func(...args), wait); };
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
 }
 
 setInterval(() => {
@@ -699,9 +730,9 @@ setInterval(() => {
   updateSyncCountdown();
 }, 1000);
 
-function escapeHTML(str) { return String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])); }
 function normalize(value) { return String(value || '').trim().toLowerCase(); }
 function number(value) { const x = Number(value); return Number.isFinite(x) ? numFormatter.format(x) : '–'; }
+function formatCurrency(value) { const x = Number(value); return Number.isFinite(x) ? `$${numFormatter.format(x)}` : '–'; }
 function itemName(item) { return item.name || item.item_name || item.nickname || String(item.id || 'Unknown Asset'); }
 const COMMODITY_ALIASES = { 'super alloys': 'super alloy', 'multi-mode focusing chambers': 'multi-mode focusing chamber' };
 
@@ -718,17 +749,17 @@ function displayName(item) { const key = commodityKey(item); return CANONICAL_NA
 function quantity(item) { return Number(item.quantity ?? item.amount ?? item.stock ?? 0); }
 function minStock(item) { return Number(item.min_stock ?? item.min ?? 0); }
 
-function needAmount(item) { 
+function needAmount(item) {
   const nm = commodityKey(item);
   const custom = CUSTOM_ALERTS[nm];
   const q = quantity(item);
   if (custom && custom.type === 'max') return Math.max(0, q - custom.yellow);
   if (custom && custom.type === 'min') return Math.max(0, custom.yellow - q);
-  return Math.max(0, minStock(item) - q); 
+  return Math.max(0, minStock(item) - q);
 }
 
 function maxStock(item) {
-  const value = item.max_stock ?? item.max ?? item.maxStock ?? item.max_quantity ?? item.maxQuantity ?? 0;
+  const value = item?.max_stock ?? item?.max ?? item?.maxStock ?? item?.max_quantity ?? item?.maxQuantity ?? 0;
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
 }
@@ -770,15 +801,15 @@ function formatBaseHealth(value) {
   return `${pct.toFixed(pct % 1 ? 1 : 0)}%`;
 }
 
-// INTELLIGENTER KOORDINATEN-FIX (Schluckt leere Kommas!)
 function formatPosition(value) {
   if (!value) return '–';
   if (typeof value === 'string') {
-    return value.split(',').map(s => s.trim()).filter(s => s !== '').join(' // ');
+    const cleaned = value.split(',').map(s => s.trim()).filter(Boolean);
+    return cleaned.length ? cleaned.join(' // ') : '–';
   }
   if (typeof value === 'object') {
     const arr = [value.x ?? value.X, value.y ?? value.Y, value.z ?? value.Z].filter(v => v !== undefined && v !== null && String(v).trim() !== '');
-    return arr.join(' // ');
+    return arr.length ? arr.join(' // ') : '–';
   }
   return String(value);
 }
@@ -790,7 +821,7 @@ function updateBaseTelemetry() {
   const health = rhwBase.health ?? rhwBase.base_health;
   const healthDisplay = formatBaseHealth(health);
 
-  if (els.baseMoneyVal) scrambleText(els.baseMoneyVal, Number.isFinite(Number(money)) ? `${numFormatter.format(money)} CR` : '–');
+  if (els.baseMoneyVal) scrambleText(els.baseMoneyVal, formatCurrency(money));
   if (els.baseStorageVal) scrambleText(els.baseStorageVal, Number.isFinite(Number(cargo)) ? numFormatter.format(cargo) : '–');
   if (els.baseHealthVal) scrambleText(els.baseHealthVal, healthDisplay);
 
@@ -836,57 +867,77 @@ function readinessText(state, role) {
 
 function updateSyncCountdown() {
   if (!els.syncCountdown) return;
-  if (isLoading) { 
-    els.syncCountdown.textContent = 'SYNCING'; 
+  if (isLoading) {
+    els.syncCountdown.textContent = 'SYNCING';
     els.syncCountdown.style.color = 'var(--warn)';
-    return; 
+    return;
   }
-  if (!nextSyncAt) { 
-    els.syncCountdown.textContent = '–'; 
+  if (!nextSyncAt) {
+    els.syncCountdown.textContent = '–';
     els.syncCountdown.style.color = 'var(--gold)';
-    return; 
+    return;
   }
-  
+
   const remaining = Math.max(0, Math.ceil((nextSyncAt - Date.now()) / 1000));
   els.syncCountdown.textContent = `${remaining}s`;
-  
-  if (remaining <= 10) els.syncCountdown.style.color = 'var(--warn)';
-  else els.syncCountdown.style.color = 'var(--gold)';
+  els.syncCountdown.style.color = remaining <= 10 ? 'var(--warn)' : 'var(--gold)';
 }
 
-function setTelemetryState(telemetry, cls = '') {
+function setTelemetryState(telemetry, cls = 'gold') {
   if (!els.telemetryStateVal) return;
   scrambleText(els.telemetryStateVal, telemetry);
   els.telemetryStateVal.style.color = `var(--${cls})`;
 }
 
+function setFooterConnection(state, colorToken = '') {
+  if (!els.footerConnection) return;
+  els.footerConnection.textContent = state;
+  els.footerConnection.style.color = colorToken ? `var(--${colorToken})` : '';
+}
+
+function setSupplierLinkState(state, text) {
+  if (els.supplierLinkBadge) {
+    els.supplierLinkBadge.classList.remove('polling', 'online', 'offline');
+    els.supplierLinkBadge.classList.add(state);
+  }
+  if (els.supplierLinkText) els.supplierLinkText.textContent = text;
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try { return await fetch(url, { ...options, signal: controller.signal }); } 
-  catch (error) { if (error.name === 'AbortError') throw new Error(`TELEMETRY TIMEOUT AFTER ${Math.round(timeoutMs / 1000)}S`); throw error; } 
-  finally { clearTimeout(timeout); }
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error.name === 'AbortError') throw new Error(`TELEMETRY TIMEOUT AFTER ${Math.round(timeoutMs / 1000)}S`);
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
-function stockState(item) { 
-  const q = quantity(item); const nm = commodityKey(item); const custom = CUSTOM_ALERTS[nm]; 
-  if (custom) { 
+function stockState(item) {
+  const q = quantity(item);
+  const nm = commodityKey(item);
+  const custom = CUSTOM_ALERTS[nm];
+  if (custom) {
     if (custom.type === 'max') return q >= custom.red ? 'critical' : (q >= custom.yellow ? 'low' : 'ok');
     return q < custom.red ? 'critical' : (q < custom.yellow ? 'low' : 'ok');
-  } 
-  if (PROCUREMENT.includes(nm) || BYPRODUCTS.includes(nm)) return 'ok'; 
-  const min = minStock(item); 
-  if (min > 0 && q <= min * 0.25) return 'critical'; 
-  if (min > 0 && q < min) return 'low'; return 'ok'; 
+  }
+  if (PROCUREMENT.includes(nm) || BYPRODUCTS.includes(nm)) return 'ok';
+  const min = minStock(item);
+  if (min > 0 && q <= min * 0.25) return 'critical';
+  if (min > 0 && q < min) return 'low';
+  return 'ok';
 }
 
-function assetRole(item) { 
-  const nm = commodityKey(item); 
-  if (EXPORTS.includes(nm)) return 'export'; 
-  if (BYPRODUCTS.includes(nm)) return 'byproduct'; 
-  if (MAINTENANCE.includes(nm)) return 'maintenance'; 
-  if (PROCUREMENT.includes(nm)) return 'procurement'; 
-  return 'other'; 
+function assetRole(item) {
+  const nm = commodityKey(item);
+  if (EXPORTS.includes(nm)) return 'export';
+  if (BYPRODUCTS.includes(nm)) return 'byproduct';
+  if (MAINTENANCE.includes(nm)) return 'maintenance';
+  if (PROCUREMENT.includes(nm)) return 'procurement';
+  return 'other';
 }
 
 function rebuildItemCaches() {
@@ -907,17 +958,17 @@ function rebuildItemCaches() {
 
 function operationalItems() { return operationalItemsCache; }
 function roleLabel(role) { if (role === 'maintenance') return 'FACILITY'; if (role === 'export') return 'EXPORT'; if (role === 'byproduct') return 'WASTE'; return 'PROCUREMENT'; }
-function statusLabel(state, role) { 
+function statusLabel(state, role) {
   if (role === 'byproduct') return state === 'critical' ? 'OVERFLOW' : (state === 'low' ? 'WARN' : 'STABLE');
-  return state === 'critical' ? 'CRITICAL' : (state === 'low' ? 'LOW' : 'STABLE'); 
+  return state === 'critical' ? 'CRITICAL' : (state === 'low' ? 'LOW' : 'STABLE');
 }
 
-function rolePill(role) { 
-  let cls = 'buy'; 
-  if (role === 'export') cls = 'both'; 
-  if (role === 'maintenance') cls = 'sell'; 
-  if (role === 'byproduct') cls = 'waste'; 
-  return `<span class="pill ${cls}">${roleLabel(role)}</span>`; 
+function rolePill(role) {
+  let cls = 'buy';
+  if (role === 'export') cls = 'both';
+  if (role === 'maintenance') cls = 'sell';
+  if (role === 'byproduct') cls = 'waste';
+  return `<span class="pill ${cls}">${roleLabel(role)}</span>`;
 }
 
 function statusPill(state, role) { return `<span class="pill ${state}">${statusLabel(state, role)}</span>`; }
@@ -927,18 +978,20 @@ function findCommodity(name) { return itemsByKey.get(keyFromName(name)) || null;
 function stockFor(name) { const item = findCommodity(name); return item ? quantity(item) : 0; }
 function displayRecipeName(name) { return displayName({ name }); }
 
-function handleSort(e) { 
-  const th = e.target.closest('th'); if (!th || !th.dataset.sort) return; 
-  const col = th.dataset.sort; 
-  if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; } 
-  renderManifest(); 
+function handleSort(e) {
+  const th = e.target.closest('th');
+  if (!th || !th.dataset.sort) return;
+  const col = th.dataset.sort;
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+  renderManifest();
 }
 
-function updateSortArrows() { 
+function updateSortArrows() {
   els.tableHeaders.forEach(th => {
     if (th.dataset.sort === sortCol) th.setAttribute('data-dir', sortAsc ? 'asc' : 'desc');
     else th.removeAttribute('data-dir');
-  }); 
+  });
 }
 
 function analyzeRecipe(recipe) {
@@ -963,27 +1016,27 @@ function analyzeRecipe(recipe) {
   return { recipe, productItem, productStock, ingredientData, possibleCycles, possibleOutput, bottleneck, nextCycleGap, cardState };
 }
 
-function renderProductionModules() { 
-  if (!els.productionGrid) return; 
-  if (!Array.isArray(RECIPES) || !RECIPES.length) { 
-    els.productionGrid.innerHTML = '<div class="production-card"><div class="production-title">No recipes configured</div></div>'; 
-    return; 
+function renderProductionModules() {
+  if (!els.productionGrid) return;
+  if (!Array.isArray(RECIPES) || !RECIPES.length) {
+    els.productionGrid.innerHTML = '<div class="production-card"><div class="production-title">No recipes configured</div></div>';
+    return;
   }
 
-  els.productionGrid.innerHTML = RECIPES.map((recipe, index) => { 
+  els.productionGrid.innerHTML = RECIPES.map((recipe, index) => {
     const analysis = analyzeRecipe(recipe);
-    const ingredientRows = analysis.ingredientData.map(item => { 
-      const isBottleneck = analysis.bottleneck && item.name === analysis.bottleneck.name; 
+    const ingredientRows = analysis.ingredientData.map(item => {
+      const isBottleneck = analysis.bottleneck && item.name === analysis.bottleneck.name;
       const immediateGap = item.currentCycleGap > 0 ? ` / Missing ${number(item.currentCycleGap)}` : '';
-      return `<li class="${isBottleneck ? 'bottleneck' : ''}"><span>${escapeHTML(displayRecipeName(item.name))}</span><span><small>Req ${number(item.required)}${immediateGap}</small> <strong>${number(item.stock)}</strong></span></li>`; 
-    }).join(''); 
+      return `<li class="${isBottleneck ? 'bottleneck' : ''}"><span>${escapeHTML(displayRecipeName(item.name))}</span><span><small>Req ${number(item.required)}${immediateGap}</small> <strong>${number(item.stock)}</strong></span></li>`;
+    }).join('');
 
     const nextGapText = analysis.bottleneck
       ? `<div class="next-gap">NEXT +1 CYCLE: <strong>${escapeHTML(displayRecipeName(analysis.bottleneck.name))} +${number(analysis.nextCycleGap)}</strong></div>`
       : '';
 
-    const byproductsText = recipe.byproducts && recipe.byproducts.length 
-      ? `<div class="footnote" style="margin-top: 10px; color: var(--gold); border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px;">+ BYPROD/CYCLE: ${recipe.byproducts.map(bp => `${number(bp[1])} ${escapeHTML(displayRecipeName(bp[0]))}`).join(' / ')}</div>` 
+    const byproductsText = recipe.byproducts && recipe.byproducts.length
+      ? `<div class="footnote" style="margin-top: 10px; color: var(--gold); border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px;">+ BYPROD/CYCLE: ${recipe.byproducts.map(bp => `${number(bp[1])} ${escapeHTML(displayRecipeName(bp[0]))}`).join(' / ')}</div>`
       : '';
 
     return `<div class="production-card ${analysis.cardState}">
@@ -998,8 +1051,8 @@ function renderProductionModules() {
               ${nextGapText}
               <ul class="recipe-list">${ingredientRows}</ul>
               ${byproductsText}
-            </div>`; 
-  }).join(''); 
+            </div>`;
+  }).join('');
 }
 
 function renderSupplier() {
@@ -1007,6 +1060,7 @@ function renderSupplier() {
   if (!supplierGrid) return;
 
   if (!lisheenBase || !Array.isArray(lisheenBase.shop_items)) {
+    setSupplierLinkState('offline', 'SAT-LINK LOST');
     supplierGrid.innerHTML = `
       <div class="supplier-card critical" style="width: 100%; max-width: none;">
         <div class="supplier-header-row">
@@ -1015,25 +1069,27 @@ function renderSupplier() {
              <div class="supplier-title" style="color: var(--danger);">LISHEEN UPLINK LOST</div>
           </div>
         </div>
-        <div class="footnote" style="font-family: var(--font-tech); font-size: 12px; color: var(--muted);">DATABANKS UNREACHABLE / SIGNAL LOST</div>
+        <div class="footnote">DATABANKS UNREACHABLE / SIGNAL LOST</div>
       </div>`;
     return;
   }
 
+  setSupplierLinkState('online', 'SAT-LINK ACTIVE');
   const targets = ['gold', 'gold ore'];
-  
+
   supplierGrid.innerHTML = targets.map(targetName => {
-    const item = lisheenBase.shop_items.find(i => keyFromName(i.name || i.nickname || '') === targetName);
+    const item = lisheenBase.shop_items.find(i => commodityKey(i) === targetName);
     const q = item ? quantity(item) : 0;
-    const price = item ? priceBuy(item) : 0; 
-    
+    const price = item ? priceBuy(item) : 0;
+
     const state = q > 5000 ? 'ok' : (q > 0 ? 'low' : 'critical');
     const stateText = q > 5000 ? 'SUPPLY STABLE' : (q > 0 ? 'SUPPLY LOW' : 'DEPLETED');
     const title = CANONICAL_NAMES[targetName] || targetName.toUpperCase();
     const dotColor = state === 'ok' ? 'var(--good)' : (state === 'low' ? 'var(--warn)' : 'var(--danger)');
-    
-    const maxStockAssumed = targetName === 'gold' ? 60000 : 50000;
-    const fillPct = Math.min(100, Math.max(0, (q / maxStockAssumed) * 100));
+
+    const fallbackMax = BAR_MAX_FALLBACKS[targetName] || (targetName === 'gold' ? 60000 : 50000);
+    const supplierMax = item ? (maxStock(item) || fallbackMax) : fallbackMax;
+    const fillPct = supplierMax > 0 ? Math.min(100, Math.max(0, (q / supplierMax) * 100)) : 0;
 
     return `
       <div class="supplier-card ${state}">
@@ -1041,11 +1097,11 @@ function renderSupplier() {
         <div class="supplier-header-row">
           <div>
             <div class="supplier-kicker">REMOTE SCAN // <span style="color: ${dotColor};">${stateText}</span></div>
-            <div class="supplier-title">${title}</div>
+            <div class="supplier-title">${escapeHTML(title)}</div>
           </div>
           <div class="pill ${state}" style="font-size: 11px; padding: 4px 10px; height: fit-content;">${state.toUpperCase()}</div>
         </div>
-        
+
         <div class="supplier-stats">
           <div class="supplier-stat">
             <small>AVAILABLE STOCK</small>
@@ -1053,17 +1109,17 @@ function renderSupplier() {
           </div>
           <div class="supplier-stat">
             <small>UNIT BUY PRICE</small>
-            <strong class="scramble-supplier" data-val="${price > 0 ? number(price) + ' CR' : 'N/A'}"></strong>
+            <strong class="scramble-supplier" data-val="${price > 0 ? formatCurrency(price) : 'N/A'}"></strong>
           </div>
         </div>
 
-        <div class="supplier-progress-wrap" data-tooltip="${fillPct.toFixed(0)}% EST. CAPACITY">
+        <div class="supplier-progress-wrap" data-tooltip="${fillPct.toFixed(0)}% OF MAX ${number(supplierMax)}">
           <div class="supplier-progress-fill ${state}" style="width: ${fillPct}%;"></div>
         </div>
       </div>
     `;
   }).join('');
-  
+
   supplierGrid.querySelectorAll('.scramble-supplier').forEach(el => scrambleText(el, el.dataset.val));
 }
 
@@ -1135,15 +1191,16 @@ function renderFeedstockRows() {
 }
 
 function renderFacilityList(target, maintenance, emptyText) {
+  if (!target) return;
   if (!maintenance.length) {
     target.innerHTML = renderOverviewEmptyRow(emptyText) + renderFeedstockRows();
     return;
   }
   const maintenanceRows = maintenance.map(item => {
-    const state = stockState(item); const role = assetRole(item);
+    const state = stockState(item);
+    const role = assetRole(item);
     return renderOverviewRow({
-      state, role, name: displayName(item),
-      detail: overviewDetail(item, state, role),
+      state, role, name: displayName(item), detail: overviewDetail(item, state, role),
       quantityValue: quantity(item), progress: renderProgress(item)
     });
   }).join('');
@@ -1151,12 +1208,16 @@ function renderFacilityList(target, maintenance, emptyText) {
 }
 
 function renderList(target, list, emptyText) {
-  if (!list.length) { target.innerHTML = renderOverviewEmptyRow(emptyText); return; }
+  if (!target) return;
+  if (!list.length) {
+    target.innerHTML = renderOverviewEmptyRow(emptyText);
+    return;
+  }
   target.innerHTML = list.map(item => {
-    const state = stockState(item); const role = assetRole(item);
+    const state = stockState(item);
+    const role = assetRole(item);
     return renderOverviewRow({
-      state, role, name: displayName(item),
-      detail: overviewDetail(item, state, role),
+      state, role, name: displayName(item), detail: overviewDetail(item, state, role),
       quantityValue: quantity(item), progress: renderProgress(item)
     });
   }).join('');
@@ -1168,16 +1229,18 @@ function renderOverview() {
 
   const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort(sortByName);
   const exports = sourceItems.filter(item => assetRole(item) === 'export').sort((a, b) => {
-    let idxA = EXPORT_ORDER.indexOf(displayName(a)); let idxB = EXPORT_ORDER.indexOf(displayName(b));
-    if (idxA === -1) idxA = 999; if (idxB === -1) idxB = 999;
+    let idxA = EXPORT_ORDER.indexOf(displayName(a));
+    let idxB = EXPORT_ORDER.indexOf(displayName(b));
+    if (idxA === -1) idxA = 999;
+    if (idxB === -1) idxB = 999;
     if (idxA !== idxB) return idxA - idxB;
     return sortByName(a, b);
   });
   const byproducts = sourceItems.filter(item => assetRole(item) === 'byproduct').sort(sortByName);
 
-  if(els.maintenanceCount) scrambleText(els.maintenanceCount, maintenance.length);
-  if(els.exportCount) scrambleText(els.exportCount, exports.length);
-  if(els.byproductCount) scrambleText(els.byproductCount, byproducts.length);
+  if (els.maintenanceCount) scrambleText(els.maintenanceCount, maintenance.length);
+  if (els.exportCount) scrambleText(els.exportCount, exports.length);
+  if (els.byproductCount) scrambleText(els.byproductCount, byproducts.length);
 
   renderFacilityList(els.maintenanceList, maintenance, 'FACILITY RESERVES STABLE');
   renderList(els.exportList, exports, 'NO EXPORT ASSETS DETECTED');
@@ -1185,6 +1248,7 @@ function renderOverview() {
 }
 
 function renderManifest() {
+  if (!els.itemsBody || !els.search || !els.roleFilter) return;
   const query = normalize(els.search.value);
   const roleFilter = els.roleFilter.value;
 
@@ -1196,6 +1260,7 @@ function renderManifest() {
 
   if (visible.length === 0) {
     els.itemsBody.innerHTML = `<tr><td colspan="7" class="empty-state">NO ASSETS MATCHING QUERY IN LOCAL DATABANKS</td></tr>`;
+    updateSortArrows();
     return;
   }
 
@@ -1220,9 +1285,11 @@ function renderManifest() {
   updateSortArrows();
 
   els.itemsBody.innerHTML = visible.map(item => {
-    const role = assetRole(item); const state = stockState(item); const need = needAmount(item);
+    const role = assetRole(item);
+    const state = stockState(item);
+    const need = needAmount(item);
     const needDisplay = (role === 'byproduct' || role === 'procurement') ? '–' : (need ? number(need) : '–');
-    return `<tr><td><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td>${number(quantity(item))}</td><td>${needDisplay}</td><td>${number(priceSell(item))}</td><td>${number(priceBuy(item))}</td></tr>`;
+    return `<tr><td><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td>${number(quantity(item))}</td><td>${needDisplay}</td><td>${formatCurrency(priceSell(item))}</td><td>${formatCurrency(priceBuy(item))}</td></tr>`;
   }).join('');
 }
 
@@ -1238,23 +1305,30 @@ async function loadData() {
   if (isLoading) return;
   isLoading = true;
 
-  if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
+  if (refreshTimer) {
+    clearTimeout(refreshTimer);
+    refreshTimer = null;
+  }
 
   document.body.classList.add('syncing');
   setTelemetryState('POLLING', 'warn');
-  
+  setFooterConnection('SYNCING', 'warn');
+  setSupplierLinkState('polling', 'SAT-LINK SCANNING');
+
   if (els.liveStatus) {
     els.liveStatus.style.color = 'var(--warn)';
     scrambleText(els.liveStatus, 'SYNCING TELEMETRY...', 400);
   }
   if (els.uplinkPanel) {
     els.uplinkPanel.classList.remove('offline', 'online');
-    els.uplinkPanel.classList.add('warn');
   }
-  
+
   updateSyncCountdown();
-  
-  if (els.errorBox) { els.errorBox.style.display = 'none'; els.errorBox.textContent = ''; }
+
+  if (els.errorBox) {
+    els.errorBox.style.display = 'none';
+    els.errorBox.textContent = '';
+  }
   if (els.refreshBtn) els.refreshBtn.disabled = true;
 
   try {
@@ -1265,7 +1339,6 @@ async function loadData() {
     if (!Array.isArray(data)) throw new Error('INVALID TELEMETRY RESPONSE.');
 
     rhwBase = data.find(base => normalize(base?.name) === BASE_NAME || normalize(base?.nickname) === BASE_NAME);
-    
     lisheenBase = data.find(base => {
       const n = normalize(base?.name);
       const nn = normalize(base?.nickname);
@@ -1278,14 +1351,16 @@ async function loadData() {
     items = rhwBase.shop_items;
     rebuildItemCaches();
     lastLoaded = new Date();
-    
+
     setTelemetryState('LIVE', 'good');
+    setFooterConnection('SECURE', 'good');
+
     if (els.liveStatus) {
       els.liveStatus.style.color = 'var(--good)';
       scrambleText(els.liveStatus, 'CONNECTION SECURE', 600);
     }
     if (els.uplinkPanel) {
-      els.uplinkPanel.classList.remove('warn', 'offline');
+      els.uplinkPanel.classList.remove('offline');
       els.uplinkPanel.classList.add('online');
     }
 
@@ -1293,26 +1368,30 @@ async function loadData() {
   } catch (error) {
     console.error(error);
     setTelemetryState('ERROR', 'danger');
+    setFooterConnection('FAILED', 'danger');
+    setSupplierLinkState('offline', 'SAT-LINK LOST');
+    renderSupplier();
+
     if (els.liveStatus) {
       els.liveStatus.style.color = 'var(--danger)';
       scrambleText(els.liveStatus, 'UPLINK FAILED', 400);
     }
     if (els.uplinkPanel) {
-      els.uplinkPanel.classList.remove('warn', 'online');
+      els.uplinkPanel.classList.remove('online');
       els.uplinkPanel.classList.add('offline');
     }
 
     if (els.errorBox) {
-      els.errorBox.textContent = `TELEMETRY ERROR: ${error.message}`;
+      const staleText = lastLoaded ? ` // LAST VALID SYNC ${lastLoaded.toLocaleTimeString('de-DE')}` : '';
+      els.errorBox.textContent = `TELEMETRY ERROR: ${error.message}${staleText}`;
       els.errorBox.style.display = 'block';
     }
   } finally {
     isLoading = false;
     document.body.classList.remove('syncing');
     if (els.refreshBtn) els.refreshBtn.disabled = false;
-    
+
     if (lastLoaded && els.syncTimeVal) {
-      // NUR NOCH DIE UHRZEIT! (HH:MM:SS) 🕒
       const timeString = lastLoaded.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       scrambleText(els.syncTimeVal, timeString);
     }
@@ -1323,10 +1402,10 @@ async function loadData() {
   }
 }
 
-els.search.addEventListener('input', debounce(renderManifest, 250)); 
-els.roleFilter.addEventListener('change', renderManifest); 
-els.refreshBtn.addEventListener('click', loadData); 
-els.tableHeaders.forEach(th => th.addEventListener('click', handleSort)); 
+els.search?.addEventListener('input', debounce(renderManifest, 250));
+els.roleFilter?.addEventListener('change', renderManifest);
+els.refreshBtn?.addEventListener('click', loadData);
+els.tableHeaders.forEach(th => th.addEventListener('click', handleSort));
 
 loadData();
 </script>
