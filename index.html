@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHW Command Dashboard · V3.0.1 Stable Release</title>
+  <title>RHW Command Dashboard · V3.0.2 Stable Release</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -62,62 +62,113 @@
     }
 
     /* Subtiles Flackern (Stromschwankungen) */
-    @keyframes bgFlicker {
-      0%, 98%, 100% { opacity: 0.3; }
-      99% { opacity: 0.15; }
-    }
+    @keyframes bgFlicker { 0%, 98%, 100% { opacity: 0.3; } 99% { opacity: 0.15; } }
 
     body::before {
       content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9998;
       background:
         repeating-linear-gradient(180deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 4px),
         radial-gradient(circle at 50% 0%, rgba(212,175,55,0.02), transparent 45%);
-      mix-blend-mode: screen;
-      opacity: 0.3;
-      animation: bgFlicker 12s infinite;
+      mix-blend-mode: screen; opacity: 0.3; animation: bgFlicker 12s infinite;
     }
 
     @keyframes corePulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
     @keyframes slowBreathe { 0%, 100% { opacity: 0.035; transform: scale(1); } 50% { opacity: 0.055; transform: scale(1.02); } }
-    @keyframes bootUp {
-      0% { opacity: 0; transform: translateY(15px) scale(0.99); filter: blur(5px) brightness(1.5); }
-      50% { filter: blur(0px) brightness(1.2); }
-      100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
-    }
+    @keyframes bootUp { 0% { opacity: 0; transform: translateY(15px) scale(0.99); filter: blur(5px) brightness(1.5); } 50% { filter: blur(0px) brightness(1.2); } 100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); } }
     @keyframes hazardMove { 0% { background-position: 0 0; } 100% { background-position: 28px 0; } }
     @keyframes bracketBlink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; text-shadow: 0 0 8px var(--gold); } }
     @keyframes blink { 50% { opacity: 0; } }
 
     .anim-boot { opacity: 0; animation: bootUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    .delay-1 { animation-delay: 0.05s; }
-    .delay-2 { animation-delay: 0.15s; }
-    .delay-3 { animation-delay: 0.25s; }
-    .delay-4 { animation-delay: 0.35s; }
-    .delay-5 { animation-delay: 0.45s; }
+    .delay-1 { animation-delay: 0.05s; } .delay-2 { animation-delay: 0.15s; } .delay-3 { animation-delay: 0.25s; } .delay-4 { animation-delay: 0.35s; } .delay-5 { animation-delay: 0.45s; }
     
     .blink-colon { animation: blink 1s step-start infinite; }
 
     .hrc-dark { border: 0; height: 1px; background: var(--line); margin: 40px auto 20px; width: 90%; }
+
+    /* =========================================
+       NEW HUD FUSION HEADER (ZONE I & II) 
+       ========================================= */
+    .command-header {
+      position: relative; overflow: hidden; padding: 40px 32px; text-align: left;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+      background: radial-gradient(circle at 20% 50%, rgba(212,175,55,0.05), transparent 40%), linear-gradient(135deg, rgba(5,6,8,0.95), rgba(10,12,15,0.98));
+      backdrop-filter: blur(10px); box-shadow: inset 0 -5px 20px rgba(0,0,0,0.5);
+    }
+    .command-header::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.8), transparent); opacity: 0.8; }
+    
+    .header-watermark { position: absolute; right: -70px; top: -100px; width: 460px; height: 460px; background-image: url('https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png'); background-size: contain; background-repeat: no-repeat; opacity: 0.035; pointer-events: none; filter: grayscale(20%); animation: slowBreathe 8s ease-in-out infinite; }
+
+    .command-header-inner { display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; max-width: 1400px; margin: 0 auto; flex-wrap: wrap; position: relative; z-index: 2; }
+    
+    /* ZONE I: Base Infos */
+    .command-brand { display: flex; align-items: center; gap: 32px; flex: 1; min-width: 320px; }
+    .crest-frame { position: relative; width: 150px; display: grid; place-items: center; flex-shrink: 0; }
+    .crest-frame::before { content: ''; position: absolute; width: 130px; height: 130px; border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,0.2), rgba(194,135,34,0.05) 44%, transparent 68%); animation: corePulse 4s ease-in-out infinite; }
+    .crest { position: relative; z-index: 2; width: 140px; filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.2)); }
+    
+    .brand-copy { display: flex; flex-direction: column; width: 100%; }
+    .eyebrow { color: var(--gold); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 4px; opacity: 0.8; }
+    h1 { margin: 0 0 12px 0; font-family: var(--font-title); color: var(--text); font-size: clamp(38px, 4.5vw, 64px); font-weight: 700; line-height: 0.85; letter-spacing: 0.05em; text-transform: uppercase; text-shadow: 0 0 15px rgba(255,255,255,0.1); }
+    
+    .transmission-line { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 24px; color: var(--muted); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em; }
+    .transmission-line span { display: flex; align-items: center; gap: 12px; }
+    .transmission-line span:not(:last-child)::after { content: ''; width: 1px; height: 10px; background: rgba(212,175,55,0.3); }
+    .transmission-line strong { color: var(--gold); font-weight: normal; }
+
+    .base-telemetry-bar {
+      display: inline-flex; flex-wrap: wrap; gap: 20px; align-items: center;
+      background: linear-gradient(90deg, rgba(212,175,55,0.05), rgba(0,0,0,0.4));
+      border: 1px solid rgba(255,255,255,0.05); border-left: 2px solid var(--gold);
+      padding: 12px 24px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+    }
+    .base-telemetry-stat { display: flex; flex-direction: column; }
+    .base-telemetry-stat small { color: var(--muted); font-family: var(--font-tech); font-size: 9px; letter-spacing: 0.15em; margin-bottom: 4px; text-transform: uppercase; }
+    .base-telemetry-stat strong { font-family: var(--font-tech); color: var(--text); font-size: 18px; letter-spacing: 0.05em; text-shadow: 0 0 10px rgba(255,255,255,0.1); transition: color 0.3s; }
+    
+    .base-telemetry-stat.credits strong { color: var(--gold); text-shadow: 0 0 10px rgba(212,175,55,0.3); }
+    .base-telemetry-stat.health-good strong { color: var(--good); text-shadow: 0 0 10px rgba(74,143,98,0.3); }
+    .base-telemetry-stat.health-warn strong { color: var(--warn); text-shadow: 0 0 10px rgba(194,135,34,0.3); }
+    .base-telemetry-stat.health-critical strong { color: var(--danger); text-shadow: 0 0 10px rgba(165,42,42,0.3); }
+    .telemetry-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.1); }
+
+    /* ZONE II: Uplink Terminal */
+    .uplink-panel {
+      background: linear-gradient(180deg, rgba(10,12,15,0.9), rgba(5,6,8,0.95));
+      border: 1px solid rgba(255,255,255,0.05);
+      border-top: 2px solid var(--warn);
+      padding: 16px 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(194,135,34,0.05);
+      width: 100%; max-width: 340px; flex-shrink: 0;
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .uplink-panel.online { border-top-color: var(--good); box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(74,143,98,0.05); }
+    .uplink-panel.offline { border-top-color: var(--danger); box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(165,42,42,0.05); }
+
+    .uplink-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 12px; }
+    .live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 12px var(--warn); flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s; }
+    .uplink-panel.online .live-dot { background: var(--good); box-shadow: 0 0 12px var(--good); }
+    .uplink-panel.offline .live-dot { background: var(--danger); box-shadow: 0 0 12px var(--danger); }
+    
+    .uplink-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+    .uplink-stat { display: flex; flex-direction: column; }
+    
+    @media (max-width: 1100px) { .command-header-inner { flex-direction: column; align-items: stretch; } .uplink-panel { max-width: 100%; } }
+    /* ========================================= */
 
     .ticker-wrap {
       width: 100%; background: rgba(0,0,0,0.85); border-bottom: 1px solid rgba(212,175,55,0.3);
       padding: 6px 0; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.7); margin-bottom: 20px;
       position: relative; display: flex; white-space: nowrap;
     }
-    .ticker-wrap::before, .ticker-wrap::after {
-      content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; pointer-events: none;
-    }
+    .ticker-wrap::before, .ticker-wrap::after { content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; pointer-events: none; }
     .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent); }
     .ticker-wrap::after { right: 0; background: linear-gradient(-90deg, var(--bg), transparent); }
     
-    .ticker { 
-      display: flex; width: max-content; white-space: nowrap; 
-      animation: tickerAnim 300s linear infinite; 
-    }
-    .ticker span { 
-      flex-shrink: 0; white-space: nowrap; padding-right: 50px; font-family: var(--font-tech); font-size: 12px; 
-      color: rgba(212,175,55,0.8); letter-spacing: 0.15em; text-transform: uppercase; 
-    }
+    .ticker { display: flex; width: max-content; white-space: nowrap; animation: tickerAnim 300s linear infinite; }
+    .ticker span { flex-shrink: 0; white-space: nowrap; padding-right: 50px; font-family: var(--font-tech); font-size: 12px; color: rgba(212,175,55,0.8); letter-spacing: 0.15em; text-transform: uppercase; }
     @keyframes tickerAnim { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
     main { padding: 0 32px 40px; display: grid; gap: 24px; max-width: 1400px; margin: 0 auto; }
@@ -178,50 +229,17 @@
     .panel-head { padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.4); }
     .panel-title { font-family: var(--font-title); font-size: 24px; color: var(--gold); letter-spacing: 0.08em; text-shadow: 0 0 10px rgba(212,175,55,0.2); }
 
-    /* --- LISHEEN RADAR STYLES (Ultra-Sleek & Zentriert) --- */
-    .supplier-grid { 
-      display: flex; 
-      justify-content: center; /* Symmetrisch in der Mitte! */
-      flex-wrap: wrap; 
-      gap: 24px; 
-      padding: 24px; 
-      background: radial-gradient(circle at 50% 0%, rgba(107, 164, 255, 0.05), transparent 60%);
-    }
-    
-    .supplier-card { 
-      width: 100%;
-      max-width: 380px; /* Keine riesigen Werbetafeln mehr! xDD */
-      flex: 1 1 300px; 
-      border: 1px solid rgba(255,255,255,0.05); 
-      background: linear-gradient(180deg, rgba(8,12,18,0.95), rgba(5,7,10,0.98)); 
-      padding: 20px; 
-      position: relative; 
-      box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 0 20px rgba(107, 164, 255, 0.03); 
-      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
-      overflow: hidden; 
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .supplier-card::after {
-      content: ''; position: absolute; inset: 0;
-      background-image: linear-gradient(rgba(107, 164, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(107, 164, 255, 0.03) 1px, transparent 1px);
-      background-size: 20px 20px; pointer-events: none; z-index: 0;
-    }
+    /* LISHEEN RADAR STYLES */
+    .supplier-grid { display: flex; justify-content: center; flex-wrap: wrap; gap: 24px; padding: 24px; background: radial-gradient(circle at 50% 0%, rgba(107, 164, 255, 0.05), transparent 60%); }
+    .supplier-card { width: 100%; max-width: 380px; flex: 1 1 300px; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(180deg, rgba(8,12,18,0.95), rgba(5,7,10,0.98)); padding: 20px; position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 0 20px rgba(107, 164, 255, 0.03); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); overflow: hidden; display: flex; flex-direction: column; }
+    .supplier-card::after { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(107, 164, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(107, 164, 255, 0.03) 1px, transparent 1px); background-size: 20px 20px; pointer-events: none; z-index: 0; }
     .supplier-card > * { position: relative; z-index: 1; }
-    
     .supplier-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; z-index: 2; transition: background 0.3s; }
     .supplier-card.critical::before { background: var(--danger); box-shadow: 0 0 12px var(--danger); }
     .supplier-card.low::before { background: var(--warn); box-shadow: 0 0 12px var(--warn); }
     .supplier-card.ok::before { background: var(--good); box-shadow: 0 0 12px var(--good); }
 
-    .supplier-scanline {
-      position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: rgba(107, 164, 255, 0.5);
-      box-shadow: 0 0 15px 2px rgba(107, 164, 255, 0.4);
-      animation: radarScan 3s linear infinite;
-      z-index: 3; pointer-events: none;
-    }
+    .supplier-scanline { position: absolute; top: 0; left: 0; right: 0; height: 1px; background: rgba(107, 164, 255, 0.5); box-shadow: 0 0 15px 2px rgba(107, 164, 255, 0.4); animation: radarScan 3s linear infinite; z-index: 3; pointer-events: none; }
     @keyframes radarScan { 0% { top: -10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 110%; opacity: 0; } }
 
     .supplier-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px dashed rgba(107, 164, 255, 0.15); padding-bottom: 12px; }
@@ -238,20 +256,11 @@
     .supplier-progress-fill.ok { background: var(--good); box-shadow: 0 0 8px var(--good); }
     .supplier-progress-fill.low { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
     .supplier-progress-fill.critical { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
-    /* ---------------------------------------------------- */
 
+    /* PRODUCTION */
     .production-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; padding: 24px; }
-    .production-card { 
-      border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(180deg, rgba(8,10,12,0.9), rgba(5,6,7,0.9)); 
-      padding: 20px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
-      clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px));
-    }
-    
-    .production-card::after {
-      content: ''; position: absolute; inset: 0;
-      background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-      background-size: 20px 20px; pointer-events: none; z-index: 0;
-    }
+    .production-card { border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(180deg, rgba(8,10,12,0.9), rgba(5,6,7,0.9)); padding: 20px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px)); }
+    .production-card::after { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 20px 20px; pointer-events: none; z-index: 0; }
     .production-card > * { position: relative; z-index: 1; }
     .production-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--line); z-index: 2; }
     .production-card.critical::before { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
@@ -273,12 +282,9 @@
     .recipe-list li.bottleneck { color: var(--danger); font-weight: bold; text-shadow: 0 0 5px rgba(165,42,42,0.5); }
     .recipe-list li.bottleneck span:first-child::before { content: '► '; font-size: 10px; }
 
+    /* CONTROLS & TABLE */
     .controls { display: flex; gap: 12px; flex-wrap: wrap; }
-    input, select, button { 
-      background: rgba(0,0,0,0.8); color: var(--text); border: 1px solid var(--line-soft); 
-      padding: 10px 16px; font-family: var(--font-tech); font-size: 13px; outline: none; transition: 0.2s; 
-      clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
-    }
+    input, select, button { background: rgba(0,0,0,0.8); color: var(--text); border: 1px solid var(--line-soft); padding: 10px 16px; font-family: var(--font-tech); font-size: 13px; outline: none; transition: 0.2s; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); }
     input:focus, select:focus { border-color: var(--gold); box-shadow: inset 0 0 8px rgba(212,175,55,0.1); }
     button { color: var(--bg); background: var(--gold); font-weight: bold; letter-spacing: 0.05em; border: none; }
     button:hover { background: #ffe47a; box-shadow: 0 0 15px rgba(212,175,55,0.4); }
@@ -286,28 +292,20 @@
 
     .table-wrap { overflow: auto; max-height: 600px; position: relative; }
     table { width: 100%; border-collapse: collapse; font-family: var(--font-tech); font-size: 13px; }
-    
     th, td { text-align: left; padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.03); white-space: nowrap; }
     th { color: var(--gold); user-select: none; background: rgba(5,6,8,0.95); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 rgba(212,175,55,0.2); backdrop-filter: blur(4px); border-bottom: none; }
     th:hover { background: #111; color: #fff; }
     th[data-sort] { padding-right: 22px; }
     th[data-sort][data-dir="asc"]::after { content: ' ▲'; position: absolute; right: 6px; color: var(--gold); font-size: 11px; }
     th[data-sort][data-dir="desc"]::after { content: ' ▼'; position: absolute; right: 6px; color: var(--gold); font-size: 11px; }
-    
     tr { transition: background 0.1s; }
     tr:hover td { background: rgba(212, 175, 55, 0.08); text-shadow: 0 0 5px rgba(212,175,55,0.4); }
-    
     .empty-state { text-align: center; padding: 30px !important; color: var(--warn); font-size: 14px; letter-spacing: 0.15em; font-weight: bold; }
     .empty-state::before, .empty-state::after { content: ' /// '; opacity: 0.5; }
-
     #itemsBody tr td:first-child { padding-left: 26px; }
     #itemsBody tr td:first-child strong { position: relative; display: inline-block; transition: text-shadow 0.2s, color 0.2s; }
     #itemsBody tr:hover td:first-child strong { text-shadow: 0 0 10px var(--gold); color: #fff; }
-    
-    @media (min-width: 600px) {
-      #itemsBody tr:hover td:first-child strong::before { content: '⌜ '; color: var(--gold); position: absolute; left: -20px; animation: bracketBlink 1s infinite; }
-      #itemsBody tr:hover td:first-child strong::after { content: ' ⌟'; color: var(--gold); position: absolute; right: -20px; animation: bracketBlink 1s infinite; }
-    }
+    @media (min-width: 600px) { #itemsBody tr:hover td:first-child strong::before { content: '⌜ '; color: var(--gold); position: absolute; left: -20px; animation: bracketBlink 1s infinite; } #itemsBody tr:hover td:first-child strong::after { content: ' ⌟'; color: var(--gold); position: absolute; right: -20px; animation: bracketBlink 1s infinite; } }
 
     .pill { padding: 3px 8px; font-size: 11px; border: 1px solid var(--line); border-radius: 2px; letter-spacing: 0.05em; font-weight: bold; }
     .critical { color: #ff8b8b; border-color: rgba(165,42,42,0.8); background: rgba(165,42,42,0.15); }
@@ -320,86 +318,28 @@
 
     #itemsBody, #productionGrid, #supplierGrid { transition: opacity 0.3s ease, filter 0.3s ease; }
     body.syncing #itemsBody, body.syncing #productionGrid, body.syncing #supplierGrid { opacity: 0.3; filter: blur(4px) grayscale(50%); pointer-events: none; }
-
     .error-box { display: none; padding: 10px 20px; border-bottom: 1px solid rgba(165, 42, 42, 0.55); background: rgba(165, 42, 42, 0.12); color: #ffbdbd; font-family: var(--font-tech); font-size: 12px; margin: 0; }
-
+    
     .manifest-panel { position: relative; overflow: hidden; }
-    .manifest-panel::after {
-      content: ''; position: absolute; left: -20%; right: -20%; top: -30%; height: 90px;
-      background: linear-gradient(180deg, transparent, rgba(212,175,55,0.12), transparent);
-      opacity: 0; pointer-events: none; transform: translateY(-120%);
-    }
+    .manifest-panel::after { content: ''; position: absolute; left: -20%; right: -20%; top: -30%; height: 90px; background: linear-gradient(180deg, transparent, rgba(212,175,55,0.12), transparent); opacity: 0; pointer-events: none; transform: translateY(-120%); }
     body.syncing .manifest-panel::after { opacity: 1; animation: uplinkSweep 1.15s linear infinite; }
     body.syncing #liveStatus { animation: uplinkBlink 0.85s ease-in-out infinite; }
-
     @keyframes uplinkSweep { from { transform: translateY(-120%); } to { transform: translateY(720%); } }
     @keyframes uplinkBlink { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; text-shadow: 0 0 10px var(--warn); } }
 
-    #holoTooltip {
-      position: fixed; pointer-events: none; background: rgba(10, 12, 15, 0.95); border: 1px solid var(--gold);
-      color: var(--gold); padding: 6px 10px; font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em;
-      z-index: 10000; box-shadow: 0 0 15px rgba(212, 175, 55, 0.15); opacity: 0; transition: opacity 0.15s;
-      transform: translate(15px, 15px); clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
-    }
-
-    .command-header {
-      position: relative; overflow: hidden; padding: 32px; text-align: left; border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-      background: radial-gradient(circle at 12% 50%, rgba(212,175,55,0.08), transparent 30%), linear-gradient(135deg, rgba(3,4,5,0.92), rgba(9,12,15,0.98));
-      backdrop-filter: blur(10px); box-shadow: inset 0 -1px 0 rgba(255,255,255,0.03);
-    }
-    .command-header::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.75), transparent); opacity: 0.75; }
-
-    .header-watermark { position: absolute; right: -70px; top: -100px; width: 460px; height: 460px; background-image: url('https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png'); background-size: contain; background-repeat: no-repeat; opacity: 0.035; pointer-events: none; filter: grayscale(20%); animation: slowBreathe 8s ease-in-out infinite; }
-
-    .command-header-inner { position: relative; z-index: 2; max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(330px, 360px); gap: 32px; align-items: center; }
-    .command-brand { display: flex; align-items: center; gap: 24px; min-width: 0; }
-    .crest-frame { position: relative; width: 168px; display: grid; place-items: center; }
-    .crest-frame::before { content: ''; position: absolute; width: 142px; height: 142px; border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,0.2), rgba(194,135,34,0.05) 44%, transparent 68%); animation: corePulse 4s ease-in-out infinite; }
-    .crest { position: relative; z-index: 2; width: 152px; filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.2)); }
-    
-    .eyebrow { color: var(--gold); font-family: var(--font-tech); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; }
-    h1 { margin: 0; font-family: var(--font-title); color: var(--text); font-size: clamp(42px, 4.6vw, 66px); font-weight: 700; line-height: 0.92; letter-spacing: 0.05em; text-transform: uppercase; text-shadow: 0 0 15px rgba(255,255,255,0.1); }
-    .subtitle { font-family: var(--font-tech); color: var(--muted); font-size: 13px; margin-top: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
-    
-    .transmission-line { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 13px; color: var(--muted); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em; }
-    .transmission-line span { padding-left: 12px; border-left: 1px solid rgba(212,175,55,0.3); }
-    .transmission-line span:first-child { padding-left: 0; border-left: 0; }
-
-    .facility-telemetry { display: grid; grid-template-columns: repeat(3, minmax(118px, 1fr)); gap: 10px; margin-top: 18px; max-width: 660px; }
-    .mini-telemetry-card { 
-      border: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.6); padding: 10px 12px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); 
-      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
-    }
-    .mini-telemetry-card small { display: block; color: var(--muted); font-family: var(--font-tech); font-size: 9px; letter-spacing: 0.15em; margin-bottom: 6px; text-transform: uppercase; }
-    .mini-telemetry-card strong { color: var(--gold); font-family: var(--font-tech); font-size: 14px; letter-spacing: 0.05em; text-shadow: 0 0 8px rgba(212,175,55,0.3); }
-
-    .mini-telemetry-card.health-good { border-color: rgba(74,143,98,0.55); background: linear-gradient(180deg, rgba(74,143,98,0.15), rgba(0,0,0,0.7)); }
-    .mini-telemetry-card.health-good strong { color: var(--good); text-shadow: 0 0 5px var(--good); }
-    .mini-telemetry-card.health-warn { border-color: rgba(194,135,34,0.58); background: linear-gradient(180deg, rgba(194,135,34,0.15), rgba(0,0,0,0.7)); }
-    .mini-telemetry-card.health-warn strong { color: var(--warn); text-shadow: 0 0 5px var(--warn); }
-    .mini-telemetry-card.health-critical { border-color: rgba(165,42,42,0.65); background: linear-gradient(180deg, rgba(165,42,42,0.2), rgba(0,0,0,0.7)); }
-    .mini-telemetry-card.health-critical strong { color: var(--danger); text-shadow: 0 0 5px var(--danger); }
-
-    .command-status-grid { display: grid; grid-template-columns: repeat(2, minmax(145px, 1fr)); gap: 12px; }
-    .status-chip { 
-      border: 1px solid rgba(212,175,55,0.22); background: rgba(0,0,0,0.5); padding: 12px 14px; display: flex; flex-direction: column; justify-content: center; 
-      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-    }
-    .status-chip small { color: var(--muted); font-family: var(--font-tech); font-size: 10px; letter-spacing: 0.15em; margin-bottom: 4px; text-transform: uppercase; }
-    .status-chip strong { color: var(--gold); font-family: var(--font-tech); font-size: 15px; letter-spacing: 0.05em; transition: color 0.3s; }
-
-    .uplink-chip { grid-column: span 2; flex-direction: row; justify-content: flex-start; align-items: center; gap: 12px; background: rgba(74,143,98,0.1); box-shadow: inset 0 0 0 1px rgba(74,143,98,0.3); }
-    .live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--good); box-shadow: 0 0 12px var(--good); animation: corePulse 2s infinite; flex: 0 0 auto; }
+    #holoTooltip { position: fixed; pointer-events: none; background: rgba(10, 12, 15, 0.95); border: 1px solid var(--gold); color: var(--gold); padding: 6px 10px; font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em; z-index: 10000; box-shadow: 0 0 15px rgba(212, 175, 55, 0.15); opacity: 0; transition: opacity 0.15s; transform: translate(15px, 15px); clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); }
 
     footer { text-align: center; font-family: var(--font-tech); font-size: 12px; color: #555555; padding: 20px 20px 40px; letter-spacing: 0.05em; }
 
-    @media (max-width: 1100px) { .summary-grid { grid-template-columns: 1fr 1fr; } .command-header-inner { grid-template-columns: 1fr; gap: 20px; } }
     @media (max-width: 900px) { 
       main { padding: 0 16px 40px; gap: 16px; } 
-      .summary-grid, .production-grid, .facility-telemetry, .supplier-grid { grid-template-columns: 1fr; } 
+      .summary-grid, .production-grid, .supplier-grid { grid-template-columns: 1fr; } 
       .panel-head, .controls { flex-direction: column; align-items: stretch; } 
       input, select, button { width: 100%; min-height: 44px; } 
-      .command-status-grid { grid-template-columns: 1fr 1fr; } 
+      .base-telemetry-bar { flex-direction: column; clip-path: none; align-items: flex-start; }
+      .telemetry-divider { display: none; }
+      .command-brand { flex-direction: column; text-align: center; } 
+      .transmission-line { justify-content: center; } 
     }
   </style>
 </head>
@@ -407,9 +347,12 @@
 
   <div id="holoTooltip"></div>
 
+  <!-- HUD FUSION HEADER -->
   <header class="command-header anim-boot delay-1">
     <div class="header-watermark" aria-hidden="true"></div>
     <div class="command-header-inner">
+      
+      <!-- ZONE I: BRANDING & BASE TELEMETRY -->
       <div class="command-brand">
         <div class="crest-frame">
           <img class="crest" src="https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png" alt="RHW Crest" />
@@ -417,60 +360,67 @@
         <div class="brand-copy">
           <div class="eyebrow">BMM CHARTERED STRATEGIC MANUFACTURING FACILITY</div>
           <h1>RESOLUTION HEAVY WORKS</h1>
-          <div class="subtitle">INDUSTRIAL MANUFACTURING HUB</div>
+          
           <div class="transmission-line">
             <span>AUTHORITY: ALISTAIR THORNE</span>
-            <span>TX-ID: BELFAST-RHW-424</span>
             <span>CHARTER: ACTIVE</span>
+            <span>SECURE CHANNEL</span>
           </div>
-          <div class="facility-telemetry">
-            <div class="mini-telemetry-card health-telemetry" id="baseHealthCard">
+
+          <div class="base-telemetry-bar">
+            <div class="base-telemetry-stat health-telemetry" id="baseHealthCard">
               <small>STRUCTURAL INTEGRITY</small>
               <strong class="scramble" id="baseHealthVal">SCANNING...</strong>
             </div>
-            <div class="mini-telemetry-card">
+            <div class="telemetry-divider"></div>
+            <div class="base-telemetry-stat credits">
               <small>BASE CREDITS</small>
               <strong class="scramble" id="baseMoneyVal">DECRYPTING...</strong>
             </div>
-            <div class="mini-telemetry-card">
+            <div class="telemetry-divider"></div>
+            <div class="base-telemetry-stat">
               <small>FREE STORAGE</small>
               <strong class="scramble" id="baseStorageVal">CALCULATING...</strong>
             </div>
           </div>
+
         </div>
       </div>
 
-      <div class="command-status-grid">
-        <div class="status-chip uplink-chip">
+      <!-- ZONE II: UPLINK CONSOLE -->
+      <div class="uplink-panel" id="uplinkPanel">
+        <div class="uplink-header">
           <span class="live-dot" id="liveDot"></span>
           <div>
-            <small>UPLINK STATUS</small>
-            <strong class="scramble" id="liveStatus">SYNCING TELEMETRY...</strong>
+            <small style="color:var(--muted); font-size:9px; letter-spacing:0.15em; display:block; margin-bottom:2px;">UPLINK STATUS</small>
+            <strong class="scramble" id="liveStatus" style="color:var(--good); font-size:14px; letter-spacing:0.05em;">SYNCING TELEMETRY...</strong>
           </div>
         </div>
-        <div class="status-chip">
-          <small>LATEST SYNC</small>
-          <strong id="syncTimeVal">–</strong>
-        </div>
-        <div class="status-chip">
-          <small>NEXT SYNC</small>
-          <strong id="syncCountdown">–</strong>
-        </div>
-        <div class="status-chip">
-          <small>TELEMETRY</small>
-          <strong class="scramble" id="telemetryStateVal" style="color:var(--warn)">POLLING</strong>
-        </div>
-        <div class="status-chip">
-          <small>REFRESH CYCLE</small>
-          <strong>60S</strong>
+        <div class="uplink-grid">
+          <div class="uplink-stat">
+            <small style="color:var(--muted); font-size:9px; letter-spacing:0.1em; margin-bottom:4px;">LATEST SYNC</small>
+            <strong id="syncTimeVal" style="color:var(--text); font-size:14px; font-family:var(--font-tech);">–</strong>
+          </div>
+          <div class="uplink-stat">
+            <small style="color:var(--muted); font-size:9px; letter-spacing:0.1em; margin-bottom:4px;">NEXT SYNC</small>
+            <strong id="syncCountdown" style="color:var(--text); font-size:14px; font-family:var(--font-tech);">–</strong>
+          </div>
+          <div class="uplink-stat">
+            <small style="color:var(--muted); font-size:9px; letter-spacing:0.1em; margin-bottom:4px;">DATALINK</small>
+            <strong class="scramble" id="telemetryStateVal" style="color:var(--warn); font-size:14px; font-family:var(--font-tech);">POLLING</strong>
+          </div>
+          <div class="uplink-stat">
+            <small style="color:var(--muted); font-size:9px; letter-spacing:0.1em; margin-bottom:4px;">REFRESH CYCLE</small>
+            <strong style="color:var(--text); font-size:14px; font-family:var(--font-tech);">60S</strong>
+          </div>
         </div>
       </div>
+
     </div>
   </header>
 
   <div class="ticker-wrap anim-boot delay-2">
-    <div class="ticker" id="tickerContainer">
-      </div>
+    <div class="ticker" id="tickerContainer"></div>
   </div>
 
   <div class="command-strip anim-boot delay-3" id="commandStrip">
@@ -566,7 +516,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V3.0.1 STABLE) - THE SECRET EDITION 🤫
+   RHW DASHBOARD LOGIC (V3.0.2 STABLE)
    ========================================================================== */
 
 const LORE_MESSAGES = [
@@ -653,7 +603,9 @@ const BAR_MAX_FALLBACKS = {
   'gold ore': 50000, 'niobium ore': 50000, 'military salvage': 30000
 };
 
-const numFormatter = new Intl.NumberFormat('en-US'); 
+// Europäische Nummern-Formatierung
+const numFormatter = new Intl.NumberFormat('de-DE'); 
+
 const CANONICAL_NAMES = { 
   'ablative armor plating': 'Ablative Armor Plating', 'energy field equipment': 'Energy Field Equipment', 
   'gold ore': 'Gold Ore', 'hull panels': 'Hull Panels', 'hydrocarbons': 'Hydrocarbons', 
@@ -674,6 +626,7 @@ let isLoading = false;
 let nextSyncAt = null;
 
 const els = { 
+  uplinkPanel: document.getElementById('uplinkPanel'),
   liveStatus: document.getElementById('liveStatus'), 
   liveDot: document.getElementById('liveDot'),
   syncTimeVal: document.getElementById('syncTimeVal'),
@@ -715,7 +668,7 @@ function scrambleText(el, finalStr, duration = 500) {
   const interval = setInterval(() => {
     let result = '';
     for(let i = 0; i < finalStr.length; i++) {
-      if ([' ', '$', '%', '–', ',', '.', ':'].includes(finalStr[i])) {
+      if ([' ', 'C', 'R', '%', '–', ',', '.', ':'].includes(finalStr[i])) {
         result += finalStr[i];
       } else if (step / steps > i / finalStr.length) {
         result += finalStr[i];
@@ -741,7 +694,7 @@ setInterval(() => {
     const hours = String(now.getHours()).padStart(2, '0');
     const mins = String(now.getMinutes()).padStart(2, '0');
     const secs = String(now.getSeconds()).padStart(2, '0');
-    els.rpFooterTime.innerHTML = `SYS-CLOCK: ${now.toLocaleDateString('en-GB')} [${hours}<span class="blink-colon">:</span>${mins}<span class="blink-colon">:</span>${secs}Z]`;
+    els.rpFooterTime.innerHTML = `SYS-CLOCK: [${hours}<span class="blink-colon">:</span>${mins}<span class="blink-colon">:</span>${secs}]`;
   }
   updateSyncCountdown();
 }, 1000);
@@ -817,14 +770,15 @@ function formatBaseHealth(value) {
   return `${pct.toFixed(pct % 1 ? 1 : 0)}%`;
 }
 
+// INTELLIGENTER KOORDINATEN-FIX (Schluckt leere Kommas!)
 function formatPosition(value) {
   if (!value) return '–';
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') {
+    return value.split(',').map(s => s.trim()).filter(s => s !== '').join(' // ');
+  }
   if (typeof value === 'object') {
-    const x = value.x ?? value.X;
-    const y = value.y ?? value.Y;
-    const z = value.z ?? value.Z;
-    if ([x, y, z].every(v => v !== undefined && v !== null)) return `${x}, ${y}, ${z}`;
+    const arr = [value.x ?? value.X, value.y ?? value.Y, value.z ?? value.Z].filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+    return arr.join(' // ');
   }
   return String(value);
 }
@@ -836,7 +790,7 @@ function updateBaseTelemetry() {
   const health = rhwBase.health ?? rhwBase.base_health;
   const healthDisplay = formatBaseHealth(health);
 
-  if (els.baseMoneyVal) scrambleText(els.baseMoneyVal, Number.isFinite(Number(money)) ? `$${numFormatter.format(money)}` : '–');
+  if (els.baseMoneyVal) scrambleText(els.baseMoneyVal, Number.isFinite(Number(money)) ? `${numFormatter.format(money)} CR` : '–');
   if (els.baseStorageVal) scrambleText(els.baseStorageVal, Number.isFinite(Number(cargo)) ? numFormatter.format(cargo) : '–');
   if (els.baseHealthVal) scrambleText(els.baseHealthVal, healthDisplay);
 
@@ -903,7 +857,7 @@ function updateSyncCountdown() {
 function setTelemetryState(telemetry, cls = '') {
   if (!els.telemetryStateVal) return;
   scrambleText(els.telemetryStateVal, telemetry);
-  els.telemetryStateVal.className = cls;
+  els.telemetryStateVal.style.color = `var(--${cls})`;
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
@@ -1099,7 +1053,7 @@ function renderSupplier() {
           </div>
           <div class="supplier-stat">
             <small>UNIT BUY PRICE</small>
-            <strong class="scramble-supplier" data-val="${price > 0 ? '$' + number(price) : 'N/A'}"></strong>
+            <strong class="scramble-supplier" data-val="${price > 0 ? number(price) + ' CR' : 'N/A'}"></strong>
           </div>
         </div>
 
@@ -1291,11 +1245,11 @@ async function loadData() {
   
   if (els.liveStatus) {
     els.liveStatus.style.color = 'var(--warn)';
-    scrambleText(els.liveStatus, 'UPLINK IN PROGRESS...', 400);
+    scrambleText(els.liveStatus, 'SYNCING TELEMETRY...', 400);
   }
-  if (els.liveDot) {
-    els.liveDot.style.background = 'var(--warn)';
-    els.liveDot.style.boxShadow = '0 0 14px rgba(194, 135, 34, 0.9)';
+  if (els.uplinkPanel) {
+    els.uplinkPanel.classList.remove('offline', 'online');
+    els.uplinkPanel.classList.add('warn');
   }
   
   updateSyncCountdown();
@@ -1312,13 +1266,11 @@ async function loadData() {
 
     rhwBase = data.find(base => normalize(base?.name) === BASE_NAME || normalize(base?.nickname) === BASE_NAME);
     
-    // --- LISHEEN ABFANGEN (FEHLERTOLERANT) ---
     lisheenBase = data.find(base => {
       const n = normalize(base?.name);
       const nn = normalize(base?.nickname);
       return n.includes('lisheen') || nn.includes('lisheen');
     });
-    // ----------------------------------------
 
     if (!rhwBase || typeof rhwBase !== 'object') throw new Error('RHW NOT FOUND IN DATASTREAM.');
     if (!Array.isArray(rhwBase.shop_items)) throw new Error('INVALID RHW SHOP DATA.');
@@ -1332,9 +1284,9 @@ async function loadData() {
       els.liveStatus.style.color = 'var(--good)';
       scrambleText(els.liveStatus, 'CONNECTION SECURE', 600);
     }
-    if (els.liveDot) {
-      els.liveDot.style.background = 'var(--good)';
-      els.liveDot.style.boxShadow = '0 0 14px rgba(74, 143, 98, 0.9)';
+    if (els.uplinkPanel) {
+      els.uplinkPanel.classList.remove('warn', 'offline');
+      els.uplinkPanel.classList.add('online');
     }
 
     renderAll();
@@ -1345,9 +1297,9 @@ async function loadData() {
       els.liveStatus.style.color = 'var(--danger)';
       scrambleText(els.liveStatus, 'UPLINK FAILED', 400);
     }
-    if (els.liveDot) {
-      els.liveDot.style.background = 'var(--danger)';
-      els.liveDot.style.boxShadow = '0 0 14px rgba(165, 42, 42, 0.9)';
+    if (els.uplinkPanel) {
+      els.uplinkPanel.classList.remove('warn', 'online');
+      els.uplinkPanel.classList.add('offline');
     }
 
     if (els.errorBox) {
@@ -1360,8 +1312,9 @@ async function loadData() {
     if (els.refreshBtn) els.refreshBtn.disabled = false;
     
     if (lastLoaded && els.syncTimeVal) {
-      const timeString = lastLoaded.toISOString().replace('T', ' ').substring(0, 19);
-      scrambleText(els.syncTimeVal, timeString + 'Z');
+      // NUR NOCH DIE UHRZEIT! (HH:MM:SS) 🕒
+      const timeString = lastLoaded.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      scrambleText(els.syncTimeVal, timeString);
     }
 
     nextSyncAt = Date.now() + AUTO_REFRESH_MS;
