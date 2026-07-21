@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Resolution Heavy Works live logistics and production command dashboard." />
-  <title>RHW Command Dashboard · V3.1 Recipe Color Consistency Patch</title>
+  <title>RHW Command Dashboard · V3.3.2 UI Refinement</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -69,7 +69,6 @@
       overflow-x: hidden;
     }
 
-    /* Subtle power fluctuation */
     @keyframes bgFlicker { 0%, 98%, 100% { opacity: 0.3; } 99% { opacity: 0.15; } }
 
     body::before {
@@ -95,11 +94,8 @@
     .footnote { color: var(--muted); font-family: var(--font-tech); font-size: 11px; }
     .overview-row-meta { display: flex; align-items: center; gap: 12px; }
 
-    /* =========================================
-       HUD FUSION HEADER (ZONE I & II)
-       ========================================= */
     .command-header {
-      position: relative; overflow: hidden; padding: 40px 32px; text-align: left;
+      position: relative; overflow: hidden; padding: 32px 32px 30px; text-align: left;
       border-bottom: 1px solid rgba(212, 175, 55, 0.2);
       background: radial-gradient(circle at 20% 50%, rgba(212,175,55,0.05), transparent 40%), linear-gradient(135deg, rgba(5,6,8,0.95), rgba(10,12,15,0.98));
       backdrop-filter: blur(10px); box-shadow: inset 0 -5px 20px rgba(0,0,0,0.5);
@@ -108,32 +104,29 @@
 
     .header-watermark { position: absolute; right: -70px; top: -100px; width: 460px; height: 460px; background-image: url('https://i.ibb.co/Xk2g1vk9/IMG-6267-removebg-preview.png'); background-size: contain; background-repeat: no-repeat; opacity: 0.035; pointer-events: none; filter: grayscale(20%); animation: slowBreathe 8s ease-in-out infinite; }
 
-    .command-header-inner { display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; max-width: 1400px; margin: 0 auto; flex-wrap: wrap; position: relative; z-index: 2; }
+    .command-header-inner { display: flex; justify-content: space-between; align-items: center; gap: 40px; max-width: 1400px; margin: 0 auto; flex-wrap: wrap; position: relative; z-index: 2; }
 
-    .command-brand { display: flex; align-items: center; gap: 32px; flex: 1; min-width: 320px; }
-    .crest-frame { position: relative; width: 150px; display: grid; place-items: center; flex-shrink: 0; }
-    .crest-frame::before { content: ''; position: absolute; width: 130px; height: 130px; border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,0.2), rgba(194,135,34,0.05) 44%, transparent 68%); animation: corePulse 4s ease-in-out infinite; }
-    .crest { position: relative; z-index: 2; width: 140px; filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.2)); }
+    .command-brand { display: flex; align-items: center; gap: 26px; flex: 1; min-width: 320px; }
+    .crest-frame { position: relative; width: 132px; display: grid; place-items: center; flex-shrink: 0; }
+    .crest-frame::before { content: ''; position: absolute; width: 112px; height: 112px; border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,0.2), rgba(194,135,34,0.05) 44%, transparent 68%); animation: corePulse 4s ease-in-out infinite; }
+    .crest { position: relative; z-index: 2; width: 122px; filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.2)); }
 
     .brand-copy { display: flex; flex-direction: column; width: 100%; }
     .eyebrow { color: var(--gold); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 4px; opacity: 0.8; }
-    h1 { margin: 0 0 12px 0; font-family: var(--font-title); color: var(--text); font-size: clamp(38px, 4.5vw, 64px); font-weight: 700; line-height: 0.85; letter-spacing: 0.05em; text-transform: uppercase; text-shadow: 0 0 15px rgba(255,255,255,0.1); }
+    h1 { margin: 0 0 10px 0; font-family: var(--font-title); color: var(--text); font-size: clamp(38px, 4.5vw, 64px); font-weight: 700; line-height: 0.85; letter-spacing: 0.05em; text-transform: uppercase; text-shadow: 0 0 15px rgba(255,255,255,0.1); }
 
-    .transmission-line { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 24px; color: var(--muted); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em; }
+    .transmission-line { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 18px; color: var(--muted); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em; }
     .transmission-line span { display: flex; align-items: center; gap: 12px; }
     .transmission-line span:not(:last-child)::after { content: ''; width: 1px; height: 10px; background: rgba(212,175,55,0.3); }
-    .transmission-line strong { color: var(--gold); font-weight: normal; }
+    .transmission-line strong { color: var(--text); font-weight: normal; }
+    .channel-chip { width: fit-content; padding: 3px 8px; border: 1px solid rgba(79,137,101,0.38); background: rgba(79,137,101,0.08); color: #83b895; }
+    .channel-chip i { width: 6px; height: 6px; border-radius: 50%; background: var(--good); box-shadow: 0 0 8px rgba(79,137,101,0.72); }
+    .channel-chip::after { display: none !important; }
 
-    .base-telemetry-bar {
-      display: inline-flex; flex-wrap: wrap; gap: 20px; align-items: center;
-      background: linear-gradient(90deg, rgba(212,175,55,0.05), rgba(0,0,0,0.4));
-      border: 1px solid rgba(255,255,255,0.05); border-left: 2px solid var(--gold);
-      padding: 12px 24px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
-    }
+    .base-telemetry-bar { display: inline-flex; flex-wrap: wrap; gap: 16px; align-items: center; background: linear-gradient(90deg, rgba(212,175,55,0.05), rgba(0,0,0,0.4)); border: 1px solid rgba(255,255,255,0.05); border-left: 2px solid var(--gold); padding: 10px 18px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%); }
     .base-telemetry-stat { display: flex; flex-direction: column; }
     .base-telemetry-stat small { color: var(--muted); font-family: var(--font-tech); font-size: 9px; letter-spacing: 0.15em; margin-bottom: 4px; text-transform: uppercase; }
-    .base-telemetry-stat strong { font-family: var(--font-tech); color: var(--text); font-size: 18px; letter-spacing: 0.05em; text-shadow: 0 0 10px rgba(255,255,255,0.1); transition: color 0.3s; }
+    .base-telemetry-stat strong { font-family: var(--font-tech); color: var(--text); font-size: 17px; letter-spacing: 0.05em; text-shadow: 0 0 10px rgba(255,255,255,0.1); transition: color 0.3s; }
 
     .base-telemetry-stat.credits strong { color: var(--gold); text-shadow: 0 0 10px rgba(212,175,55,0.3); }
     .base-telemetry-stat.health-good strong { color: var(--good); text-shadow: 0 0 10px rgba(74,143,98,0.3); }
@@ -141,15 +134,7 @@
     .base-telemetry-stat.health-critical strong { color: var(--danger); text-shadow: 0 0 10px rgba(165,42,42,0.3); }
     .telemetry-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.1); }
 
-    .uplink-panel {
-      background: linear-gradient(180deg, rgba(10,12,15,0.9), rgba(5,6,8,0.95));
-      border: 1px solid rgba(255,255,255,0.05); border-top: 2px solid var(--warn);
-      padding: 16px 20px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(194,135,34,0.05);
-      width: 100%; max-width: 340px; flex-shrink: 0;
-      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
-      transition: border-color 0.3s, box-shadow 0.3s;
-    }
+    .uplink-panel { background: linear-gradient(180deg, rgba(10,12,15,0.9), rgba(5,6,8,0.95)); border: 1px solid rgba(255,255,255,0.05); border-top: 2px solid var(--warn); padding: 16px 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(194,135,34,0.05); width: 100%; max-width: 340px; flex-shrink: 0; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%); transition: border-color 0.3s, box-shadow 0.3s; }
     .uplink-panel.online { border-top-color: var(--good); box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(74,143,98,0.05); }
     .uplink-panel.offline { border-top-color: var(--danger); box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(165,42,42,0.05); }
 
@@ -160,78 +145,112 @@
 
     .uplink-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
     .uplink-stat { display: flex; flex-direction: column; }
+    .uplink-label { display: block; color: var(--muted); font-family: var(--font-tech); font-size: 9px; letter-spacing: 0.13em; margin-bottom: 4px; text-transform: uppercase; }
+    .uplink-value { color: var(--text); font-family: var(--font-tech); font-size: 14px; letter-spacing: 0.04em; }
 
     @media (max-width: 1100px) { .command-header-inner { flex-direction: column; align-items: stretch; } .uplink-panel { max-width: 100%; } }
 
-    .ticker-wrap {
-      width: 100%; background: rgba(0,0,0,0.85); border-bottom: 1px solid rgba(212,175,55,0.3);
-      padding: 6px 0; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.7); margin-bottom: 20px;
-      position: relative; display: flex; white-space: nowrap;
-    }
-    .ticker-wrap::before, .ticker-wrap::after { content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; pointer-events: none; }
-    .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent); }
-    .ticker-wrap::after { right: 0; background: linear-gradient(-90deg, var(--bg), transparent); }
-    .ticker { display: flex; width: max-content; white-space: nowrap; animation: tickerAnim 300s linear infinite; }
+    .ticker-wrap { display: flex; align-items: stretch; width: 100%; min-height: 42px; padding: 0; margin-bottom: 18px; opacity: 1; overflow: hidden; background: rgba(0,0,0,0.88); border-top: 1px solid rgba(212,175,55,0.12); border-bottom: 1px solid rgba(212,175,55,0.30); box-shadow: inset 0 2px 12px rgba(0,0,0,0.72); }
+    .ticker-label { position: relative; z-index: 5; flex: 0 0 auto; min-width: 215px; display: flex; align-items: center; gap: 10px; padding: 7px 18px 7px 22px; border-right: 1px solid rgba(212,175,55,0.32); background: linear-gradient(90deg, rgba(212,175,55,0.13), rgba(10,12,15,0.98)); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%); font-family: var(--font-tech); white-space: nowrap; }
+    .ticker-label strong { display: block; color: var(--gold); font-size: 11px; line-height: 1.05; letter-spacing: 0.12em; }
+    .ticker-label small { display: block; margin-top: 3px; color: rgba(224,224,224,0.52); font-size: 8px; line-height: 1; letter-spacing: 0.11em; }
+    .ticker-live-dot { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--good); box-shadow: 0 0 10px rgba(79,137,101,0.92); animation: corePulse 2.2s ease-in-out infinite; }
+    .ticker-viewport { position: relative; min-width: 0; flex: 1; overflow: hidden; display: flex; align-items: center; }
+    .ticker-viewport::before, .ticker-viewport::after { content: ''; position: absolute; top: 0; bottom: 0; width: 46px; z-index: 3; pointer-events: none; }
+    .ticker-viewport::before { left: 0; background: linear-gradient(90deg, rgba(5,6,8,0.98), transparent); }
+    .ticker-viewport::after { right: 0; background: linear-gradient(-90deg, rgba(5,6,8,0.98), transparent); }
+    .ticker { display: flex; align-items: center; width: max-content; min-width: max-content; white-space: nowrap; will-change: transform; animation: tickerAnim var(--ticker-duration, 280s) linear infinite; }
     @keyframes tickerAnim { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .ticker-wrap:hover .ticker, .ticker-wrap:focus-within .ticker { animation-play-state: paused; }
+    .ticker-sequence { display: flex; align-items: center; flex: 0 0 auto; white-space: nowrap; }
+    .ticker .ticker-item { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; color: rgba(224,224,224,0.86); font-family: var(--font-tech); font-size: 13px; line-height: 42px; letter-spacing: 0.065em; text-transform: uppercase; text-shadow: 0 0 8px rgba(255,255,255,0.025); }
+    .ticker .ticker-tag { padding-right: 0; color: var(--gold); font-weight: bold; letter-spacing: 0.085em; }
+    .ticker .ticker-item.good .ticker-tag { color: #78b98e; }
+    .ticker .ticker-item.warn .ticker-tag { color: #d2a04d; }
+    .ticker .ticker-item.danger .ticker-tag { color: #c96868; }
+    .ticker .ticker-item.remote .ticker-tag { color: #8cb4ff; }
+    .ticker .ticker-item.lore .ticker-tag { color: rgba(212,175,55,0.78); }
+    .ticker .ticker-item.muted .ticker-tag { color: var(--muted); }
+    .ticker .ticker-item.warn .ticker-message { color: rgba(238,215,173,0.90); }
+    .ticker .ticker-item.danger .ticker-message { color: rgba(244,184,184,0.92); }
+    .ticker .ticker-item.remote .ticker-message { color: rgba(202,219,251,0.90); }
+    .ticker .ticker-item.lore .ticker-message { color: rgba(224,224,224,0.72); }
+    .ticker .ticker-message { padding-right: 0; }
+    .ticker .ticker-separator { padding-right: 0; color: rgba(212,175,55,0.34); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.14em; padding: 0 4px; }
 
     main { padding: 0 32px 40px; display: grid; gap: 24px; max-width: 1400px; margin: 0 auto; }
 
-    .panel, .alert-card {
-      background-color: var(--panel); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.05); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
-    }
-
-    .command-strip {
-      max-width: 1400px; margin: -4px auto 22px; padding: 10px 32px; color: var(--muted); font-family: var(--font-tech); font-size: 11px;
-      letter-spacing: 0.1em; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.04), transparent);
-    }
+    .command-strip { max-width: 1400px; margin: -4px auto 22px; padding: 10px 32px; color: var(--muted); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.04), transparent); }
     .command-strip strong { color: var(--gold); font-weight: bold; }
 
-    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .alert-card { padding: 18px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
+    .summary-grid > .alert-card { display: flex; flex-direction: column; min-height: 0; }
+    .split-column { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+    .split-column > .alert-card { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    
+    .alert-card { background-color: var(--panel); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.05); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); padding: 18px; transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease; }
+    .alert-card:hover { transform: translateY(-2px); border-color: rgba(212,175,55,0.18); box-shadow: 0 12px 28px rgba(0,0,0,0.28); }
+
+    .alert-list { flex: 1; align-content: start; display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
     .alert-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-family: var(--font-title); color: var(--gold); font-size: 22px; letter-spacing: 0.05em; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px; }
+    .alert-title > span:first-child { display: inline-flex; align-items: center; gap: 9px; }
+    .section-index { font-family: var(--font-tech); font-size: 9px; font-weight: normal; color: rgba(212,175,55,0.55); border: 1px solid rgba(212,175,55,0.18); padding: 2px 4px; letter-spacing: 0.08em; }
     .count-badge { font-family: var(--font-tech); font-size: 14px; color: var(--muted); }
 
-    .alert-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
     .alert-list li { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 8px 12px; background: rgba(0,0,0,0.4); border-left: 2px solid var(--line); font-size: 13px; }
     .alert-list li.alert-critical { border-left-color: var(--danger); }
     .alert-list li.alert-low { border-left-color: var(--warn); }
     .alert-list li.alert-ok { border-left-color: var(--good); }
     .alert-list small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
-
     .overview-row-qty { font-size: 16px; font-family: var(--font-tech); white-space: nowrap; }
 
-    .progress-wrap {
-      margin-top: 8px; width: 100%; height: 6px; background: rgba(255,255,255,0.07); position: relative;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.05);
-    }
-    .progress-wrap::after {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background: repeating-linear-gradient(90deg, transparent 0, transparent 4px, rgba(10,12,15,0.9) 4px, rgba(10,12,15,0.9) 6px); z-index: 2;
-    }
+    .progress-wrap { margin-top: 8px; width: 100%; height: 6px; background: rgba(255,255,255,0.07); position: relative; box-shadow: inset 0 1px 3px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.05); }
+    .progress-wrap::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, transparent 0, transparent 4px, rgba(10,12,15,0.9) 4px, rgba(10,12,15,0.9) 6px); z-index: 2; }
     .progress-fill { position: relative; z-index: 1; height: 100%; width: 0%; transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
     .progress-fill.ok { background-color: #4ade80; box-shadow: 0 0 10px rgba(74,222,128,0.5); }
     .progress-fill.low { background-color: #fbbf24; box-shadow: 0 0 10px rgba(251,191,36,0.5); }
     .progress-fill.critical { background-color: #f87171; box-shadow: 0 0 10px rgba(248,113,113,0.5); }
     .progress-fill.waste { background-color: #d6d3d1; box-shadow: 0 0 10px rgba(214,211,209,0.3); }
-    .progress-fill.critical, .progress-fill.waste {
-      background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.25), rgba(255,255,255,0.25) 8px, transparent 8px, transparent 16px);
-      background-size: 23px 23px; animation: hazardMove 1s linear infinite;
-    }
+    .progress-fill.confiscated-bar { background-color: #ab47bc; box-shadow: 0 0 10px rgba(171, 71, 188, 0.5); }
+    .progress-fill.critical, .progress-fill.waste { background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.25), rgba(255,255,255,0.25) 8px, transparent 8px, transparent 16px); background-size: 23px 23px; animation: hazardMove 1.8s linear infinite; }
 
     .waste-panel { box-shadow: inset 0 0 0 1px rgba(168,159,145,0.15); }
     .waste-panel .alert-title span:first-child { color: var(--waste); }
     .waste-panel .alert-list li { background: linear-gradient(90deg, rgba(168,159,145,0.04), rgba(0,0,0,0.3)); }
 
-    .alert-list li.feedstock-divider { margin: 15px 0 10px; padding: 10px 0; border-left: 0; border-top: 1px dashed rgba(212,175,55,0.25); background: transparent; display: flex; justify-content: space-between; align-items: center; color: var(--gold); font-family: var(--font-title); font-size: 20px; letter-spacing: 0.05em; text-transform: none; }
-    .alert-list li.feedstock-row { background: linear-gradient(90deg, rgba(212,175,55,0.05), rgba(0,0,0,0.4)); }
+    .confiscated-panel { box-shadow: inset 0 0 0 1px rgba(156, 39, 176, 0.15); }
+    .confiscated-panel .alert-title span:first-child { color: #ce93d8; }
+    .confiscated-panel .alert-title .section-index { color: #ab47bc; border-color: rgba(171, 71, 188, 0.3); }
+    .confiscated-panel .alert-list li { background: linear-gradient(90deg, rgba(156, 39, 176, 0.04), rgba(0,0,0,0.3)); border-left-color: #ab47bc; }
+    .confiscated-panel .alert-list li.alert-ok { border-left-color: #ab47bc; }
 
+    .feedstock-panel { box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.15); }
+    .feedstock-panel .alert-title span:first-child { color: #e6c875; }
+    .feedstock-panel .alert-title .section-index { color: #d4af37; border-color: rgba(212, 175, 55, 0.3); }
+    .feedstock-panel .alert-list li { background: linear-gradient(90deg, rgba(212, 175, 55, 0.04), rgba(0,0,0,0.3)); border-left-color: #d4af37; }
+    .feedstock-panel .alert-list li.alert-ok { border-left-color: var(--gold); }
+
+    .panel { background-color: var(--panel); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.05); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); transition: border-color 0.22s ease, box-shadow 0.22s ease; }
+    .panel:hover { border-color: rgba(255,255,255,0.09); box-shadow: 0 14px 34px rgba(0,0,0,0.22); }
+    
     .panel-head { padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.4); }
+    .panel-heading-copy { min-width: 0; }
     .panel-title { font-family: var(--font-title); font-size: 24px; color: var(--gold); letter-spacing: 0.08em; text-shadow: 0 0 10px rgba(212,175,55,0.2); }
+    .section-kicker { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; color: var(--muted); font-family: var(--font-tech); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; }
+    .section-kicker span { color: var(--gold); }
 
-    /* LISHEEN RADAR */
-    .supplier-grid { display: flex; justify-content: center; flex-wrap: wrap; gap: 24px; padding: 24px; background: radial-gradient(circle at 50% 0%, rgba(107, 164, 255, 0.05), transparent 60%); }
-    .supplier-card { width: 100%; max-width: 380px; flex: 1 1 300px; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(180deg, rgba(8,12,18,0.95), rgba(5,7,10,0.98)); padding: 20px; position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 0 20px rgba(107, 164, 255, 0.03); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); overflow: hidden; display: flex; flex-direction: column; }
+    .remote-panel { border-color: rgba(125,167,234,0.18); }
+    .remote-panel:hover { border-color: rgba(125,167,234,0.32); }
+    .remote-panel-head { background: linear-gradient(90deg, rgba(125,167,234,0.09), rgba(0,0,0,0.18) 60%, transparent); border-bottom-color: rgba(125,167,234,0.16); align-items: center; }
+    .remote-panel-title { color: var(--remote); text-shadow: 0 0 10px rgba(125,167,234,0.22); }
+    .remote-route { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 5px; }
+    .remote-route span { display: flex; gap: 6px; align-items: baseline; font-family: var(--font-tech); }
+    .remote-route small { color: rgba(125,167,234,0.58); font-size: 8px; letter-spacing: 0.13em; }
+    .remote-route strong { color: #b9cdf0; font-size: 10px; letter-spacing: 0.08em; font-weight: normal; }
+
+    .supplier-grid { display: flex; justify-content: center; flex-wrap: wrap; gap: 24px; padding: 20px; background: radial-gradient(circle at 50% 0%, rgba(107, 164, 255, 0.05), transparent 60%); }
+    .supplier-card { width: 100%; max-width: 420px; flex: 1 1 300px; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(180deg, rgba(8,12,18,0.95), rgba(5,7,10,0.98)); padding: 18px; position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 0 20px rgba(107, 164, 255, 0.03); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease; }
+    .supplier-card:hover { transform: translateY(-2px); border-color: rgba(125,167,234,0.2); box-shadow: 0 14px 30px rgba(0,0,0,0.34), inset 0 0 20px rgba(125,167,234,0.03); }
     .supplier-card::after { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(107, 164, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(107, 164, 255, 0.03) 1px, transparent 1px); background-size: 20px 20px; pointer-events: none; z-index: 0; }
     .supplier-card > * { position: relative; z-index: 1; }
     .supplier-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; z-index: 2; transition: background 0.3s; }
@@ -239,17 +258,30 @@
     .supplier-card.low::before { background: var(--warn); box-shadow: 0 0 12px var(--warn); }
     .supplier-card.ok::before { background: var(--good); box-shadow: 0 0 12px var(--good); }
 
-    .supplier-scanline { position: absolute; top: 0; left: 0; right: 0; height: 1px; background: rgba(107, 164, 255, 0.5); box-shadow: 0 0 15px 2px rgba(107, 164, 255, 0.4); animation: radarScan 3s linear infinite; z-index: 3; pointer-events: none; }
+    .supplier-scanline { position: absolute; top: 0; left: 0; right: 0; height: 1px; background: rgba(107, 164, 255, 0.5); box-shadow: 0 0 15px 2px rgba(107, 164, 255, 0.4); animation: radarScan 6s linear infinite; z-index: 3; pointer-events: none; opacity: 0.48; }
     @keyframes radarScan { 0% { top: -10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 110%; opacity: 0; } }
 
+    .remote-card-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 7px; }
+    .remote-badge { padding: 2px 6px; border: 1px solid rgba(125,167,234,0.2); color: rgba(185,205,240,0.78); background: rgba(125,167,234,0.05); font-family: var(--font-tech); font-size: 8px; letter-spacing: 0.11em; text-transform: uppercase; }
+    
     .supplier-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px dashed rgba(107, 164, 255, 0.15); padding-bottom: 12px; }
     .supplier-kicker { font-family: var(--font-tech); color: #8cb4ff; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px; }
-    .supplier-title { font-family: var(--font-title); color: #e0eaff; font-size: 26px; letter-spacing: 0.05em; text-shadow: 0 0 10px rgba(107, 164, 255, 0.3); margin: 0; line-height: 1; }
+    .supplier-title { font-family: var(--font-title); color: #e0eaff; font-size: 28px; letter-spacing: 0.05em; text-shadow: 0 0 10px rgba(107, 164, 255, 0.3); margin: 0; line-height: 1; }
+    .supplier-state { font-family: var(--font-tech); font-size: 9px; letter-spacing: 0.12em; }
+    .supplier-state.ok, .supplier-state.low, .supplier-state.critical { border: 0; background: transparent; padding: 0; }
+    .supplier-state.ok { color: #78ad8a; }
+    .supplier-state.low { color: #c99a53; }
+    .supplier-state.critical { color: #c46c6c; }
 
     .supplier-stats { display: flex; gap: 10px; font-family: var(--font-tech); margin-top: auto; }
-    .supplier-stat { flex: 1; border: 1px solid rgba(107, 164, 255, 0.15); background: rgba(107, 164, 255, 0.05); padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .supplier-stat { flex: 1; border: 1px solid rgba(107, 164, 255, 0.15); background: rgba(107, 164, 255, 0.05); padding: 10px; text-align: left; display: flex; flex-direction: column; justify-content: center; min-height: 72px; }
     .supplier-stat small { color: #8cb4ff; font-size: 10px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
-    .supplier-stat strong { font-size: 18px; color: var(--text); }
+    .supplier-stat.stock strong { font-size: 22px; color: #eef4ff; }
+    .supplier-stat.price strong { font-size: 18px; color: var(--remote); }
+    .supplier-pill { height: fit-content; padding: 4px 10px; font-size: 10px; }
+    .supplier-card.remote-error { max-width: none; }
+    .supplier-kicker.error { color: #d78b8b; }
+    .supplier-title.error { color: var(--danger); }
 
     .supplier-progress-wrap { margin-top: 14px; width: 100%; height: 4px; background: rgba(107, 164, 255, 0.1); position: relative; overflow: hidden; }
     .supplier-progress-fill { height: 100%; position: absolute; left: 0; top: 0; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -268,37 +300,78 @@
     .sat-link-badge.offline .sat-link-text { color: var(--danger); }
 
     /* PRODUCTION */
-    .production-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; padding: 24px; }
-    .production-card { border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(180deg, rgba(8,10,12,0.9), rgba(5,6,7,0.9)); padding: 20px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px)); }
+    .production-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; padding: 20px; }
+    .production-card { border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(180deg, rgba(8,10,12,0.9), rgba(5,6,7,0.9)); padding: 18px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px)); transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, opacity 0.22s ease; }
+    .production-card:hover { transform: translateY(-2px); border-color: rgba(212,175,55,0.18); box-shadow: 0 14px 30px rgba(0,0,0,0.32); }
     .production-card::after { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 20px 20px; pointer-events: none; z-index: 0; }
     .production-card > * { position: relative; z-index: 1; }
     .production-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--line); z-index: 2; }
+    .production-card.critical { background: linear-gradient(180deg, rgba(10,9,10,0.82), rgba(5,6,7,0.92)); }
     .production-card.critical::before { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
     .production-card.low::before { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
     .production-card.ok::before { background: var(--good); }
 
+    .production-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
     .production-kicker { font-family: var(--font-tech); color: var(--muted); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 6px; }
     .production-title { font-family: var(--font-title); color: var(--gold); font-size: 24px; letter-spacing: 0.05em; text-shadow: 0 0 8px rgba(212,175,55,0.15); }
+    .module-state { padding: 3px 7px; border: 1px solid currentColor; font-family: var(--font-tech); font-size: 9px; letter-spacing: 0.1em; white-space: nowrap; }
+    .module-state.ok { color: #78ad8a; }
+    .module-state.low { color: #c99a53; }
+    .module-state.critical { color: #c46c6c; }
+
     .production-stats { display: flex; gap: 8px; margin: 16px 0; font-family: var(--font-tech); }
     .production-stat { flex: 1; border: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.5); padding: 10px; text-align: center; }
     .production-stat small { color: var(--muted); font-size: 10px; display: block; margin-bottom: 4px; }
     .production-stat strong { font-size: 18px; color: var(--text); }
+    .production-stock-primary strong { color: var(--gold); font-size: 22px; }
 
     .next-gap { margin: 12px 0; padding: 10px; border: 1px dashed rgba(212,175,55,0.3); color: var(--muted); font-family: var(--font-tech); font-size: 12px; background: rgba(212,175,55,0.03); position: relative; }
     .next-gap::before { content: 'TARGET'; position: absolute; right: 8px; top: -8px; padding: 0 6px; background: #0c0e12; color: rgba(212,175,55,0.8); font-size: 10px; letter-spacing: 0.1em; }
+    .next-gap.ok { border-color: rgba(79,137,101,0.3); }
+    .next-gap.low { border-color: rgba(184,134,55,0.34); }
+    .next-gap.critical { border-color: rgba(155,66,66,0.4); background: rgba(155,66,66,0.045); }
 
+    .recipe-column-head { display: grid; grid-template-columns: minmax(0, 1fr) 104px 112px; gap: 14px; align-items: center; margin: 3px 0 0; padding: 0 0 7px; border-bottom: 1px solid rgba(212,175,55,0.12); color: #827d72; font-family: var(--font-tech); font-size: 8.5px; font-weight: 700; letter-spacing: 0.105em; text-transform: uppercase; }
+    .recipe-column-head span:nth-child(2), .recipe-column-head span:nth-child(3) { text-align: right; }
     .recipe-list { margin: 0; padding: 0; list-style: none; }
-    .recipe-list li { display: flex; justify-content: space-between; font-size: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
-    .recipe-list li.bottleneck { color: var(--danger); font-weight: bold; text-shadow: 0 0 5px rgba(165,42,42,0.5); }
-    .recipe-list li.bottleneck span:first-child::before { content: '► '; font-size: 10px; }
+    .recipe-list li { display: grid; grid-template-columns: minmax(0, 1fr) 104px 112px; gap: 14px; align-items: center; min-height: 37px; margin-inline: -8px; padding: 8px; color: #d6d0c3; font-size: 12px; font-weight: 400; background: linear-gradient(90deg, rgba(3,4,5,0.58), rgba(3,4,5,0.34)); border-bottom: 1px solid rgba(255,255,255,0.045); }
+    
+    .recipe-name { min-width: 0; color: #d6d0c3; overflow-wrap: anywhere; }
+    .recipe-required, .recipe-stock { font-family: var(--font-tech); white-space: nowrap; text-align: right; }
+    .recipe-required { color: #d7b85b; font-size: 11px; font-weight: 700; letter-spacing: 0.015em; }
+    .recipe-stock { color: #ece4d3; font-size: 12px; font-weight: 700; letter-spacing: 0.015em; }
+    .recipe-short { display: block; margin-top: 2px; color: #df7474; font-size: 8px; font-weight: 700; letter-spacing: 0.075em; text-transform: uppercase; }
 
-    /* CONTROLS & TABLE */
+    .recipe-list li.bottleneck { color: inherit; font-weight: 400; text-shadow: none; background: rgba(155,66,66,0.055); border-bottom-color: rgba(155,66,66,0.18); }
+    .recipe-list li.bottleneck .recipe-name { color: #df7474; font-weight: 700; }
+    .recipe-list li.bottleneck .recipe-name::after { content: 'BOTTLENECK'; display: block; margin-top: 2px; color: rgba(223,116,116,0.70); font-family: var(--font-tech); font-size: 8px; letter-spacing: 0.1em; }
+    .recipe-list li.bottleneck .recipe-required { color: #d7b85b; }
+    .recipe-list li.bottleneck .recipe-stock { color: #df7474; }
+
+    .byproduct-strip { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 11px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.06); font-family: var(--font-tech); font-size: 9px; letter-spacing: 0.08em; color: var(--muted); }
+    .byproduct-strip > span:first-child { color: var(--waste); }
+    .byproduct-tag { padding: 3px 6px; border: 1px solid rgba(168,159,145,0.24); background: rgba(168,159,145,0.06); color: #c7c0b5; }
+
     .controls { display: flex; gap: 12px; flex-wrap: wrap; }
     input, select, button { background: rgba(0,0,0,0.8); color: var(--text); border: 1px solid var(--line-soft); padding: 10px 16px; font-family: var(--font-tech); font-size: 13px; outline: none; transition: 0.2s; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); }
     input:focus, select:focus { border-color: var(--gold); box-shadow: inset 0 0 8px rgba(212,175,55,0.1); }
     button { color: var(--bg); background: var(--gold); font-weight: bold; letter-spacing: 0.05em; border: none; }
     button:hover { background: #ffe47a; box-shadow: 0 0 15px rgba(212,175,55,0.4); }
     button:disabled { opacity: 0.4; filter: grayscale(1); }
+
+    .manifest-panel .panel-head { gap: 18px; flex-wrap: wrap; }
+    .manifest-controls { align-items: center; }
+    .search-control { position: relative; display: block; min-width: 210px; }
+    .search-control input { width: 100%; padding-left: 36px; }
+    .search-icon { position: absolute; left: 13px; top: 50%; width: 12px; height: 12px; border: 1px solid var(--muted); border-radius: 50%; transform: translateY(-58%); pointer-events: none; z-index: 2; }
+    .search-icon::after { content: ''; position: absolute; width: 5px; height: 1px; background: var(--muted); right: -4px; bottom: -2px; transform: rotate(45deg); }
+    
+    .role-segments { display: flex; padding: 2px; border: 1px solid var(--line-soft); background: rgba(0,0,0,0.48); }
+    .role-segment { min-height: 34px; padding: 7px 9px; border: 0; border-right: 1px solid rgba(255,255,255,0.04); clip-path: none; background: transparent; color: var(--muted); font-size: 10px; }
+    .role-segment:last-child { border-right: 0; }
+    .role-segment:hover { background: rgba(212,175,55,0.05); color: var(--text); box-shadow: none; }
+    .role-segment.active { background: rgba(212,175,55,0.12); color: var(--gold); }
+    .uplink-button { min-height: 38px; }
 
     .table-wrap { overflow: auto; max-height: 600px; position: relative; }
     table { width: 100%; border-collapse: collapse; font-family: var(--font-tech); font-size: 13px; }
@@ -325,6 +398,7 @@
     .buy { color: #d7e9ff; background: var(--blue-soft); border-color: rgba(47, 128, 237, 0.48); }
     .sell { color: #f3e0b8; background: rgba(210, 173, 103, 0.15); border-color: rgba(210, 173, 103, 0.48); }
     .both { color: #efe1ff; background: rgba(176, 103, 226, 0.16); border-color: rgba(176, 103, 226, 0.48); }
+    .confiscated-pill { color: #f3e5f5; background: rgba(156, 39, 176, 0.16); border-color: rgba(156, 39, 176, 0.48); }
 
     #itemsBody, #productionGrid, #supplierGrid { transition: opacity 0.3s ease, filter 0.3s ease; }
     body.syncing #itemsBody, body.syncing #productionGrid, body.syncing #supplierGrid { opacity: 0.3; filter: blur(4px) grayscale(50%); pointer-events: none; }
@@ -338,264 +412,10 @@
     @keyframes uplinkBlink { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; text-shadow: 0 0 10px var(--warn); } }
 
     #holoTooltip { position: fixed; pointer-events: none; background: rgba(10, 12, 15, 0.95); border: 1px solid var(--gold); color: var(--gold); padding: 6px 10px; font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em; z-index: 10000; box-shadow: 0 0 15px rgba(212, 175, 55, 0.15); opacity: 0; transition: opacity 0.15s; transform: translate(15px, 15px); clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); }
-
     footer { text-align: center; font-family: var(--font-tech); font-size: 12px; color: #555555; padding: 20px 20px 40px; letter-spacing: 0.05em; }
+    .footer-clock { margin-top: 6px; color: var(--gold); font-family: var(--font-tech); }
 
-    @media (max-width: 900px) { 
-      main { padding: 0 16px 40px; gap: 16px; } 
-      .summary-grid, .production-grid { grid-template-columns: 1fr; } 
-      .supplier-grid { flex-direction: column; align-items: stretch; }
-      .supplier-card { max-width: none; }
-      .panel-head, .controls { flex-direction: column; align-items: stretch; } 
-      input, select, button { width: 100%; min-height: 44px; } 
-      .base-telemetry-bar { flex-direction: column; clip-path: none; align-items: flex-start; }
-      .telemetry-divider { display: none; }
-      .command-brand { flex-direction: column; text-align: center; } 
-      .transmission-line { justify-content: center; }
-      th { position: static; }
-    }
-
-
-    /* =========================================
-       V3.1 VISUAL REFINEMENT
-       ========================================= */
-    :root {
-      --danger: #9b4242;
-      --warn: #b88637;
-      --good: #4f8965;
-      --remote: #7da7ea;
-      --remote-soft: rgba(125, 167, 234, 0.10);
-      --panel-strong: rgba(8, 10, 13, 0.88);
-    }
-
-    .visually-hidden {
-      position: absolute !important;
-      width: 1px !important;
-      height: 1px !important;
-      padding: 0 !important;
-      margin: -1px !important;
-      overflow: hidden !important;
-      clip: rect(0, 0, 0, 0) !important;
-      white-space: nowrap !important;
-      border: 0 !important;
-    }
-
-    .command-header { padding: 32px 32px 30px; }
-    .command-header-inner { align-items: center; }
-    .command-brand { gap: 26px; }
-    .crest-frame { width: 132px; }
-    .crest-frame::before { width: 112px; height: 112px; }
-    .crest { width: 122px; }
-    h1 { margin-bottom: 10px; }
-
-    .transmission-line { margin-bottom: 18px; }
-    .transmission-line strong { color: var(--text); }
-    .channel-chip {
-      width: fit-content;
-      padding: 3px 8px;
-      border: 1px solid rgba(79,137,101,0.38);
-      background: rgba(79,137,101,0.08);
-      color: #83b895;
-    }
-    .channel-chip i {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--good);
-      box-shadow: 0 0 8px rgba(79,137,101,0.72);
-    }
-    .channel-chip::after { display: none !important; }
-
-    .base-telemetry-bar { padding: 10px 18px; gap: 16px; }
-    .base-telemetry-stat strong { font-size: 17px; }
-    .uplink-label {
-      display: block;
-      color: var(--muted);
-      font-family: var(--font-tech);
-      font-size: 9px;
-      letter-spacing: 0.13em;
-      margin-bottom: 4px;
-      text-transform: uppercase;
-    }
-    .uplink-value {
-      color: var(--text);
-      font-family: var(--font-tech);
-      font-size: 14px;
-      letter-spacing: 0.04em;
-    }
-
-    .ticker-wrap {
-      padding: 5px 0;
-      margin-bottom: 16px;
-      opacity: 0.72;
-      border-bottom-color: rgba(212,175,55,0.18);
-    }
-    .ticker { animation-duration: 420s; }
-
-    .summary-grid { align-items: stretch; }
-    .summary-grid > .alert-card { height: 100%; display: flex; flex-direction: column; }
-    .summary-grid .alert-list { flex: 1; align-content: start; }
-    .alert-card { transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease; }
-    .alert-card:hover { transform: translateY(-2px); border-color: rgba(212,175,55,0.18); box-shadow: 0 12px 28px rgba(0,0,0,0.28); }
-    .alert-title > span:first-child { display: inline-flex; align-items: center; gap: 9px; }
-    .section-index {
-      font-family: var(--font-tech);
-      font-size: 9px;
-      font-weight: normal;
-      color: rgba(212,175,55,0.55);
-      border: 1px solid rgba(212,175,55,0.18);
-      padding: 2px 4px;
-      letter-spacing: 0.08em;
-    }
-
-    .progress-fill.ok { background-color: #5a9a70; box-shadow: 0 0 8px rgba(90,154,112,0.34); }
-    .progress-fill.low { background-color: #c08c3b; box-shadow: 0 0 8px rgba(192,140,59,0.34); }
-    .progress-fill.critical { background-color: #a94d4d; box-shadow: 0 0 8px rgba(169,77,77,0.34); }
-    .progress-fill.critical, .progress-fill.waste { animation-duration: 1.8s; }
-
-    .panel { transition: border-color 0.22s ease, box-shadow 0.22s ease; }
-    .panel:hover { border-color: rgba(255,255,255,0.09); box-shadow: 0 14px 34px rgba(0,0,0,0.22); }
-    .panel-heading-copy { min-width: 0; }
-    .section-kicker {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 3px;
-      color: var(--muted);
-      font-family: var(--font-tech);
-      font-size: 9px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .section-kicker span { color: var(--gold); }
-
-    .remote-panel { border-color: rgba(125,167,234,0.18); }
-    .remote-panel:hover { border-color: rgba(125,167,234,0.32); }
-    .remote-panel-head {
-      background: linear-gradient(90deg, rgba(125,167,234,0.09), rgba(0,0,0,0.18) 60%, transparent);
-      border-bottom-color: rgba(125,167,234,0.16);
-      align-items: center;
-    }
-    .remote-panel-title { color: var(--remote); text-shadow: 0 0 10px rgba(125,167,234,0.22); }
-    .remote-route { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 5px; }
-    .remote-route span { display: flex; gap: 6px; align-items: baseline; font-family: var(--font-tech); }
-    .remote-route small { color: rgba(125,167,234,0.58); font-size: 8px; letter-spacing: 0.13em; }
-    .remote-route strong { color: #b9cdf0; font-size: 10px; letter-spacing: 0.08em; font-weight: normal; }
-
-    .supplier-grid { gap: 18px; padding: 20px; }
-    .supplier-card {
-      max-width: 420px;
-      padding: 18px;
-      background: linear-gradient(180deg, rgba(8,12,18,0.9), rgba(5,7,10,0.96));
-      transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
-    }
-    .supplier-card:hover { transform: translateY(-2px); border-color: rgba(125,167,234,0.2); box-shadow: 0 14px 30px rgba(0,0,0,0.34), inset 0 0 20px rgba(125,167,234,0.03); }
-    .supplier-scanline { opacity: 0.48; animation-duration: 6s; }
-    .remote-card-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 7px; }
-    .remote-badge {
-      padding: 2px 6px;
-      border: 1px solid rgba(125,167,234,0.2);
-      color: rgba(185,205,240,0.78);
-      background: rgba(125,167,234,0.05);
-      font-family: var(--font-tech);
-      font-size: 8px;
-      letter-spacing: 0.11em;
-      text-transform: uppercase;
-    }
-    .supplier-state { font-family: var(--font-tech); font-size: 9px; letter-spacing: 0.12em; }
-    .supplier-title { font-size: 28px; }
-    .supplier-state.ok, .supplier-state.low, .supplier-state.critical { border: 0; background: transparent; padding: 0; }
-    .supplier-state.ok { color: #78ad8a; }
-    .supplier-state.low { color: #c99a53; }
-    .supplier-state.critical { color: #c46c6c; }
-    .manifest-panel-head { flex-wrap: wrap; gap: 15px; }
-
-    .supplier-stat { min-height: 72px; text-align: left; }
-    .supplier-stat.stock strong { font-size: 22px; color: #eef4ff; }
-    .supplier-stat.price strong { color: var(--remote); }
-    .supplier-pill { height: fit-content; padding: 4px 10px; font-size: 10px; }
-    .supplier-card.remote-error { max-width: none; }
-    .supplier-kicker.error { color: #d78b8b; }
-    .supplier-title.error { color: var(--danger); }
-
-    .production-grid { gap: 16px; padding: 20px; }
-    .production-card { padding: 18px; transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, opacity 0.22s ease; }
-    .production-card:hover { transform: translateY(-2px); border-color: rgba(212,175,55,0.18); box-shadow: 0 14px 30px rgba(0,0,0,0.32); }
-    .production-card.critical { background: linear-gradient(180deg, rgba(10,9,10,0.82), rgba(5,6,7,0.92)); }
-    .production-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-    .module-state {
-      padding: 3px 7px;
-      border: 1px solid currentColor;
-      font-family: var(--font-tech);
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      white-space: nowrap;
-    }
-    .module-state.ok { color: #78ad8a; }
-    .module-state.low { color: #c99a53; }
-    .module-state.critical { color: #c46c6c; }
-    .production-stock-primary strong { color: var(--gold); font-size: 22px; }
-    .next-gap.ok { border-color: rgba(79,137,101,0.3); }
-    .next-gap.low { border-color: rgba(184,134,55,0.34); }
-    .next-gap.critical { border-color: rgba(155,66,66,0.4); background: rgba(155,66,66,0.045); }
-    .recipe-list li.bottleneck { background: rgba(155,66,66,0.055); margin-inline: -8px; padding-inline: 8px; border-bottom-color: rgba(155,66,66,0.18); }
-    .recipe-list li.bottleneck::after {
-      content: 'BOTTLENECK';
-      margin-left: 8px;
-      color: rgba(196,108,108,0.72);
-      font-family: var(--font-tech);
-      font-size: 8px;
-      letter-spacing: 0.1em;
-    }
-    .byproduct-strip {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 11px;
-      padding-top: 8px;
-      border-top: 1px dashed rgba(255,255,255,0.06);
-      font-family: var(--font-tech);
-      font-size: 9px;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-    }
-    .byproduct-strip > span:first-child { color: var(--waste); }
-    .byproduct-tag { padding: 3px 6px; border: 1px solid rgba(168,159,145,0.24); background: rgba(168,159,145,0.06); color: #c7c0b5; }
-
-    .manifest-panel .panel-head { gap: 18px; flex-wrap: wrap; }
-    .manifest-controls { align-items: center; }
-    .search-control { position: relative; display: block; min-width: 210px; }
-    .search-control input { width: 100%; padding-left: 36px; }
-    .search-icon {
-      position: absolute;
-      left: 13px;
-      top: 50%;
-      width: 12px;
-      height: 12px;
-      border: 1px solid var(--muted);
-      border-radius: 50%;
-      transform: translateY(-58%);
-      pointer-events: none;
-      z-index: 2;
-    }
-    .search-icon::after { content: ''; position: absolute; width: 5px; height: 1px; background: var(--muted); right: -4px; bottom: -2px; transform: rotate(45deg); }
-    .role-segments { display: flex; padding: 2px; border: 1px solid var(--line-soft); background: rgba(0,0,0,0.48); }
-    .role-segment {
-      min-height: 34px;
-      padding: 7px 9px;
-      border: 0;
-      border-right: 1px solid rgba(255,255,255,0.04);
-      clip-path: none;
-      background: transparent;
-      color: var(--muted);
-      font-size: 10px;
-    }
-    .role-segment:last-child { border-right: 0; }
-    .role-segment:hover { background: rgba(212,175,55,0.05); color: var(--text); box-shadow: none; }
-    .role-segment.active { background: rgba(212,175,55,0.12); color: var(--gold); }
-    .uplink-button { min-height: 38px; }
-
+    /* RESPONSIVE TWEAKS */
     #dataTable th:first-child, #dataTable td:first-child { min-width: 250px; }
     #dataTable th:nth-child(n+4), #dataTable td:nth-child(n+4) { text-align: right; }
     #dataTable th[data-dir] { color: #fff; background: rgba(212,175,55,0.075); }
@@ -604,27 +424,17 @@
     .buy-price { color: #b8cfee; }
     .sell-price { color: #ddc58f; }
     tbody tr:focus-visible { outline: 1px solid rgba(212,175,55,0.55); outline-offset: -1px; }
-    #itemsBody tr:hover td:first-child strong::before,
-    #itemsBody tr:hover td:first-child strong::after { animation: none; opacity: 0.72; }
-
-    .footer-clock { margin-top: 6px; color: var(--gold); font-family: var(--font-tech); }
 
     @media (max-width: 900px) {
       .command-header { padding: 24px 16px; }
       .crest-frame { width: 104px; }
       .crest-frame::before { width: 90px; height: 90px; }
       .crest { width: 98px; }
-      .base-telemetry-bar {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        width: 100%;
-        padding: 10px 12px;
-        gap: 10px 14px;
-        align-items: start;
-      }
+      .base-telemetry-bar { display: grid; grid-template-columns: 1fr 1fr; width: 100%; padding: 10px 12px; gap: 10px 14px; align-items: start; }
       .base-telemetry-stat:first-child { grid-column: span 2; }
       .ticker-wrap { display: none; }
       .command-strip { margin-top: 0; }
+      .summary-grid { grid-template-columns: 1fr; }
       .remote-panel-head { align-items: stretch; }
       .sat-link-badge { width: fit-content; }
       .production-grid { padding: 14px; }
@@ -634,13 +444,7 @@
       .role-segment { flex: 1 0 auto; }
       .search-control { width: 100%; }
       .table-wrap { overflow-x: auto; }
-      #dataTable th:first-child, #dataTable td:first-child {
-        position: sticky;
-        left: 0;
-        z-index: 4;
-        background: rgba(6,7,9,0.97);
-        box-shadow: 1px 0 0 rgba(212,175,55,0.12);
-      }
+      #dataTable th:first-child, #dataTable td:first-child { position: sticky; left: 0; z-index: 4; background: rgba(6,7,9,0.97); box-shadow: 1px 0 0 rgba(212,175,55,0.12); }
       #dataTable th:first-child { z-index: 12; }
     }
 
@@ -653,222 +457,20 @@
       .production-stat { padding: 8px 5px; }
       .production-stat strong { font-size: 15px; }
       .production-stock-primary strong { font-size: 18px; }
-    }
-
-
-    /* --- PRODUCTION RECIPE LEDGER: MATERIAL / REQUIRED / CURRENT STOCK --- */
-    .recipe-column-head,
-    .recipe-list li {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 104px 112px;
-      gap: 14px;
-      align-items: center;
-    }
-
-    .recipe-column-head {
-      margin: 3px 0 0;
-      padding: 0 0 7px;
-      border-bottom: 1px solid rgba(212,175,55,0.12);
-      color: #827d72;
-      font-family: var(--font-tech);
-      font-size: 8.5px;
-      font-weight: 700;
-      letter-spacing: 0.105em;
-      text-transform: uppercase;
-    }
-
-    .recipe-column-head span:nth-child(2),
-    .recipe-column-head span:nth-child(3) { text-align: right; }
-
-    .recipe-list li {
-      justify-content: initial;
-      min-height: 37px;
-      margin-inline: -8px;
-      padding: 8px;
-      color: #d6d0c3;
-      font-weight: 400;
-      text-shadow: none;
-      opacity: 1;
-      background: linear-gradient(90deg, rgba(3,4,5,0.58), rgba(3,4,5,0.34));
-      border-bottom-color: rgba(255,255,255,0.045);
-    }
-
-    .recipe-name {
-      min-width: 0;
-      color: #d6d0c3;
-      overflow-wrap: anywhere;
-    }
-
-    .production-card .recipe-list li:not(.bottleneck),
-    .production-card.critical .recipe-list li:not(.bottleneck),
-    .production-card.low .recipe-list li:not(.bottleneck),
-    .production-card.ok .recipe-list li:not(.bottleneck) {
-      opacity: 1;
-    }
-
-    .production-card .recipe-name {
-      color: #d6d0c3;
-    }
-
-    .recipe-required,
-    .recipe-stock {
-      font-family: var(--font-tech);
-      white-space: nowrap;
-      text-align: right;
-    }
-
-    .recipe-required {
-      color: #d7b85b;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.015em;
-    }
-
-    .recipe-stock {
-      color: #ece4d3;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.015em;
-    }
-
-    .recipe-short {
-      display: block;
-      margin-top: 2px;
-      color: #df7474;
-      font-size: 8px;
-      font-weight: 700;
-      letter-spacing: 0.075em;
-      text-transform: uppercase;
-    }
-
-    .recipe-list li.bottleneck {
-      color: inherit;
-      font-weight: 400;
-      text-shadow: none;
-      background: linear-gradient(90deg, rgba(72,20,22,0.38), rgba(8,5,6,0.58));
-    }
-
-    .recipe-list li.bottleneck::after { content: none; display: none; }
-    .recipe-list li.bottleneck .recipe-name { color: #df7474; font-weight: 700; }
-    .recipe-list li.bottleneck .recipe-name::after {
-      content: 'BOTTLENECK';
-      display: block;
-      margin-top: 2px;
-      color: rgba(223,116,116,0.70);
-      font-family: var(--font-tech);
-      font-size: 8px;
-      letter-spacing: 0.1em;
-    }
-
-    .recipe-list li.bottleneck .recipe-required { color: #d7b85b; }
-    .recipe-list li.bottleneck .recipe-stock { color: #df7474; }
-
-    @media (max-width: 520px) {
-      .recipe-column-head,
-      .recipe-list li {
-        grid-template-columns: minmax(0, 1fr) 88px 96px;
-        gap: 9px;
-      }
+      
+      .recipe-column-head, .recipe-list li { grid-template-columns: minmax(0, 1fr) 88px 96px; gap: 9px; }
       .recipe-column-head { font-size: 7.5px; letter-spacing: 0.08em; }
       .recipe-required { font-size: 10px; }
       .recipe-stock { font-size: 11px; }
     }
 
     @media (max-width: 390px) {
-      .recipe-column-head,
-      .recipe-list li {
-        grid-template-columns: minmax(0, 1fr) 72px 78px;
-        gap: 6px;
-      }
+      .recipe-column-head, .recipe-list li { grid-template-columns: minmax(0, 1fr) 72px 78px; gap: 6px; }
       .recipe-column-head span:nth-child(2) { font-size: 0; }
-      .recipe-column-head span:nth-child(2)::after { content: 'REQ / CYCLE'; font-size: 7px; }
+      .recipe-column-head span:nth-child(2):after { content: 'REQ / CYCLE'; font-size: 7px; }
       .recipe-column-head span:nth-child(3) { font-size: 0; }
-      .recipe-column-head span:nth-child(3)::after { content: 'ON HAND'; font-size: 7px; }
+      .recipe-column-head span:nth-child(3):after { content: 'ON HAND'; font-size: 7px; }
     }
-
-    /* =========================================
-       V3.1 INDUSTRIAL NEWSWIRE
-       ========================================= */
-    .ticker-wrap {
-      display: flex;
-      align-items: stretch;
-      width: 100%;
-      min-height: 42px;
-      padding: 0;
-      margin-bottom: 18px;
-      opacity: 1;
-      overflow: hidden;
-      background: rgba(0,0,0,0.88);
-      border-top: 1px solid rgba(212,175,55,0.12);
-      border-bottom: 1px solid rgba(212,175,55,0.30);
-      box-shadow: inset 0 2px 12px rgba(0,0,0,0.72);
-    }
-    .ticker-wrap::before, .ticker-wrap::after { display: none; }
-    .ticker-label {
-      position: relative; z-index: 5; flex: 0 0 auto; min-width: 215px;
-      display: flex; align-items: center; gap: 10px; padding: 7px 18px 7px 22px;
-      border-right: 1px solid rgba(212,175,55,0.32);
-      background: linear-gradient(90deg, rgba(212,175,55,0.13), rgba(10,12,15,0.98));
-      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
-      font-family: var(--font-tech); white-space: nowrap;
-    }
-    .ticker-label strong { display: block; color: var(--gold); font-size: 11px; line-height: 1.05; letter-spacing: 0.12em; }
-    .ticker-label small { display: block; margin-top: 3px; color: rgba(224,224,224,0.52); font-size: 8px; line-height: 1; letter-spacing: 0.11em; }
-    .ticker-live-dot {
-      width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%;
-      background: var(--good); box-shadow: 0 0 10px rgba(79,137,101,0.92);
-      animation: corePulse 2.2s ease-in-out infinite;
-    }
-    .ticker-viewport { position: relative; min-width: 0; flex: 1; overflow: hidden; display: flex; align-items: center; }
-    .ticker-viewport::before, .ticker-viewport::after {
-      content: ''; position: absolute; top: 0; bottom: 0; width: 46px; z-index: 3; pointer-events: none;
-    }
-    .ticker-viewport::before { left: 0; background: linear-gradient(90deg, rgba(5,6,8,0.98), transparent); }
-    .ticker-viewport::after { right: 0; background: linear-gradient(-90deg, rgba(5,6,8,0.98), transparent); }
-    .ticker {
-      display: flex; align-items: center; width: max-content; min-width: max-content; white-space: nowrap;
-      will-change: transform; animation: tickerAnim var(--ticker-duration, 280s) linear infinite;
-    }
-    .ticker-wrap:hover .ticker, .ticker-wrap:focus-within .ticker { animation-play-state: paused; }
-    .ticker-sequence { display: flex; align-items: center; flex: 0 0 auto; white-space: nowrap; }
-    .ticker .ticker-item {
-      display: inline-flex; align-items: center; gap: 8px; padding: 0 12px;
-      color: rgba(224,224,224,0.86); font-family: var(--font-tech); font-size: 13px;
-      line-height: 42px; letter-spacing: 0.065em; text-transform: uppercase;
-      text-shadow: 0 0 8px rgba(255,255,255,0.025);
-    }
-    .ticker .ticker-tag { padding-right: 0; color: var(--gold); font-weight: bold; letter-spacing: 0.085em; }
-    .ticker .ticker-item.good .ticker-tag { color: #78b98e; }
-    .ticker .ticker-item.warn .ticker-tag { color: #d2a04d; }
-    .ticker .ticker-item.danger .ticker-tag { color: #c96868; }
-    .ticker .ticker-item.remote .ticker-tag { color: #8cb4ff; }
-    .ticker .ticker-item.lore .ticker-tag { color: rgba(212,175,55,0.78); }
-    .ticker .ticker-item.muted .ticker-tag { color: var(--muted); }
-    .ticker .ticker-item.warn .ticker-message { color: rgba(238,215,173,0.90); }
-    .ticker .ticker-item.danger .ticker-message { color: rgba(244,184,184,0.92); }
-    .ticker .ticker-item.remote .ticker-message { color: rgba(202,219,251,0.90); }
-    .ticker .ticker-item.lore .ticker-message { color: rgba(224,224,224,0.72); }
-    .ticker .ticker-message { padding-right: 0; }
-    .ticker .ticker-separator { padding-right: 0; color: rgba(212,175,55,0.34); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.14em; padding: 0 4px; }
-    @media (max-width: 900px) {
-      .ticker-wrap { display: flex; min-height: 38px; margin-bottom: 12px; }
-      .ticker-label { min-width: auto; padding: 6px 14px; }
-      .ticker-label strong { font-size: 9px; }
-      .ticker-label small { display: none; }
-      .ticker .ticker-item { font-size: 11px; line-height: 38px; padding: 0 9px; }
-      .ticker-viewport::before, .ticker-viewport::after { width: 26px; }
-    }
-    @media (max-width: 560px) {
-      .ticker-label { display: none; }
-      .ticker .ticker-item { font-size: 10px; letter-spacing: 0.045em; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .ticker { animation: none !important; transform: none !important; }
-      .ticker-sequence[data-ticker-copy="1"] { display: none; }
-      .ticker-viewport { overflow-x: auto; scrollbar-width: thin; }
-    }
-
   </style>
 </head>
 <body>
@@ -962,18 +564,37 @@
 
   <main>
     <section class="summary-grid anim-boot delay-4">
-      <div class="alert-card panel maintenance-panel">
-        <div class="alert-title"><span><b class="section-index">01</b>Facility Maintenance</span><span class="count-badge scramble" id="maintenanceCount">0</span></div>
-        <ul class="alert-list" id="maintenanceList"></ul>
+      
+      <!-- COLUMN 1: Facility & Waste -->
+      <div class="split-column">
+        <div class="alert-card">
+          <div class="alert-title"><span><b class="section-index">01A</b>Facility Maintenance</span><span class="count-badge scramble" id="maintenanceCount">0</span></div>
+          <ul class="alert-list" id="maintenanceList"></ul>
+        </div>
+        <div class="alert-card waste-panel">
+          <div class="alert-title"><span><b class="section-index">01B</b>Waste Management</span><span class="count-badge scramble" id="byproductCount">0</span></div>
+          <ul class="alert-list" id="byproductList"></ul>
+        </div>
       </div>
-      <div class="alert-card panel export-panel">
+      
+      <!-- COLUMN 2: Exports -->
+      <div class="alert-card">
         <div class="alert-title"><span><b class="section-index">02</b>Export Inventory</span><span class="count-badge scramble" id="exportCount">0</span></div>
         <ul class="alert-list" id="exportList"></ul>
       </div>
-      <div class="alert-card panel waste-panel">
-        <div class="alert-title"><span><b class="section-index">03</b>Waste Management</span><span class="count-badge scramble" id="byproductCount">0</span></div>
-        <ul class="alert-list" id="byproductList"></ul>
+      
+      <!-- COLUMN 3: Feedstock & Confiscated -->
+      <div class="split-column">
+        <div class="alert-card feedstock-panel">
+          <div class="alert-title"><span><b class="section-index">03A</b>Industrial Feedstock</span><span class="count-badge scramble" id="feedstockCount">0</span></div>
+          <ul class="alert-list" id="feedstockList"></ul>
+        </div>
+        <div class="alert-card confiscated-panel">
+          <div class="alert-title"><span><b class="section-index">03B</b>Confiscated Assets</span><span class="count-badge scramble" id="confiscatedCount">0</span></div>
+          <ul class="alert-list" id="confiscatedList"></ul>
+        </div>
       </div>
+      
     </section>
 
     <section class="panel remote-panel anim-boot delay-4">
@@ -1024,6 +645,7 @@
             <button class="role-segment" type="button" data-role="procurement">PROCURE</button>
             <button class="role-segment" type="button" data-role="export">EXPORT</button>
             <button class="role-segment" type="button" data-role="byproduct">WASTE</button>
+            <button class="role-segment" type="button" data-role="confiscated">SEIZED</button>
           </div>
           <select id="roleFilter" class="visually-hidden" aria-label="Filter assets by role">
             <option value="all">ALL ASSETS</option>
@@ -1031,6 +653,7 @@
             <option value="procurement">PROCUREMENT</option>
             <option value="export">EXPORT</option>
             <option value="byproduct">WASTE / BYPROD</option>
+            <option value="confiscated">SEIZED</option>
           </select>
           <button id="refreshBtn" class="uplink-button" type="button"><span>FORCE UPLINK</span></button>
         </div>
@@ -1044,7 +667,6 @@
               <th data-sort="role">ROLE</th>
               <th data-sort="status">STATUS</th>
               <th data-sort="quantity">QTY</th>
-              <th data-sort="need">NEED</th>
               <th data-sort="sell">SELL ($)</th>
               <th data-sort="buy">BUY ($)</th>
             </tr>
@@ -1063,7 +685,7 @@
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V3.1 RECIPE COLOR CONSISTENCY PATCH)
+   RHW DASHBOARD LOGIC (V3.3.2 UI REFINEMENT)
    ========================================================================== */
 
 const TICKER_DYNAMIC_SLOT_COUNT = 10;
@@ -1073,48 +695,22 @@ const NEWSWIRE_POOLS = {
     { tag: 'BMM MARKET WATCH', text: 'NIOBIUM CONTRACTS STRENGTHEN AS OMEGA SUPPLY TIGHTENS', tone: 'lore' },
     { tag: 'NEW LONDON EXCHANGE', text: 'INDUSTRIAL METALS OPEN FIRM ON CONTINUED MANUFACTURING DEMAND', tone: 'lore' },
     { tag: 'BMM COMMODITIES', text: 'GOLD PREMIUMS HOLD ABOVE THE WEEKLY AVERAGE AHEAD OF THE NEXT FREIGHT WINDOW', tone: 'lore' },
-    { tag: 'BRETONIA TRADE', text: 'BULK FREIGHT BOOKINGS RISE ACROSS THE NEW LONDON INDUSTRIAL CORRIDOR', tone: 'lore' },
-    { tag: 'DUBLIN MARKET', text: 'REFINERY DEMAND CONTINUES TO SUPPORT ORE PRICES ACROSS THE SYSTEM', tone: 'remote' },
-    { tag: 'BMM FINANCE', text: 'INDUSTRIAL CREDIT CONDITIONS REMAIN FAVORABLE FOR CHARTERED FACILITIES', tone: 'lore' },
-    { tag: 'COMMODITIES DESK', text: 'MOX SUPPLY REMAINS THE PRIMARY PRICE DRIVER FOR HEAVY INDUSTRIAL OUTPUT', tone: 'lore' },
-    { tag: 'TRADE NETWORK', text: 'PROTOTYPE COMPONENT ORDERS ADVANCE ON RENEWED DEFENSE-SECTOR DEMAND', tone: 'lore' }
+    { tag: 'BRETONIA TRADE', text: 'BULK FREIGHT BOOKINGS RISE ACROSS THE NEW LONDON INDUSTRIAL CORRIDOR', tone: 'lore' }
   ],
   regional: [
     { tag: 'NEW LONDON DESK', text: 'FREIGHT VOLUME RISES ALONG THE INDUSTRIAL CORRIDOR', tone: 'lore' },
-    { tag: 'DUBLIN DESK', text: 'LISHEEN DEPOT PREPARES FOR INCREASED REFINED-METAL TRAFFIC', tone: 'remote' },
-    { tag: 'OMEGA BORDER WATCH', text: 'COMMERCIAL CONVOYS REPORT LONGER TRANSIT TIMES NEAR THE BORDER APPROACHES', tone: 'warn' },
-    { tag: 'BRETONIA SHIPPING', text: 'PIER ALLOCATIONS TIGHTEN AHEAD OF THE NEXT BULK-CARGO WINDOW', tone: 'lore' },
-    { tag: 'TRADE LANE REPORT', text: 'NEW LONDON ROUTES REMAIN OPEN WITH MODERATE COMMERCIAL CONGESTION', tone: 'good' },
-    { tag: 'BMM REGIONAL', text: 'CHARTERED FACILITIES REPORT STEADY OUTPUT ACROSS CENTRAL BRETONIA', tone: 'lore' },
-    { tag: 'DUBLIN FREIGHT', text: 'ORE HAULERS RECEIVE PRIORITY CLEARANCE FOR REFINERY DELIVERIES', tone: 'remote' },
-    { tag: 'NEW LONDON PORT', text: 'HEAVY FREIGHT BERTHS OPERATE ABOVE NORMAL WEEKDAY VOLUME', tone: 'lore' }
+    { tag: 'DUBLIN DESK', text: 'LISHEEN DEPOT PREPARES FOR INCREASED REFINED-METAL TRAFFIC', tone: 'remote' }
   ],
   security: [
     { tag: 'BPA SECURITY BRIEF', text: 'RANDOMIZED CARGO INSPECTIONS CONTINUE AT LOCAL JUMP GATES', tone: 'warn' },
-    { tag: 'BAF PATROL REPORT', text: 'VANGUARD GROUP BEGINS A ROUTINE SYSTEM SWEEP', tone: 'lore' },
-    { tag: 'BPA INTELLIGENCE', text: 'MOLLY-LINKED ACTIVITY REPORTED NEAR OUTER TRADE LANES', tone: 'warn' },
-    { tag: 'OMEGA SECURITY', text: 'CORSAIR MOVEMENT REPORTED BEYOND THE BRETONIAN APPROACHES', tone: 'warn' },
-    { tag: 'BMM SECURITY', text: 'ACCESS CONTROLS REMAIN ACTIVE ACROSS ALL MANUFACTURING DECKS', tone: 'good' },
-    { tag: 'DOCK SECURITY', text: 'INBOUND FREIGHTERS SUBJECT TO SECONDARY MANIFEST VERIFICATION', tone: 'warn' },
-    { tag: 'BPA ADVISORY', text: 'UNREGISTERED TRANSPONDER ACTIVITY UNDER REVIEW IN THE LOCAL SECTOR', tone: 'warn' },
-    { tag: 'BAF COMMAND', text: 'COMMERCIAL TRAFFIC ADVISED TO KEEP PRIMARY LANES CLEAR FOR PATROL TRANSIT', tone: 'lore' }
+    { tag: 'BAF PATROL REPORT', text: 'VANGUARD GROUP BEGINS A ROUTINE SYSTEM SWEEP', tone: 'lore' }
   ],
   operations: [
     { tag: 'RHW DOCKS', text: 'PIER FOUR OPENS FOR THE NEXT BULK FREIGHT WINDOW', tone: 'lore' },
-    { tag: 'RHW ENGINEERING', text: 'REACTOR BAY TWO CLEARED FOR SCHEDULED COOLANT SERVICE', tone: 'good' },
-    { tag: 'RHW LOGISTICS', text: 'OUTBOUND CARGO ALLOCATION UPDATED FOR THE NEXT SHIPPING CYCLE', tone: 'lore' },
-    { tag: 'RHW SHIFT DESK', text: 'DOCK CREWS REPORT READY FOR THE NEXT CARGO WINDOW', tone: 'good' },
-    { tag: 'RHW FABRICATION', text: 'PRODUCTION SCHEDULING PRIORITIZES HIGH-VALUE EXPORT CONTRACTS', tone: 'lore' },
-    { tag: 'RHW MATERIALS', text: 'WAREHOUSE TEAMS BEGIN CONSOLIDATION OF INDUSTRIAL FEEDSTOCK', tone: 'lore' },
-    { tag: 'RHW TRAFFIC', text: 'FREIGHTER ALBATROSS CLEARED FOR APPROACH TO PIER FOUR', tone: 'lore' },
-    { tag: 'RHW CONTROL', text: 'NEXT INTERNAL INVENTORY AUDIT ASSIGNED TO THE NIGHT SHIFT', tone: 'lore' }
+    { tag: 'RHW ENGINEERING', text: 'REACTOR BAY TWO CLEARED FOR SCHEDULED COOLANT SERVICE', tone: 'good' }
   ],
   corporate: [
     { tag: 'BMM CORPORATE', text: 'INDUSTRIAL OUTPUT FORECAST REVISED UPWARD FOR THE CURRENT QUARTER', tone: 'lore' },
-    { tag: 'BMM SHAREHOLDER WIRE', text: 'HEAVY MANUFACTURING REMAINS A CORE DRIVER OF BRETONIAN GROWTH', tone: 'lore' },
-    { tag: 'CROWN BULLETIN', text: 'BRETONIAN INDUSTRY REMAINS OPEN, SECURE AND PRODUCTIVE', tone: 'lore' },
-    { tag: 'BRETONIA INDUSTRY', text: 'ORDER PREVAILS // PRODUCTION ENDURES', tone: 'lore' },
-    { tag: 'BMM CHARTER OFFICE', text: 'STRATEGIC MANUFACTURING FACILITIES RECEIVE RENEWED LOGISTICS PRIORITY', tone: 'lore' },
     { tag: 'CROWN LOYALTY', text: 'GLORY TO THE QUEEN', tone: 'lore' }
   ]
 };
@@ -1137,7 +733,6 @@ function pickNewswireMessage(category, excludedTexts = []) {
 }
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
 function escapeHTML(str) { return String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])); }
 
 const tickerContainer = document.getElementById('tickerContainer');
@@ -1163,17 +758,11 @@ const TICKER_MAX_DURATION_SECONDS = 150;
 
 function updateTickerSpeed() {
   if (!tickerContainer || prefersReducedMotion.matches) return;
-
   requestAnimationFrame(() => {
     const primarySequence = tickerContainer.querySelector('.ticker-sequence[data-ticker-copy="0"]');
     if (!primarySequence) return;
-
     const distance = primarySequence.scrollWidth;
-    const duration = Math.max(
-      TICKER_MIN_DURATION_SECONDS,
-      Math.min(TICKER_MAX_DURATION_SECONDS, distance / TICKER_SPEED_PX_PER_SECOND)
-    );
-
+    const duration = Math.max(TICKER_MIN_DURATION_SECONDS, Math.min(TICKER_MAX_DURATION_SECONDS, distance / TICKER_SPEED_PX_PER_SECOND));
     tickerContainer.style.setProperty('--ticker-duration', `${duration.toFixed(1)}s`);
   });
 }
@@ -1233,13 +822,14 @@ const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 
 const BYPRODUCTS = ['toxic waste', 'scrap metal'];
 const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore'];
 const FEEDSTOCK = ['gold ore', 'niobium ore', 'military salvage'];
+const CONFISCATED = ['wildcat gold'];
 
-const EXPORT_ORDER = ['Reactor Systems', 'Superstructure Systems', 'Multi-Mode Focusing Chamber', 'Prototype Components', 'Gold', 'Niobium'];
+const EXPORT_ORDER = ['Multi-Mode Focusing Chamber', 'Reactor Systems', 'Superstructure Systems', 'Prototype Components', 'Gold', 'Niobium'];
 
 const RECIPES = [
+  { product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] },
   { product: 'Reactor Systems', output: 1, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] },
   { product: 'Superstructure Systems', output: 1, byproducts: [], ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] },
-  { product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] },
   { product: 'Prototype Components', output: 25, byproducts: [['Scrap Metal', 450]], ingredients: [['Military Salvage',255]] },
   { product: 'Gold', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Gold Ore',425], ['MOX',170], ['Industrial Materials',85]] },
   { product: 'Niobium', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Niobium Ore',425], ['MOX',170], ['Industrial Materials',85]] }
@@ -1257,14 +847,16 @@ const CUSTOM_ALERTS = {
   'multi-mode focusing chamber': { type: 'min', red: 500, yellow: 1000 },
   'multi-mode focusing chambers': { type: 'min', red: 500, yellow: 1000 },
   'scrap metal': { type: 'max', yellow: 10000, red: 15000 },
-  'toxic waste': { type: 'max', yellow: 10000, red: 15000 }
+  'toxic waste': { type: 'max', yellow: 10000, red: 15000 },
+  'wildcat gold': { type: 'max', yellow: 25000, red: 30000 }
 };
 
 const BAR_MAX_FALLBACKS = {
   'basic alloy': 45000, 'food rations': 45000, 'consumer goods': 45000,
   'reactor systems': 1000, 'superstructure systems': 1000, 'multi-mode focusing chamber': 2000,
   'prototype components': 25000, 'gold': 60000, 'niobium': 30000,
-  'gold ore': 50000, 'niobium ore': 50000, 'military salvage': 30000
+  'gold ore': 50000, 'niobium ore': 50000, 'military salvage': 30000,
+  'wildcat gold': 30000
 };
 
 const numFormatter = new Intl.NumberFormat('de-DE');
@@ -1277,7 +869,8 @@ const CANONICAL_NAMES = {
   'multi-mode focusing chambers': 'Multi-Mode Focusing Chamber', 'superstructure systems': 'Superstructure Systems',
   'reactor systems': 'Reactor Systems', 'gold': 'Gold', 'prototype components': 'Prototype Components',
   'basic alloy': 'Basic Alloy', 'food rations': 'Food Rations', 'consumer goods': 'Consumer Goods',
-  'industrial materials': 'Industrial Materials', 'niobium ore': 'Niobium Ore', 'toxic waste': 'Toxic Waste', 'scrap metal': 'Scrap Metal'
+  'industrial materials': 'Industrial Materials', 'niobium ore': 'Niobium Ore', 'toxic waste': 'Toxic Waste', 'scrap metal': 'Scrap Metal',
+  'wildcat gold': 'Wildcat Gold'
 };
 
 let items = [];
@@ -1307,12 +900,19 @@ const els = {
   baseHealthCard: document.getElementById('baseHealthCard'),
   baseMoneyVal: document.getElementById('baseMoneyVal'),
   baseStorageVal: document.getElementById('baseStorageVal'),
+  
   maintenanceList: document.getElementById('maintenanceList'),
-  exportList: document.getElementById('exportList'),
   byproductList: document.getElementById('byproductList'),
+  exportList: document.getElementById('exportList'),
+  feedstockList: document.getElementById('feedstockList'),
+  confiscatedList: document.getElementById('confiscatedList'),
+  
   maintenanceCount: document.getElementById('maintenanceCount'),
-  exportCount: document.getElementById('exportCount'),
   byproductCount: document.getElementById('byproductCount'),
+  exportCount: document.getElementById('exportCount'),
+  feedstockCount: document.getElementById('feedstockCount'),
+  confiscatedCount: document.getElementById('confiscatedCount'),
+  
   itemsBody: document.getElementById('itemsBody'),
   errorBox: document.getElementById('errorBox'),
   search: document.getElementById('search'),
@@ -1433,7 +1033,9 @@ function progressMeta(item) {
   const max = barMaxFor(item);
   const percent = max > 0 ? Math.min(100, (q / max) * 100) : 0;
   const state = stockState(item);
-  const cls = role === 'byproduct' ? 'waste' : state;
+  let cls = state;
+  if (role === 'byproduct') cls = 'waste';
+  if (role === 'confiscated' && state === 'ok') cls = 'confiscated-bar';
   return { percent: Math.max(0, Math.round(percent)), cls, max };
 }
 
@@ -1508,6 +1110,11 @@ function readinessText(state, role) {
     if (state === 'low') return 'DISPOSAL WATCH';
     return 'CONTAINMENT STABLE';
   }
+  if (role === 'confiscated') {
+    if (state === 'critical') return 'VAULT OVERFLOW';
+    if (state === 'low') return 'HIGH VOLUME';
+    return 'EVIDENCE SECURED';
+  }
   if (role === 'export') {
     if (state === 'critical') return 'EXPORT RESERVE CRITICAL';
     if (state === 'low') return 'LOW EXPORT RESERVE';
@@ -1559,7 +1166,6 @@ function setSupplierLinkState(state, text) {
   if (els.supplierLinkText) els.supplierLinkText.textContent = text;
 }
 
-
 function tickerStateTone(state) {
   if (state === 'critical') return 'danger';
   if (state === 'low') return 'warn';
@@ -1571,25 +1177,6 @@ function healthPercentValue(value) {
   if (!Number.isFinite(n)) return null;
   if (n <= 100) return Math.max(0, Math.min(100, n));
   return Math.max(0, Math.min(100, (n / 24000000) * 100));
-}
-
-function worstTrackedState(list) {
-  const rank = { critical: 3, low: 2, ok: 1 };
-  return list.reduce((worst, item) => rank[stockState(item)] > rank[worst] ? stockState(item) : worst, 'ok');
-}
-
-function summarizeTrackedItems(role, nominalText) {
-  const tracked = operationalItems().filter(item => assetRole(item) === role);
-  const alerts = tracked
-    .map(item => ({ item, state: stockState(item) }))
-    .filter(entry => entry.state !== 'ok')
-    .sort((a, b) => ({ critical: 0, low: 1 }[a.state] - ({ critical: 0, low: 1 }[b.state])));
-
-  if (!alerts.length) return { text: nominalText, tone: 'good' };
-  const names = alerts.slice(0, 3).map(entry => `${displayName(entry.item).toUpperCase()} ${statusLabel(entry.state, role)}`);
-  const suffix = alerts.length > 3 ? ` +${alerts.length - 3} MORE` : '';
-  const worst = worstTrackedState(alerts.map(entry => entry.item));
-  return { text: `${names.join(' / ')}${suffix}`, tone: tickerStateTone(worst) };
 }
 
 function priorityToneRank(tone) {
@@ -1627,7 +1214,7 @@ function buildPriorityWire(recipeAnalyses) {
   });
 
   const wasteAlerts = operationalItems()
-    .filter(item => assetRole(item) === 'byproduct' && stockState(item) !== 'ok')
+    .filter(item => (assetRole(item) === 'byproduct' || assetRole(item) === 'confiscated') && stockState(item) !== 'ok')
     .sort((a, b) => priorityToneRank(tickerStateTone(stockState(b))) - priorityToneRank(tickerStateTone(stockState(a))));
 
   if (wasteAlerts.length) {
@@ -1645,7 +1232,7 @@ function buildPriorityWire(recipeAnalyses) {
     const blockedNames = blocked.slice(0, 3).map(analysis => displayRecipeName(analysis.recipe.product).toUpperCase());
     const bottleneckCounts = new Map();
     blocked.forEach(analysis => {
-      const key = analysis.bottleneck ? displayRecipeName(analysis.bottleneck.name).toUpperCase() : 'UNKNOWN INPUT';
+      const key = analysis.bottleneck ? analysis.bottleneck.name.toUpperCase() : 'UNKNOWN INPUT';
       bottleneckCounts.set(key, (bottleneckCounts.get(key) || 0) + 1);
     });
     const primary = [...bottleneckCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'UNKNOWN INPUT';
@@ -1720,7 +1307,7 @@ function buildProductionDeskMessage(recipeAnalyses) {
       .filter(analysis => analysis.bottleneck)
       .sort((a, b) => a.nextCycleGap - b.nextCycleGap)[0];
     const recoveryText = recovery?.bottleneck
-      ? `NEXT RECOVERY TARGET ${displayRecipeName(recovery.bottleneck.name).toUpperCase()} +${number(recovery.nextCycleGap)}`
+      ? `NEXT RECOVERY TARGET ${escapeHTML(recovery.bottleneck.name).toUpperCase()} +${number(recovery.nextCycleGap)}`
       : 'RECOVERY INPUT UNDER REVIEW';
     return {
       tag: 'RHW PRODUCTION DESK',
@@ -1814,7 +1401,7 @@ function stockState(item) {
     if (custom.type === 'max') return q >= custom.red ? 'critical' : (q >= custom.yellow ? 'low' : 'ok');
     return q < custom.red ? 'critical' : (q < custom.yellow ? 'low' : 'ok');
   }
-  if (PROCUREMENT.includes(nm) || BYPRODUCTS.includes(nm)) return 'ok';
+  if (PROCUREMENT.includes(nm) || BYPRODUCTS.includes(nm) || CONFISCATED.includes(nm)) return 'ok';
   const min = minStock(item);
   if (min > 0 && q <= min * 0.25) return 'critical';
   if (min > 0 && q < min) return 'low';
@@ -1827,13 +1414,22 @@ function assetRole(item) {
   if (BYPRODUCTS.includes(nm)) return 'byproduct';
   if (MAINTENANCE.includes(nm)) return 'maintenance';
   if (PROCUREMENT.includes(nm)) return 'procurement';
+  if (CONFISCATED.includes(nm)) return 'confiscated';
   return 'other';
 }
 
 function rebuildItemCaches() {
+  const requiredKeys = [...FEEDSTOCK, ...MAINTENANCE, ...EXPORTS, ...BYPRODUCTS, ...CONFISCATED].map(keyFromName);
+  requiredKeys.forEach(reqKey => {
+    if (!items.some(i => commodityKey(i) === reqKey)) {
+      items.push({ name: CANONICAL_NAMES[reqKey] || reqKey.toUpperCase(), quantity: 0, price: 0 });
+    }
+  });
+
   itemsByKey = new Map();
   operationalItemsCache = [];
   const seenOperational = new Set();
+  
   for (const item of items) {
     const key = commodityKey(item);
     if (!itemsByKey.has(key)) itemsByKey.set(key, item);
@@ -1847,9 +1443,17 @@ function rebuildItemCaches() {
 }
 
 function operationalItems() { return operationalItemsCache; }
-function roleLabel(role) { if (role === 'maintenance') return 'FACILITY'; if (role === 'export') return 'EXPORT'; if (role === 'byproduct') return 'WASTE'; return 'PROCUREMENT'; }
+
+function roleLabel(role) { 
+  if (role === 'maintenance') return 'FACILITY'; 
+  if (role === 'export') return 'EXPORT'; 
+  if (role === 'byproduct') return 'WASTE'; 
+  if (role === 'confiscated') return 'SEIZED';
+  return 'PROCUREMENT'; 
+}
+
 function statusLabel(state, role) {
-  if (role === 'byproduct') return state === 'critical' ? 'OVERFLOW' : (state === 'low' ? 'WARN' : 'STABLE');
+  if (role === 'byproduct' || role === 'confiscated') return state === 'critical' ? 'OVERFLOW' : (state === 'low' ? 'WARN' : 'STABLE');
   return state === 'critical' ? 'CRITICAL' : (state === 'low' ? 'LOW' : 'STABLE');
 }
 
@@ -1858,6 +1462,7 @@ function rolePill(role) {
   if (role === 'export') cls = 'both';
   if (role === 'maintenance') cls = 'sell';
   if (role === 'byproduct') cls = 'waste';
+  if (role === 'confiscated') cls = 'confiscated-pill';
   return `<span class="pill ${cls}">${roleLabel(role)}</span>`;
 }
 
@@ -1889,12 +1494,27 @@ function analyzeRecipe(recipe) {
   const productStock = productItem ? quantity(productItem) : 0;
 
   const ingredientData = recipe.ingredients.map(pair => {
-    const ingredientName = pair[0];
+    const originalName = pair[0];
     const required = pair[1];
-    const stock = stockFor(ingredientName);
+    
+    let stock = 0;
+    let displayNameStr = displayRecipeName(originalName);
+    let extraHtml = '';
+
+    if (keyFromName(originalName) === 'gold') {
+      const stdGold = stockFor('Gold');
+      const wcGold = stockFor('Wildcat Gold');
+      stock = stdGold + wcGold;
+      
+      displayNameStr = 'Gold / Wildcat Gold';
+      extraHtml = `<span style="display:block; font-size:9.5px; opacity:0.8; margin-top:3px; letter-spacing:0.05em; font-family:var(--font-tech);"><span style="color:var(--gold);">STD: ${number(stdGold)}</span> // <span style="color:#ce93d8;">WC: ${number(wcGold)}</span></span>`;
+    } else {
+      stock = stockFor(originalName);
+    }
+
     const cycles = required > 0 ? Math.floor(stock / required) : 0;
     const currentCycleGap = Math.max(0, required - stock);
-    return { name: ingredientName, required, stock, cycles, currentCycleGap };
+    return { name: originalName, displayName: displayNameStr, extraHtml, required, stock, cycles, currentCycleGap };
   });
 
   const possibleCycles = ingredientData.length ? Math.min(...ingredientData.map(i => i.cycles)) : 0;
@@ -1922,14 +1542,15 @@ function renderProductionModules() {
         : '';
 
       return `<li class="${isBottleneck ? 'bottleneck' : ''}">
-                <span class="recipe-name">${escapeHTML(displayRecipeName(item.name))}</span>
+                <span class="recipe-name">${escapeHTML(item.displayName)}${item.extraHtml || ''}</span>
                 <span class="recipe-required">${number(item.required)}</span>
                 <span class="recipe-stock">${number(item.stock)}${shortText}</span>
               </li>`;
     }).join('');
 
+    const bottleneckDisplay = analysis.bottleneck ? (keyFromName(analysis.bottleneck.name) === 'gold' ? 'GOLD / WILDCAT GOLD' : escapeHTML(analysis.bottleneck.name).toUpperCase()) : '';
     const nextGapText = analysis.bottleneck
-      ? `<div class="next-gap ${analysis.cardState}">NEXT +1 CYCLE: <strong>${escapeHTML(displayRecipeName(analysis.bottleneck.name))} +${number(analysis.nextCycleGap)}</strong></div>`
+      ? `<div class="next-gap ${analysis.cardState}">NEXT +1 CYCLE: <strong>${bottleneckDisplay} +${number(analysis.nextCycleGap)}</strong></div>`
       : '';
 
     const byproductsText = recipe.byproducts && recipe.byproducts.length
@@ -2031,18 +1652,13 @@ function renderSupplier() {
   supplierGrid.querySelectorAll('.scramble-supplier').forEach(el => scrambleText(el, el.dataset.val));
 }
 
-function feedstockRequirement(name) {
-  const key = keyFromName(name);
-  for (const recipe of RECIPES) {
-    const ingredient = recipe.ingredients.find(([ingredientName]) => keyFromName(ingredientName) === key);
-    if (ingredient) return Number(ingredient[1]) || 0;
-  }
-  return 0;
-}
-
 function feedstockAnalysis(item) {
   const key = commodityKey(item);
-  const required = feedstockRequirement(key);
+  let required = 0;
+  for (const recipe of RECIPES) {
+    const ingredient = recipe.ingredients.find(([ingredientName]) => keyFromName(ingredientName) === key);
+    if (ingredient) required = Number(ingredient[1]) || 0;
+  }
   const q = quantity(item);
   const cycles = required > 0 ? Math.floor(q / required) : 0;
   const state = cycles <= 0 ? 'critical' : cycles < 10 ? 'low' : 'ok';
@@ -2070,49 +1686,12 @@ function overviewDetail(item, state, role) {
     if (state === 'low') return 'WARNING: HIGH VOLUME';
     return 'CRITICAL OVERFLOW';
   }
-  return state === 'ok' ? readinessText(state, role) : `DEFICIT: ${number(needAmount(item))}`;
-}
-
-function renderFeedstockRows() {
-  const rows = FEEDSTOCK.map(name => {
-    const item = findCommodity(name);
-    const display = displayRecipeName(name);
-    const fallbackKey = keyFromName(name);
-
-    if (!item) {
-      return renderOverviewRow({
-        state: 'critical', role: 'feedstock', name: display,
-        detail: '0 CYCLES AVAILABLE', quantityValue: 0,
-        progress: renderFeedstockProgress(null, 'critical', fallbackKey), extraClass: 'feedstock-row'
-      });
-    }
-
-    const analysis = feedstockAnalysis(item);
-    return renderOverviewRow({
-      state: analysis.state, role: 'feedstock', name: displayName(item),
-      detail: `${number(analysis.cycles)} CYCLES AVAILABLE`, quantityValue: analysis.quantity,
-      progress: renderFeedstockProgress(item, analysis.state, fallbackKey), extraClass: 'feedstock-row'
-    });
-  }).join('');
-
-  return `<li class="feedstock-divider"><span>Industrial Feedstock</span><span class="count-badge">${FEEDSTOCK.length}</span></li>${rows}`;
-}
-
-function renderFacilityList(target, maintenance, emptyText) {
-  if (!target) return;
-  if (!maintenance.length) {
-    target.innerHTML = renderOverviewEmptyRow(emptyText) + renderFeedstockRows();
-    return;
+  if (role === 'confiscated') {
+    if (state === 'ok') return 'EVIDENCE SECURED';
+    if (state === 'low') return 'VAULT FILLING';
+    return 'VAULT OVERFLOW';
   }
-  const maintenanceRows = maintenance.map(item => {
-    const state = stockState(item);
-    const role = assetRole(item);
-    return renderOverviewRow({
-      state, role, name: displayName(item), detail: overviewDetail(item, state, role),
-      quantityValue: quantity(item), progress: renderProgress(item)
-    });
-  }).join('');
-  target.innerHTML = maintenanceRows + renderFeedstockRows();
+  return state === 'ok' ? readinessText(state, role) : `DEFICIT: ${number(needAmount(item))}`;
 }
 
 function renderList(target, list, emptyText) {
@@ -2145,14 +1724,40 @@ function renderOverview() {
     return sortByName(a, b);
   });
   const byproducts = sourceItems.filter(item => assetRole(item) === 'byproduct').sort(sortByName);
+  const confiscated = sourceItems.filter(item => assetRole(item) === 'confiscated').sort(sortByName);
 
   if (els.maintenanceCount) scrambleText(els.maintenanceCount, maintenance.length);
   if (els.exportCount) scrambleText(els.exportCount, exports.length);
   if (els.byproductCount) scrambleText(els.byproductCount, byproducts.length);
+  if (els.confiscatedCount) scrambleText(els.confiscatedCount, confiscated.length);
+  if (els.feedstockCount) scrambleText(els.feedstockCount, FEEDSTOCK.length);
 
-  renderFacilityList(els.maintenanceList, maintenance, 'FACILITY RESERVES STABLE');
+  renderList(els.maintenanceList, maintenance, 'FACILITY RESERVES STABLE');
   renderList(els.exportList, exports, 'NO EXPORT ASSETS DETECTED');
   renderList(els.byproductList, byproducts, 'NO WASTE DETECTED');
+  renderList(els.confiscatedList, confiscated, 'NO CONTRABAND SECURED');
+  
+  if (els.feedstockList) {
+    els.feedstockList.innerHTML = FEEDSTOCK.map(name => {
+      const item = findCommodity(name);
+      const display = displayRecipeName(name);
+      const fallbackKey = keyFromName(name);
+
+      if (!item || item.missing) {
+        return renderOverviewRow({
+          state: 'critical', role: 'procurement', name: display,
+          detail: '0 CYCLES AVAILABLE', quantityValue: 0,
+          progress: renderFeedstockProgress(null, 'critical', fallbackKey)
+        });
+      }
+      const analysis = feedstockAnalysis(item);
+      return renderOverviewRow({
+        state: analysis.state, role: 'procurement', name: displayName(item),
+        detail: `${number(analysis.cycles)} CYCLES AVAILABLE`, quantityValue: analysis.quantity,
+        progress: renderFeedstockProgress(item, analysis.state, fallbackKey)
+      });
+    }).join('');
+  }
 }
 
 function updateRoleSegments() {
@@ -2176,7 +1781,7 @@ function renderManifest() {
   });
 
   if (visible.length === 0) {
-    els.itemsBody.innerHTML = `<tr><td colspan="7" class="empty-state">NO ASSETS MATCHING QUERY IN LOCAL DATABANKS</td></tr>`;
+    els.itemsBody.innerHTML = `<tr><td colspan="6" class="empty-state">NO ASSETS MATCHING QUERY IN LOCAL DATABANKS</td></tr>`;
     updateSortArrows();
     return;
   }
@@ -2190,7 +1795,6 @@ function renderManifest() {
       valA = weight[stockState(a)]; valB = weight[stockState(b)];
     }
     else if (sortCol === 'quantity') { valA = quantity(a); valB = quantity(b); }
-    else if (sortCol === 'need') { valA = needAmount(a); valB = needAmount(b); }
     else if (sortCol === 'sell') { valA = priceSell(a); valB = priceSell(b); }
     else if (sortCol === 'buy') { valA = priceBuy(a); valB = priceBuy(b); }
 
@@ -2204,9 +1808,8 @@ function renderManifest() {
   els.itemsBody.innerHTML = visible.map(item => {
     const role = assetRole(item);
     const state = stockState(item);
-    const need = needAmount(item);
-    const needDisplay = (role === 'byproduct' || role === 'procurement') ? '–' : (need ? number(need) : '–');
-    return `<tr tabindex="0"><td class="asset-cell"><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td class="numeric-cell">${number(quantity(item))}</td><td class="numeric-cell">${needDisplay}</td><td class="numeric-cell price-cell sell-price">${formatCurrency(priceSell(item))}</td><td class="numeric-cell price-cell buy-price">${formatCurrency(priceBuy(item))}</td></tr>`;
+    
+    return `<tr tabindex="0"><td class="asset-cell"><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td class="numeric-cell">${number(quantity(item))}</td><td class="numeric-cell price-cell sell-price">${formatCurrency(priceSell(item))}</td><td class="numeric-cell price-cell buy-price">${formatCurrency(priceBuy(item))}</td></tr>`;
   }).join('');
 }
 
