@@ -85,6 +85,7 @@
     @keyframes hazardMove { 0% { background-position: 0 0; } 100% { background-position: 28px 0; } }
     @keyframes bracketBlink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; text-shadow: 0 0 8px var(--gold); } }
     @keyframes blink { 50% { opacity: 0; } }
+    @keyframes pulseCritical { 0% { box-shadow: inset 0 0 0 rgba(165, 42, 42, 0.0); } 50% { box-shadow: inset 5px 0 15px rgba(165, 42, 42, 0.4); } 100% { box-shadow: inset 0 0 0 rgba(165, 42, 42, 0.0); } }
 
     .anim-boot { opacity: 0; animation: bootUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .delay-1 { animation-delay: 0.05s; } .delay-2 { animation-delay: 0.15s; } .delay-3 { animation-delay: 0.25s; } .delay-4 { animation-delay: 0.35s; } .delay-5 { animation-delay: 0.45s; }
@@ -107,13 +108,27 @@
     .command-header-inner { display: flex; justify-content: space-between; align-items: center; gap: 40px; max-width: 1400px; margin: 0 auto; flex-wrap: wrap; position: relative; z-index: 2; }
 
     .command-brand { display: flex; align-items: center; gap: 26px; flex: 1; min-width: 320px; }
-    .crest-frame { position: relative; width: 132px; display: grid; place-items: center; flex-shrink: 0; }
-    .crest-frame::before { content: ''; position: absolute; width: 112px; height: 112px; border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,0.2), rgba(194,135,34,0.05) 44%, transparent 68%); animation: corePulse 4s ease-in-out infinite; }
-    .crest { position: relative; z-index: 2; width: 122px; filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.2)); }
+    
+    /* Enlarged Logo Area */
+    .crest-frame { position: relative; width: 180px; display: grid; place-items: center; flex-shrink: 0; }
+    .crest-frame::before { content: ''; position: absolute; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,0.2), rgba(194,135,34,0.05) 44%, transparent 68%); animation: corePulse 4s ease-in-out infinite; }
+    .crest { position: relative; z-index: 2; width: 160px; filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.2)); }
 
     .brand-copy { display: flex; flex-direction: column; width: 100%; }
     .eyebrow { color: var(--gold); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 4px; opacity: 0.8; }
-    h1 { margin: 0 0 10px 0; font-family: var(--font-title); color: var(--text); font-size: clamp(38px, 4.5vw, 64px); font-weight: 700; line-height: 0.85; letter-spacing: 0.05em; text-transform: uppercase; text-shadow: 0 0 15px rgba(255,255,255,0.1); }
+    
+    /* Metallic Title */
+h1 { 
+      margin: 0 0 10px 0; 
+      font-family: var(--font-title); 
+      color: var(--text);
+      font-size: clamp(38px, 4.5vw, 64px); 
+      font-weight: 700; 
+      line-height: 0.85; 
+      letter-spacing: 0.05em; 
+      text-transform: uppercase; 
+      text-shadow: 0 0 15px rgba(255,255,255,0.1); 
+    }
 
     .transmission-line { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 18px; color: var(--muted); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.1em; }
     .transmission-line span { display: flex; align-items: center; gap: 12px; }
@@ -185,6 +200,8 @@
 
     .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
     .summary-grid > .alert-card { display: flex; flex-direction: column; min-height: 0; }
+    
+    /* Layout Fix for Alert Cards */
     .split-column { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
     .split-column > .alert-card { flex: auto; display: flex; flex-direction: column; }
     
@@ -198,7 +215,13 @@
     .count-badge { font-family: var(--font-tech); font-size: 14px; color: var(--muted); }
 
     .alert-list li { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 8px 12px; background: rgba(0,0,0,0.4); border-left: 2px solid var(--line); font-size: 13px; }
-    .alert-list li.alert-critical { border-left-color: var(--danger); }
+    
+    /* Critical Pulse Animation on Alert Rows */
+    .alert-list li.alert-critical { 
+      border-left-color: var(--danger); 
+      animation: pulseCritical 2.5s infinite;
+    }
+    
     .alert-list li.alert-low { border-left-color: var(--warn); }
     .alert-list li.alert-ok { border-left-color: var(--good); }
     .alert-list small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
