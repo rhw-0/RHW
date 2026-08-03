@@ -497,7 +497,7 @@ h1 {
 
 
     /* =========================================
-       V3.6 COMPACT DUAL-FACILITY UPLINK
+       V3.3 COMPACT DUAL-FACILITY UPLINK
        ========================================= */
     .remote-panel .remote-panel-head { padding: 13px 18px; }
     .remote-panel .remote-panel-title { font-size: 22px; }
@@ -635,6 +635,47 @@ h1 {
 
     .role-pill-stack { display: inline-flex; flex-wrap: wrap; gap: 4px; }
 
+    th[data-sort]:focus-visible {
+      outline: 1px solid rgba(212,175,55,0.72);
+      outline-offset: -2px;
+      color: #fff;
+      background: rgba(212,175,55,0.09);
+    }
+
+    .quantity-stack {
+      display: inline-flex;
+      align-items: baseline;
+      justify-content: flex-end;
+      gap: 7px;
+      min-width: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .overview-row-meta .quantity-stack { flex-wrap: wrap; }
+    .stock-delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-family: var(--font-tech);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.035em;
+      white-space: nowrap;
+    }
+    .stock-delta.up { color: #78ad8a; }
+    .stock-delta.down { color: #c46c6c; }
+    .stock-delta.neutral { color: var(--muted); }
+    .production-stat .stock-delta { display: flex; justify-content: center; margin-top: 4px; }
+
+    .sat-link-badge.stale { border-color: rgba(184,134,55,0.42); }
+    .sat-link-badge.stale .sat-link-dot { background: var(--warn); box-shadow: 0 0 10px var(--warn); }
+    .sat-link-badge.stale .sat-link-text { color: var(--warn); }
+    .remote-link-pill.stale { color: #d2a04d; background: rgba(184,134,55,0.09); }
+    .supplier-card.stale::before { background: var(--warn); box-shadow: 0 0 10px rgba(184,134,55,0.7); }
+    .supplier-card.stale { border-color: rgba(184,134,55,0.24); }
+    .supplier-commodity-row.stale { border-left-color: var(--warn); opacity: 0.82; }
+    .supplier-commodity-name small.stale { color: #d2a04d; }
+    .supplier-progress-fill.stale { background: var(--warn); box-shadow: 0 0 8px rgba(184,134,55,0.34); }
+
     @media (max-width: 900px) {
       .supplier-grid { grid-template-columns: 1fr; padding: 12px; }
       .remote-panel .remote-panel-head { gap: 10px; }
@@ -661,7 +702,7 @@ h1 {
     <div class="command-header-inner">
       <div class="command-brand">
         <div class="crest-frame">
-          <img class="crest" src="https://i.imgur.com/BXcPQYS.png" alt="RHW Crest" />
+          <img class="crest" src="https://i.imgur.com/BXcPQYS.png" alt="RHW Crest" decoding="async" fetchpriority="high" />
         </div>
         <div class="brand-copy">
           <div class="eyebrow">BMM CHARTERED STRATEGIC MANUFACTURING FACILITY</div>
@@ -840,14 +881,15 @@ h1 {
       <div class="error-box" id="errorBox" aria-live="polite"></div>
       <div class="table-wrap">
         <table id="dataTable">
+          <caption class="visually-hidden">RHW logistics assets. Activate a column heading to sort the manifest.</caption>
           <thead>
             <tr>
-              <th data-sort="name">ASSET</th>
-              <th data-sort="role">ROLE</th>
-              <th data-sort="status">STATUS</th>
-              <th data-sort="quantity">QTY</th>
-              <th data-sort="sell">SELL ($)</th>
-              <th data-sort="buy">BUY ($)</th>
+              <th scope="col" tabindex="0" role="button" aria-sort="none" aria-label="Sort by asset name" data-sort="name">ASSET</th>
+              <th scope="col" tabindex="0" role="button" aria-sort="none" aria-label="Sort by asset role" data-sort="role">ROLE</th>
+              <th scope="col" tabindex="0" role="button" aria-sort="none" aria-label="Sort by asset status" data-sort="status">STATUS</th>
+              <th scope="col" tabindex="0" role="button" aria-sort="none" aria-label="Sort by quantity" data-sort="quantity">QTY</th>
+              <th scope="col" tabindex="0" role="button" aria-sort="none" aria-label="Sort by sell price" data-sort="sell">SELL ($)</th>
+              <th scope="col" tabindex="0" role="button" aria-sort="none" aria-label="Sort by buy price" data-sort="buy">BUY ($)</th>
             </tr>
           </thead>
           <tbody id="itemsBody"></tbody>
@@ -864,7 +906,7 @@ h1 {
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V3.3.2 UI REFINEMENT)
+   RHW DASHBOARD LOGIC (V3.3)
    ========================================================================== */
 
 const TICKER_DYNAMIC_SLOT_COUNT = 10;
@@ -991,69 +1033,93 @@ document.addEventListener('mousemove', e => {
   }
 });
 
-const API_URL = 'https://darkstat.dd84ai.com/api/pobs';
-const BASE_NAME = 'resolution heavy works';
-const AUTO_REFRESH_MS = 60000;
-const FETCH_TIMEOUT_MS = 18000;
+// ============================================================
+// RHW DASHBOARD CONFIGURATION · V3.3
+// Edit recipes, tracked roles, thresholds and remote facilities here.
+// ============================================================
+const DASHBOARD_VERSION = 'V3.3';
+const DASHBOARD_CONFIG = Object.freeze({
+  apiUrl: 'https://darkstat.dd84ai.com/api/pobs',
+  baseName: 'resolution heavy works',
+  autoRefreshMs: 60000,
+  fetchTimeoutMs: 18000,
+  storageKeys: Object.freeze({
+    view: 'rhw-dashboard-v3.3:view',
+    stockSnapshot: 'rhw-dashboard-v3.3:stock-snapshot'
+  }),
+  roles: Object.freeze({
+    maintenance: ['basic alloy', 'food rations', 'consumer goods'],
+    export: ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'basic alloy', 'niobium'],
+    byproduct: ['toxic waste'],
+    procurement: ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'prototype components', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore', 'scrap metal'],
+    feedstock: ['gold ore', 'niobium ore', 'scrap metal'],
+    confiscated: ['wildcat gold']
+  }),
+  remoteFacilities: Object.freeze([
+    Object.freeze({
+      key: 'lisheen',
+      name: 'Lisheen Logistic Depot',
+      system: 'Dublin',
+      matches: ['lisheen logistic depot', 'lisheen'],
+      targets: ['gold', 'gold ore'],
+      statusTarget: 'gold'
+    }),
+    Object.freeze({
+      key: 'shelton',
+      name: 'Shelton Industrial Yard',
+      system: 'Leeds',
+      matches: ['shelton industrial yard', 'shelton'],
+      targets: ['niobium', 'niobium ore'],
+      statusTarget: 'niobium'
+    })
+  ]),
+  exportOrder: ['Multi-Mode Focusing Chamber', 'Reactor Systems', 'Superstructure Systems', 'Basic Alloy', 'Gold', 'Niobium'],
+  recipes: Object.freeze([
+    Object.freeze({ product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] }),
+    Object.freeze({ product: 'Reactor Systems', output: 1, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] }),
+    Object.freeze({ product: 'Superstructure Systems', output: 1, byproducts: [], ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] }),
+    Object.freeze({ product: 'Basic Alloy', output: 750, byproducts: [['Toxic Waste', 150]], ingredients: [['Industrial Materials',75], ['MOX',100], ['Scrap Metal',750]] }),
+    Object.freeze({ product: 'Gold', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Gold Ore',425], ['MOX',170], ['Industrial Materials',85]] }),
+    Object.freeze({ product: 'Niobium', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Niobium Ore',425], ['MOX',170], ['Industrial Materials',85]] })
+  ]),
+  alerts: Object.freeze({
+    'basic alloy': { type: 'min', red: 2500, yellow: 15000 },
+    'food rations': { type: 'min', red: 2500, yellow: 15000 },
+    'consumer goods': { type: 'min', red: 2500, yellow: 15000 },
+    'gold': { type: 'min', red: 5000, yellow: 15000 },
+    'niobium': { type: 'min', red: 5000, yellow: 10000 },
+    'reactor systems': { type: 'min', red: 200, yellow: 500 },
+    'superstructure systems': { type: 'min', red: 200, yellow: 500 },
+    'multi-mode focusing chamber': { type: 'min', red: 500, yellow: 1000 },
+    'multi-mode focusing chambers': { type: 'min', red: 500, yellow: 1000 },
+    'toxic waste': { type: 'max', yellow: 15000, red: 30000, max: 50000 },
+    'wildcat gold': { type: 'max', yellow: 25000, red: 30000 }
+  }),
+  barMaxFallbacks: Object.freeze({
+    'basic alloy': 45000, 'food rations': 45000, 'consumer goods': 45000,
+    'reactor systems': 1000, 'superstructure systems': 1000, 'multi-mode focusing chamber': 2000,
+    'gold': 60000, 'niobium': 30000, 'prototype components': 25000,
+    'gold ore': 50000, 'niobium ore': 50000, 'scrap metal': 30000, 'toxic waste': 50000,
+    'wildcat gold': 30000
+  })
+});
 
-const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods'];
-const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'basic alloy', 'niobium'];
-const BYPRODUCTS = ['toxic waste'];
-const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'prototype components', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore', 'scrap metal'];
-const FEEDSTOCK = ['gold ore', 'niobium ore', 'scrap metal'];
-const CONFISCATED = ['wildcat gold'];
-
-const REMOTE_FACILITIES = [
-  {
-    key: 'lisheen',
-    name: 'Lisheen Logistic Depot',
-    system: 'Dublin',
-    matches: ['lisheen logistic depot', 'lisheen'],
-    targets: ['gold', 'gold ore'],
-    statusTarget: 'gold'
-  },
-  {
-    key: 'shelton',
-    name: 'Shelton Industrial Yard',
-    system: 'Leeds',
-    matches: ['shelton industrial yard', 'shelton'],
-    targets: ['niobium', 'niobium ore'],
-    statusTarget: 'niobium'
-  }
-];
-
-const EXPORT_ORDER = ['Multi-Mode Focusing Chamber', 'Reactor Systems', 'Superstructure Systems', 'Basic Alloy', 'Gold', 'Niobium'];
-
-const RECIPES = [
-  { product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] },
-  { product: 'Reactor Systems', output: 1, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] },
-  { product: 'Superstructure Systems', output: 1, byproducts: [], ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] },
-  { product: 'Basic Alloy', output: 750, byproducts: [['Toxic Waste', 150]], ingredients: [['Industrial Materials',75], ['MOX',100], ['Scrap Metal',750]] },
-  { product: 'Gold', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Gold Ore',425], ['MOX',170], ['Industrial Materials',85]] },
-  { product: 'Niobium', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Niobium Ore',425], ['MOX',170], ['Industrial Materials',85]] }
-];
-
-const CUSTOM_ALERTS = {
-  'basic alloy': { type: 'min', red: 2500, yellow: 15000 },
-  'food rations': { type: 'min', red: 2500, yellow: 15000 },
-  'consumer goods': { type: 'min', red: 2500, yellow: 15000 },
-  'gold': { type: 'min', red: 5000, yellow: 15000 },
-  'niobium': { type: 'min', red: 5000, yellow: 10000 },
-  'reactor systems': { type: 'min', red: 200, yellow: 500 },
-  'superstructure systems': { type: 'min', red: 200, yellow: 500 },
-  'multi-mode focusing chamber': { type: 'min', red: 500, yellow: 1000 },
-  'multi-mode focusing chambers': { type: 'min', red: 500, yellow: 1000 },
-  'toxic waste': { type: 'max', yellow: 15000, red: 30000, max: 50000 },
-  'wildcat gold': { type: 'max', yellow: 25000, red: 30000 }
-};
-
-const BAR_MAX_FALLBACKS = {
-  'basic alloy': 45000, 'food rations': 45000, 'consumer goods': 45000,
-  'reactor systems': 1000, 'superstructure systems': 1000, 'multi-mode focusing chamber': 2000,
-  'gold': 60000, 'niobium': 30000, 'prototype components': 25000,
-  'gold ore': 50000, 'niobium ore': 50000, 'military salvage': 30000, 'scrap metal': 30000, 'toxic waste': 50000,
-  'wildcat gold': 30000
-};
+const API_URL = DASHBOARD_CONFIG.apiUrl;
+const BASE_NAME = DASHBOARD_CONFIG.baseName;
+const AUTO_REFRESH_MS = DASHBOARD_CONFIG.autoRefreshMs;
+const FETCH_TIMEOUT_MS = DASHBOARD_CONFIG.fetchTimeoutMs;
+const STORAGE_KEYS = DASHBOARD_CONFIG.storageKeys;
+const MAINTENANCE = DASHBOARD_CONFIG.roles.maintenance;
+const EXPORTS = DASHBOARD_CONFIG.roles.export;
+const BYPRODUCTS = DASHBOARD_CONFIG.roles.byproduct;
+const PROCUREMENT = DASHBOARD_CONFIG.roles.procurement;
+const FEEDSTOCK = DASHBOARD_CONFIG.roles.feedstock;
+const CONFISCATED = DASHBOARD_CONFIG.roles.confiscated;
+const REMOTE_FACILITIES = DASHBOARD_CONFIG.remoteFacilities;
+const EXPORT_ORDER = DASHBOARD_CONFIG.exportOrder;
+const RECIPES = DASHBOARD_CONFIG.recipes;
+const CUSTOM_ALERTS = DASHBOARD_CONFIG.alerts;
+const BAR_MAX_FALLBACKS = DASHBOARD_CONFIG.barMaxFallbacks;
 
 const numFormatter = new Intl.NumberFormat('de-DE');
 
@@ -1080,6 +1146,10 @@ let sortAsc = true;
 let refreshTimer = null;
 let isLoading = false;
 let nextSyncAt = null;
+let dataIsStale = false;
+let lastSyncError = '';
+let stockDeltas = new Map();
+let previousStockSnapshot = loadStoredStockSnapshot();
 
 const els = {
   uplinkPanel: document.getElementById('uplinkPanel'),
@@ -1183,9 +1253,107 @@ setInterval(() => {
 }, 1000);
 
 function normalize(value) { return String(value || '').trim().toLowerCase(); }
-function number(value) { const x = Number(value); return Number.isFinite(x) ? numFormatter.format(x) : '–'; }
-function formatCurrency(value) { const x = Number(value); return Number.isFinite(x) ? `$${numFormatter.format(x)}` : '–'; }
-function itemName(item) { return item.name || item.item_name || item.nickname || String(item.id || 'Unknown Asset'); }
+
+function finiteNumber(value, fallback = null, minimum = -Infinity) {
+  if (value === null || value === undefined || value === '') return fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= minimum ? parsed : fallback;
+}
+
+function number(value) {
+  const parsed = finiteNumber(value);
+  return parsed === null ? '–' : numFormatter.format(parsed);
+}
+
+function formatCurrency(value) {
+  const parsed = finiteNumber(value, null, 0);
+  return parsed === null ? '–' : `$${numFormatter.format(parsed)}`;
+}
+
+function safeStorageGet(key, fallback = null) {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw === null ? fallback : JSON.parse(raw);
+  } catch (error) {
+    console.warn('LOCAL STORAGE READ FAILED', error);
+    return fallback;
+  }
+}
+
+function safeStorageSet(key, value) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn('LOCAL STORAGE WRITE FAILED', error);
+  }
+}
+
+function loadStoredStockSnapshot() {
+  const saved = safeStorageGet(STORAGE_KEYS.stockSnapshot, {});
+  return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+}
+
+function createStockSnapshot(sourceItems) {
+  const snapshot = {};
+  for (const item of sourceItems) {
+    const key = commodityKey(item);
+    if (!key || item?.missing) continue;
+    snapshot[key] = quantity(item);
+  }
+  return snapshot;
+}
+
+function updateStockDeltas(sourceItems) {
+  const currentSnapshot = createStockSnapshot(sourceItems);
+  const nextDeltas = new Map();
+
+  Object.entries(currentSnapshot).forEach(([key, current]) => {
+    const previous = finiteNumber(previousStockSnapshot?.[key]);
+    if (previous === null) return;
+    const delta = current - previous;
+    if (Math.abs(delta) > 0.000001) nextDeltas.set(key, delta);
+  });
+
+  stockDeltas = nextDeltas;
+  previousStockSnapshot = currentSnapshot;
+  safeStorageSet(STORAGE_KEYS.stockSnapshot, currentSnapshot);
+}
+
+function stockDelta(item) {
+  if (!item || item.missing) return 0;
+  return stockDeltas.get(commodityKey(item)) || 0;
+}
+
+function renderStockDelta(item) {
+  const delta = stockDelta(item);
+  if (!delta) return '';
+  const cls = delta > 0 ? 'up' : 'down';
+  const arrow = delta > 0 ? '▲' : '▼';
+  const sign = delta > 0 ? '+' : '−';
+  return `<span class="stock-delta ${cls}" title="Change since previous verified sync">${arrow} ${sign}${number(Math.abs(delta))}</span>`;
+}
+
+function saveViewPreferences() {
+  safeStorageSet(STORAGE_KEYS.view, {
+    search: els.search?.value || '',
+    role: els.roleFilter?.value || 'all',
+    sortCol,
+    sortAsc
+  });
+}
+
+function restoreViewPreferences() {
+  const saved = safeStorageGet(STORAGE_KEYS.view, {});
+  const validColumns = new Set(['name', 'role', 'status', 'quantity', 'sell', 'buy']);
+  const validRoles = new Set(['all', 'maintenance', 'procurement', 'export', 'byproduct', 'confiscated']);
+
+  if (els.search && typeof saved?.search === 'string') els.search.value = saved.search.slice(0, 200);
+  if (els.roleFilter && validRoles.has(saved?.role)) els.roleFilter.value = saved.role;
+  if (validColumns.has(saved?.sortCol)) sortCol = saved.sortCol;
+  if (typeof saved?.sortAsc === 'boolean') sortAsc = saved.sortAsc;
+}
+
+function itemName(item) { return item?.name || item?.item_name || item?.nickname || String(item?.id || 'Unknown Asset'); }
 const COMMODITY_ALIASES = { 'super alloys': 'super alloy', 'multi-mode focusing chambers': 'multi-mode focusing chamber' };
 
 function cleanCommodityKey(rawName) {
@@ -1198,8 +1366,8 @@ function cleanCommodityKey(rawName) {
 function commodityKey(item) { return cleanCommodityKey(itemName(item)); }
 function keyFromName(name) { return cleanCommodityKey(name); }
 function displayName(item) { const key = commodityKey(item); return CANONICAL_NAMES[key] || itemName(item); }
-function quantity(item) { return Number(item.quantity ?? item.amount ?? item.stock ?? 0); }
-function minStock(item) { return Number(item.min_stock ?? item.min ?? 0); }
+function quantity(item) { return finiteNumber(item?.quantity ?? item?.amount ?? item?.stock, 0, 0); }
+function minStock(item) { return finiteNumber(item?.min_stock ?? item?.min, 0, 0); }
 
 function needAmount(item) {
   const nm = commodityKey(item);
@@ -1212,8 +1380,7 @@ function needAmount(item) {
 
 function maxStock(item) {
   const value = item?.max_stock ?? item?.max ?? item?.maxStock ?? item?.max_quantity ?? item?.maxQuantity ?? 0;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
+  return finiteNumber(value, 0, 0);
 }
 
 function barMaxFor(item) {
@@ -1356,7 +1523,7 @@ function setFooterConnection(state, colorToken = '') {
 
 function setSupplierLinkState(state, text) {
   if (els.supplierLinkBadge) {
-    els.supplierLinkBadge.classList.remove('polling', 'online', 'offline', 'degraded');
+    els.supplierLinkBadge.classList.remove('polling', 'online', 'offline', 'degraded', 'stale');
     els.supplierLinkBadge.classList.add(state);
   }
   if (els.supplierLinkText) els.supplierLinkText.textContent = text;
@@ -1392,22 +1559,27 @@ function buildPriorityWire(recipeAnalyses) {
     });
   }
 
-  ['maintenance', 'export'].forEach(role => {
-    const tracked = operationalItems()
-      .filter(item => hasAssetRole(item, role))
-      .map(item => ({ item, state: stockState(item) }))
-      .filter(entry => entry.state !== 'ok')
-      .sort((a, b) => priorityToneRank(tickerStateTone(b.state)) - priorityToneRank(tickerStateTone(a.state)));
+  const reserveAlerts = operationalItems()
+    .map(item => ({
+      item,
+      state: stockState(item),
+      roles: assetRoles(item).filter(role => role === 'maintenance' || role === 'export')
+    }))
+    .filter(entry => entry.roles.length && entry.state !== 'ok')
+    .sort((a, b) => priorityToneRank(tickerStateTone(b.state)) - priorityToneRank(tickerStateTone(a.state)));
 
-    if (!tracked.length) return;
-    const worstTone = tickerStateTone(tracked[0].state);
-    const summary = tracked.slice(0, 3).map(entry => `${displayName(entry.item).toUpperCase()} ${statusLabel(entry.state, role)}`).join(' / ');
+  if (reserveAlerts.length) {
+    const worstTone = tickerStateTone(reserveAlerts[0].state);
+    const summary = reserveAlerts.slice(0, 3).map(entry => {
+      const roleText = entry.roles.map(roleLabel).join('+');
+      return `${displayName(entry.item).toUpperCase()} [${roleText}] ${statusLabel(entry.state, entry.roles[0])}`;
+    }).join(' / ');
     priorities.push({
-      tag: role === 'maintenance' ? 'PRIORITY / FACILITY' : 'PRIORITY / EXPORT',
+      tag: 'PRIORITY / RESERVES',
       text: summary,
       tone: worstTone
     });
-  });
+  }
 
   const wasteAlerts = operationalItems()
     .filter(item => (hasAssetRole(item, 'byproduct') || hasAssetRole(item, 'confiscated')) && stockState(item) !== 'ok')
@@ -1591,6 +1763,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS)
 }
 
 function stockState(item) {
+  if (!item || item.missing) return 'critical';
   const q = quantity(item);
   const nm = commodityKey(item);
   const custom = CUSTOM_ALERTS[nm];
@@ -1625,13 +1798,24 @@ function assetRole(item) {
 }
 
 function rebuildItemCaches() {
-  const requiredKeys = [...FEEDSTOCK, ...MAINTENANCE, ...EXPORTS, ...BYPRODUCTS, ...CONFISCATED].map(keyFromName);
+  const requiredKeys = [...FEEDSTOCK, ...MAINTENANCE, ...EXPORTS, ...BYPRODUCTS, ...CONFISCATED, ...PROCUREMENT].map(keyFromName);
+  const augmentedItems = Array.isArray(items) ? [...items] : [];
+  const existingKeys = new Set(augmentedItems.map(commodityKey));
+
   requiredKeys.forEach(reqKey => {
-    if (!items.some(i => commodityKey(i) === reqKey)) {
-      items.push({ name: CANONICAL_NAMES[reqKey] || reqKey.toUpperCase(), quantity: 0, price: 0, missing: true });
-    }
+    if (existingKeys.has(reqKey)) return;
+    augmentedItems.push({
+      name: CANONICAL_NAMES[reqKey] || reqKey.toUpperCase(),
+      quantity: 0,
+      missing: true,
+      synthetic: true,
+      price_to_sell_to_base: null,
+      price_to_buy_from_base: null
+    });
+    existingKeys.add(reqKey);
   });
 
+  items = augmentedItems;
   itemsByKey = new Map();
   operationalItemsCache = [];
   const seenOperational = new Set();
@@ -1676,25 +1860,47 @@ function rolePillsFor(item) {
 }
 
 function statusPill(state, role) { return `<span class="pill ${state}">${statusLabel(state, role)}</span>`; }
-function priceSell(item) { return item.price_to_sell_to_base ?? item.sell_price ?? item.price_sell ?? item.price ?? 0; }
-function priceBuy(item) { return item.price_to_buy_from_base ?? item.buy_price ?? item.price_buy ?? item.price ?? 0; }
+function firstValidPrice(item, keys) {
+  if (!item || item.missing) return null;
+  for (const key of keys) {
+    if (item[key] === undefined || item[key] === null || item[key] === '') continue;
+    const value = finiteNumber(item[key], null, 0);
+    if (value !== null) return value;
+  }
+  return null;
+}
+function priceSell(item) { return firstValidPrice(item, ['price_to_sell_to_base', 'sell_price', 'price_sell', 'price']); }
+function priceBuy(item) { return firstValidPrice(item, ['price_to_buy_from_base', 'buy_price', 'price_buy', 'price']); }
 function findCommodity(name) { return itemsByKey.get(keyFromName(name)) || null; }
 function stockFor(name) { const item = findCommodity(name); return item ? quantity(item) : 0; }
 function displayRecipeName(name) { return displayName({ name }); }
 
-function handleSort(e) {
-  const th = e.target.closest('th');
-  if (!th || !th.dataset.sort) return;
-  const col = th.dataset.sort;
-  if (sortCol === col) sortAsc = !sortAsc;
-  else { sortCol = col; sortAsc = true; }
+function sortManifestBy(column) {
+  if (!column) return;
+  if (sortCol === column) sortAsc = !sortAsc;
+  else { sortCol = column; sortAsc = true; }
+  saveViewPreferences();
   renderManifest();
+}
+
+function handleSort(event) {
+  const th = event.target.closest('th[data-sort]');
+  if (th) sortManifestBy(th.dataset.sort);
+}
+
+function handleSortKeydown(event) {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  const th = event.currentTarget;
+  sortManifestBy(th?.dataset?.sort);
 }
 
 function updateSortArrows() {
   els.tableHeaders.forEach(th => {
-    if (th.dataset.sort === sortCol) th.setAttribute('data-dir', sortAsc ? 'asc' : 'desc');
+    const active = th.dataset.sort === sortCol;
+    if (active) th.setAttribute('data-dir', sortAsc ? 'asc' : 'desc');
     else th.removeAttribute('data-dir');
+    th.setAttribute('aria-sort', active ? (sortAsc ? 'ascending' : 'descending') : 'none');
   });
 }
 
@@ -1776,7 +1982,7 @@ function renderProductionModules() {
                 <span class="module-state ${analysis.cardState}">${statusLabel(analysis.cardState, 'production')}</span>
               </div>
               <div class="production-stats">
-                <div class="production-stat production-stock-primary"><small>IN STOCK</small><strong>${number(analysis.productStock)}</strong></div>
+                <div class="production-stat production-stock-primary"><small>IN STOCK</small><strong>${number(analysis.productStock)}</strong>${renderStockDelta(analysis.productItem)}</div>
                 <div class="production-stat"><small>MAX CYCLES</small><strong>${number(analysis.possibleCycles)}</strong></div>
                 <div class="production-stat"><small>EST. YIELD</small><strong>${number(analysis.possibleOutput)}</strong></div>
               </div>
@@ -1790,14 +1996,13 @@ function renderProductionModules() {
   }).join('');
 }
 
-function supplierItemState(item, baseOnline) {
-  if (!baseOnline || !item) return 'critical';
+function supplierItemState(item) {
+  if (!item) return 'critical';
   const q = quantity(item);
   return q > 5000 ? 'ok' : (q > 0 ? 'low' : 'critical');
 }
 
-function supplierStateText(item, baseOnline) {
-  if (!baseOnline) return 'LINK OFFLINE';
+function supplierStateText(item) {
   if (!item) return 'UNLISTED';
   const q = quantity(item);
   return q > 5000 ? 'SUPPLY STABLE' : (q > 0 ? 'SUPPLY LOW' : 'DEPLETED');
@@ -1807,41 +2012,50 @@ function renderSupplier() {
   const supplierGrid = document.getElementById('supplierGrid');
   if (!supplierGrid) return;
 
-  const onlineCount = REMOTE_FACILITIES.filter(facility => {
+  const readableCount = REMOTE_FACILITIES.filter(facility => {
     const base = remoteBases.get(facility.key);
     return base && Array.isArray(base.shop_items);
   }).length;
+  const liveCount = dataIsStale ? 0 : readableCount;
 
-  if (onlineCount === REMOTE_FACILITIES.length) {
-    setSupplierLinkState('online', `${onlineCount}/${REMOTE_FACILITIES.length} SAT-LINKS ACTIVE`);
-  } else if (onlineCount > 0) {
-    setSupplierLinkState('degraded', `${onlineCount}/${REMOTE_FACILITIES.length} SAT-LINKS ACTIVE`);
+  if (dataIsStale && readableCount > 0) {
+    const staleTime = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'UNKNOWN';
+    setSupplierLinkState('stale', `CACHE ONLY · LAST SYNC ${staleTime}`);
+  } else if (liveCount === REMOTE_FACILITIES.length) {
+    setSupplierLinkState('online', `${liveCount}/${REMOTE_FACILITIES.length} SAT-LINKS ACTIVE`);
+  } else if (liveCount > 0) {
+    setSupplierLinkState('degraded', `${liveCount}/${REMOTE_FACILITIES.length} SAT-LINKS ACTIVE`);
   } else {
     setSupplierLinkState('offline', `0/${REMOTE_FACILITIES.length} SAT-LINKS ACTIVE`);
   }
 
   supplierGrid.innerHTML = REMOTE_FACILITIES.map(facility => {
     const base = remoteBases.get(facility.key);
-    const baseOnline = Boolean(base && Array.isArray(base.shop_items));
+    const baseReadable = Boolean(base && Array.isArray(base.shop_items));
+    const baseLive = baseReadable && !dataIsStale;
+    const baseStale = baseReadable && dataIsStale;
+
     const rowData = facility.targets.map(targetName => {
-      const item = baseOnline ? base.shop_items.find(entry => commodityKey(entry) === targetName) : null;
+      const item = baseReadable ? base.shop_items.find(entry => commodityKey(entry) === targetName) : null;
       const q = item ? quantity(item) : 0;
-      const price = item ? priceBuy(item) : 0;
+      const price = item ? priceBuy(item) : null;
       const isStatusTarget = keyFromName(targetName) === keyFromName(facility.statusTarget);
-      const signalState = supplierItemState(item, baseOnline);
-      const state = isStatusTarget ? signalState : 'info';
-      const stateText = isStatusTarget
-        ? supplierStateText(item, baseOnline)
-        : (baseOnline ? 'REFERENCE STOCK' : 'DATA UNAVAILABLE');
+      const signalState = supplierItemState(item);
+      const state = baseStale ? 'stale' : (isStatusTarget ? signalState : 'info');
+      const stateText = baseStale
+        ? (isStatusTarget ? 'CACHED STATUS' : 'CACHED REFERENCE')
+        : (isStatusTarget ? supplierStateText(item) : (baseLive ? 'REFERENCE STOCK' : 'DATA UNAVAILABLE'));
       const title = CANONICAL_NAMES[targetName] || displayRecipeName(targetName);
       const fallbackMax = BAR_MAX_FALLBACKS[targetName] || 50000;
       const supplierMax = item ? (maxStock(item) || fallbackMax) : fallbackMax;
-      const fillPct = baseOnline && supplierMax > 0 ? Math.min(100, Math.max(0, (q / supplierMax) * 100)) : 0;
+      const fillPct = baseReadable && supplierMax > 0 ? Math.min(100, Math.max(0, (q / supplierMax) * 100)) : 0;
       return { q, price, state, signalState, stateText, title, supplierMax, fillPct, isStatusTarget };
     });
 
     const primarySignal = rowData.find(row => row.isStatusTarget);
-    const facilityState = baseOnline && primarySignal ? primarySignal.signalState : 'critical';
+    const facilityState = baseStale ? 'stale' : (baseLive && primarySignal ? primarySignal.signalState : 'critical');
+    const linkClass = baseStale ? 'stale' : (baseLive ? 'online' : 'offline');
+    const linkText = baseStale ? 'STALE DATA' : (baseLive ? 'LINK ACTIVE' : 'LINK LOST');
 
     const rows = rowData.map(row => `
       <div class="supplier-commodity-row ${row.state}">
@@ -1851,11 +2065,11 @@ function renderSupplier() {
         </div>
         <div class="supplier-commodity-metric stock">
           <small>Stock</small>
-          <strong class="scramble-supplier" data-val="${baseOnline ? number(row.q) : 'N/A'}"></strong>
+          <strong class="scramble-supplier" data-val="${baseReadable ? number(row.q) : 'N/A'}"></strong>
         </div>
         <div class="supplier-commodity-metric price">
           <small>Unit Buy</small>
-          <strong class="scramble-supplier" data-val="${baseOnline && row.price > 0 ? formatCurrency(row.price) : 'N/A'}"></strong>
+          <strong class="scramble-supplier" data-val="${baseReadable ? formatCurrency(row.price) : 'N/A'}"></strong>
         </div>
         <div class="supplier-progress-wrap" data-tooltip="${row.fillPct.toFixed(0)}% OF MAX ${number(row.supplierMax)}">
           <div class="supplier-progress-fill ${row.state}" style="width:${row.fillPct}%;"></div>
@@ -1874,7 +2088,7 @@ function renderSupplier() {
             <div class="supplier-title">${escapeHTML(facility.name)}</div>
             <div class="remote-facility-subline">PROCUREMENT RADAR // ${facility.targets.length} COMMODITY CHANNELS</div>
           </div>
-          <span class="remote-link-pill ${baseOnline ? 'online' : 'offline'}">${baseOnline ? 'LINK ACTIVE' : 'LINK LOST'}</span>
+          <span class="remote-link-pill ${linkClass}">${linkText}</span>
         </div>
         <div class="supplier-commodity-list">${rows}</div>
       </div>`;
@@ -1896,12 +2110,12 @@ function feedstockAnalysis(item) {
   return { key, required, quantity: q, cycles, state };
 }
 
-function renderOverviewRow({ state, role, name, detail = '', quantityValue = 0, progress = '', extraClass = '' }) {
+function renderOverviewRow({ state, role, name, item = null, detail = '', quantityValue = 0, progress = '', extraClass = '' }) {
   const safeDetail = detail ? `<small>${escapeHTML(detail)}</small>` : '';
   return `<li class="alert-${state}${extraClass ? ` ${extraClass}` : ''}">
             <span><strong>${escapeHTML(name)}</strong>${safeDetail}${progress}</span>
             <div class="overview-row-meta">
-              <strong class="overview-row-qty">${number(quantityValue)}</strong>
+              <span class="quantity-stack"><strong class="overview-row-qty">${number(quantityValue)}</strong>${renderStockDelta(item)}</span>
               ${statusPill(state, role)}
             </div>
           </li>`;
@@ -1935,7 +2149,7 @@ function renderList(target, list, emptyText, roleOverride = null) {
     const state = stockState(item);
     const role = roleOverride || assetRole(item);
     return renderOverviewRow({
-      state, role, name: displayName(item), detail: overviewDetail(item, state, role),
+      state, role, name: displayName(item), item, detail: overviewDetail(item, state, role),
       quantityValue: quantity(item), progress: renderProgress(item)
     });
   }).join('');
@@ -1983,7 +2197,7 @@ function renderOverview() {
       }
       const analysis = feedstockAnalysis(item);
       return renderOverviewRow({
-        state: analysis.state, role: 'procurement', name: displayName(item),
+        state: analysis.state, role: 'procurement', name: displayName(item), item,
         detail: `${number(analysis.cycles)} CYCLES AVAILABLE`, quantityValue: analysis.quantity,
         progress: renderFeedstockProgress(item, analysis.state, fallbackKey)
       });
@@ -2026,8 +2240,8 @@ function renderManifest() {
       valA = weight[stockState(a)]; valB = weight[stockState(b)];
     }
     else if (sortCol === 'quantity') { valA = quantity(a); valB = quantity(b); }
-    else if (sortCol === 'sell') { valA = priceSell(a); valB = priceSell(b); }
-    else if (sortCol === 'buy') { valA = priceBuy(a); valB = priceBuy(b); }
+    else if (sortCol === 'sell') { valA = priceSell(a) ?? -1; valB = priceSell(b) ?? -1; }
+    else if (sortCol === 'buy') { valA = priceBuy(a) ?? -1; valB = priceBuy(b) ?? -1; }
 
     if (valA < valB) return sortAsc ? -1 : 1;
     if (valA > valB) return sortAsc ? 1 : -1;
@@ -2040,7 +2254,7 @@ function renderManifest() {
     const role = assetRole(item);
     const state = stockState(item);
     
-    return `<tr tabindex="0"><td class="asset-cell"><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePillsFor(item)}</td><td>${statusPill(state, role)}</td><td class="numeric-cell">${number(quantity(item))}</td><td class="numeric-cell price-cell sell-price">${formatCurrency(priceSell(item))}</td><td class="numeric-cell price-cell buy-price">${formatCurrency(priceBuy(item))}</td></tr>`;
+    return `<tr><td class="asset-cell"><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePillsFor(item)}</td><td>${statusPill(state, role)}</td><td class="numeric-cell"><span class="quantity-stack"><span>${number(quantity(item))}</span>${renderStockDelta(item)}</span></td><td class="numeric-cell price-cell sell-price">${formatCurrency(priceSell(item))}</td><td class="numeric-cell price-cell buy-price">${formatCurrency(priceBuy(item))}</td></tr>`;
   }).join('');
 }
 
@@ -2100,17 +2314,22 @@ async function loadData() {
     const data = await response.json();
     if (!Array.isArray(data)) throw new Error('INVALID TELEMETRY RESPONSE.');
 
-    rhwBase = data.find(base => normalize(base?.name) === BASE_NAME || normalize(base?.nickname) === BASE_NAME);
-    remoteBases = new Map(
+    const nextRhwBase = data.find(base => normalize(base?.name) === BASE_NAME || normalize(base?.nickname) === BASE_NAME);
+    const nextRemoteBases = new Map(
       REMOTE_FACILITIES.map(facility => [facility.key, findRemoteFacility(data, facility)])
     );
 
-    if (!rhwBase || typeof rhwBase !== 'object') throw new Error('RHW NOT FOUND IN DATASTREAM.');
-    if (!Array.isArray(rhwBase.shop_items)) throw new Error('INVALID RHW SHOP DATA.');
+    if (!nextRhwBase || typeof nextRhwBase !== 'object') throw new Error('RHW NOT FOUND IN DATASTREAM.');
+    if (!Array.isArray(nextRhwBase.shop_items)) throw new Error('INVALID RHW SHOP DATA.');
 
-    items = rhwBase.shop_items;
+    rhwBase = nextRhwBase;
+    remoteBases = nextRemoteBases;
+    items = rhwBase.shop_items.map(item => ({ ...item }));
+    updateStockDeltas(items);
     rebuildItemCaches();
     lastLoaded = new Date();
+    dataIsStale = false;
+    lastSyncError = '';
 
     setTelemetryState('LIVE', 'good');
     setFooterConnection('SECURE', 'good');
@@ -2128,15 +2347,16 @@ async function loadData() {
     updateNetworkFeed('live');
   } catch (error) {
     console.error(error);
-    setTelemetryState('ERROR', 'danger');
-    setFooterConnection('FAILED', 'danger');
-    setSupplierLinkState('offline', 'SAT-LINK LOST');
+    dataIsStale = Boolean(lastLoaded);
+    lastSyncError = String(error?.message || 'UNKNOWN TELEMETRY ERROR');
+    setTelemetryState(dataIsStale ? 'STALE' : 'ERROR', dataIsStale ? 'warn' : 'danger');
+    setFooterConnection(dataIsStale ? 'CACHE' : 'FAILED', dataIsStale ? 'warn' : 'danger');
     renderSupplier();
-    updateNetworkFeed('error', error.message);
+    updateNetworkFeed('error', lastSyncError);
 
     if (els.liveStatus) {
-      els.liveStatus.style.color = 'var(--danger)';
-      scrambleText(els.liveStatus, 'UPLINK FAILED', 400);
+      els.liveStatus.style.color = dataIsStale ? 'var(--warn)' : 'var(--danger)';
+      scrambleText(els.liveStatus, dataIsStale ? 'STALE DATA // CACHE ACTIVE' : 'UPLINK FAILED', 400);
     }
     if (els.uplinkPanel) {
       els.uplinkPanel.classList.remove('online');
@@ -2164,17 +2384,23 @@ async function loadData() {
   }
 }
 
-els.search?.addEventListener('input', debounce(renderManifest, 250));
-els.roleFilter?.addEventListener('change', () => { updateRoleSegments(); renderManifest(); });
+els.search?.addEventListener('input', debounce(() => { saveViewPreferences(); renderManifest(); }, 250));
+els.roleFilter?.addEventListener('change', () => { saveViewPreferences(); updateRoleSegments(); renderManifest(); });
 els.roleSegmentButtons.forEach(button => button.addEventListener('click', () => {
   if (!els.roleFilter) return;
   els.roleFilter.value = button.dataset.role || 'all';
+  saveViewPreferences();
   updateRoleSegments();
   renderManifest();
 }));
 els.refreshBtn?.addEventListener('click', loadData);
-els.tableHeaders.forEach(th => th.addEventListener('click', handleSort));
+els.tableHeaders.forEach(th => {
+  th.addEventListener('click', handleSort);
+  th.addEventListener('keydown', handleSortKeydown);
+});
+restoreViewPreferences();
 updateRoleSegments();
+updateSortArrows();
 
 loadData();
 </script>
