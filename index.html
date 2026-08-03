@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Resolution Heavy Works live logistics and production command dashboard." />
-  <title>RHW Command Dashboard · V3.3.2 UI Refinement</title>
+  <title>RHW Command Dashboard · V3.3 Toxic Waste Capacity Fix</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -494,6 +494,162 @@ h1 {
       .recipe-column-head span:nth-child(3) { font-size: 0; }
       .recipe-column-head span:nth-child(3):after { content: 'ON HAND'; font-size: 7px; }
     }
+
+
+    /* =========================================
+       V3.6 COMPACT DUAL-FACILITY UPLINK
+       ========================================= */
+    .remote-panel .remote-panel-head { padding: 13px 18px; }
+    .remote-panel .remote-panel-title { font-size: 22px; }
+    .remote-panel .remote-route { gap: 5px 14px; margin-top: 3px; }
+
+    .supplier-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+      justify-content: initial;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .supplier-card.remote-facility-card {
+      width: auto;
+      max-width: none;
+      min-width: 0;
+      padding: 0;
+      flex: none;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(8,12,18,0.92), rgba(5,7,10,0.97));
+    }
+
+    .remote-facility-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid rgba(125,167,234,0.14);
+      background: linear-gradient(90deg, rgba(125,167,234,0.07), transparent 72%);
+    }
+
+    .remote-facility-head .remote-card-meta { margin-bottom: 5px; }
+    .remote-facility-head .supplier-title { font-size: 22px; line-height: 1; }
+    .remote-facility-subline {
+      margin-top: 5px;
+      color: rgba(185,205,240,0.55);
+      font-family: var(--font-tech);
+      font-size: 8px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .remote-link-pill {
+      flex: 0 0 auto;
+      padding: 3px 7px;
+      border: 1px solid currentColor;
+      font-family: var(--font-tech);
+      font-size: 8px;
+      letter-spacing: 0.09em;
+      white-space: nowrap;
+    }
+    .remote-link-pill.online { color: #78ad8a; background: rgba(79,137,101,0.08); }
+    .remote-link-pill.offline { color: #c46c6c; background: rgba(155,66,66,0.08); }
+
+    .supplier-commodity-list { display: grid; }
+    .supplier-commodity-row {
+      display: grid;
+      grid-template-columns: minmax(150px, 1fr) 92px 82px;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+      padding: 10px 14px 9px;
+      border-bottom: 1px solid rgba(255,255,255,0.045);
+      border-left: 2px solid var(--line);
+      background: rgba(0,0,0,0.22);
+    }
+    .supplier-commodity-row:last-child { border-bottom: 0; }
+    .supplier-commodity-row.ok { border-left-color: var(--good); }
+    .supplier-commodity-row.low { border-left-color: var(--warn); }
+    .supplier-commodity-row.critical { border-left-color: var(--danger); }
+    .supplier-commodity-row.info { border-left-color: var(--remote); }
+    .supplier-commodity-row:hover { background: rgba(125,167,234,0.045); }
+
+    .supplier-commodity-name { min-width: 0; }
+    .supplier-commodity-name strong {
+      display: block;
+      overflow: hidden;
+      color: #e4ecfb;
+      font-family: var(--font-title);
+      font-size: 19px;
+      line-height: 1;
+      letter-spacing: 0.035em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .supplier-commodity-name small {
+      display: block;
+      margin-top: 4px;
+      font-family: var(--font-tech);
+      font-size: 8px;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .supplier-commodity-name small.ok { color: #78ad8a; }
+    .supplier-commodity-name small.low { color: #c99a53; }
+    .supplier-commodity-name small.critical { color: #c46c6c; }
+    .supplier-commodity-name small.info { color: rgba(185,205,240,0.72); }
+
+    .supplier-commodity-metric { min-width: 0; font-family: var(--font-tech); text-align: right; }
+    .supplier-commodity-metric small {
+      display: block;
+      margin-bottom: 3px;
+      color: rgba(125,167,234,0.58);
+      font-size: 7px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .supplier-commodity-metric strong {
+      display: block;
+      overflow: hidden;
+      color: var(--text);
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .supplier-commodity-metric.price strong { color: var(--remote); }
+
+    .supplier-commodity-row .supplier-progress-wrap {
+      grid-column: 1 / -1;
+      height: 3px;
+      margin-top: 0;
+    }
+    .supplier-progress-fill.info {
+      background: var(--remote);
+      box-shadow: 0 0 8px rgba(125,167,234,0.34);
+    }
+
+    .sat-link-badge.degraded { border-color: rgba(184,134,55,0.35); }
+    .sat-link-badge.degraded .sat-link-dot { background: var(--warn); box-shadow: 0 0 10px var(--warn); }
+    .sat-link-badge.degraded .sat-link-text { color: var(--warn); }
+
+    .role-pill-stack { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+
+    @media (max-width: 900px) {
+      .supplier-grid { grid-template-columns: 1fr; padding: 12px; }
+      .remote-panel .remote-panel-head { gap: 10px; }
+    }
+
+    @media (max-width: 520px) {
+      .supplier-commodity-row {
+        grid-template-columns: minmax(0, 1fr) 78px 72px;
+        gap: 7px;
+        padding-inline: 10px;
+      }
+      .supplier-commodity-name strong { font-size: 17px; }
+      .supplier-commodity-metric strong { font-size: 12px; }
+    }
+
   </style>
 </head>
 <body>
@@ -623,11 +779,11 @@ h1 {
     <section class="panel remote-panel anim-boot delay-4">
       <div class="panel-head remote-panel-head">
         <div class="panel-heading-copy">
-          <div class="section-kicker"><span>04</span> REMOTE FACILITY</div>
+          <div class="section-kicker"><span>04</span> REMOTE FACILITIES</div>
           <div class="panel-title remote-panel-title">EXTERNAL LOGISTICS UPLINK</div>
           <div class="remote-route">
-            <span><small>TARGET</small><strong>LISHEEN LOGISTIC DEPOT</strong></span>
-            <span><small>SYSTEM</small><strong>DUBLIN</strong></span>
+            <span><small>TARGETS</small><strong>2 LOGISTICS FACILITIES</strong></span>
+            <span><small>SYSTEMS</small><strong>DUBLIN // LEEDS</strong></span>
             <span><small>MODE</small><strong>PROCUREMENT RADAR</strong></span>
           </div>
         </div>
@@ -841,19 +997,38 @@ const AUTO_REFRESH_MS = 60000;
 const FETCH_TIMEOUT_MS = 18000;
 
 const MAINTENANCE = ['basic alloy', 'food rations', 'consumer goods'];
-const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'prototype components', 'niobium'];
-const BYPRODUCTS = ['toxic waste', 'scrap metal'];
-const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'military salvage', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore'];
-const FEEDSTOCK = ['gold ore', 'niobium ore', 'military salvage'];
+const EXPORTS = ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'basic alloy', 'niobium'];
+const BYPRODUCTS = ['toxic waste'];
+const PROCUREMENT = ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'prototype components', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore', 'scrap metal'];
+const FEEDSTOCK = ['gold ore', 'niobium ore', 'scrap metal'];
 const CONFISCATED = ['wildcat gold'];
 
-const EXPORT_ORDER = ['Multi-Mode Focusing Chamber', 'Reactor Systems', 'Superstructure Systems', 'Prototype Components', 'Gold', 'Niobium'];
+const REMOTE_FACILITIES = [
+  {
+    key: 'lisheen',
+    name: 'Lisheen Logistic Depot',
+    system: 'Dublin',
+    matches: ['lisheen logistic depot', 'lisheen'],
+    targets: ['gold', 'gold ore'],
+    statusTarget: 'gold'
+  },
+  {
+    key: 'shelton',
+    name: 'Shelton Industrial Yard',
+    system: 'Leeds',
+    matches: ['shelton industrial yard', 'shelton'],
+    targets: ['niobium', 'niobium ore'],
+    statusTarget: 'niobium'
+  }
+];
+
+const EXPORT_ORDER = ['Multi-Mode Focusing Chamber', 'Reactor Systems', 'Superstructure Systems', 'Basic Alloy', 'Gold', 'Niobium'];
 
 const RECIPES = [
   { product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] },
   { product: 'Reactor Systems', output: 1, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] },
   { product: 'Superstructure Systems', output: 1, byproducts: [], ingredients: [['Gold',25], ['Hull Panels',25], ['Ablative Armor Plating',25], ['Super Alloy',25]] },
-  { product: 'Prototype Components', output: 25, byproducts: [['Scrap Metal', 450]], ingredients: [['Military Salvage',255]] },
+  { product: 'Basic Alloy', output: 750, byproducts: [['Toxic Waste', 150]], ingredients: [['Industrial Materials',75], ['MOX',100], ['Scrap Metal',750]] },
   { product: 'Gold', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Gold Ore',425], ['MOX',170], ['Industrial Materials',85]] },
   { product: 'Niobium', output: 800, byproducts: [['Toxic Waste', 150]], ingredients: [['Niobium Ore',425], ['MOX',170], ['Industrial Materials',85]] }
 ];
@@ -866,19 +1041,17 @@ const CUSTOM_ALERTS = {
   'niobium': { type: 'min', red: 5000, yellow: 10000 },
   'reactor systems': { type: 'min', red: 200, yellow: 500 },
   'superstructure systems': { type: 'min', red: 200, yellow: 500 },
-  'prototype components': { type: 'min', red: 2500, yellow: 5000 },
   'multi-mode focusing chamber': { type: 'min', red: 500, yellow: 1000 },
   'multi-mode focusing chambers': { type: 'min', red: 500, yellow: 1000 },
-  'scrap metal': { type: 'max', yellow: 10000, red: 15000 },
-  'toxic waste': { type: 'max', yellow: 10000, red: 15000 },
+  'toxic waste': { type: 'max', yellow: 15000, red: 30000, max: 50000 },
   'wildcat gold': { type: 'max', yellow: 25000, red: 30000 }
 };
 
 const BAR_MAX_FALLBACKS = {
   'basic alloy': 45000, 'food rations': 45000, 'consumer goods': 45000,
   'reactor systems': 1000, 'superstructure systems': 1000, 'multi-mode focusing chamber': 2000,
-  'prototype components': 25000, 'gold': 60000, 'niobium': 30000,
-  'gold ore': 50000, 'niobium ore': 50000, 'military salvage': 30000,
+  'gold': 60000, 'niobium': 30000, 'prototype components': 25000,
+  'gold ore': 50000, 'niobium ore': 50000, 'military salvage': 30000, 'scrap metal': 30000, 'toxic waste': 50000,
   'wildcat gold': 30000
 };
 
@@ -899,7 +1072,7 @@ const CANONICAL_NAMES = {
 let items = [];
 let lastLoaded = null;
 let rhwBase = null;
-let lisheenBase = null;
+let remoteBases = new Map(REMOTE_FACILITIES.map(facility => [facility.key, null]));
 let itemsByKey = new Map();
 let operationalItemsCache = [];
 let sortCol = 'name';
@@ -1046,7 +1219,7 @@ function maxStock(item) {
 function barMaxFor(item) {
   const nm = commodityKey(item);
   const role = assetRole(item);
-  if (role === 'byproduct') return CUSTOM_ALERTS[nm]?.red || 15000;
+  if (role === 'byproduct') return CUSTOM_ALERTS[nm]?.max || BAR_MAX_FALLBACKS[nm] || CUSTOM_ALERTS[nm]?.red || 15000;
   return maxStock(item) || BAR_MAX_FALLBACKS[nm] || 1;
 }
 
@@ -1183,7 +1356,7 @@ function setFooterConnection(state, colorToken = '') {
 
 function setSupplierLinkState(state, text) {
   if (els.supplierLinkBadge) {
-    els.supplierLinkBadge.classList.remove('polling', 'online', 'offline');
+    els.supplierLinkBadge.classList.remove('polling', 'online', 'offline', 'degraded');
     els.supplierLinkBadge.classList.add(state);
   }
   if (els.supplierLinkText) els.supplierLinkText.textContent = text;
@@ -1221,7 +1394,7 @@ function buildPriorityWire(recipeAnalyses) {
 
   ['maintenance', 'export'].forEach(role => {
     const tracked = operationalItems()
-      .filter(item => assetRole(item) === role)
+      .filter(item => hasAssetRole(item, role))
       .map(item => ({ item, state: stockState(item) }))
       .filter(entry => entry.state !== 'ok')
       .sort((a, b) => priorityToneRank(tickerStateTone(b.state)) - priorityToneRank(tickerStateTone(a.state)));
@@ -1237,7 +1410,7 @@ function buildPriorityWire(recipeAnalyses) {
   });
 
   const wasteAlerts = operationalItems()
-    .filter(item => (assetRole(item) === 'byproduct' || assetRole(item) === 'confiscated') && stockState(item) !== 'ok')
+    .filter(item => (hasAssetRole(item, 'byproduct') || hasAssetRole(item, 'confiscated')) && stockState(item) !== 'ok')
     .sort((a, b) => priorityToneRank(tickerStateTone(stockState(b))) - priorityToneRank(tickerStateTone(stockState(a))));
 
   if (wasteAlerts.length) {
@@ -1266,13 +1439,16 @@ function buildPriorityWire(recipeAnalyses) {
     });
   }
 
-  if (!lisheenBase || !Array.isArray(lisheenBase.shop_items)) {
-    priorities.push({
-      tag: 'PRIORITY / DUBLIN LINK',
-      text: 'LISHEEN MARKET DATABANK UNREACHABLE // REMOTE QUOTATIONS UNAVAILABLE',
-      tone: 'warn'
-    });
-  }
+  REMOTE_FACILITIES.forEach(facility => {
+    const base = remoteBases.get(facility.key);
+    if (!base || !Array.isArray(base.shop_items)) {
+      priorities.push({
+        tag: `PRIORITY / ${facility.system.toUpperCase()} LINK`,
+        text: `${facility.name.toUpperCase()} DATABANK UNREACHABLE // REMOTE QUOTATIONS UNAVAILABLE`,
+        tone: 'warn'
+      });
+    }
+  });
 
   return priorities
     .sort((a, b) => priorityToneRank(b.tone) - priorityToneRank(a.tone))
@@ -1289,35 +1465,33 @@ function buildFinanceDeskMessage() {
   };
 }
 
-function buildLisheenMarketMessage() {
-  if (!lisheenBase || !Array.isArray(lisheenBase.shop_items)) {
-    return { tag: 'DUBLIN MARKET', text: 'LISHEEN QUOTATION FEED UNAVAILABLE // GOLD MARKET DATA PENDING', tone: 'danger' };
+function buildRemoteMarketMessage(facilityKey) {
+  const facility = REMOTE_FACILITIES.find(entry => entry.key === facilityKey);
+  if (!facility) return { tag: 'REMOTE MARKET', text: 'UNKNOWN FACILITY CONFIGURATION', tone: 'danger' };
+
+  const base = remoteBases.get(facility.key);
+  if (!base || !Array.isArray(base.shop_items)) {
+    return {
+      tag: `${facility.system.toUpperCase()} MARKET`,
+      text: `${facility.name.toUpperCase()} QUOTATION FEED UNAVAILABLE`,
+      tone: 'danger'
+    };
   }
 
-  const goldItem = lisheenBase.shop_items.find(entry => commodityKey(entry) === 'gold');
-  const oreItem = lisheenBase.shop_items.find(entry => commodityKey(entry) === 'gold ore');
-  const goldQty = goldItem ? quantity(goldItem) : 0;
-  const goldPrice = goldItem ? priceBuy(goldItem) : 0;
+  const parts = facility.targets.map(targetName => {
+    const item = base.shop_items.find(entry => commodityKey(entry) === targetName);
+    if (!item) return `${displayRecipeName(targetName).toUpperCase()} UNLISTED`;
+    const price = priceBuy(item);
+    return `${displayName(item).toUpperCase()} ${number(quantity(item))}${price > 0 ? ` @ ${formatCurrency(price)}` : ''}`;
+  });
 
-  const goldRecipe = RECIPES.find(recipe => keyFromName(recipe.product) === 'gold');
-  const oreIngredient = goldRecipe?.ingredients.find(([name]) => keyFromName(name) === 'gold ore');
-  const orePerCycle = Number(oreIngredient?.[1]) || 425;
-  const goldPerCycle = Number(goldRecipe?.output) || 800;
-  const oreQty = oreItem ? quantity(oreItem) : 0;
-  const refiningRuns = orePerCycle > 0 ? Math.floor(oreQty / orePerCycle) : 0;
-  const potentialOutput = refiningRuns * goldPerCycle;
-
-  const goldPart = goldItem
-    ? `LISHEEN OFFERS ${number(goldQty)} REFINED GOLD${goldPrice > 0 ? ` AT ${formatCurrency(goldPrice)}` : ''}`
-    : 'REFINED GOLD CURRENTLY UNLISTED';
-  const orePart = oreItem
-    ? `ORE RESERVE SUPPORTS ${number(refiningRuns)} REFINING RUNS / ${number(potentialOutput)} UNITS POTENTIAL OUTPUT`
-    : 'ORE CAPACITY DATA UNAVAILABLE';
+  const primaryItem = base.shop_items.find(entry => commodityKey(entry) === keyFromName(facility.statusTarget));
+  const primaryAvailable = Boolean(primaryItem && quantity(primaryItem) > 0);
 
   return {
-    tag: 'DUBLIN MARKET',
-    text: `${goldPart} // ${orePart}`,
-    tone: goldItem && goldQty > 0 ? 'remote' : 'warn'
+    tag: `${facility.system.toUpperCase()} MARKET`,
+    text: `${facility.name.toUpperCase()} // ${parts.join(' // ')}`,
+    tone: primaryAvailable ? 'remote' : 'warn'
   };
 }
 
@@ -1362,7 +1536,7 @@ function buildIndustrialNewswireMessages() {
 
   [
     buildFinanceDeskMessage(),
-    buildLisheenMarketMessage(),
+    ...REMOTE_FACILITIES.map(facility => buildRemoteMarketMessage(facility.key)),
     buildProductionDeskMessage(recipeAnalyses)
   ].forEach(message => {
     messages.push(message);
@@ -1431,36 +1605,42 @@ function stockState(item) {
   return 'ok';
 }
 
-function assetRole(item) {
+function assetRoles(item) {
   const nm = commodityKey(item);
-  if (EXPORTS.includes(nm)) return 'export';
-  if (BYPRODUCTS.includes(nm)) return 'byproduct';
-  if (MAINTENANCE.includes(nm)) return 'maintenance';
-  if (PROCUREMENT.includes(nm)) return 'procurement';
-  if (CONFISCATED.includes(nm)) return 'confiscated';
-  return 'other';
+  const roles = [];
+  if (MAINTENANCE.includes(nm)) roles.push('maintenance');
+  if (EXPORTS.includes(nm)) roles.push('export');
+  if (BYPRODUCTS.includes(nm)) roles.push('byproduct');
+  if (CONFISCATED.includes(nm)) roles.push('confiscated');
+  if (PROCUREMENT.includes(nm) || FEEDSTOCK.includes(nm)) roles.push('procurement');
+  return [...new Set(roles)];
+}
+
+function hasAssetRole(item, role) {
+  return assetRoles(item).includes(role);
+}
+
+function assetRole(item) {
+  return assetRoles(item)[0] || 'other';
 }
 
 function rebuildItemCaches() {
   const requiredKeys = [...FEEDSTOCK, ...MAINTENANCE, ...EXPORTS, ...BYPRODUCTS, ...CONFISCATED].map(keyFromName);
   requiredKeys.forEach(reqKey => {
     if (!items.some(i => commodityKey(i) === reqKey)) {
-      items.push({ name: CANONICAL_NAMES[reqKey] || reqKey.toUpperCase(), quantity: 0, price: 0 });
+      items.push({ name: CANONICAL_NAMES[reqKey] || reqKey.toUpperCase(), quantity: 0, price: 0, missing: true });
     }
   });
 
   itemsByKey = new Map();
   operationalItemsCache = [];
   const seenOperational = new Set();
-  
+
   for (const item of items) {
     const key = commodityKey(item);
     if (!itemsByKey.has(key)) itemsByKey.set(key, item);
-    const role = assetRole(item);
-    if (role === 'other') continue;
-    const uniqueKey = `${role}:${key}`;
-    if (seenOperational.has(uniqueKey)) continue;
-    seenOperational.add(uniqueKey);
+    if (!assetRoles(item).length || seenOperational.has(key)) continue;
+    seenOperational.add(key);
     operationalItemsCache.push(item);
   }
 }
@@ -1487,6 +1667,12 @@ function rolePill(role) {
   if (role === 'byproduct') cls = 'waste';
   if (role === 'confiscated') cls = 'confiscated-pill';
   return `<span class="pill ${cls}">${roleLabel(role)}</span>`;
+}
+
+function rolePillsFor(item) {
+  const roles = assetRoles(item);
+  if (!roles.length) return rolePill('procurement');
+  return `<span class="role-pill-stack">${roles.map(role => rolePill(role)).join('')}</span>`;
 }
 
 function statusPill(state, role) { return `<span class="pill ${state}">${statusLabel(state, role)}</span>`; }
@@ -1604,72 +1790,94 @@ function renderProductionModules() {
   }).join('');
 }
 
+function supplierItemState(item, baseOnline) {
+  if (!baseOnline || !item) return 'critical';
+  const q = quantity(item);
+  return q > 5000 ? 'ok' : (q > 0 ? 'low' : 'critical');
+}
+
+function supplierStateText(item, baseOnline) {
+  if (!baseOnline) return 'LINK OFFLINE';
+  if (!item) return 'UNLISTED';
+  const q = quantity(item);
+  return q > 5000 ? 'SUPPLY STABLE' : (q > 0 ? 'SUPPLY LOW' : 'DEPLETED');
+}
+
 function renderSupplier() {
   const supplierGrid = document.getElementById('supplierGrid');
   if (!supplierGrid) return;
 
-  if (!lisheenBase || !Array.isArray(lisheenBase.shop_items)) {
-    setSupplierLinkState('offline', 'SAT-LINK LOST');
-    supplierGrid.innerHTML = `
-      <div class="supplier-card critical remote-error">
-        <div class="supplier-header-row">
-          <div>
-             <div class="supplier-kicker error">COMM-LINK FAILED</div>
-             <div class="supplier-title error">LISHEEN UPLINK LOST</div>
-          </div>
-        </div>
-        <div class="footnote">DATABANKS UNREACHABLE / SIGNAL LOST</div>
-      </div>`;
-    return;
+  const onlineCount = REMOTE_FACILITIES.filter(facility => {
+    const base = remoteBases.get(facility.key);
+    return base && Array.isArray(base.shop_items);
+  }).length;
+
+  if (onlineCount === REMOTE_FACILITIES.length) {
+    setSupplierLinkState('online', `${onlineCount}/${REMOTE_FACILITIES.length} SAT-LINKS ACTIVE`);
+  } else if (onlineCount > 0) {
+    setSupplierLinkState('degraded', `${onlineCount}/${REMOTE_FACILITIES.length} SAT-LINKS ACTIVE`);
+  } else {
+    setSupplierLinkState('offline', `0/${REMOTE_FACILITIES.length} SAT-LINKS ACTIVE`);
   }
 
-  setSupplierLinkState('online', 'SAT-LINK ACTIVE');
-  const targets = ['gold', 'gold ore'];
+  supplierGrid.innerHTML = REMOTE_FACILITIES.map(facility => {
+    const base = remoteBases.get(facility.key);
+    const baseOnline = Boolean(base && Array.isArray(base.shop_items));
+    const rowData = facility.targets.map(targetName => {
+      const item = baseOnline ? base.shop_items.find(entry => commodityKey(entry) === targetName) : null;
+      const q = item ? quantity(item) : 0;
+      const price = item ? priceBuy(item) : 0;
+      const isStatusTarget = keyFromName(targetName) === keyFromName(facility.statusTarget);
+      const signalState = supplierItemState(item, baseOnline);
+      const state = isStatusTarget ? signalState : 'info';
+      const stateText = isStatusTarget
+        ? supplierStateText(item, baseOnline)
+        : (baseOnline ? 'REFERENCE STOCK' : 'DATA UNAVAILABLE');
+      const title = CANONICAL_NAMES[targetName] || displayRecipeName(targetName);
+      const fallbackMax = BAR_MAX_FALLBACKS[targetName] || 50000;
+      const supplierMax = item ? (maxStock(item) || fallbackMax) : fallbackMax;
+      const fillPct = baseOnline && supplierMax > 0 ? Math.min(100, Math.max(0, (q / supplierMax) * 100)) : 0;
+      return { q, price, state, signalState, stateText, title, supplierMax, fillPct, isStatusTarget };
+    });
 
-  supplierGrid.innerHTML = targets.map(targetName => {
-    const item = lisheenBase.shop_items.find(i => commodityKey(i) === targetName);
-    const q = item ? quantity(item) : 0;
-    const price = item ? priceBuy(item) : 0;
+    const primarySignal = rowData.find(row => row.isStatusTarget);
+    const facilityState = baseOnline && primarySignal ? primarySignal.signalState : 'critical';
 
-    const state = q > 5000 ? 'ok' : (q > 0 ? 'low' : 'critical');
-    const stateText = q > 5000 ? 'SUPPLY STABLE' : (q > 0 ? 'SUPPLY LOW' : 'DEPLETED');
-    const title = CANONICAL_NAMES[targetName] || targetName.toUpperCase();
-
-    const fallbackMax = BAR_MAX_FALLBACKS[targetName] || (targetName === 'gold' ? 60000 : 50000);
-    const supplierMax = item ? (maxStock(item) || fallbackMax) : fallbackMax;
-    const fillPct = supplierMax > 0 ? Math.min(100, Math.max(0, (q / supplierMax) * 100)) : 0;
+    const rows = rowData.map(row => `
+      <div class="supplier-commodity-row ${row.state}">
+        <div class="supplier-commodity-name">
+          <strong>${escapeHTML(row.title)}</strong>
+          <small class="${row.state}">${escapeHTML(row.stateText)}</small>
+        </div>
+        <div class="supplier-commodity-metric stock">
+          <small>Stock</small>
+          <strong class="scramble-supplier" data-val="${baseOnline ? number(row.q) : 'N/A'}"></strong>
+        </div>
+        <div class="supplier-commodity-metric price">
+          <small>Unit Buy</small>
+          <strong class="scramble-supplier" data-val="${baseOnline && row.price > 0 ? formatCurrency(row.price) : 'N/A'}"></strong>
+        </div>
+        <div class="supplier-progress-wrap" data-tooltip="${row.fillPct.toFixed(0)}% OF MAX ${number(row.supplierMax)}">
+          <div class="supplier-progress-fill ${row.state}" style="width:${row.fillPct}%;"></div>
+        </div>
+      </div>`).join('');
 
     return `
-      <div class="supplier-card ${state}">
+      <div class="supplier-card remote-facility-card ${facilityState}">
         <div class="supplier-scanline"></div>
-        <div class="remote-card-meta">
-          <span class="remote-badge">REMOTE FACILITY</span>
-          <span class="remote-badge">DUBLIN</span>
-        </div>
-        <div class="supplier-header-row">
+        <div class="remote-facility-head">
           <div>
-            <div class="supplier-kicker">PROCUREMENT SCAN // <span class="supplier-state ${state}">${stateText}</span></div>
-            <div class="supplier-title">${escapeHTML(title)}</div>
+            <div class="remote-card-meta">
+              <span class="remote-badge">REMOTE FACILITY</span>
+              <span class="remote-badge">${escapeHTML(facility.system.toUpperCase())}</span>
+            </div>
+            <div class="supplier-title">${escapeHTML(facility.name)}</div>
+            <div class="remote-facility-subline">PROCUREMENT RADAR // ${facility.targets.length} COMMODITY CHANNELS</div>
           </div>
-          <div class="pill ${state} supplier-pill">${state.toUpperCase()}</div>
+          <span class="remote-link-pill ${baseOnline ? 'online' : 'offline'}">${baseOnline ? 'LINK ACTIVE' : 'LINK LOST'}</span>
         </div>
-
-        <div class="supplier-stats">
-          <div class="supplier-stat stock">
-            <small>AVAILABLE STOCK</small>
-            <strong class="scramble-supplier" data-val="${number(q)}"></strong>
-          </div>
-          <div class="supplier-stat price">
-            <small>UNIT BUY PRICE</small>
-            <strong class="scramble-supplier" data-val="${price > 0 ? formatCurrency(price) : 'N/A'}"></strong>
-          </div>
-        </div>
-
-        <div class="supplier-progress-wrap" data-tooltip="${fillPct.toFixed(0)}% OF MAX ${number(supplierMax)}">
-          <div class="supplier-progress-fill ${state}" style="width: ${fillPct}%;"></div>
-        </div>
-      </div>
-    `;
+        <div class="supplier-commodity-list">${rows}</div>
+      </div>`;
   }).join('');
 
   supplierGrid.querySelectorAll('.scramble-supplier').forEach(el => scrambleText(el, el.dataset.val));
@@ -1717,7 +1925,7 @@ function overviewDetail(item, state, role) {
   return state === 'ok' ? readinessText(state, role) : `DEFICIT: ${number(needAmount(item))}`;
 }
 
-function renderList(target, list, emptyText) {
+function renderList(target, list, emptyText, roleOverride = null) {
   if (!target) return;
   if (!list.length) {
     target.innerHTML = renderOverviewEmptyRow(emptyText);
@@ -1725,7 +1933,7 @@ function renderList(target, list, emptyText) {
   }
   target.innerHTML = list.map(item => {
     const state = stockState(item);
-    const role = assetRole(item);
+    const role = roleOverride || assetRole(item);
     return renderOverviewRow({
       state, role, name: displayName(item), detail: overviewDetail(item, state, role),
       quantityValue: quantity(item), progress: renderProgress(item)
@@ -1737,8 +1945,8 @@ function renderOverview() {
   const sourceItems = operationalItems();
   const sortByName = (a, b) => displayName(a).localeCompare(displayName(b));
 
-  const maintenance = sourceItems.filter(item => assetRole(item) === 'maintenance').sort(sortByName);
-  const exports = sourceItems.filter(item => assetRole(item) === 'export').sort((a, b) => {
+  const maintenance = sourceItems.filter(item => hasAssetRole(item, 'maintenance')).sort(sortByName);
+  const exports = sourceItems.filter(item => hasAssetRole(item, 'export')).sort((a, b) => {
     let idxA = EXPORT_ORDER.indexOf(displayName(a));
     let idxB = EXPORT_ORDER.indexOf(displayName(b));
     if (idxA === -1) idxA = 999;
@@ -1746,8 +1954,8 @@ function renderOverview() {
     if (idxA !== idxB) return idxA - idxB;
     return sortByName(a, b);
   });
-  const byproducts = sourceItems.filter(item => assetRole(item) === 'byproduct').sort(sortByName);
-  const confiscated = sourceItems.filter(item => assetRole(item) === 'confiscated').sort(sortByName);
+  const byproducts = sourceItems.filter(item => hasAssetRole(item, 'byproduct')).sort(sortByName);
+  const confiscated = sourceItems.filter(item => hasAssetRole(item, 'confiscated')).sort(sortByName);
 
   if (els.maintenanceCount) scrambleText(els.maintenanceCount, maintenance.length);
   if (els.exportCount) scrambleText(els.exportCount, exports.length);
@@ -1755,11 +1963,11 @@ function renderOverview() {
   if (els.confiscatedCount) scrambleText(els.confiscatedCount, confiscated.length);
   if (els.feedstockCount) scrambleText(els.feedstockCount, FEEDSTOCK.length);
 
-  renderList(els.maintenanceList, maintenance, 'FACILITY RESERVES STABLE');
-  renderList(els.exportList, exports, 'NO EXPORT ASSETS DETECTED');
-  renderList(els.byproductList, byproducts, 'NO WASTE DETECTED');
-  renderList(els.confiscatedList, confiscated, 'NO CONTRABAND SECURED');
-  
+  renderList(els.maintenanceList, maintenance, 'FACILITY RESERVES STABLE', 'maintenance');
+  renderList(els.exportList, exports, 'NO EXPORT ASSETS DETECTED', 'export');
+  renderList(els.byproductList, byproducts, 'NO WASTE DETECTED', 'byproduct');
+  renderList(els.confiscatedList, confiscated, 'NO CONTRABAND SECURED', 'confiscated');
+
   if (els.feedstockList) {
     els.feedstockList.innerHTML = FEEDSTOCK.map(name => {
       const item = findCommodity(name);
@@ -1800,7 +2008,7 @@ function renderManifest() {
   const visible = operationalItems().filter(item => {
     const role = assetRole(item);
     const matchesQuery = !query || normalize(displayName(item)).includes(query) || normalize(itemName(item)).includes(query);
-    return matchesQuery && (roleFilter === 'all' || role === roleFilter);
+    return matchesQuery && (roleFilter === 'all' || hasAssetRole(item, roleFilter));
   });
 
   if (visible.length === 0) {
@@ -1812,7 +2020,7 @@ function renderManifest() {
   visible.sort((a, b) => {
     let valA, valB;
     if (sortCol === 'name') { valA = displayName(a); valB = displayName(b); }
-    else if (sortCol === 'role') { valA = assetRole(a); valB = assetRole(b); }
+    else if (sortCol === 'role') { valA = assetRoles(a).join(' / '); valB = assetRoles(b).join(' / '); }
     else if (sortCol === 'status') {
       const weight = { critical: 1, low: 2, ok: 3 };
       valA = weight[stockState(a)]; valB = weight[stockState(b)];
@@ -1832,7 +2040,7 @@ function renderManifest() {
     const role = assetRole(item);
     const state = stockState(item);
     
-    return `<tr tabindex="0"><td class="asset-cell"><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePill(role)}</td><td>${statusPill(state, role)}</td><td class="numeric-cell">${number(quantity(item))}</td><td class="numeric-cell price-cell sell-price">${formatCurrency(priceSell(item))}</td><td class="numeric-cell price-cell buy-price">${formatCurrency(priceBuy(item))}</td></tr>`;
+    return `<tr tabindex="0"><td class="asset-cell"><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePillsFor(item)}</td><td>${statusPill(state, role)}</td><td class="numeric-cell">${number(quantity(item))}</td><td class="numeric-cell price-cell sell-price">${formatCurrency(priceSell(item))}</td><td class="numeric-cell price-cell buy-price">${formatCurrency(priceBuy(item))}</td></tr>`;
   }).join('');
 }
 
@@ -1842,6 +2050,16 @@ function renderAll() {
   renderProductionModules();
   renderManifest();
   updateBaseTelemetry();
+}
+
+function findRemoteFacility(data, facility) {
+  return data.find(base => {
+    const candidates = [normalize(base?.name), normalize(base?.nickname)].filter(Boolean);
+    return facility.matches.some(rawMatch => {
+      const match = normalize(rawMatch);
+      return candidates.some(candidate => candidate === match || candidate.includes(match));
+    });
+  }) || null;
 }
 
 async function loadData() {
@@ -1883,11 +2101,9 @@ async function loadData() {
     if (!Array.isArray(data)) throw new Error('INVALID TELEMETRY RESPONSE.');
 
     rhwBase = data.find(base => normalize(base?.name) === BASE_NAME || normalize(base?.nickname) === BASE_NAME);
-    lisheenBase = data.find(base => {
-      const n = normalize(base?.name);
-      const nn = normalize(base?.nickname);
-      return n.includes('lisheen') || nn.includes('lisheen');
-    });
+    remoteBases = new Map(
+      REMOTE_FACILITIES.map(facility => [facility.key, findRemoteFacility(data, facility)])
+    );
 
     if (!rhwBase || typeof rhwBase !== 'object') throw new Error('RHW NOT FOUND IN DATASTREAM.');
     if (!Array.isArray(rhwBase.shop_items)) throw new Error('INVALID RHW SHOP DATA.');
