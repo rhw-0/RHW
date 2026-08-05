@@ -180,6 +180,13 @@ h1 {
     .ticker-label { position: relative; z-index: 5; flex: 0 0 auto; min-width: 215px; display: flex; align-items: center; gap: 10px; padding: 7px 18px 7px 22px; border-right: 1px solid rgba(212,175,55,0.32); background: linear-gradient(90deg, rgba(212,175,55,0.13), rgba(10,12,15,0.98)); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%); font-family: var(--font-tech); white-space: nowrap; }
     .ticker-label strong { display: block; color: var(--gold); font-size: 11px; line-height: 1.05; letter-spacing: 0.12em; }
     .ticker-label small { display: block; margin-top: 3px; color: rgba(224,224,224,0.52); font-size: 8px; line-height: 1; letter-spacing: 0.11em; }
+    .ticker-label small .feed-dot { display: inline-block; width: 5px; height: 5px; margin-right: 5px; border-radius: 50%; background: var(--muted); vertical-align: 1px; }
+    .ticker-label small.feed-live { color: rgba(120,185,142,0.88); }
+    .ticker-label small.feed-live .feed-dot { background: #78b98e; box-shadow: 0 0 6px rgba(120,185,142,0.55); }
+    .ticker-label small.feed-stale { color: rgba(210,160,77,0.90); }
+    .ticker-label small.feed-stale .feed-dot { background: #d2a04d; }
+    .ticker-label small.feed-local { color: rgba(160,172,185,0.78); }
+    .ticker-label small.feed-local .feed-dot { background: #7f8b98; }
     .ticker-live-dot { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--good); box-shadow: 0 0 10px rgba(79,137,101,0.92); animation: corePulse 2.2s ease-in-out infinite; }
     .ticker-viewport { position: relative; min-width: 0; flex: 1; overflow: hidden; display: flex; align-items: center; }
     .ticker-viewport::before, .ticker-viewport::after { content: ''; position: absolute; top: 0; bottom: 0; width: 46px; z-index: 3; pointer-events: none; }
@@ -203,6 +210,23 @@ h1 {
     .ticker .ticker-item.lore .ticker-message { color: rgba(224,224,224,0.72); }
     .ticker .ticker-message { padding-right: 0; }
     .ticker .ticker-separator { padding-right: 0; color: rgba(212,175,55,0.34); font-family: var(--font-tech); font-size: 11px; letter-spacing: 0.14em; padding: 0 4px; }
+
+    /* FX: LOW uses one bulletin at a time instead of a continuously moving strip. */
+    .ticker-single { display: none; min-width: 0; max-width: 100%; align-items: center; overflow: hidden; opacity: 1; }
+    .ticker-single.swap { opacity: 0; }
+    .ticker-single .ticker-item { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; padding: 0 14px; color: rgba(224,224,224,0.86); font-family: var(--font-tech); font-size: 13px; line-height: 42px; letter-spacing: 0.065em; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
+    .ticker-single .ticker-tag { flex: 0 0 auto; color: var(--gold); font-weight: bold; letter-spacing: 0.085em; }
+    .ticker-single .ticker-message { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .ticker-single .ticker-item.good .ticker-tag { color: #78b98e; }
+    .ticker-single .ticker-item.warn .ticker-tag { color: #d2a04d; }
+    .ticker-single .ticker-item.danger .ticker-tag { color: #c96868; }
+    .ticker-single .ticker-item.remote .ticker-tag { color: #8cb4ff; }
+    .ticker-single .ticker-item.lore .ticker-tag { color: rgba(212,175,55,0.78); }
+    .ticker-single .ticker-item.muted .ticker-tag { color: var(--muted); }
+    .ticker-single .ticker-item.warn .ticker-message { color: rgba(238,215,173,0.90); }
+    .ticker-single .ticker-item.danger .ticker-message { color: rgba(244,184,184,0.92); }
+    .ticker-single .ticker-item.remote .ticker-message { color: rgba(202,219,251,0.90); }
+    .ticker-single .ticker-item.lore .ticker-message { color: rgba(224,224,224,0.72); }
 
     main { padding: 0 32px 40px; display: grid; gap: 24px; max-width: 1400px; margin: 0 auto; }
 
@@ -1111,9 +1135,10 @@ h1 {
     .eco th { background: #050608 !important; }
     .eco * { box-shadow: none !important; text-shadow: none !important; filter: none !important; }
     .eco .anim-boot { opacity: 1 !important; transform: none !important; }
-    .eco .ticker {
-      will-change: auto;
-      animation: tickerAnim var(--ticker-duration, 280s) steps(90) infinite !important;
+    .eco .ticker { display: none !important; }
+    .eco .ticker-single {
+      display: flex !important;
+      transition: opacity 0.28s ease !important;
     }
 
     /* Header actions use two rows inside the compact uplink panel:
@@ -1373,11 +1398,12 @@ h1 {
       <span class="ticker-live-dot"></span>
       <span>
         <strong>BMM INDUSTRIAL NEWSWIRE</strong>
-        <small>MARKETS // REGIONAL BULLETINS</small>
+        <small id="newswireFeedStatus" class="feed-local" aria-live="polite"><span class="feed-dot"></span><span class="feed-status-text">LOCAL FALLBACK</span></small>
       </span>
     </div>
     <div class="ticker-viewport">
       <div class="ticker" id="tickerContainer"></div>
+      <div class="ticker-single" id="tickerSingle" aria-hidden="true"></div>
     </div>
   </div>
 
@@ -1574,9 +1600,10 @@ const NEWSWIRE_POOLS = {
 };
 
 const newswireHistory = new Map();
+let activeNewswirePools = NEWSWIRE_POOLS;
 
 function pickNewswireMessage(category, excludedTexts = []) {
-  const pool = NEWSWIRE_POOLS[category] || [];
+  const pool = activeNewswirePools[category] || [];
   if (!pool.length) return { tag: 'BMM NEWSWIRE', text: 'EDITORIAL DESK AWAITING BULLETINS', tone: 'muted' };
 
   const blocked = new Set(excludedTexts);
@@ -1594,6 +1621,44 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 function escapeHTML(str) { return String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])); }
 
 const tickerContainer = document.getElementById('tickerContainer');
+const tickerSingle = document.getElementById('tickerSingle');
+let tickerMessageQueue = [{ tag: 'BMM NEWSWIRE', text: 'AWAITING INITIAL TELEMETRY BURST', tone: 'muted' }];
+let ecoTickerIndex = 0;
+let ecoTickerTimer = null;
+
+function renderEcoTickerMessage(index = ecoTickerIndex) {
+  if (!tickerSingle) return;
+  const message = tickerMessageQueue.length
+    ? tickerMessageQueue[index % tickerMessageQueue.length]
+    : { tag: 'BMM NEWSWIRE', text: 'AWAITING INITIAL TELEMETRY BURST', tone: 'muted' };
+  const tone = ['good', 'warn', 'danger', 'remote', 'lore', 'muted'].includes(message.tone) ? message.tone : 'lore';
+  tickerSingle.innerHTML = `<span class="ticker-item ${tone}"><span class="ticker-tag">[${escapeHTML(message.tag)}]</span><span class="ticker-message">${escapeHTML(message.text)}</span></span>`;
+}
+
+function rotateEcoTicker() {
+  if (!tickerSingle || tickerMessageQueue.length < 2 || document.visibilityState === 'hidden') return;
+  tickerSingle.classList.add('swap');
+  window.setTimeout(() => {
+    ecoTickerIndex = (ecoTickerIndex + 1) % tickerMessageQueue.length;
+    renderEcoTickerMessage();
+    tickerSingle.classList.remove('swap');
+  }, 220);
+}
+
+function stopEcoTicker() {
+  if (ecoTickerTimer) window.clearInterval(ecoTickerTimer);
+  ecoTickerTimer = null;
+  tickerSingle?.classList.remove('swap');
+}
+
+function startEcoTicker() {
+  stopEcoTicker();
+  ecoTickerIndex %= Math.max(1, tickerMessageQueue.length);
+  renderEcoTickerMessage();
+  if (tickerMessageQueue.length > 1 && document.visibilityState !== 'hidden') {
+    ecoTickerTimer = window.setInterval(rotateEcoTicker, 6000);
+  }
+}
 
 function tickerItemMarkup(message, slotIndex = null) {
   const slotAttribute = slotIndex === null ? '' : ` data-ticker-slot="${slotIndex}"`;
@@ -1649,7 +1714,11 @@ function updateTickerSlots(messages) {
   while (safeMessages.length < TICKER_DYNAMIC_SLOT_COUNT) {
     safeMessages.push({ tag: 'BMM NEWSWIRE', text: 'EDITORIAL QUEUE CLEAR // AWAITING NEXT BULLETIN', tone: 'muted' });
   }
+  tickerMessageQueue = safeMessages.map(message => ({ ...message }));
+  ecoTickerIndex %= Math.max(1, tickerMessageQueue.length);
   safeMessages.forEach((message, index) => updateTickerSlot(index, message));
+  renderEcoTickerMessage();
+  if (ecoMode) startEcoTicker();
   updateTickerSpeed();
 }
 
@@ -1678,18 +1747,21 @@ const DASHBOARD_VERSION = 'V3.5';
 const DASHBOARD_CONFIG = Object.freeze({
   apiUrl: 'https://darkstat.dd84ai.com/api/pobs',
   baseName: 'resolution heavy works',
+  newswireUrl: './assets/RHW_Newswire.md',
   autoRefreshMs: 300000,
   fetchTimeoutMs: 18000,
   storageKeys: Object.freeze({
     view: 'rhw-dashboard-v3.5:view',
-    eco: 'rhw-dashboard-v3.5:eco'
+    eco: 'rhw-dashboard-v3.5:eco',
+    newswireCache: 'rhw-dashboard-v3.5:newswire-cache'
   }),
   features: Object.freeze({
     capitalShipyard: true,
     fixedLogistics: true,
     marketScan: true,
     ecoMode: true,
-    newswire: true
+    newswire: true,
+    remoteNewswire: true
   }),
   roles: Object.freeze({
     maintenance: ['basic alloy', 'food rations', 'consumer goods'],
@@ -1739,7 +1811,7 @@ const DASHBOARD_CONFIG = Object.freeze({
         key: 'dunkirk',
         name: 'Dunkirk-Class Battleship',
         subtitle: 'Bretonian Capital Hull',
-        matches: ['bretonia dunkirk class battleship', 'dunkirk class battleship', 'dunkirk battleship', 'dunkirk'],
+        matches: ['dsy_br_battleship', 'bretonia dunkirk class battleship', 'dunkirk class battleship', 'dunkirk battleship', 'dunkirk'],
         sellPrice: 8500000
       }),
       Object.freeze({
@@ -2002,6 +2074,8 @@ let ecoResizeTimer = null;
 function setEcoMode(on) {
   ecoMode = Boolean(on);
   document.documentElement.classList.toggle('eco', ecoMode);
+  if (ecoMode) startEcoTicker();
+  else stopEcoTicker();
   updateEcoToggleLabel();
 }
 
@@ -2067,6 +2141,8 @@ function initEcoMode() {
     if (ecoPreference === 'auto') scheduleEcoAutoDetect(850);
   });
   document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') stopEcoTicker();
+    else if (ecoMode) startEcoTicker();
     if (document.visibilityState === 'visible' && ecoPreference === 'auto') scheduleEcoAutoDetect(350);
   });
 }
@@ -2781,13 +2857,20 @@ function normalizedAssetMatch(value) {
     .replace(/\s+/g, ' ');
 }
 
+function itemIdentityCandidates(item) {
+  return [
+    item?.name, item?.item_name, item?.nickname, item?.id,
+    item?.item_code, item?.itemCode, item?.code,
+    item?.archetype, item?.archetype_id, item?.arch_id
+  ].map(normalizedAssetMatch).filter(Boolean);
+}
+
 function findCommodityByAliases(matches = []) {
   const normalizedMatches = matches.map(normalizedAssetMatch).filter(Boolean);
   if (!normalizedMatches.length) return null;
-  return items.find(item => {
-    const candidate = normalizedAssetMatch(itemName(item));
-    return normalizedMatches.some(match => candidate === match || candidate.includes(match));
-  }) || null;
+  return items.find(item => itemIdentityCandidates(item).some(candidate =>
+    normalizedMatches.some(match => candidate === match || candidate.includes(match))
+  )) || null;
 }
 
 function shipyardTrafficState(value) {
@@ -3517,6 +3600,116 @@ els.tableHeaders.forEach(th => {
   th.addEventListener('click', handleSort);
   th.addEventListener('keydown', handleSortKeydown);
 });
+
+// ============================================================
+// RHW NEWSWIRE · EDITABLE MARKDOWN + LAST-GOOD CACHE
+// The remote file extends the built-in pools category by category.
+// If it is unavailable, the most recently verified file is used.
+// ============================================================
+const NEWSWIRE_URL = DASHBOARD_CONFIG.newswireUrl;
+const NEWSWIRE_TONES = ['good', 'warn', 'danger', 'remote', 'lore', 'muted'];
+
+function parseNewswireMarkdown(text) {
+  const pools = {};
+  let category = null;
+  for (const rawLine of String(text || '').split('\n')) {
+    const line = rawLine.trim();
+    const headerMatch = line.match(/^##\s+(.+?)\s*$/);
+    if (headerMatch) {
+      category = normalize(headerMatch[1]).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      if (category && !pools[category]) pools[category] = [];
+      continue;
+    }
+    if (!category || !line.startsWith('-')) continue;
+    const msgMatch = line.match(/^-\s*\[([^|\]]+?)\s*\|\s*([A-Za-z]+)\s*\]\s*(.+)$/);
+    if (!msgMatch) continue;
+    const tag = msgMatch[1].trim().toUpperCase().slice(0, 40);
+    const toneCandidate = msgMatch[2].trim().toLowerCase();
+    const tone = NEWSWIRE_TONES.includes(toneCandidate) ? toneCandidate : 'lore';
+    const body = msgMatch[3].trim().toUpperCase().slice(0, 240);
+    if (tag && body) pools[category].push({ tag, text: body, tone });
+  }
+  return pools;
+}
+
+function mergeNewswirePools(remotePools = {}) {
+  const merged = {};
+  const categories = new Set([...Object.keys(NEWSWIRE_POOLS), ...Object.keys(remotePools || {})]);
+  categories.forEach(category => {
+    const seen = new Set();
+    const combined = [...(remotePools?.[category] || []), ...(NEWSWIRE_POOLS[category] || [])];
+    merged[category] = combined.filter(message => {
+      const identity = `${message.tag}\u0000${message.text}`;
+      if (seen.has(identity)) return false;
+      seen.add(identity);
+      return true;
+    });
+  });
+  return merged;
+}
+
+function countNewswireBulletins(pools) {
+  return Object.values(pools || {}).reduce((sum, list) => sum + (Array.isArray(list) ? list.length : 0), 0);
+}
+
+function setNewswireFeedStatus(mode, bulletinCount = 0, cachedAt = 0) {
+  const el = document.getElementById('newswireFeedStatus');
+  if (!el) return;
+  el.classList.remove('feed-live', 'feed-stale', 'feed-local');
+  el.classList.add(mode === 'live' ? 'feed-live' : (mode === 'stale' ? 'feed-stale' : 'feed-local'));
+  const label = el.querySelector('.feed-status-text');
+  if (label) label.textContent = mode === 'live' ? 'REMOTE FEED LIVE' : (mode === 'stale' ? 'REMOTE FEED STALE' : 'LOCAL FALLBACK');
+  const cacheTime = cachedAt ? new Date(cachedAt).toLocaleString('de-DE') : '';
+  el.title = mode === 'live'
+    ? `${bulletinCount} external bulletins loaded from the RHW repository`
+    : (mode === 'stale'
+      ? `Remote file unavailable // using ${bulletinCount} cached bulletins from ${cacheTime || 'the last verified sync'}`
+      : 'Remote file unavailable or disabled // using bulletins embedded in the dashboard');
+}
+
+function applyNewswirePools(pools) {
+  activeNewswirePools = mergeNewswirePools(pools);
+  newswireHistory.clear();
+  if (lastLoaded) updateTickerSlots(buildIndustrialNewswireMessages());
+}
+
+async function loadNewswire() {
+  if (!FEATURES.newswire || !FEATURES.remoteNewswire || !NEWSWIRE_URL) {
+    activeNewswirePools = NEWSWIRE_POOLS;
+    setNewswireFeedStatus('local');
+    return;
+  }
+
+  try {
+    const response = await fetchWithTimeout(NEWSWIRE_URL, {
+      headers: { 'Accept': 'text/markdown,text/plain;q=0.9,*/*;q=0.1' },
+      cache: 'no-store'
+    }, 10000);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const sourceText = await response.text();
+    const remotePools = parseNewswireMarkdown(sourceText);
+    const count = countNewswireBulletins(remotePools);
+    if (!count) throw new Error('NO BULLETINS PARSED');
+
+    applyNewswirePools(remotePools);
+    safeStorageSet(STORAGE_KEYS.newswireCache, { sourceText, savedAt: Date.now() });
+    setNewswireFeedStatus('live', count);
+  } catch (error) {
+    const cached = safeStorageGet(STORAGE_KEYS.newswireCache, null);
+    const cachedPools = cached?.sourceText ? parseNewswireMarkdown(cached.sourceText) : {};
+    const cachedCount = countNewswireBulletins(cachedPools);
+    if (cachedCount) {
+      applyNewswirePools(cachedPools);
+      setNewswireFeedStatus('stale', cachedCount, Number(cached.savedAt) || 0);
+    } else {
+      activeNewswirePools = NEWSWIRE_POOLS;
+      newswireHistory.clear();
+      setNewswireFeedStatus('local');
+    }
+    console.warn('RHW NEWSWIRE FETCH FAILED', error);
+  }
+}
+
 restoreViewPreferences();
 applyFeatureVisibility();
 initEcoMode();
@@ -3524,6 +3717,7 @@ updateRoleSegments();
 updateSortArrows();
 updateMarketSortButtons();
 
+loadNewswire();
 loadData();
 </script>
 </body>
