@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Resolution Heavy Works live logistics and production command dashboard." />
-  <title>RHW Command Dashboard · V3.4</title>
+  <title>RHW Command Dashboard · V3.5</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -499,8 +499,8 @@ h1 {
     .confiscated-pill { color: #f3e5f5; background: rgba(156, 39, 176, 0.16); border-color: rgba(156, 39, 176, 0.48); }
     .shipyard-pill { color: #d9e8ff; background: rgba(78, 121, 184, 0.16); border-color: rgba(100, 151, 224, 0.52); }
 
-    #itemsBody, #productionGrid, #supplierGrid, #shipyardControl { transition: opacity 0.3s ease, filter 0.3s ease; }
-    body.syncing #itemsBody, body.syncing #productionGrid, body.syncing #supplierGrid, body.syncing #shipyardControl { opacity: 0.3; filter: blur(4px) grayscale(50%); pointer-events: none; }
+    #itemsBody, #productionGrid, #supplierGrid, #marketScanGrid, #shipyardControl { transition: opacity 0.3s ease, filter 0.3s ease; }
+    body.syncing #itemsBody, body.syncing #productionGrid, body.syncing #supplierGrid, body.syncing #marketScanGrid, body.syncing #shipyardControl { opacity: 0.3; filter: blur(4px) grayscale(50%); pointer-events: none; }
     .error-box { display: none; padding: 10px 20px; border-bottom: 1px solid rgba(165, 42, 42, 0.55); background: rgba(165, 42, 42, 0.12); color: #ffbdbd; font-family: var(--font-tech); font-size: 12px; margin: 0; }
 
     .manifest-panel { position: relative; overflow: hidden; }
@@ -1083,6 +1083,212 @@ h1 {
       .alert-title { min-height: 31px; }
     }
 
+
+    /* =========================================
+       V3.5 PERFORMANCE + MODULAR LOGISTICS
+       ========================================= */
+    [hidden] { display: none !important; }
+
+    .eco *, .eco *::before, .eco *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+    .eco body::before,
+    .eco .header-watermark,
+    .eco .supplier-scanline { display: none !important; }
+    .eco .command-header,
+    .eco .alert-card,
+    .eco .panel,
+    .eco .capital-shipyard-control,
+    .eco th { backdrop-filter: none !important; }
+    .eco .alert-card,
+    .eco .panel,
+    .eco .capital-shipyard-control { background-color: rgba(10,12,15,0.96) !important; }
+    .eco .command-header {
+      background: linear-gradient(135deg, rgba(5,6,8,0.99), rgba(10,12,15,1)) !important;
+      box-shadow: none !important;
+    }
+    .eco th { background: #050608 !important; }
+    .eco * { box-shadow: none !important; text-shadow: none !important; filter: none !important; }
+    .eco .anim-boot { opacity: 1 !important; transform: none !important; }
+    .eco .ticker {
+      will-change: auto;
+      animation: tickerAnim var(--ticker-duration, 280s) steps(90) infinite !important;
+    }
+
+    /* Header actions use two rows inside the compact uplink panel:
+       datalink state above, both controls below. This prevents the buttons
+       from covering the datalink label/value at desktop widths. */
+    .uplink-actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .uplink-actions > .uplink-stat { grid-column: 1 / -1; }
+    .uplink-actions > .header-uplink-button {
+      width: 100%;
+      min-width: 0;
+    }
+    .fx-mode-button {
+      min-width: 92px;
+      padding-inline: 13px;
+      color: rgba(185,205,240,0.88);
+      border-color: rgba(125,167,234,0.34);
+      border-top-color: rgba(185,205,240,0.55);
+      background: linear-gradient(180deg, rgba(18,28,43,0.92), rgba(8,11,16,0.98));
+      letter-spacing: 0.11em;
+    }
+    .fx-mode-button::after { background: #8cb4ff; color: #8cb4ff; }
+    .fx-mode-button.eco-active { color: #94dcb0; border-color: rgba(74,143,98,0.5); }
+    .fx-mode-button.eco-active::after { background: var(--good); color: var(--good); }
+
+    .logistics-subsection {
+      border-top: 1px solid rgba(125,167,234,0.12);
+      background: rgba(0,0,0,0.12);
+    }
+    .logistics-subsection + .logistics-subsection {
+      border-top-color: rgba(125,167,234,0.22);
+    }
+    .logistics-subhead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 16px 10px;
+      border-bottom: 1px dashed rgba(125,167,234,0.14);
+      background: linear-gradient(90deg, rgba(125,167,234,0.055), rgba(0,0,0,0.13) 58%, transparent);
+    }
+    .logistics-subhead-kicker {
+      margin-bottom: 3px;
+      color: rgba(125,167,234,0.58);
+      font-family: var(--font-tech);
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .logistics-subhead-title {
+      color: #d9e6fb;
+      font-family: var(--font-title);
+      font-size: 21px;
+      line-height: 1;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .logistics-subhead-meta {
+      color: rgba(185,205,240,0.68);
+      font-family: var(--font-tech);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-align: right;
+      text-transform: uppercase;
+    }
+    .market-scan-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .market-sort-segments {
+      display: inline-flex;
+      padding: 2px;
+      border: 1px solid rgba(125,167,234,0.18);
+      background: rgba(0,0,0,0.42);
+    }
+    .market-sort-button {
+      min-height: 28px;
+      padding: 5px 8px;
+      border: 0;
+      border-right: 1px solid rgba(255,255,255,0.045);
+      clip-path: none;
+      background: transparent;
+      color: rgba(185,205,240,0.54);
+      font-size: 8px;
+      letter-spacing: 0.09em;
+      box-shadow: none;
+    }
+    .market-sort-button:last-child { border-right: 0; }
+    .market-sort-button:hover { background: rgba(125,167,234,0.07); color: #d9e6fb; box-shadow: none; }
+    .market-sort-button.active { background: rgba(125,167,234,0.14); color: #b9cdf0; }
+
+    .market-scan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+      gap: 12px;
+      padding: 14px;
+      background: radial-gradient(circle at 50% 0%, rgba(107,164,255,0.045), transparent 62%);
+    }
+    .market-card {
+      width: auto;
+      max-width: none;
+      min-width: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    .market-card .remote-facility-head { min-height: 82px; }
+    .market-card .supplier-title { font-size: 22px; }
+    .market-card .supplier-commodity-row {
+      grid-template-columns: minmax(145px, 1fr) 82px 82px;
+    }
+    .supplier-commodity-row.unlisted { border-left-color: var(--warn); opacity: 0.88; }
+    .supplier-commodity-name small.unlisted { color: #d2a04d; }
+    .supplier-commodity-metric.price strong.unlisted { color: #d2a04d; font-size: 10px; }
+
+    .supplier-empty,
+    .feature-empty {
+      grid-column: 1 / -1;
+      min-height: 116px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 8px;
+      padding: 28px 20px;
+      border: 1px dashed rgba(125,167,234,0.2);
+      background: rgba(125,167,234,0.025);
+      color: rgba(185,205,240,0.72);
+      font-family: var(--font-tech);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+    .supplier-empty small,
+    .feature-empty small {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+    }
+    .feature-empty.production-empty {
+      margin: 20px;
+      border-color: rgba(212,175,55,0.22);
+      background: rgba(212,175,55,0.025);
+      color: rgba(217,188,88,0.78);
+    }
+    .feature-empty.shipyard-empty {
+      margin: 16px;
+      border-color: rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.018);
+      color: rgba(224,224,224,0.70);
+    }
+
+    @media (max-width: 760px) {
+      .logistics-subhead { align-items: flex-start; flex-direction: column; }
+      .market-scan-actions { width: 100%; justify-content: space-between; }
+      .logistics-subhead-meta { text-align: left; }
+      .market-scan-grid { grid-template-columns: 1fr; padding: 12px; }
+    }
+
+    @media (max-width: 520px) {
+      .uplink-actions { grid-template-columns: 1fr; }
+      .uplink-actions > .uplink-stat { grid-column: 1; }
+      .uplink-actions > .header-uplink-button { width: 100%; }
+      .fx-mode-button { width: 100%; }
+      .market-scan-actions { align-items: stretch; flex-direction: column; }
+      .market-sort-segments { width: 100%; }
+      .market-sort-button { flex: 1; }
+      .market-card .supplier-commodity-row { grid-template-columns: minmax(0, 1fr) 70px 72px; gap: 7px; }
+    }
+
   </style>
 </head>
 <body>
@@ -1094,7 +1300,7 @@ h1 {
     <div class="command-header-inner">
       <div class="command-brand">
         <div class="crest-frame">
-          <img class="crest" src="https://i.imgur.com/BXcPQYS.png" alt="RHW Crest" decoding="async" fetchpriority="high" />
+          <img class="crest" src="./assets/rhw-crest.png" alt="RHW Crest" decoding="async" fetchpriority="high" onerror="this.onerror=null;this.src='https://i.imgur.com/BXcPQYS.png';" />
         </div>
         <div class="brand-copy">
           <div class="eyebrow">BMM CHARTERED STRATEGIC MANUFACTURING FACILITY</div>
@@ -1155,13 +1361,14 @@ h1 {
               <strong class="scramble uplink-value" id="telemetryStateVal" aria-live="polite">POLLING</strong>
             </div>
             <button id="headerRefreshBtn" class="uplink-button header-uplink-button" type="button"><span>FORCE UPLINK</span></button>
+            <button id="ecoToggleBtn" class="uplink-button header-uplink-button fx-mode-button" type="button" title="Reduce visual effects on slower devices" aria-label="Visual effects mode: automatic"><span>FX: AUTO</span></button>
           </div>
         </div>
       </div>
     </div>
   </header>
 
-  <div class="ticker-wrap anim-boot delay-2" aria-label="BMM Industrial Newswire">
+  <div class="ticker-wrap anim-boot delay-2" id="newswirePanel" aria-label="BMM Industrial Newswire">
     <div class="ticker-label" aria-hidden="true">
       <span class="ticker-live-dot"></span>
       <span>
@@ -1218,15 +1425,15 @@ h1 {
 
     <section class="capital-shipyard-control anim-boot delay-4" id="shipyardControl" aria-label="Capital Shipyard Control"></section>
 
-    <section class="panel remote-panel anim-boot delay-4">
+    <section class="panel remote-panel anim-boot delay-4" id="externalLogisticsPanel">
       <div class="panel-head remote-panel-head">
         <div class="panel-heading-copy">
           <div class="section-kicker"><span>05</span> REMOTE FACILITIES</div>
           <div class="panel-title remote-panel-title">EXTERNAL LOGISTICS UPLINK</div>
           <div class="remote-route">
-            <span><small>TARGETS</small><strong>2 LOGISTICS FACILITIES</strong></span>
-            <span><small>SYSTEMS</small><strong>DUBLIN // LEEDS</strong></span>
-            <span><small>MODE</small><strong>PROCUREMENT RADAR</strong></span>
+            <span><small>TARGETS</small><strong id="externalTargetsMeta">2 FIXED LINKS + 5 MARKET CHANNELS</strong></span>
+            <span><small>SYSTEMS</small><strong id="externalSystemsMeta">DUBLIN // LEEDS // ALL REGISTERED BASES</strong></span>
+            <span><small>MODE</small><strong id="externalModeMeta">FIXED LOGISTICS + REGIONAL MARKET SCAN</strong></span>
           </div>
         </div>
         <div class="sat-link-badge polling" id="supplierLinkBadge">
@@ -1234,10 +1441,37 @@ h1 {
           <span class="sat-link-text" id="supplierLinkText">SAT-LINK SCANNING</span>
         </div>
       </div>
-      <div class="supplier-grid" id="supplierGrid"></div>
+
+      <section class="logistics-subsection" id="fixedLogisticsSection" aria-labelledby="fixedLogisticsTitle">
+        <div class="logistics-subhead">
+          <div>
+            <div class="logistics-subhead-kicker">DIRECT SAT-LINKS</div>
+            <div class="logistics-subhead-title" id="fixedLogisticsTitle">FIXED LOGISTICS</div>
+          </div>
+          <div class="logistics-subhead-meta" id="fixedLogisticsMeta">AWAITING TELEMETRY</div>
+        </div>
+        <div class="supplier-grid" id="supplierGrid"></div>
+      </section>
+
+      <section class="logistics-subsection market-scan-section" id="marketScanSection" aria-labelledby="marketScanTitle">
+        <div class="logistics-subhead market-scan-head">
+          <div>
+            <div class="logistics-subhead-kicker">CROSS-BASE PROCUREMENT RADAR</div>
+            <div class="logistics-subhead-title" id="marketScanTitle">REGIONAL MARKET SCAN</div>
+          </div>
+          <div class="market-scan-actions">
+            <div class="logistics-subhead-meta" id="marketScanMeta">AWAITING TELEMETRY</div>
+            <div class="market-sort-segments" role="group" aria-label="Sort regional market offers">
+              <button class="market-sort-button active" type="button" data-market-sort="price" aria-pressed="true">BEST PRICE</button>
+              <button class="market-sort-button" type="button" data-market-sort="stock" aria-pressed="false">MOST STOCK</button>
+            </div>
+          </div>
+        </div>
+        <div class="market-scan-grid" id="marketScanGrid"></div>
+      </section>
     </section>
 
-    <section class="panel anim-boot delay-4">
+    <section class="panel anim-boot delay-4" id="productionPanel">
       <div class="panel-head">
         <div class="panel-heading-copy">
           <div class="section-kicker"><span>06</span> INTERNAL SYSTEMS</div>
@@ -1309,7 +1543,7 @@ h1 {
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V3.4)
+   RHW DASHBOARD LOGIC (V3.5)
    ========================================================================== */
 
 const TICKER_DYNAMIC_SLOT_COUNT = 10;
@@ -1437,17 +1671,25 @@ document.addEventListener('mousemove', e => {
 });
 
 // ============================================================
-// RHW DASHBOARD CONFIGURATION · V3.4
-// Edit recipes, tracked roles, thresholds and remote facilities here.
+// RHW DASHBOARD CONFIGURATION · V3.5
+// Edit features, recipes, tracked roles, thresholds, market scans and remote facilities here.
 // ============================================================
-const DASHBOARD_VERSION = 'V3.4';
+const DASHBOARD_VERSION = 'V3.5';
 const DASHBOARD_CONFIG = Object.freeze({
   apiUrl: 'https://darkstat.dd84ai.com/api/pobs',
   baseName: 'resolution heavy works',
   autoRefreshMs: 300000,
   fetchTimeoutMs: 18000,
   storageKeys: Object.freeze({
-    view: 'rhw-dashboard-v3.3:view'
+    view: 'rhw-dashboard-v3.5:view',
+    eco: 'rhw-dashboard-v3.5:eco'
+  }),
+  features: Object.freeze({
+    capitalShipyard: true,
+    fixedLogistics: true,
+    marketScan: true,
+    ecoMode: true,
+    newswire: true
   }),
   roles: Object.freeze({
     maintenance: ['basic alloy', 'food rations', 'consumer goods'],
@@ -1458,6 +1700,13 @@ const DASHBOARD_CONFIG = Object.freeze({
     feedstock: ['gold ore', 'niobium ore', 'scrap metal'],
     confiscated: ['wildcat gold']
   }),
+  marketScan: Object.freeze([
+    'Avionics Systems',
+    'Interior Systems',
+    'Propulsion Systems',
+    'Exotic Systems',
+    'Prototype Components'
+  ]),
   remoteFacilities: Object.freeze([
     Object.freeze({
       key: 'lisheen',
@@ -1538,6 +1787,8 @@ const BASE_NAME = DASHBOARD_CONFIG.baseName;
 const AUTO_REFRESH_MS = DASHBOARD_CONFIG.autoRefreshMs;
 const FETCH_TIMEOUT_MS = DASHBOARD_CONFIG.fetchTimeoutMs;
 const STORAGE_KEYS = DASHBOARD_CONFIG.storageKeys;
+const FEATURES = DASHBOARD_CONFIG.features;
+const MARKET_SCAN = DASHBOARD_CONFIG.marketScan || [];
 const MAINTENANCE = DASHBOARD_CONFIG.roles.maintenance;
 const EXPORTS = DASHBOARD_CONFIG.roles.export;
 const BYPRODUCTS = DASHBOARD_CONFIG.roles.byproduct;
@@ -1571,6 +1822,8 @@ let items = [];
 let lastLoaded = null;
 let rhwBase = null;
 let remoteBases = new Map(REMOTE_FACILITIES.map(facility => [facility.key, null]));
+let allBases = [];
+let marketSort = 'price';
 let itemsByKey = new Map();
 let operationalItemsCache = [];
 let sortCol = 'name';
@@ -1623,7 +1876,20 @@ const els = {
   footerConnection: document.getElementById('footerConnection'),
   supplierLinkBadge: document.getElementById('supplierLinkBadge'),
   supplierLinkText: document.getElementById('supplierLinkText'),
-  shipyardControl: document.getElementById('shipyardControl')
+  shipyardControl: document.getElementById('shipyardControl'),
+  externalLogisticsPanel: document.getElementById('externalLogisticsPanel'),
+  fixedLogisticsSection: document.getElementById('fixedLogisticsSection'),
+  fixedLogisticsMeta: document.getElementById('fixedLogisticsMeta'),
+  marketScanSection: document.getElementById('marketScanSection'),
+  marketScanGrid: document.getElementById('marketScanGrid'),
+  marketScanMeta: document.getElementById('marketScanMeta'),
+  marketSortButtons: document.querySelectorAll('.market-sort-button'),
+  externalTargetsMeta: document.getElementById('externalTargetsMeta'),
+  externalSystemsMeta: document.getElementById('externalSystemsMeta'),
+  externalModeMeta: document.getElementById('externalModeMeta'),
+  productionPanel: document.getElementById('productionPanel'),
+  newswirePanel: document.getElementById('newswirePanel'),
+  ecoToggleBtn: document.getElementById('ecoToggleBtn')
 };
 
 function scrambleText(el, finalStr, duration = 500) {
@@ -1727,12 +1993,122 @@ function safeStorageSet(key, value) {
   }
 }
 
+
+let ecoMode = false;
+let ecoPreference = 'auto';
+let ecoMeasureToken = 0;
+let ecoResizeTimer = null;
+
+function setEcoMode(on) {
+  ecoMode = Boolean(on);
+  document.documentElement.classList.toggle('eco', ecoMode);
+  updateEcoToggleLabel();
+}
+
+function updateEcoToggleLabel() {
+  const button = els.ecoToggleBtn;
+  if (!button) return;
+  const span = button.querySelector('span');
+  const label = ecoPreference === 'auto' ? 'FX: AUTO' : (ecoPreference === 'on' ? 'FX: LOW' : 'FX: FULL');
+  if (span) span.textContent = label;
+  button.classList.toggle('eco-active', ecoMode);
+  button.setAttribute('aria-pressed', ecoMode ? 'true' : 'false');
+  button.setAttribute('aria-label', `Visual effects mode: ${ecoPreference === 'auto' ? 'automatic' : (ecoPreference === 'on' ? 'reduced' : 'full')}`);
+}
+
+function scheduleEcoAutoDetect(delay = 700) {
+  if (!FEATURES.ecoMode || ecoPreference !== 'auto') return;
+  const token = ++ecoMeasureToken;
+  clearTimeout(ecoResizeTimer);
+  ecoResizeTimer = setTimeout(() => {
+    if (token !== ecoMeasureToken || ecoPreference !== 'auto') return;
+    if (prefersReducedMotion.matches) { setEcoMode(true); return; }
+    if (document.visibilityState === 'hidden') return;
+
+    const start = performance.now();
+    let frames = 0;
+    const sampleMs = 1800;
+    function tick(now) {
+      if (token !== ecoMeasureToken || ecoPreference !== 'auto') return;
+      frames += 1;
+      const elapsed = now - start;
+      if (elapsed < sampleMs) { requestAnimationFrame(tick); return; }
+      const fps = frames / Math.max(0.001, elapsed / 1000);
+      setEcoMode(fps < 42);
+    }
+    requestAnimationFrame(tick);
+  }, delay);
+}
+
+function cycleEcoPreference() {
+  ecoPreference = ecoPreference === 'auto' ? 'on' : (ecoPreference === 'on' ? 'off' : 'auto');
+  safeStorageSet(STORAGE_KEYS.eco, ecoPreference);
+  ecoMeasureToken += 1;
+  if (ecoPreference === 'on') setEcoMode(true);
+  else if (ecoPreference === 'off') setEcoMode(false);
+  else scheduleEcoAutoDetect(150);
+  updateEcoToggleLabel();
+}
+
+function initEcoMode() {
+  if (!FEATURES.ecoMode) {
+    if (els.ecoToggleBtn) els.ecoToggleBtn.hidden = true;
+    return;
+  }
+  const saved = safeStorageGet(STORAGE_KEYS.eco, 'auto');
+  ecoPreference = ['auto', 'on', 'off'].includes(saved) ? saved : 'auto';
+  els.ecoToggleBtn?.addEventListener('click', cycleEcoPreference);
+  if (ecoPreference === 'on') setEcoMode(true);
+  else if (ecoPreference === 'off') setEcoMode(false);
+  else scheduleEcoAutoDetect(1200);
+  updateEcoToggleLabel();
+
+  window.addEventListener('resize', () => {
+    if (ecoPreference === 'auto') scheduleEcoAutoDetect(850);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && ecoPreference === 'auto') scheduleEcoAutoDetect(350);
+  });
+}
+
+function applyFeatureVisibility() {
+  const showExternal = Boolean(FEATURES.fixedLogistics || FEATURES.marketScan);
+  if (els.externalLogisticsPanel) els.externalLogisticsPanel.hidden = !showExternal;
+  if (els.fixedLogisticsSection) els.fixedLogisticsSection.hidden = !FEATURES.fixedLogistics;
+  if (els.marketScanSection) els.marketScanSection.hidden = !FEATURES.marketScan;
+  if (els.newswirePanel) els.newswirePanel.hidden = !FEATURES.newswire;
+  if (els.ecoToggleBtn) els.ecoToggleBtn.hidden = !FEATURES.ecoMode;
+
+  if (els.externalTargetsMeta) {
+    const targetParts = [];
+    if (FEATURES.fixedLogistics) targetParts.push(`${REMOTE_FACILITIES.length} FIXED LINKS`);
+    if (FEATURES.marketScan) targetParts.push(`${MARKET_SCAN.length} MARKET CHANNELS`);
+    els.externalTargetsMeta.textContent = targetParts.join(' + ') || 'NO TARGETS';
+  }
+  if (els.externalSystemsMeta) {
+    const systems = FEATURES.fixedLogistics ? REMOTE_FACILITIES.map(f => f.system.toUpperCase()) : [];
+    if (FEATURES.marketScan) systems.push('ALL REGISTERED BASES');
+    els.externalSystemsMeta.textContent = systems.join(' // ') || 'NONE';
+  }
+  if (els.externalModeMeta) {
+    const modes = [];
+    if (FEATURES.fixedLogistics) modes.push('FIXED LOGISTICS');
+    if (FEATURES.marketScan) modes.push('REGIONAL MARKET SCAN');
+    els.externalModeMeta.textContent = modes.join(' + ') || 'STANDBY';
+  }
+
+  if (els.shipyardControl) {
+    els.shipyardControl.hidden = !FEATURES.capitalShipyard;
+  }
+}
+
 function saveViewPreferences() {
   safeStorageSet(STORAGE_KEYS.view, {
     search: els.search?.value || '',
     role: els.roleFilter?.value || 'all',
     sortCol,
-    sortAsc
+    sortAsc,
+    marketSort
   });
 }
 
@@ -1745,6 +2121,7 @@ function restoreViewPreferences() {
   if (els.roleFilter && validRoles.has(saved?.role)) els.roleFilter.value = saved.role;
   if (validColumns.has(saved?.sortCol)) sortCol = saved.sortCol;
   if (typeof saved?.sortAsc === 'boolean') sortAsc = saved.sortAsc;
+  if (['price', 'stock'].includes(saved?.marketSort)) marketSort = saved.marketSort;
 }
 
 function itemName(item) { return item?.name || item?.item_name || item?.nickname || String(item?.id || 'Unknown Asset'); }
@@ -2131,6 +2508,7 @@ function buildIndustrialNewswireMessages() {
 }
 
 function updateNetworkFeed(mode = 'live', errorMessage = '') {
+  if (!FEATURES.newswire) return;
   if (!tickerContainer) return;
   if (mode === 'loading') {
     updateTickerSlot(0, { tag: 'BMM NEWSWIRE', text: 'TELEMETRY BURST IN PROGRESS // MARKET DESKS STANDING BY', tone: 'warn' });
@@ -2343,7 +2721,7 @@ function analyzeRecipe(recipe) {
 function renderProductionModules() {
   if (!els.productionGrid) return;
   if (!Array.isArray(RECIPES) || !RECIPES.length) {
-    els.productionGrid.innerHTML = '<div class="production-card"><div class="production-title">No recipes configured</div></div>';
+    els.productionGrid.innerHTML = '<div class="feature-empty production-empty">PRODUCTION MODULES STANDBY<small>NO RECIPES CONFIGURED</small></div>';
     return;
   }
 
@@ -2419,7 +2797,13 @@ function shipyardTrafficState(value) {
 
 function renderShipyardControl() {
   const mount = els.shipyardControl;
-  if (!mount || !CAPITAL_SHIPYARD) return;
+  if (!mount) return;
+  if (!FEATURES.capitalShipyard) { mount.hidden = true; return; }
+  mount.hidden = false;
+  if (!CAPITAL_SHIPYARD) {
+    mount.innerHTML = '<div class="feature-empty shipyard-empty">CAPITAL SHIPYARD STANDBY<small>NO SHIPYARD CONFIGURATION LOADED</small></div>';
+    return;
+  }
 
   mount.classList.toggle('stale', dataIsStale);
 
@@ -2547,93 +2931,276 @@ function supplierStateText(item) {
   return q > 5000 ? 'SUPPLY STABLE' : (q > 0 ? 'SUPPLY LOW' : 'DEPLETED');
 }
 
-function renderSupplier() {
-  const supplierGrid = document.getElementById('supplierGrid');
-  if (!supplierGrid) return;
+function marketBaseSystem(base) {
+  const value = base?.system_name ?? base?.system ?? base?.systemName;
+  return String(value || 'UNKNOWN SYSTEM').trim() || 'UNKNOWN SYSTEM';
+}
 
-  const readableCount = REMOTE_FACILITIES.filter(facility => {
-    const base = remoteBases.get(facility.key);
-    return base && Array.isArray(base.shop_items);
-  }).length;
-  const liveCount = dataIsStale ? 0 : readableCount;
+function validMarketPrice(item) {
+  const price = priceBuy(item);
+  return Number.isFinite(price) && price > 0 ? price : null;
+}
 
-  if (dataIsStale && readableCount > 0) {
-    const staleTime = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'UNKNOWN';
-    setSupplierLinkState('stale', `CACHE ONLY · LAST SYNC ${staleTime}`);
-  } else if (liveCount === REMOTE_FACILITIES.length) {
-    setSupplierLinkState('online', `${liveCount}/${REMOTE_FACILITIES.length} SAT-LINKS ACTIVE`);
-  } else if (liveCount > 0) {
-    setSupplierLinkState('degraded', `${liveCount}/${REMOTE_FACILITIES.length} SAT-LINKS ACTIVE`);
-  } else {
-    setSupplierLinkState('offline', `0/${REMOTE_FACILITIES.length} SAT-LINKS ACTIVE`);
+function updateMarketSortButtons() {
+  els.marketSortButtons?.forEach(button => {
+    const active = button.dataset.marketSort === marketSort;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+}
+
+function renderMarketScan() {
+  const grid = els.marketScanGrid;
+  if (!grid || !FEATURES.marketScan) return { totalOffers: 0, uniqueBases: 0, pending: false };
+
+  updateMarketSortButtons();
+
+  if (!MARKET_SCAN.length) {
+    if (els.marketScanMeta) els.marketScanMeta.textContent = 'NO CHANNELS CONFIGURED';
+    grid.innerHTML = '<div class="supplier-empty">REGIONAL MARKET SCAN STANDBY<small>NO SCAN TARGETS CONFIGURED</small></div>';
+    return { totalOffers: 0, uniqueBases: 0, pending: false };
   }
 
-  supplierGrid.innerHTML = REMOTE_FACILITIES.map(facility => {
-    const base = remoteBases.get(facility.key);
-    const baseReadable = Boolean(base && Array.isArray(base.shop_items));
-    const baseLive = baseReadable && !dataIsStale;
-    const baseStale = baseReadable && dataIsStale;
+  if (!Array.isArray(allBases) || !allBases.length) {
+    if (els.marketScanMeta) els.marketScanMeta.textContent = 'AWAITING FIRST TELEMETRY BURST';
+    grid.innerHTML = '<div class="supplier-empty">MARKET SCAN PENDING<small>AWAITING FIRST TELEMETRY BURST</small></div>';
+    return { totalOffers: 0, uniqueBases: 0, pending: true };
+  }
 
-    const rowData = facility.targets.map(targetName => {
-      const item = baseReadable ? base.shop_items.find(entry => commodityKey(entry) === targetName) : null;
-      const q = item ? quantity(item) : 0;
-      const price = item ? priceBuy(item) : null;
-      const isStatusTarget = keyFromName(targetName) === keyFromName(facility.statusTarget);
-      const signalState = supplierItemState(item);
-      const state = baseStale ? 'stale' : (isStatusTarget ? signalState : 'info');
-      const stateText = baseStale
-        ? (isStatusTarget ? 'CACHED STATUS' : 'CACHED REFERENCE')
-        : (isStatusTarget ? supplierStateText(item) : (baseLive ? 'REFERENCE STOCK' : 'DATA UNAVAILABLE'));
-      const title = CANONICAL_NAMES[targetName] || displayRecipeName(targetName);
-      const fallbackMax = BAR_MAX_FALLBACKS[targetName] || 50000;
-      const supplierMax = item ? (maxStock(item) || fallbackMax) : fallbackMax;
-      const fillPct = baseReadable && supplierMax > 0 ? Math.min(100, Math.max(0, (q / supplierMax) * 100)) : 0;
-      return { q, price, state, signalState, stateText, title, supplierMax, fillPct, isStatusTarget };
-    });
+  const sellerKeys = new Set();
+  let totalOffers = 0;
+  const cards = MARKET_SCAN.map(targetName => {
+    const key = keyFromName(targetName);
+    const priced = [];
+    const unlisted = [];
 
-    const primarySignal = rowData.find(row => row.isStatusTarget);
-    const facilityState = baseStale ? 'stale' : (baseLive && primarySignal ? primarySignal.signalState : 'critical');
-    const linkClass = baseStale ? 'stale' : (baseLive ? 'online' : 'offline');
-    const linkText = baseStale ? 'STALE DATA' : (baseLive ? 'LINK ACTIVE' : 'LINK LOST');
+    for (const base of allBases) {
+      if (!base || !Array.isArray(base.shop_items)) continue;
+      if (normalize(base.name) === BASE_NAME || normalize(base.nickname) === BASE_NAME) continue;
+      const item = base.shop_items.find(entry => commodityKey(entry) === key);
+      if (!item) continue;
 
-    const rows = rowData.map(row => `
-      <div class="supplier-commodity-row ${row.state}">
-        <div class="supplier-commodity-name">
-          <strong>${escapeHTML(row.title)}</strong>
-          <small class="${row.state}">${escapeHTML(row.stateText)}</small>
-        </div>
-        <div class="supplier-commodity-metric stock">
-          <small>Stock</small>
-          <strong class="scramble-supplier" data-val="${baseReadable ? number(row.q) : 'N/A'}"></strong>
-        </div>
-        <div class="supplier-commodity-metric price">
-          <small>Unit Buy</small>
-          <strong class="scramble-supplier" data-val="${baseReadable ? formatCurrency(row.price) : 'N/A'}"></strong>
-        </div>
-        <div class="supplier-progress-wrap" data-tooltip="${row.fillPct.toFixed(0)}% OF MAX ${number(row.supplierMax)}">
-          <div class="supplier-progress-fill ${row.state}" style="width:${row.fillPct}%;"></div>
-        </div>
-      </div>`).join('');
+      const total = quantity(item);
+      const reserve = Math.max(0, minStock(item) || 0);
+      const sellable = Math.max(0, total - reserve);
+      if (sellable <= 0) continue;
+
+      const name = String(base.name || base.nickname || 'UNKNOWN BASE').trim() || 'UNKNOWN BASE';
+      const baseKey = normalize(name);
+      const offer = {
+        baseKey,
+        name,
+        system: marketBaseSystem(base),
+        q: sellable,
+        total,
+        reserve,
+        price: validMarketPrice(item)
+      };
+
+      if (offer.price === null) unlisted.push(offer);
+      else {
+        priced.push(offer);
+        sellerKeys.add(baseKey);
+        totalOffers += 1;
+      }
+    }
+
+    const bestPrice = priced.length ? Math.min(...priced.map(offer => offer.price)) : null;
+    if (marketSort === 'stock') {
+      priced.sort((a, b) => (b.q - a.q) || (a.price - b.price) || a.name.localeCompare(b.name));
+    } else {
+      priced.sort((a, b) => (a.price - b.price) || (b.q - a.q) || a.name.localeCompare(b.name));
+    }
+    unlisted.sort((a, b) => (b.q - a.q) || a.name.localeCompare(b.name));
+
+    let visiblePriced = priced.slice(0, 6);
+    if (marketSort === 'stock' && bestPrice !== null) {
+      const bestOffer = priced.find(offer => offer.price === bestPrice);
+      if (bestOffer && !visiblePriced.includes(bestOffer)) {
+        visiblePriced = visiblePriced.length < 6
+          ? [...visiblePriced, bestOffer]
+          : [...visiblePriced.slice(0, 5), bestOffer];
+      }
+    }
+    const remainingSlots = Math.max(0, 6 - visiblePriced.length);
+    const visibleUnlisted = unlisted.slice(0, remainingSlots);
+    const allVisible = [...visiblePriced, ...visibleUnlisted];
+    const maxQ = Math.max(0, ...allVisible.map(offer => offer.q));
+
+    return { targetName, priced, unlisted, bestPrice, allVisible, maxQ };
+  });
+
+  if (els.marketScanMeta) {
+    const cachePrefix = dataIsStale ? 'CACHE ONLY · ' : '';
+    els.marketScanMeta.textContent = `${cachePrefix}${sellerKeys.size} BASES · ${totalOffers} PRICED OFFERS`;
+  }
+
+  grid.innerHTML = cards.map(card => {
+    const title = CANONICAL_NAMES[keyFromName(card.targetName)] || displayRecipeName(card.targetName);
+    const state = dataIsStale ? 'stale' : (card.priced.length ? 'ok' : (card.unlisted.length ? 'low' : 'critical'));
+    const rows = card.allVisible.map(offer => {
+      const isUnlisted = offer.price === null;
+      const isBest = !isUnlisted && card.bestPrice !== null && offer.price === card.bestPrice;
+      const fillPct = card.maxQ > 0 ? Math.max(3, Math.min(100, (offer.q / card.maxQ) * 100)) : 0;
+      const rowClass = dataIsStale ? 'stale' : (isUnlisted ? 'unlisted' : 'info');
+      const note = `${offer.system.toUpperCase()}${isBest ? ' · BEST PRICE' : ''}${isUnlisted ? ' · STOCK DETECTED / NOT LISTED' : ''}`;
+      const priceText = isUnlisted ? 'NOT LISTED' : formatCurrency(offer.price);
+      return `
+        <div class="supplier-commodity-row ${rowClass}">
+          <div class="supplier-commodity-name">
+            <strong>${escapeHTML(offer.name)}</strong>
+            <small class="${rowClass}">${escapeHTML(note)}</small>
+          </div>
+          <div class="supplier-commodity-metric stock">
+            <small>For Sale</small>
+            <strong class="scramble-market" data-val="${number(offer.q)}"></strong>
+          </div>
+          <div class="supplier-commodity-metric price">
+            <small>Unit Price</small>
+            <strong class="scramble-market${isUnlisted ? ' unlisted' : ''}" data-val="${escapeHTML(priceText)}"></strong>
+          </div>
+          <div class="supplier-progress-wrap" data-tooltip="${number(offer.q)} FOR SALE // ${number(offer.total)} TOTAL · ${number(offer.reserve)} BASE RESERVE">
+            <div class="supplier-progress-fill ${dataIsStale ? 'stale' : (isUnlisted ? 'low' : 'info')}" style="width:${fillPct}%;"></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    const empty = '<div class="supplier-commodity-row critical"><div class="supplier-commodity-name"><strong>NO SELLERS FOUND</strong><small class="critical">NO BASE ABOVE ITS MINIMUM RESERVE</small></div></div>';
+    const pricedCount = card.priced.length;
+    const unlistedCount = card.unlisted.length;
+    const linkClass = dataIsStale ? 'stale' : (pricedCount ? 'online' : (unlistedCount ? 'degraded' : 'offline'));
+    const linkText = dataIsStale ? 'STALE DATA' : (pricedCount ? 'SCAN LIVE' : (unlistedCount ? 'UNLISTED STOCK' : 'NO SUPPLY'));
 
     return `
-      <div class="supplier-card remote-facility-card ${facilityState}">
+      <div class="supplier-card market-card ${state}">
         <div class="supplier-scanline"></div>
         <div class="remote-facility-head">
           <div>
             <div class="remote-card-meta">
-              <span class="remote-badge">REMOTE FACILITY</span>
-              <span class="remote-badge">${escapeHTML(facility.system.toUpperCase())}</span>
+              <span class="remote-badge">MARKET SCAN</span>
+              <span class="remote-badge">${pricedCount} OFFER${pricedCount === 1 ? '' : 'S'}</span>
             </div>
-            <div class="supplier-title">${escapeHTML(facility.name)}</div>
-            <div class="remote-facility-subline">PROCUREMENT RADAR // ${facility.targets.length} COMMODITY CHANNELS</div>
+            <div class="supplier-title">${escapeHTML(String(title).toUpperCase())}</div>
+            <div class="remote-facility-subline">${marketSort === 'price' ? 'SORTED BY BEST PRICE' : 'SORTED BY AVAILABLE STOCK'} // TOP ${Math.min(6, card.allVisible.length)} RESULTS</div>
           </div>
           <span class="remote-link-pill ${linkClass}">${linkText}</span>
         </div>
-        <div class="supplier-commodity-list">${rows}</div>
+        <div class="supplier-commodity-list">${rows || empty}</div>
       </div>`;
   }).join('');
 
-  supplierGrid.querySelectorAll('.scramble-supplier').forEach(el => scrambleText(el, el.dataset.val));
+  grid.querySelectorAll('.scramble-market').forEach(el => scrambleText(el, el.dataset.val));
+  return { totalOffers, uniqueBases: sellerKeys.size, pending: false };
+}
+
+function renderSupplier() {
+  const supplierGrid = document.getElementById('supplierGrid');
+  if (!els.externalLogisticsPanel || (!FEATURES.fixedLogistics && !FEATURES.marketScan)) return;
+
+  let readableCount = 0;
+  let liveCount = 0;
+
+  if (FEATURES.fixedLogistics && supplierGrid) {
+    readableCount = REMOTE_FACILITIES.filter(facility => {
+      const base = remoteBases.get(facility.key);
+      return base && Array.isArray(base.shop_items);
+    }).length;
+    liveCount = dataIsStale ? 0 : readableCount;
+
+    if (!REMOTE_FACILITIES.length) {
+      supplierGrid.innerHTML = '<div class="supplier-empty">FIXED LOGISTICS STANDBY<small>NO REMOTE FACILITIES CONFIGURED</small></div>';
+    } else {
+      supplierGrid.innerHTML = REMOTE_FACILITIES.map(facility => {
+        const base = remoteBases.get(facility.key);
+        const baseReadable = Boolean(base && Array.isArray(base.shop_items));
+        const baseLive = baseReadable && !dataIsStale;
+        const baseStale = baseReadable && dataIsStale;
+
+        const rowData = facility.targets.map(targetName => {
+          const item = baseReadable ? base.shop_items.find(entry => commodityKey(entry) === targetName) : null;
+          const q = item ? quantity(item) : 0;
+          const price = item ? priceBuy(item) : null;
+          const isStatusTarget = keyFromName(targetName) === keyFromName(facility.statusTarget);
+          const signalState = supplierItemState(item);
+          const state = baseStale ? 'stale' : (isStatusTarget ? signalState : 'info');
+          const stateText = baseStale
+            ? (isStatusTarget ? 'CACHED STATUS' : 'CACHED REFERENCE')
+            : (isStatusTarget ? supplierStateText(item) : (baseLive ? 'REFERENCE STOCK' : 'DATA UNAVAILABLE'));
+          const title = CANONICAL_NAMES[targetName] || displayRecipeName(targetName);
+          const fallbackMax = BAR_MAX_FALLBACKS[targetName] || 50000;
+          const supplierMax = item ? (maxStock(item) || fallbackMax) : fallbackMax;
+          const fillPct = baseReadable && supplierMax > 0 ? Math.min(100, Math.max(0, (q / supplierMax) * 100)) : 0;
+          return { q, price, state, signalState, stateText, title, supplierMax, fillPct, isStatusTarget };
+        });
+
+        const primarySignal = rowData.find(row => row.isStatusTarget);
+        const facilityState = baseStale ? 'stale' : (baseLive && primarySignal ? primarySignal.signalState : 'critical');
+        const linkClass = baseStale ? 'stale' : (baseLive ? 'online' : 'offline');
+        const linkText = baseStale ? 'STALE DATA' : (baseLive ? 'LINK ACTIVE' : 'LINK LOST');
+
+        const rows = rowData.map(row => `
+          <div class="supplier-commodity-row ${row.state}">
+            <div class="supplier-commodity-name">
+              <strong>${escapeHTML(row.title)}</strong>
+              <small class="${row.state}">${escapeHTML(row.stateText)}</small>
+            </div>
+            <div class="supplier-commodity-metric stock">
+              <small>Stock</small>
+              <strong class="scramble-supplier" data-val="${baseReadable ? number(row.q) : 'N/A'}"></strong>
+            </div>
+            <div class="supplier-commodity-metric price">
+              <small>Unit Buy</small>
+              <strong class="scramble-supplier" data-val="${baseReadable ? formatCurrency(row.price) : 'N/A'}"></strong>
+            </div>
+            <div class="supplier-progress-wrap" data-tooltip="${row.fillPct.toFixed(0)}% OF MAX ${number(row.supplierMax)}">
+              <div class="supplier-progress-fill ${row.state}" style="width:${row.fillPct}%;"></div>
+            </div>
+          </div>`).join('');
+
+        return `
+          <div class="supplier-card remote-facility-card ${facilityState}">
+            <div class="supplier-scanline"></div>
+            <div class="remote-facility-head">
+              <div>
+                <div class="remote-card-meta">
+                  <span class="remote-badge">REMOTE FACILITY</span>
+                  <span class="remote-badge">${escapeHTML(facility.system.toUpperCase())}</span>
+                </div>
+                <div class="supplier-title">${escapeHTML(facility.name)}</div>
+                <div class="remote-facility-subline">PROCUREMENT RADAR // ${facility.targets.length} COMMODITY CHANNELS</div>
+              </div>
+              <span class="remote-link-pill ${linkClass}">${linkText}</span>
+            </div>
+            <div class="supplier-commodity-list">${rows}</div>
+          </div>`;
+      }).join('');
+      supplierGrid.querySelectorAll('.scramble-supplier').forEach(el => scrambleText(el, el.dataset.val));
+    }
+
+    if (els.fixedLogisticsMeta) {
+      const prefix = dataIsStale ? 'CACHE ONLY · ' : '';
+      els.fixedLogisticsMeta.textContent = `${prefix}${readableCount}/${REMOTE_FACILITIES.length} LINKS READABLE`;
+    }
+  }
+
+  const marketStats = FEATURES.marketScan ? renderMarketScan() : { totalOffers: 0, uniqueBases: 0, pending: false };
+
+  if (dataIsStale && lastLoaded) {
+    const staleTime = lastLoaded.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    setSupplierLinkState('stale', `CACHE ONLY · LAST SYNC ${staleTime}`);
+    return;
+  }
+
+  const fixedComplete = !FEATURES.fixedLogistics || (REMOTE_FACILITIES.length > 0 && liveCount === REMOTE_FACILITIES.length);
+  const marketReady = !FEATURES.marketScan || (!marketStats.pending && Array.isArray(allBases) && allBases.length > 0);
+  const summary = [];
+  if (FEATURES.fixedLogistics) summary.push(`${liveCount}/${REMOTE_FACILITIES.length} LINKS`);
+  if (FEATURES.marketScan) summary.push(`${marketStats.totalOffers} OFFERS`);
+
+  if (!marketReady) setSupplierLinkState('polling', 'REGIONAL SCAN PENDING');
+  else if (fixedComplete && (!FEATURES.marketScan || marketStats.totalOffers > 0)) setSupplierLinkState('online', summary.join(' · '));
+  else if ((FEATURES.fixedLogistics && liveCount > 0) || (FEATURES.marketScan && marketStats.totalOffers > 0)) setSupplierLinkState('degraded', summary.join(' · '));
+  else setSupplierLinkState('offline', summary.join(' · ') || 'UPLINK STANDBY');
 }
 
 function feedstockAnalysis(item) {
@@ -2799,8 +3366,8 @@ function renderManifest() {
 
 function renderAll() {
   renderOverview();
-  renderShipyardControl();
-  renderSupplier();
+  if (FEATURES.capitalShipyard) renderShipyardControl();
+  if (FEATURES.fixedLogistics || FEATURES.marketScan) renderSupplier();
   renderProductionModules();
   renderManifest();
   updateBaseTelemetry();
@@ -2828,7 +3395,7 @@ async function loadData() {
   document.body.classList.add('syncing');
   setTelemetryState('POLLING', 'warn');
   setFooterConnection('SYNCING', 'warn');
-  setSupplierLinkState('polling', 'SAT-LINK SCANNING');
+  if (FEATURES.fixedLogistics || FEATURES.marketScan) setSupplierLinkState('polling', 'SAT-LINK SCANNING');
   updateNetworkFeed('loading');
 
   if (els.liveStatus) {
@@ -2864,6 +3431,7 @@ async function loadData() {
     if (!Array.isArray(nextRhwBase.shop_items)) throw new Error('INVALID RHW SHOP DATA.');
 
     rhwBase = nextRhwBase;
+    allBases = data;
     remoteBases = nextRemoteBases;
     items = rhwBase.shop_items.map(item => ({ ...item }));
     rebuildItemCaches();
@@ -2891,8 +3459,8 @@ async function loadData() {
     lastSyncError = String(error?.message || 'UNKNOWN TELEMETRY ERROR');
     setTelemetryState(dataIsStale ? 'STALE' : 'ERROR', dataIsStale ? 'warn' : 'danger');
     setFooterConnection(dataIsStale ? 'CACHE' : 'FAILED', dataIsStale ? 'warn' : 'danger');
-    renderShipyardControl();
-    renderSupplier();
+    if (FEATURES.capitalShipyard) renderShipyardControl();
+    if (FEATURES.fixedLogistics || FEATURES.marketScan) renderSupplier();
     updateNetworkFeed('error', lastSyncError);
 
     if (els.liveStatus) {
@@ -2937,13 +3505,24 @@ els.roleSegmentButtons.forEach(button => button.addEventListener('click', () => 
 }));
 els.refreshBtn?.addEventListener('click', loadData);
 els.headerRefreshBtn?.addEventListener('click', loadData);
+els.marketSortButtons?.forEach(button => button.addEventListener('click', () => {
+  const nextSort = button.dataset.marketSort;
+  if (!['price', 'stock'].includes(nextSort) || nextSort === marketSort) return;
+  marketSort = nextSort;
+  saveViewPreferences();
+  updateMarketSortButtons();
+  renderMarketScan();
+}));
 els.tableHeaders.forEach(th => {
   th.addEventListener('click', handleSort);
   th.addEventListener('keydown', handleSortKeydown);
 });
 restoreViewPreferences();
+applyFeatureVisibility();
+initEcoMode();
 updateRoleSegments();
 updateSortArrows();
+updateMarketSortButtons();
 
 loadData();
 </script>
