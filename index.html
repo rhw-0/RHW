@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Resolution Heavy Works live logistics and production command dashboard." />
-  <title>RHW Command Dashboard · V3.3</title>
+  <title>RHW Command Dashboard · V3.4</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -497,9 +497,10 @@ h1 {
     .sell { color: #f3e0b8; background: rgba(210, 173, 103, 0.15); border-color: rgba(210, 173, 103, 0.48); }
     .both { color: #efe1ff; background: rgba(176, 103, 226, 0.16); border-color: rgba(176, 103, 226, 0.48); }
     .confiscated-pill { color: #f3e5f5; background: rgba(156, 39, 176, 0.16); border-color: rgba(156, 39, 176, 0.48); }
+    .shipyard-pill { color: #d9e8ff; background: rgba(78, 121, 184, 0.16); border-color: rgba(100, 151, 224, 0.52); }
 
-    #itemsBody, #productionGrid, #supplierGrid { transition: opacity 0.3s ease, filter 0.3s ease; }
-    body.syncing #itemsBody, body.syncing #productionGrid, body.syncing #supplierGrid { opacity: 0.3; filter: blur(4px) grayscale(50%); pointer-events: none; }
+    #itemsBody, #productionGrid, #supplierGrid, #shipyardControl { transition: opacity 0.3s ease, filter 0.3s ease; }
+    body.syncing #itemsBody, body.syncing #productionGrid, body.syncing #supplierGrid, body.syncing #shipyardControl { opacity: 0.3; filter: blur(4px) grayscale(50%); pointer-events: none; }
     .error-box { display: none; padding: 10px 20px; border-bottom: 1px solid rgba(165, 42, 42, 0.55); background: rgba(165, 42, 42, 0.12); color: #ffbdbd; font-family: var(--font-tech); font-size: 12px; margin: 0; }
 
     .manifest-panel { position: relative; overflow: hidden; }
@@ -574,7 +575,7 @@ h1 {
 
 
     /* =========================================
-       V3.3 COMPACT DUAL-FACILITY UPLINK
+       V3.4 COMPACT DUAL-FACILITY UPLINK
        ========================================= */
     .remote-panel .remote-panel-head { padding: 13px 18px; }
     .remote-panel .remote-panel-title { font-size: 22px; }
@@ -739,7 +740,258 @@ h1 {
     .supplier-commodity-name small.stale { color: #d2a04d; }
     .supplier-progress-fill.stale { background: var(--warn); box-shadow: 0 0 8px rgba(184,134,55,0.34); }
 
+    /* =========================================
+       V3.4 CAPITAL SHIPYARD CONTROL
+       NEUTRAL FRAME + INDEPENDENT STATUS PANELS
+       ========================================= */
+    .capital-shipyard-control {
+      position: relative;
+      margin: 0;
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.055);
+      background:
+        linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(10,12,15,0.74), rgba(5,6,8,0.96));
+      background-size: 22px 22px, 22px 22px, auto;
+      box-shadow: inset 0 0 28px rgba(255,255,255,0.012), 0 12px 28px rgba(0,0,0,0.24);
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+      overflow: hidden;
+    }
+    .capital-shipyard-control.stale { filter: saturate(0.72); opacity: 0.88; }
+
+    .shipyard-control-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      padding: 18px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      background: rgba(0,0,0,0.40);
+      box-shadow: inset 0 -1px 0 rgba(255,255,255,0.012);
+    }
+    .shipyard-heading-copy { min-width: 0; }
+    .shipyard-control-title {
+      color: #e0e4e7;
+      font-family: var(--font-title);
+      font-size: 22px;
+      line-height: 1;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(255,255,255,0.06);
+    }
+    .shipyard-control-subline {
+      margin-top: 5px;
+      color: var(--muted);
+      font-family: var(--font-tech);
+      font-size: 9px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+    }
+    .shipyard-control-states { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+    .shipyard-summary-badge,
+    .shipyard-panel-state {
+      --signal: #8ca1ad;
+      --signal-rgb: 140, 161, 173;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border: 1px solid rgba(var(--signal-rgb), 0.54);
+      color: var(--signal);
+      background: rgba(var(--signal-rgb), 0.095);
+      font-family: var(--font-tech);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      white-space: nowrap;
+      box-shadow: inset 0 0 12px rgba(var(--signal-rgb), 0.05);
+    }
+    .shipyard-summary-badge::before,
+    .shipyard-panel-state::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--signal);
+      box-shadow: 0 0 8px rgba(var(--signal-rgb), 0.72);
+    }
+    .state-critical { --signal: #f87171; --signal-rgb: 248, 113, 113; }
+    .state-low { --signal: #fbbf24; --signal-rgb: 251, 191, 36; }
+    .state-ok { --signal: #4ade80; --signal-rgb: 74, 222, 128; }
+    .capital-shipyard-control.stale .shipyard-summary-badge:last-child::after { content: ' · CACHED'; color: #d2a04d; }
+
+    .shipyard-control-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+      gap: 12px;
+      padding: 12px;
+    }
+    .shipyard-control-section {
+      --panel-signal: #8ca1ad;
+      --panel-signal-rgb: 140, 161, 173;
+      min-width: 0;
+      padding: 12px 14px 13px;
+      border: 1px solid rgba(var(--panel-signal-rgb), 0.27);
+      border-top: 2px solid var(--panel-signal);
+      background:
+        linear-gradient(90deg, rgba(var(--panel-signal-rgb), 0.045), rgba(0,0,0,0.07) 38%, rgba(0,0,0,0.15)),
+        rgba(5,7,9,0.56);
+      box-shadow: inset 0 0 18px rgba(var(--panel-signal-rgb), 0.025);
+      transition: border-color 0.22s ease, background 0.22s ease;
+    }
+    .shipyard-control-section.state-critical { --panel-signal: #f87171; --panel-signal-rgb: 248, 113, 113; }
+    .shipyard-control-section.state-low { --panel-signal: #fbbf24; --panel-signal-rgb: 251, 191, 36; }
+    .shipyard-control-section.state-ok { --panel-signal: #4ade80; --panel-signal-rgb: 74, 222, 128; }
+    .shipyard-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+      padding: 0 0 7px 9px;
+      border-bottom: 1px dashed rgba(var(--panel-signal-rgb), 0.23);
+      border-left: 2px solid var(--panel-signal);
+    }
+    .shipyard-section-title {
+      color: #e6ebee;
+      font-family: var(--font-tech);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .shipyard-panel-state {
+      --signal: var(--panel-signal);
+      --signal-rgb: var(--panel-signal-rgb);
+      padding: 3px 7px;
+      font-size: 7px;
+    }
+
+    .shipyard-component-head,
+    .shipyard-component-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 92px 104px 74px;
+      gap: 10px;
+      align-items: center;
+    }
+    .shipyard-component-head {
+      padding: 0 8px 5px;
+      color: rgba(178,190,197,0.62);
+      font-family: var(--font-tech);
+      font-size: 7px;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .shipyard-component-head span:nth-child(n+2) { text-align: right; }
+    .shipyard-component-row {
+      --row-signal: #8ca1ad;
+      --row-signal-rgb: 140, 161, 173;
+      min-height: 31px;
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      border-left: 2px solid rgba(var(--row-signal-rgb), 0.55);
+      background: linear-gradient(90deg, rgba(var(--row-signal-rgb), 0.045), rgba(0,0,0,0.15));
+    }
+    .shipyard-component-row.component-critical { --row-signal: #f87171; --row-signal-rgb: 248, 113, 113; }
+    .shipyard-component-row.component-low { --row-signal: #fbbf24; --row-signal-rgb: 251, 191, 36; }
+    .shipyard-component-row.component-ok { --row-signal: #4ade80; --row-signal-rgb: 74, 222, 128; }
+    .shipyard-component-row:last-child { border-bottom: 0; }
+    .shipyard-component-name {
+      min-width: 0;
+      overflow: hidden;
+      color: #dce2e5;
+      font-family: var(--font-main);
+      font-size: 12px;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .shipyard-component-required,
+    .shipyard-component-stock,
+    .shipyard-component-coverage {
+      color: #d7bf79;
+      font-family: var(--font-tech);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .shipyard-component-stock { color: #eef1f3; font-weight: 700; }
+    .shipyard-component-coverage { color: var(--row-signal); font-weight: 700; text-shadow: 0 0 8px rgba(var(--row-signal-rgb), 0.17); }
+    .shipyard-component-row.bottleneck {
+      background: linear-gradient(90deg, rgba(var(--row-signal-rgb), 0.14), rgba(0,0,0,0.15));
+      box-shadow: inset 3px 0 12px rgba(var(--row-signal-rgb), 0.07);
+    }
+    .shipyard-component-row.bottleneck .shipyard-component-name { color: var(--row-signal); }
+    .shipyard-component-row.bottleneck .shipyard-component-name::after {
+      content: 'BOTTLENECK';
+      display: block;
+      margin-top: 2px;
+      color: rgba(var(--row-signal-rgb), 0.80);
+      font-family: var(--font-tech);
+      font-size: 7px;
+      letter-spacing: 0.09em;
+    }
+
+    .hull-registry-list { display: grid; gap: 8px; }
+    .hull-registry-row {
+      --hull-signal: #8ca1ad;
+      --hull-signal-rgb: 140, 161, 173;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 76px 144px;
+      gap: 10px;
+      align-items: center;
+      min-height: 54px;
+      padding: 9px 10px;
+      border: 1px solid rgba(var(--hull-signal-rgb), 0.20);
+      border-left: 3px solid var(--hull-signal);
+      background: linear-gradient(90deg, rgba(var(--hull-signal-rgb), 0.065), rgba(0,0,0,0.17));
+    }
+    .hull-registry-row.hull-critical { --hull-signal: #f87171; --hull-signal-rgb: 248, 113, 113; }
+    .hull-registry-row.hull-low { --hull-signal: #fbbf24; --hull-signal-rgb: 251, 191, 36; }
+    .hull-registry-row.hull-ok { --hull-signal: #4ade80; --hull-signal-rgb: 74, 222, 128; }
+    .hull-registry-name {
+      min-width: 0;
+      color: #e8ecee;
+      font-family: var(--font-title);
+      font-size: 19px;
+      line-height: 1;
+      letter-spacing: 0.035em;
+    }
+    .hull-registry-name small {
+      display: block;
+      margin-top: 4px;
+      color: rgba(190,201,207,0.52);
+      font-family: var(--font-tech);
+      font-size: 7px;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .hull-registry-metric { min-width: 0; font-family: var(--font-tech); text-align: right; }
+    .hull-registry-metric small {
+      display: block;
+      margin-bottom: 3px;
+      color: rgba(178,190,197,0.62);
+      font-size: 7px;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .hull-registry-metric strong {
+      display: block;
+      overflow: hidden;
+      color: var(--hull-signal);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-shadow: 0 0 8px rgba(var(--hull-signal-rgb), 0.16);
+    }
+    .hull-registry-metric.price strong { color: #d9c077; text-shadow: none; }
+
     @media (max-width: 900px) {
+      .shipyard-control-grid { grid-template-columns: 1fr; }
+      .shipyard-control-section + .shipyard-control-section { border-left: 1px solid rgba(var(--panel-signal-rgb), 0.27); }
       .supplier-grid { grid-template-columns: 1fr; padding: 12px; }
       .remote-panel .remote-panel-head { gap: 10px; }
     }
@@ -752,6 +1004,83 @@ h1 {
       }
       .supplier-commodity-name strong { font-size: 17px; }
       .supplier-commodity-metric strong { font-size: 12px; }
+      .capital-shipyard-control { margin: 0; }
+      .shipyard-control-head { align-items: flex-start; flex-direction: column; padding: 16px; }
+      .shipyard-control-states { justify-content: flex-start; }
+      .shipyard-component-head, .shipyard-component-row { grid-template-columns: minmax(0, 1fr) 62px 68px 52px; gap: 6px; }
+      .shipyard-component-name { font-size: 11px; }
+      .shipyard-component-required, .shipyard-component-stock, .shipyard-component-coverage { font-size: 10px; }
+      .hull-registry-row { grid-template-columns: minmax(0, 1fr) 58px 106px; gap: 7px; padding-inline: 8px; }
+      .hull-registry-name { font-size: 17px; }
+      .hull-registry-metric strong { font-size: 11px; }
+    }
+
+
+
+    /* =========================================
+       V3.4 UNIFIED SECTION HEADING SYSTEM
+       One typography and color language for every main dashboard section.
+       Individual modules retain their accent colors in borders, badges and data.
+       ========================================= */
+    :root {
+      --section-title-color: #d9bc58;
+      --section-title-size: 24px;
+      --section-title-spacing: 0.065em;
+      --section-title-shadow: 0 0 10px rgba(212,175,55,0.16);
+    }
+
+    .alert-title,
+    .panel-title,
+    .shipyard-control-title {
+      color: var(--section-title-color);
+      font-family: var(--font-title);
+      font-size: var(--section-title-size);
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: var(--section-title-spacing);
+      text-transform: uppercase;
+      text-shadow: var(--section-title-shadow);
+    }
+
+    /* Remove legacy per-section title colors. Accent colors remain elsewhere. */
+    .waste-panel .alert-title > span:first-child,
+    .confiscated-panel .alert-title > span:first-child,
+    .feedstock-panel .alert-title > span:first-child,
+    .remote-panel-title,
+    .shipyard-control-title {
+      color: var(--section-title-color);
+      text-shadow: var(--section-title-shadow);
+    }
+
+    /* Use the same index/kicker treatment everywhere. */
+    .section-index,
+    .confiscated-panel .alert-title .section-index,
+    .feedstock-panel .alert-title .section-index {
+      color: rgba(217,188,88,0.72);
+      border-color: rgba(217,188,88,0.26);
+      background: rgba(217,188,88,0.035);
+    }
+
+    .section-kicker,
+    .shipyard-control-subline,
+    .footnote {
+      font-family: var(--font-tech);
+      letter-spacing: 0.11em;
+    }
+
+    .section-kicker span { color: var(--section-title-color); }
+
+    /* Keep title blocks visually aligned despite their different content layouts. */
+    .alert-title { min-height: 34px; }
+    .panel-title,
+    .shipyard-control-title { min-height: 24px; }
+
+    /* The compact remote header previously reduced its title to 22px. */
+    .remote-panel .remote-panel-title { font-size: var(--section-title-size); }
+
+    @media (max-width: 520px) {
+      :root { --section-title-size: 21px; }
+      .alert-title { min-height: 31px; }
     }
 
   </style>
@@ -887,10 +1216,12 @@ h1 {
       
     </section>
 
+    <section class="capital-shipyard-control anim-boot delay-4" id="shipyardControl" aria-label="Capital Shipyard Control"></section>
+
     <section class="panel remote-panel anim-boot delay-4">
       <div class="panel-head remote-panel-head">
         <div class="panel-heading-copy">
-          <div class="section-kicker"><span>04</span> REMOTE FACILITIES</div>
+          <div class="section-kicker"><span>05</span> REMOTE FACILITIES</div>
           <div class="panel-title remote-panel-title">EXTERNAL LOGISTICS UPLINK</div>
           <div class="remote-route">
             <span><small>TARGETS</small><strong>2 LOGISTICS FACILITIES</strong></span>
@@ -909,7 +1240,7 @@ h1 {
     <section class="panel anim-boot delay-4">
       <div class="panel-head">
         <div class="panel-heading-copy">
-          <div class="section-kicker"><span>05</span> INTERNAL SYSTEMS</div>
+          <div class="section-kicker"><span>06</span> INTERNAL SYSTEMS</div>
           <div class="panel-title">PRODUCTION MODULES</div>
           <div class="footnote">LIVE RECIPE CAPACITY // BOTTLENECK ANALYSIS</div>
         </div>
@@ -920,7 +1251,7 @@ h1 {
     <section class="panel manifest-panel anim-boot delay-5">
       <div class="panel-head manifest-panel-head">
         <div class="panel-heading-copy">
-          <div class="section-kicker"><span>06</span> ASSET CONTROL</div>
+          <div class="section-kicker"><span>07</span> ASSET CONTROL</div>
           <div class="panel-title">THORNE LOGISTICS MANIFEST</div>
           <div class="footnote">SEARCH, FILTER AND SORT LOCAL INVENTORY</div>
         </div>
@@ -934,6 +1265,7 @@ h1 {
             <button class="role-segment" type="button" data-role="maintenance">FACILITY</button>
             <button class="role-segment" type="button" data-role="procurement">PROCURE</button>
             <button class="role-segment" type="button" data-role="export">EXPORT</button>
+            <button class="role-segment" type="button" data-role="shipyard">SHIPYARD</button>
             <button class="role-segment" type="button" data-role="byproduct">WASTE</button>
             <button class="role-segment" type="button" data-role="confiscated">SEIZED</button>
           </div>
@@ -942,6 +1274,7 @@ h1 {
             <option value="maintenance">MAINTENANCE</option>
             <option value="procurement">PROCUREMENT</option>
             <option value="export">EXPORT</option>
+            <option value="shipyard">SHIPYARD</option>
             <option value="byproduct">WASTE / BYPROD</option>
             <option value="confiscated">SEIZED</option>
           </select>
@@ -976,7 +1309,7 @@ h1 {
 
 <script>
 /* ==========================================================================
-   RHW DASHBOARD LOGIC (V3.3)
+   RHW DASHBOARD LOGIC (V3.4)
    ========================================================================== */
 
 const TICKER_DYNAMIC_SLOT_COUNT = 10;
@@ -1104,10 +1437,10 @@ document.addEventListener('mousemove', e => {
 });
 
 // ============================================================
-// RHW DASHBOARD CONFIGURATION · V3.3
+// RHW DASHBOARD CONFIGURATION · V3.4
 // Edit recipes, tracked roles, thresholds and remote facilities here.
 // ============================================================
-const DASHBOARD_VERSION = 'V3.3';
+const DASHBOARD_VERSION = 'V3.4';
 const DASHBOARD_CONFIG = Object.freeze({
   apiUrl: 'https://darkstat.dd84ai.com/api/pobs',
   baseName: 'resolution heavy works',
@@ -1120,7 +1453,8 @@ const DASHBOARD_CONFIG = Object.freeze({
     maintenance: ['basic alloy', 'food rations', 'consumer goods'],
     export: ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'niobium'],
     byproduct: ['toxic waste'],
-    procurement: ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'prototype components', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore', 'scrap metal'],
+    procurement: ['ablative armor plating', 'avionics systems', 'energy field equipment', 'exotic systems', 'gold ore', 'hull panels', 'hydrocarbons', 'interior systems', 'prototype components', 'propulsion systems', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore', 'scrap metal'],
+    shipyard: ['avionics systems', 'interior systems', 'propulsion systems', 'superstructure systems', 'reactor systems', 'exotic systems'],
     feedstock: ['gold ore', 'niobium ore', 'scrap metal'],
     confiscated: ['wildcat gold']
   }),
@@ -1142,6 +1476,32 @@ const DASHBOARD_CONFIG = Object.freeze({
       statusTarget: 'niobium'
     })
   ]),
+  capitalShipyard: Object.freeze({
+    components: Object.freeze([
+      Object.freeze({ name: 'Avionics Systems', required: 43 }),
+      Object.freeze({ name: 'Interior Systems', required: 65 }),
+      Object.freeze({ name: 'Propulsion Systems', required: 43 }),
+      Object.freeze({ name: 'Superstructure Systems', required: 65 }),
+      Object.freeze({ name: 'Reactor Systems', required: 44 }),
+      Object.freeze({ name: 'Exotic Systems', required: 47 })
+    ]),
+    hulls: Object.freeze([
+      Object.freeze({
+        key: 'dunkirk',
+        name: 'Dunkirk-Class Battleship',
+        subtitle: 'Bretonian Capital Hull',
+        matches: ['bretonia dunkirk class battleship', 'dunkirk class battleship', 'dunkirk battleship', 'dunkirk'],
+        sellPrice: 8500000
+      }),
+      Object.freeze({
+        key: 'invincible',
+        name: 'Invincible-Class Dreadnought',
+        subtitle: 'Bretonian Capital Hull',
+        matches: ['bretonia invincible class dreadnought', 'invincible class dreadnought', 'invincible dreadnought', 'invincible'],
+        sellPrice: 8500000
+      })
+    ])
+  }),
   exportOrder: ['Multi-Mode Focusing Chamber', 'Reactor Systems', 'Superstructure Systems', 'Gold', 'Niobium'],
   recipes: Object.freeze([
     Object.freeze({ product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] }),
@@ -1182,9 +1542,11 @@ const MAINTENANCE = DASHBOARD_CONFIG.roles.maintenance;
 const EXPORTS = DASHBOARD_CONFIG.roles.export;
 const BYPRODUCTS = DASHBOARD_CONFIG.roles.byproduct;
 const PROCUREMENT = DASHBOARD_CONFIG.roles.procurement;
+const SHIPYARD = DASHBOARD_CONFIG.roles.shipyard;
 const FEEDSTOCK = DASHBOARD_CONFIG.roles.feedstock;
 const CONFISCATED = DASHBOARD_CONFIG.roles.confiscated;
 const REMOTE_FACILITIES = DASHBOARD_CONFIG.remoteFacilities;
+const CAPITAL_SHIPYARD = DASHBOARD_CONFIG.capitalShipyard;
 const EXPORT_ORDER = DASHBOARD_CONFIG.exportOrder;
 const RECIPES = DASHBOARD_CONFIG.recipes;
 const CUSTOM_ALERTS = DASHBOARD_CONFIG.alerts;
@@ -1201,7 +1563,8 @@ const CANONICAL_NAMES = {
   'reactor systems': 'Reactor Systems', 'gold': 'Gold', 'prototype components': 'Prototype Components',
   'basic alloy': 'Basic Alloy', 'food rations': 'Food Rations', 'consumer goods': 'Consumer Goods',
   'industrial materials': 'Industrial Materials', 'niobium ore': 'Niobium Ore', 'toxic waste': 'Toxic Waste', 'scrap metal': 'Scrap Metal',
-  'wildcat gold': 'Wildcat Gold'
+  'wildcat gold': 'Wildcat Gold', 'avionics systems': 'Avionics Systems', 'interior systems': 'Interior Systems',
+  'propulsion systems': 'Propulsion Systems', 'exotic systems': 'Exotic Systems'
 };
 
 let items = [];
@@ -1259,7 +1622,8 @@ const els = {
   rpFooterTime: document.getElementById('rpFooterTime'),
   footerConnection: document.getElementById('footerConnection'),
   supplierLinkBadge: document.getElementById('supplierLinkBadge'),
-  supplierLinkText: document.getElementById('supplierLinkText')
+  supplierLinkText: document.getElementById('supplierLinkText'),
+  shipyardControl: document.getElementById('shipyardControl')
 };
 
 function scrambleText(el, finalStr, duration = 500) {
@@ -1375,7 +1739,7 @@ function saveViewPreferences() {
 function restoreViewPreferences() {
   const saved = safeStorageGet(STORAGE_KEYS.view, {});
   const validColumns = new Set(['name', 'role', 'status', 'quantity', 'sell', 'buy']);
-  const validRoles = new Set(['all', 'maintenance', 'procurement', 'export', 'byproduct', 'confiscated']);
+  const validRoles = new Set(['all', 'maintenance', 'procurement', 'export', 'shipyard', 'byproduct', 'confiscated']);
 
   if (els.search && typeof saved?.search === 'string') els.search.value = saved.search.slice(0, 200);
   if (els.roleFilter && validRoles.has(saved?.role)) els.roleFilter.value = saved.role;
@@ -1815,6 +2179,7 @@ function assetRoles(item) {
   const roles = [];
   if (MAINTENANCE.includes(nm)) roles.push('maintenance');
   if (EXPORTS.includes(nm)) roles.push('export');
+  if (SHIPYARD.includes(nm)) roles.push('shipyard');
   if (BYPRODUCTS.includes(nm)) roles.push('byproduct');
   if (CONFISCATED.includes(nm)) roles.push('confiscated');
   if (PROCUREMENT.includes(nm) || FEEDSTOCK.includes(nm)) roles.push('procurement');
@@ -1830,7 +2195,7 @@ function assetRole(item) {
 }
 
 function rebuildItemCaches() {
-  const requiredKeys = [...FEEDSTOCK, ...MAINTENANCE, ...EXPORTS, ...BYPRODUCTS, ...CONFISCATED, ...PROCUREMENT].map(keyFromName);
+  const requiredKeys = [...FEEDSTOCK, ...MAINTENANCE, ...EXPORTS, ...SHIPYARD, ...BYPRODUCTS, ...CONFISCATED, ...PROCUREMENT].map(keyFromName);
   const augmentedItems = Array.isArray(items) ? [...items] : [];
   const existingKeys = new Set(augmentedItems.map(commodityKey));
 
@@ -1866,6 +2231,7 @@ function operationalItems() { return operationalItemsCache; }
 function roleLabel(role) { 
   if (role === 'maintenance') return 'FACILITY'; 
   if (role === 'export') return 'EXPORT'; 
+  if (role === 'shipyard') return 'SHIPYARD';
   if (role === 'byproduct') return 'WASTE'; 
   if (role === 'confiscated') return 'SEIZED';
   return 'PROCUREMENT'; 
@@ -1880,6 +2246,7 @@ function rolePill(role) {
   let cls = 'buy';
   if (role === 'export') cls = 'both';
   if (role === 'maintenance') cls = 'sell';
+  if (role === 'shipyard') cls = 'shipyard-pill';
   if (role === 'byproduct') cls = 'waste';
   if (role === 'confiscated') cls = 'confiscated-pill';
   return `<span class="pill ${cls}">${roleLabel(role)}</span>`;
@@ -2026,6 +2393,146 @@ function renderProductionModules() {
               ${byproductsText}
             </div>`;
   }).join('');
+}
+
+function normalizedAssetMatch(value) {
+  return normalize(value)
+    .replace(/[\"'`´‘’“”–—-]+/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function findCommodityByAliases(matches = []) {
+  const normalizedMatches = matches.map(normalizedAssetMatch).filter(Boolean);
+  if (!normalizedMatches.length) return null;
+  return items.find(item => {
+    const candidate = normalizedAssetMatch(itemName(item));
+    return normalizedMatches.some(match => candidate === match || candidate.includes(match));
+  }) || null;
+}
+
+function shipyardTrafficState(value) {
+  const count = Math.max(0, Math.floor(Number(value) || 0));
+  return count <= 0 ? 'critical' : (count === 1 ? 'low' : 'ok');
+}
+
+function renderShipyardControl() {
+  const mount = els.shipyardControl;
+  if (!mount || !CAPITAL_SHIPYARD) return;
+
+  mount.classList.toggle('stale', dataIsStale);
+
+  const componentData = CAPITAL_SHIPYARD.components.map(component => {
+    const item = findCommodity(component.name);
+    const stock = item ? quantity(item) : 0;
+    const required = Math.max(1, Number(component.required) || 1);
+    const coverage = Math.floor(stock / required);
+    const state = shipyardTrafficState(coverage);
+    return { ...component, stock, required, coverage, state };
+  });
+
+  const buildableHulls = componentData.length
+    ? Math.min(...componentData.map(component => component.coverage))
+    : 0;
+  const assemblyState = shipyardTrafficState(buildableHulls);
+  const assemblyStateText = buildableHulls <= 0
+    ? 'NO HULL READY'
+    : (buildableHulls === 1 ? '1 HULL READY' : `${number(buildableHulls)} HULLS READY`);
+
+  const nextHullTarget = buildableHulls + 1;
+  componentData.forEach(component => {
+    component.nextHullGap = Math.max(0, (nextHullTarget * component.required) - component.stock);
+    component.gapRatio = component.required > 0 ? component.nextHullGap / component.required : 0;
+  });
+
+  const bottleneck = componentData.reduce((current, component) => {
+    if (!current) return component;
+    if (component.coverage < current.coverage) return component;
+    if (component.coverage > current.coverage) return current;
+    if (component.gapRatio > current.gapRatio) return component;
+    if (component.gapRatio < current.gapRatio) return current;
+    return component.nextHullGap > current.nextHullGap ? component : current;
+  }, null);
+
+  const bottleneckName = bottleneck ? bottleneck.name : 'N/A';
+  const nextHullGap = bottleneck ? bottleneck.nextHullGap : 0;
+  const analysisLine = `BOTTLENECK ${bottleneckName.toUpperCase()} // NEXT HULL +${number(nextHullGap)}`;
+
+  const componentRows = componentData.map(component => {
+    const isBottleneck = bottleneck && keyFromName(component.name) === keyFromName(bottleneck.name);
+    return `
+      <div class="shipyard-component-row component-${component.state}${isBottleneck ? ' bottleneck' : ''}">
+        <div class="shipyard-component-name">${escapeHTML(component.name)}</div>
+        <div class="shipyard-component-required">${number(component.required)}</div>
+        <div class="shipyard-component-stock scramble-shipyard" data-val="${number(component.stock)}"></div>
+        <div class="shipyard-component-coverage scramble-shipyard" data-val="${number(component.coverage)}x"></div>
+      </div>`;
+  }).join('');
+
+  const hullData = CAPITAL_SHIPYARD.hulls.map(hull => {
+    const item = findCommodityByAliases(hull.matches);
+    const stock = item ? quantity(item) : 0;
+    const livePrice = item ? priceBuy(item) : null;
+    const rawSellPrice = livePrice !== null && livePrice > 0 ? livePrice : hull.sellPrice;
+    const sellPrice = Math.round(rawSellPrice / 100000) * 100000;
+    const state = shipyardTrafficState(stock);
+    return { ...hull, stock, sellPrice, state };
+  });
+
+  const hullReserve = hullData.length ? Math.min(...hullData.map(hull => hull.stock)) : 0;
+  const registryState = shipyardTrafficState(hullReserve);
+  const registryStateText = hullReserve <= 0
+    ? 'RESERVE INCOMPLETE'
+    : (hullReserve === 1 ? '1 EACH IN RESERVE' : `${number(hullReserve)} EACH IN RESERVE`);
+
+  const hullRows = hullData.map(hull => `
+      <div class="hull-registry-row hull-${hull.state}">
+        <div class="hull-registry-name">
+          ${escapeHTML(hull.name)}
+          <small>${escapeHTML(hull.subtitle || 'Capital Hull')}</small>
+        </div>
+        <div class="hull-registry-metric stock">
+          <small>Stock</small>
+          <strong class="scramble-shipyard" data-val="${number(hull.stock)}"></strong>
+        </div>
+        <div class="hull-registry-metric price">
+          <small>Sell Price</small>
+          <strong class="scramble-shipyard" data-val="${formatCurrency(hull.sellPrice)}"></strong>
+        </div>
+      </div>`).join('');
+
+  mount.innerHTML = `
+    <div class="shipyard-control-head">
+      <div class="shipyard-heading-copy">
+        <div class="section-kicker"><span>04</span> CAPITAL PRODUCTION</div>
+        <div class="shipyard-control-title">CAPITAL SHIPYARD CONTROL</div>
+        <div class="shipyard-control-subline">${escapeHTML(analysisLine)}</div>
+      </div>
+      <div class="shipyard-control-states">
+        <div class="shipyard-summary-badge state-${assemblyState}">ASSEMBLY ${escapeHTML(assemblyStateText)}</div>
+        <div class="shipyard-summary-badge state-${registryState}">HULL ${escapeHTML(registryStateText)}</div>
+      </div>
+    </div>
+    <div class="shipyard-control-grid">
+      <section class="shipyard-control-section shipyard-reserve-panel state-${assemblyState}">
+        <div class="shipyard-section-head">
+          <div class="shipyard-section-title">Capital Component Reserve</div>
+          <div class="shipyard-panel-state state-${assemblyState}">${escapeHTML(assemblyStateText)}</div>
+        </div>
+        <div class="shipyard-component-head"><span>Component</span><span>Req / Hull</span><span>Stock</span><span>Hulls</span></div>
+        <div class="shipyard-component-list">${componentRows}</div>
+      </section>
+      <section class="shipyard-control-section shipyard-registry-panel state-${registryState}">
+        <div class="shipyard-section-head">
+          <div class="shipyard-section-title">Hull Registry</div>
+          <div class="shipyard-panel-state state-${registryState}">${escapeHTML(registryStateText)}</div>
+        </div>
+        <div class="hull-registry-list">${hullRows}</div>
+      </section>
+    </div>`;
+
+  mount.querySelectorAll('.scramble-shipyard').forEach(el => scrambleText(el, el.dataset.val));
 }
 
 function supplierItemState(item) {
@@ -2292,6 +2799,7 @@ function renderManifest() {
 
 function renderAll() {
   renderOverview();
+  renderShipyardControl();
   renderSupplier();
   renderProductionModules();
   renderManifest();
@@ -2383,6 +2891,7 @@ async function loadData() {
     lastSyncError = String(error?.message || 'UNKNOWN TELEMETRY ERROR');
     setTelemetryState(dataIsStale ? 'STALE' : 'ERROR', dataIsStale ? 'warn' : 'danger');
     setFooterConnection(dataIsStale ? 'CACHE' : 'FAILED', dataIsStale ? 'warn' : 'danger');
+    renderShipyardControl();
     renderSupplier();
     updateNetworkFeed('error', lastSyncError);
 
