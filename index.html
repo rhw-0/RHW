@@ -160,6 +160,17 @@ h1 {
 
     .uplink-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
     .uplink-stat { display: flex; flex-direction: column; }
+    .header-clock { color: var(--gold); letter-spacing: 0.08em; }
+    .uplink-actions {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(255,255,255,0.08);
+    }
+    .header-uplink-button { min-height: 42px; padding: 10px 16px; white-space: nowrap; }
     .uplink-label { display: block; color: var(--muted); font-family: var(--font-tech); font-size: 9px; letter-spacing: 0.13em; margin-bottom: 4px; text-transform: uppercase; }
     .uplink-value { color: var(--text); font-family: var(--font-tech); font-size: 14px; letter-spacing: 0.04em; }
 
@@ -216,12 +227,7 @@ h1 {
 
     .alert-list li { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 8px 12px; background: rgba(0,0,0,0.4); border-left: 2px solid var(--line); font-size: 13px; }
     
-    /* Critical Pulse Animation on Alert Rows */
-    .alert-list li.alert-critical { 
-      border-left-color: var(--danger); 
-      animation: pulseCritical 2.5s infinite;
-    }
-    
+    .alert-list li.alert-critical { border-left-color: var(--danger); }
     .alert-list li.alert-low { border-left-color: var(--warn); }
     .alert-list li.alert-ok { border-left-color: var(--good); }
     .alert-list small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
@@ -394,7 +400,76 @@ h1 {
     .role-segment:last-child { border-right: 0; }
     .role-segment:hover { background: rgba(212,175,55,0.05); color: var(--text); box-shadow: none; }
     .role-segment.active { background: rgba(212,175,55,0.12); color: var(--gold); }
-    .uplink-button { min-height: 38px; }
+
+    .uplink-button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 42px;
+      padding: 10px 18px;
+      color: #f2d88f;
+      background: linear-gradient(180deg, rgba(42, 34, 16, 0.96), rgba(12, 11, 8, 0.98));
+      border: 1px solid rgba(212, 175, 55, 0.48);
+      border-top-color: rgba(255, 226, 138, 0.72);
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.18);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.035), inset 0 0 18px rgba(212,175,55,0.08), 0 8px 18px rgba(0,0,0,0.38);
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .uplink-button::before {
+      content: '';
+      position: absolute;
+      inset: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(212,175,55,0.12) 50%, transparent 100%);
+      transform: translateX(-120%);
+      transition: transform 0.4s ease;
+      z-index: -1;
+    }
+    .uplink-button::after {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 10px currentColor;
+      opacity: 0.7;
+      flex: 0 0 auto;
+      order: -1;
+    }
+    .uplink-button:hover {
+      color: #fff1ba;
+      background: linear-gradient(180deg, rgba(55, 43, 18, 0.98), rgba(18, 15, 10, 0.98));
+      border-color: rgba(255, 226, 138, 0.82);
+      transform: translateY(-1px);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 0 22px rgba(212,175,55,0.12), 0 12px 22px rgba(0,0,0,0.42), 0 0 18px rgba(212,175,55,0.14);
+    }
+    .uplink-button:hover::before,
+    .uplink-button:focus-visible::before { transform: translateX(120%); }
+    .uplink-button:focus-visible {
+      outline: 1px solid rgba(255, 226, 138, 0.9);
+      outline-offset: 2px;
+      color: #fff1ba;
+    }
+    .uplink-button:active {
+      transform: translateY(0);
+      background: linear-gradient(180deg, rgba(32, 25, 12, 0.98), rgba(10, 9, 7, 0.98));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), inset 0 0 12px rgba(212,175,55,0.08), 0 4px 12px rgba(0,0,0,0.32);
+    }
+    .uplink-button:disabled {
+      opacity: 0.5;
+      filter: grayscale(0.2);
+      color: rgba(242,216,143,0.72);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02), inset 0 0 12px rgba(212,175,55,0.04);
+      transform: none;
+    }
+    .uplink-button:disabled::before { transform: none; opacity: 0; }
+    .uplink-button:disabled::after { opacity: 0.35; box-shadow: none; }
+    .uplink-button span { position: relative; z-index: 1; }
 
     .table-wrap { overflow: auto; max-height: 600px; position: relative; }
     table { width: 100%; border-collapse: collapse; font-family: var(--font-tech); font-size: 13px; }
@@ -474,6 +549,8 @@ h1 {
     @media (max-width: 520px) {
       .base-telemetry-bar { grid-template-columns: 1fr; }
       .base-telemetry-stat:first-child { grid-column: auto; }
+      .uplink-actions { grid-template-columns: 1fr; }
+      .header-uplink-button { width: 100%; }
       .supplier-stats { flex-direction: column; }
       .remote-route { display: grid; grid-template-columns: 1fr; }
       .production-stats { display: grid; grid-template-columns: repeat(3, 1fr); }
@@ -651,20 +728,6 @@ h1 {
       font-variant-numeric: tabular-nums;
     }
     .overview-row-meta .quantity-stack { flex-wrap: wrap; }
-    .stock-delta {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      font-family: var(--font-tech);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.035em;
-      white-space: nowrap;
-    }
-    .stock-delta.up { color: #78ad8a; }
-    .stock-delta.down { color: #c46c6c; }
-    .stock-delta.neutral { color: var(--muted); }
-    .production-stat .stock-delta { display: flex; justify-content: center; margin-top: 4px; }
 
     .sat-link-badge.stale { border-color: rgba(184,134,55,0.42); }
     .sat-link-badge.stale .sat-link-dot { background: var(--warn); box-shadow: 0 0 10px var(--warn); }
@@ -750,12 +813,19 @@ h1 {
             <strong class="uplink-value" id="syncCountdown">–</strong>
           </div>
           <div class="uplink-stat">
-            <small class="uplink-label">DATALINK</small>
-            <strong class="scramble uplink-value" id="telemetryStateVal" aria-live="polite">POLLING</strong>
+            <small class="uplink-label">SYSTEM CLOCK</small>
+            <strong class="uplink-value header-clock" id="headerClock">[--:--:--]</strong>
           </div>
           <div class="uplink-stat">
             <small class="uplink-label">REFRESH CYCLE</small>
-            <strong class="uplink-value">60S</strong>
+            <strong class="uplink-value">5 MIN</strong>
+          </div>
+          <div class="uplink-actions">
+            <div class="uplink-stat">
+              <small class="uplink-label">DATALINK</small>
+              <strong class="scramble uplink-value" id="telemetryStateVal" aria-live="polite">POLLING</strong>
+            </div>
+            <button id="headerRefreshBtn" class="uplink-button header-uplink-button" type="button"><span>FORCE UPLINK</span></button>
           </div>
         </div>
       </div>
@@ -1041,15 +1111,14 @@ const DASHBOARD_VERSION = 'V3.3';
 const DASHBOARD_CONFIG = Object.freeze({
   apiUrl: 'https://darkstat.dd84ai.com/api/pobs',
   baseName: 'resolution heavy works',
-  autoRefreshMs: 60000,
+  autoRefreshMs: 300000,
   fetchTimeoutMs: 18000,
   storageKeys: Object.freeze({
-    view: 'rhw-dashboard-v3.3:view',
-    stockSnapshot: 'rhw-dashboard-v3.3:stock-snapshot'
+    view: 'rhw-dashboard-v3.3:view'
   }),
   roles: Object.freeze({
     maintenance: ['basic alloy', 'food rations', 'consumer goods'],
-    export: ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'basic alloy', 'niobium'],
+    export: ['multi-mode focusing chamber', 'multi-mode focusing chambers', 'superstructure systems', 'reactor systems', 'gold', 'niobium'],
     byproduct: ['toxic waste'],
     procurement: ['ablative armor plating', 'energy field equipment', 'gold ore', 'hull panels', 'hydrocarbons', 'prototype components', 'mox', 'super alloy', 'titanium', 'industrial materials', 'niobium ore', 'scrap metal'],
     feedstock: ['gold ore', 'niobium ore', 'scrap metal'],
@@ -1073,7 +1142,7 @@ const DASHBOARD_CONFIG = Object.freeze({
       statusTarget: 'niobium'
     })
   ]),
-  exportOrder: ['Multi-Mode Focusing Chamber', 'Reactor Systems', 'Superstructure Systems', 'Basic Alloy', 'Gold', 'Niobium'],
+  exportOrder: ['Multi-Mode Focusing Chamber', 'Reactor Systems', 'Superstructure Systems', 'Gold', 'Niobium'],
   recipes: Object.freeze([
     Object.freeze({ product: 'Multi-Mode Focusing Chamber', output: 10, byproducts: [['Toxic Waste', 300], ['Scrap Metal', 100]], ingredients: [['Gold',250], ['Super Alloy',125], ['Titanium',25], ['Hydrocarbons',25], ['Prototype Components',10], ['MOX',225]] }),
     Object.freeze({ product: 'Reactor Systems', output: 1, byproducts: [], ingredients: [['Energy Field Equipment',25], ['Super Alloy',25], ['Niobium',25], ['MOX',25]] }),
@@ -1148,8 +1217,6 @@ let isLoading = false;
 let nextSyncAt = null;
 let dataIsStale = false;
 let lastSyncError = '';
-let stockDeltas = new Map();
-let previousStockSnapshot = loadStoredStockSnapshot();
 
 const els = {
   uplinkPanel: document.getElementById('uplinkPanel'),
@@ -1185,8 +1252,10 @@ const els = {
   roleFilter: document.getElementById('roleFilter'),
   roleSegmentButtons: document.querySelectorAll('.role-segment'),
   refreshBtn: document.getElementById('refreshBtn'),
+  headerRefreshBtn: document.getElementById('headerRefreshBtn'),
   productionGrid: document.getElementById('productionGrid'),
   tableHeaders: document.querySelectorAll('#dataTable th[data-sort]'),
+  headerClock: document.getElementById('headerClock'),
   rpFooterTime: document.getElementById('rpFooterTime'),
   footerConnection: document.getElementById('footerConnection'),
   supplierLinkBadge: document.getElementById('supplierLinkBadge'),
@@ -1241,14 +1310,20 @@ function debounce(func, wait) {
   };
 }
 
-setInterval(() => {
+function updateSystemClocks() {
   const now = new Date();
-  if (els.rpFooterTime) {
-    const hours = String(now.getHours()).padStart(2, '0');
-    const mins = String(now.getMinutes()).padStart(2, '0');
-    const secs = String(now.getSeconds()).padStart(2, '0');
-    els.rpFooterTime.innerHTML = `SYS-CLOCK: [${hours}<span class="blink-colon">:</span>${mins}<span class="blink-colon">:</span>${secs}]`;
-  }
+  const hours = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  const secs = String(now.getSeconds()).padStart(2, '0');
+  const clockHtml = `[${hours}<span class="blink-colon">:</span>${mins}<span class="blink-colon">:</span>${secs}]`;
+
+  if (els.headerClock) els.headerClock.innerHTML = clockHtml;
+  if (els.rpFooterTime) els.rpFooterTime.innerHTML = `SYS-CLOCK: ${clockHtml}`;
+}
+
+updateSystemClocks();
+setInterval(() => {
+  updateSystemClocks();
   updateSyncCountdown();
 }, 1000);
 
@@ -1286,51 +1361,6 @@ function safeStorageSet(key, value) {
   } catch (error) {
     console.warn('LOCAL STORAGE WRITE FAILED', error);
   }
-}
-
-function loadStoredStockSnapshot() {
-  const saved = safeStorageGet(STORAGE_KEYS.stockSnapshot, {});
-  return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
-}
-
-function createStockSnapshot(sourceItems) {
-  const snapshot = {};
-  for (const item of sourceItems) {
-    const key = commodityKey(item);
-    if (!key || item?.missing) continue;
-    snapshot[key] = quantity(item);
-  }
-  return snapshot;
-}
-
-function updateStockDeltas(sourceItems) {
-  const currentSnapshot = createStockSnapshot(sourceItems);
-  const nextDeltas = new Map();
-
-  Object.entries(currentSnapshot).forEach(([key, current]) => {
-    const previous = finiteNumber(previousStockSnapshot?.[key]);
-    if (previous === null) return;
-    const delta = current - previous;
-    if (Math.abs(delta) > 0.000001) nextDeltas.set(key, delta);
-  });
-
-  stockDeltas = nextDeltas;
-  previousStockSnapshot = currentSnapshot;
-  safeStorageSet(STORAGE_KEYS.stockSnapshot, currentSnapshot);
-}
-
-function stockDelta(item) {
-  if (!item || item.missing) return 0;
-  return stockDeltas.get(commodityKey(item)) || 0;
-}
-
-function renderStockDelta(item) {
-  const delta = stockDelta(item);
-  if (!delta) return '';
-  const cls = delta > 0 ? 'up' : 'down';
-  const arrow = delta > 0 ? '▲' : '▼';
-  const sign = delta > 0 ? '+' : '−';
-  return `<span class="stock-delta ${cls}" title="Change since previous verified sync">${arrow} ${sign}${number(Math.abs(delta))}</span>`;
 }
 
 function saveViewPreferences() {
@@ -1505,8 +1535,10 @@ function updateSyncCountdown() {
   }
 
   const remaining = Math.max(0, Math.ceil((nextSyncAt - Date.now()) / 1000));
-  els.syncCountdown.textContent = `${remaining}s`;
-  els.syncCountdown.style.color = remaining <= 10 ? 'var(--warn)' : 'var(--gold)';
+  const minutes = Math.floor(remaining / 60);
+  const seconds = String(remaining % 60).padStart(2, '0');
+  els.syncCountdown.textContent = minutes > 0 ? `${minutes}:${seconds}` : `${remaining}s`;
+  els.syncCountdown.style.color = remaining <= 30 ? 'var(--warn)' : 'var(--gold)';
 }
 
 function setTelemetryState(telemetry, cls = 'gold') {
@@ -1982,7 +2014,7 @@ function renderProductionModules() {
                 <span class="module-state ${analysis.cardState}">${statusLabel(analysis.cardState, 'production')}</span>
               </div>
               <div class="production-stats">
-                <div class="production-stat production-stock-primary"><small>IN STOCK</small><strong>${number(analysis.productStock)}</strong>${renderStockDelta(analysis.productItem)}</div>
+                <div class="production-stat production-stock-primary"><small>IN STOCK</small><strong>${number(analysis.productStock)}</strong></div>
                 <div class="production-stat"><small>MAX CYCLES</small><strong>${number(analysis.possibleCycles)}</strong></div>
                 <div class="production-stat"><small>EST. YIELD</small><strong>${number(analysis.possibleOutput)}</strong></div>
               </div>
@@ -2115,7 +2147,7 @@ function renderOverviewRow({ state, role, name, item = null, detail = '', quanti
   return `<li class="alert-${state}${extraClass ? ` ${extraClass}` : ''}">
             <span><strong>${escapeHTML(name)}</strong>${safeDetail}${progress}</span>
             <div class="overview-row-meta">
-              <span class="quantity-stack"><strong class="overview-row-qty">${number(quantityValue)}</strong>${renderStockDelta(item)}</span>
+              <strong class="overview-row-qty">${number(quantityValue)}</strong>
               ${statusPill(state, role)}
             </div>
           </li>`;
@@ -2254,7 +2286,7 @@ function renderManifest() {
     const role = assetRole(item);
     const state = stockState(item);
     
-    return `<tr><td class="asset-cell"><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePillsFor(item)}</td><td>${statusPill(state, role)}</td><td class="numeric-cell"><span class="quantity-stack"><span>${number(quantity(item))}</span>${renderStockDelta(item)}</span></td><td class="numeric-cell price-cell sell-price">${formatCurrency(priceSell(item))}</td><td class="numeric-cell price-cell buy-price">${formatCurrency(priceBuy(item))}</td></tr>`;
+    return `<tr><td class="asset-cell"><strong>${escapeHTML(displayName(item))}</strong></td><td>${rolePillsFor(item)}</td><td>${statusPill(state, role)}</td><td class="numeric-cell">${number(quantity(item))}</td><td class="numeric-cell price-cell sell-price">${formatCurrency(priceSell(item))}</td><td class="numeric-cell price-cell buy-price">${formatCurrency(priceBuy(item))}</td></tr>`;
   }).join('');
 }
 
@@ -2306,6 +2338,7 @@ async function loadData() {
     els.errorBox.textContent = '';
   }
   if (els.refreshBtn) els.refreshBtn.disabled = true;
+  if (els.headerRefreshBtn) els.headerRefreshBtn.disabled = true;
 
   try {
     const response = await fetchWithTimeout(API_URL, { method: 'POST', headers: { 'Accept': 'application/json' } });
@@ -2325,7 +2358,6 @@ async function loadData() {
     rhwBase = nextRhwBase;
     remoteBases = nextRemoteBases;
     items = rhwBase.shop_items.map(item => ({ ...item }));
-    updateStockDeltas(items);
     rebuildItemCaches();
     lastLoaded = new Date();
     dataIsStale = false;
@@ -2372,6 +2404,7 @@ async function loadData() {
     isLoading = false;
     document.body.classList.remove('syncing');
     if (els.refreshBtn) els.refreshBtn.disabled = false;
+    if (els.headerRefreshBtn) els.headerRefreshBtn.disabled = false;
 
     if (lastLoaded && els.syncTimeVal) {
       const timeString = lastLoaded.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -2394,6 +2427,7 @@ els.roleSegmentButtons.forEach(button => button.addEventListener('click', () => 
   renderManifest();
 }));
 els.refreshBtn?.addEventListener('click', loadData);
+els.headerRefreshBtn?.addEventListener('click', loadData);
 els.tableHeaders.forEach(th => {
   th.addEventListener('click', handleSort);
   th.addEventListener('keydown', handleSortKeydown);
