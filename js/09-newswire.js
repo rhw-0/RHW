@@ -1,6 +1,79 @@
 const NEWSWIRE_URL = DASHBOARD_CONFIG.newswireUrl;
 const NEWSWIRE_TONES = ['good', 'warn', 'danger', 'remote', 'lore', 'muted'];
 
+const RHW_NEWSWIRE_FILTER_CATEGORIES = Object.freeze(['market', 'regional', 'security', 'operations', 'corporate']);
+const RHW_NEWSWIRE_FILTER_STORAGE_KEY = 'rhw-dashboard-v3.5:newswire-filter';
+const rhwNewswireCursors = new Map();
+let rhwNewswireFilter = 'all';
+
+// Replace random editorial selection with deterministic round-robin rotation.
+pickNewswireMessage = function(category, excludedTexts = []) {
+  const pool = activeNewswirePools[category] || [];
+  if (!pool.length) return { tag: 'BMM NEWSWIRE', text: 'EDITORIAL DESK AWAITING BULLETINS', tone: 'muted' };
+
+  const blocked = new Set(excludedTexts);
+  const startIndex = (rhwNewswireCursors.get(category) || 0) % pool.length;
+  for (let step = 0; step < pool.length; step++) {
+    const index = (startIndex + step) % pool.length;
+    if (blocked.has(pool[index].text)) continue;
+    rhwNewswireCursors.set(category, index + 1);
+    return { ...pool[index] };
+  }
+
+  rhwNewswireCursors.set(category, startIndex + 1);
+  return { ...pool[startIndex] };
+};
+
+// Keep live priority, finance, remote-market and production messages visible.
+// The chosen filter controls only the editorial category portion of the feed.
+buildIndustrialNewswireMessages = function() {
+  if (!rhwBase) {
+    return Array.from({ length: TICKER_DYNAMIC_SLOT_COUNT }, (_, index) => ({
+      tag: index === 0 ? 'BMM NEWSWIRE' : 'EDITORIAL DESK',
+      text: index === 0 ? 'AWAITING INITIAL TELEMETRY BURST' : 'ASSEMBLING MARKET AND REGIONAL BULLETINS',
+      tone: index === 0 ? 'warn' : 'muted'
+    }));
+  }
+
+  const recipeAnalyses = RECIPES.map(analyzeRecipe);
+  const messages = [...buildPriorityWire(recipeAnalyses)];
+  const usedTexts = new Set(messages.map(message => message.text));
+
+  [
+    buildFinanceDeskMessage(),
+    ...REMOTE_FACILITIES.map(facility => buildRemoteMarketMessage(facility.key)),
+    buildProductionDeskMessage(recipeAnalyses)
+  ].forEach(message => {
+    messages.push(message);
+    usedTexts.add(message.text);
+  });
+
+  const selected = rhwNewswireFilter === 'all'
+    ? RHW_NEWSWIRE_FILTER_CATEGORIES
+    : [rhwNewswireFilter].filter(category => RHW_NEWSWIRE_FILTER_CATEGORIES.includes(category));
+  const available = selected.filter(category => (activeNewswirePools[category] || []).length);
+
+  available.forEach(category => {
+    const message = pickNewswireMessage(category, [...usedTexts]);
+    messages.push(message);
+    usedTexts.add(message.text);
+  });
+
+  let categoryIndex = 0;
+  while (available.length && messages.length < TICKER_DYNAMIC_SLOT_COUNT) {
+    const category = available[categoryIndex % available.length];
+    const message = pickNewswireMessage(category, [...usedTexts]);
+    messages.push(message);
+    usedTexts.add(message.text);
+    categoryIndex += 1;
+  }
+
+  while (messages.length < TICKER_DYNAMIC_SLOT_COUNT) {
+    messages.push({ tag: 'BMM NEWSWIRE', text: 'EDITORIAL QUEUE CLEAR // AWAITING NEXT BULLETIN', tone: 'muted' });
+  }
+  return messages.slice(0, TICKER_DYNAMIC_SLOT_COUNT);
+};
+
 function parseNewswireMarkdown(text) {
   const pools = {};
   let category = null;
@@ -69,7 +142,7 @@ function setNewswireFeedStatus(mode, bulletinCount = 0, cachedAt = 0) {
 
 function applyNewswirePools(pools) {
   activeNewswirePools = mergeNewswirePools(pools);
-  newswireHistory.clear();
+  rhwNewswireCursors.clear();
   if (lastLoaded) updateTickerSlots(buildIndustrialNewswireMessages());
 }
 
@@ -114,7 +187,7 @@ async function loadNewswire({ schedule = true } = {}) {
       setNewswireFeedStatus('stale', cachedCount, Number(cached.savedAt) || 0);
     } else {
       activeNewswirePools = NEWSWIRE_POOLS;
-      newswireHistory.clear();
+      rhwNewswireCursors.clear();
       setNewswireFeedStatus('local');
     }
     console.warn('RHW NEWSWIRE FETCH FAILED', error);
@@ -124,8 +197,155 @@ async function loadNewswire({ schedule = true } = {}) {
   }
 }
 
+function installRhwEnhancementStyles() {
+  if (document.getElementById('rhwV35EnhancementStyles')) return;
+  const style = document.createElement('style');
+  style.id = 'rhwV35EnhancementStyles';
+  style.textContent = `
+    .newswire-filter {
+      position: relative; z-index: 7; display: flex; width: fit-content;
+      max-width: calc(100vw - 24px); margin: 0 0 -1px 22px; padding-right: 12px;
+      overflow-x: auto; border: 1px solid rgba(212,175,55,0.30); border-bottom: 0;
+      background: linear-gradient(90deg, rgba(212,175,55,0.12), rgba(10,12,15,0.98));
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 0 100%); scrollbar-width: none;
+    }
+    .newswire-filter::-webkit-scrollbar { display: none; }
+    .newswire-filter button {
+      min-height: 27px; padding: 6px 11px 5px; border: 0;
+      border-right: 1px solid rgba(212,175,55,0.12); clip-path: none;
+      background: transparent; color: rgba(224,224,224,0.52);
+      font-family: var(--font-tech); font-size: 8px; letter-spacing: 0.10em;
+      box-shadow: none; white-space: nowrap;
+    }
+    .newswire-filter button:last-child { border-right: 0; }
+    .newswire-filter button:hover, .newswire-filter button:focus-visible {
+      background: rgba(212,175,55,0.07); color: var(--gold); box-shadow: none;
+    }
+    .newswire-filter button.active { background: rgba(212,175,55,0.15); color: var(--gold); }
+    .hull-detection { margin-top: 5px !important; font-size: 7px !important; letter-spacing: 0.08em !important; }
+    .hull-detection.detected { color: #78ad8a !important; }
+    .hull-detection.missing { color: #df7474 !important; }
+    .hull-registry-row.hull-not-detected {
+      border-style: dashed; background: linear-gradient(90deg, rgba(248,113,113,0.08), rgba(0,0,0,0.17));
+    }
+    .hull-registry-row.hull-not-detected .hull-registry-metric.stock strong { font-size: 10px; color: #df7474; }
+    @media (max-width: 900px) { .newswire-filter { display: none; } }
+  `;
+  document.head.appendChild(style);
+}
+
+function createNewswireFilter() {
+  const ticker = document.getElementById('newswirePanel');
+  if (!ticker || document.getElementById('newswireFilter')) return;
+  const filter = document.createElement('div');
+  filter.id = 'newswireFilter';
+  filter.className = 'newswire-filter';
+  filter.setAttribute('role', 'group');
+  filter.setAttribute('aria-label', 'Filter RHW newswire editorial categories');
+  const labels = {
+    all: 'ALL', market: 'MARKET', regional: 'BRETONIA', security: 'SECURITY',
+    operations: 'OPERATIONS', corporate: 'CORPORATE'
+  };
+  ['all', ...RHW_NEWSWIRE_FILTER_CATEGORIES].forEach(category => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.newswireCategory = category;
+    button.textContent = labels[category];
+    button.addEventListener('click', () => {
+      if (category === rhwNewswireFilter) return;
+      rhwNewswireFilter = category;
+      safeStorageSet(RHW_NEWSWIRE_FILTER_STORAGE_KEY, rhwNewswireFilter);
+      rhwNewswireCursors.clear();
+      updateNewswireFilterButtons();
+      updateTickerSlots(buildIndustrialNewswireMessages());
+    });
+    filter.appendChild(button);
+  });
+  ticker.parentNode.insertBefore(filter, ticker);
+}
+
+function updateNewswireFilterButtons() {
+  document.querySelectorAll('[data-newswire-category]').forEach(button => {
+    const active = button.dataset.newswireCategory === rhwNewswireFilter;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+}
+
+function initNewswireFilter() {
+  const saved = safeStorageGet(RHW_NEWSWIRE_FILTER_STORAGE_KEY, 'all');
+  rhwNewswireFilter = saved === 'all' || RHW_NEWSWIRE_FILTER_CATEGORIES.includes(saved) ? saved : 'all';
+  installRhwEnhancementStyles();
+  createNewswireFilter();
+  updateNewswireFilterButtons();
+}
+
+function hullApiCode(hull) {
+  return hull?.apiCode || (hull?.matches || []).find(value => normalize(value).startsWith('dsy_')) || '';
+}
+
+function detectHullApiItem(hull) {
+  const code = hullApiCode(hull);
+  const normalizedCode = normalizedAssetMatch(code);
+  if (normalizedCode) {
+    const exact = items.find(item => itemIdentityCandidates(item).includes(normalizedCode));
+    if (exact) return { item: exact, mode: 'EXACT API CODE', code };
+  }
+  const fallback = findCommodityByAliases(hull?.matches || []);
+  return fallback ? { item: fallback, mode: 'ALIAS MATCH', code } : { item: null, mode: 'NOT DETECTED', code };
+}
+
+const baseRenderShipyardControl = renderShipyardControl;
+renderShipyardControl = function() {
+  baseRenderShipyardControl();
+  if (!hasVerifiedTelemetry() || !els.shipyardControl || !CAPITAL_SHIPYARD?.hulls?.length) return;
+
+  const rows = [...els.shipyardControl.querySelectorAll('.hull-registry-row')];
+  let detectedCount = 0;
+  CAPITAL_SHIPYARD.hulls.forEach((hull, index) => {
+    const row = rows[index];
+    if (!row) return;
+    const detection = detectHullApiItem(hull);
+    const detected = Boolean(detection.item);
+    if (detected) detectedCount += 1;
+
+    const name = row.querySelector('.hull-registry-name');
+    if (name) {
+      const status = document.createElement('small');
+      status.className = `hull-detection ${detected ? 'detected' : 'missing'}`;
+      status.textContent = detected
+        ? `${detection.mode} · ${detection.code || itemName(detection.item)}`
+        : `NOT DETECTED · EXPECTED ${detection.code || hull.matches?.[0] || 'API ITEM'}`;
+      name.appendChild(status);
+    }
+
+    if (!detected) {
+      row.classList.add('hull-not-detected');
+      const label = row.querySelector('.hull-registry-metric.stock small');
+      const value = row.querySelector('.hull-registry-metric.stock strong');
+      if (label) label.textContent = 'API Status';
+      if (value) {
+        if (value.dataset.scrambleInterval) window.clearInterval(Number(value.dataset.scrambleInterval));
+        value.dataset.finalText = 'NOT DETECTED';
+        value.textContent = 'NOT DETECTED';
+      }
+      row.querySelector('.hull-registry-progress .progress-wrap')?.setAttribute('aria-label', 'HULL API ITEM NOT DETECTED');
+    }
+  });
+
+  const states = els.shipyardControl.querySelector('.shipyard-control-states');
+  if (states) {
+    const badge = document.createElement('div');
+    const allDetected = detectedCount === CAPITAL_SHIPYARD.hulls.length;
+    badge.className = `shipyard-summary-badge state-${allDetected ? 'ok' : 'critical'}`;
+    badge.textContent = `API ${detectedCount}/${CAPITAL_SHIPYARD.hulls.length} DETECTED`;
+    states.appendChild(badge);
+  }
+};
+
 restoreViewPreferences();
 applyFeatureVisibility();
+initNewswireFilter();
 initEcoMode();
 updateRoleSegments();
 updateSortArrows();
