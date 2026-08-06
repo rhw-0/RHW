@@ -1,0 +1,365 @@
+function scrambleText(el, finalStr, duration = 500) {
+  if (!el) return;
+  finalStr = String(finalStr);
+
+  if (el.dataset.finalText === finalStr && el.textContent === finalStr) return;
+  el.dataset.finalText = finalStr;
+
+  if (prefersReducedMotion.matches || duration <= 0) {
+    el.textContent = finalStr;
+    return;
+  }
+
+  const chars = '0123456789@#$X%&*+';
+  const steps = Math.max(1, Math.ceil(duration / 25));
+  let step = 0;
+
+  if (el.dataset.scrambleInterval) clearInterval(Number(el.dataset.scrambleInterval));
+
+  const interval = setInterval(() => {
+    let result = '';
+    for (let i = 0; i < finalStr.length; i++) {
+      if ([' ', '$', '%', '–', ',', '.', ':', '/', '-'].includes(finalStr[i])) {
+        result += finalStr[i];
+      } else if (step / steps > i / Math.max(1, finalStr.length)) {
+        result += finalStr[i];
+      } else {
+        result += chars[Math.floor(Math.random() * chars.length)];
+      }
+    }
+    el.textContent = result;
+    if (step >= steps) {
+      clearInterval(interval);
+      el.textContent = finalStr;
+    }
+    step++;
+  }, 25);
+
+  el.dataset.scrambleInterval = String(interval);
+}
+
+function debounce(func, wait) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
+function updateSystemClocks() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  const secs = String(now.getSeconds()).padStart(2, '0');
+  const clockHtml = `[${hours}<span class="blink-colon">:</span>${mins}<span class="blink-colon">:</span>${secs}]`;
+
+  if (els.headerClock) els.headerClock.innerHTML = clockHtml;
+  if (els.rpFooterTime) els.rpFooterTime.innerHTML = `SYS-CLOCK: ${clockHtml}`;
+}
+
+updateSystemClocks();
+setInterval(() => {
+  updateSystemClocks();
+  updateSyncCountdown();
+}, 1000);
+
+function normalize(value) { return String(value || '').trim().toLowerCase(); }
+
+function finiteNumber(value, fallback = null, minimum = -Infinity) {
+  if (value === null || value === undefined || value === '') return fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= minimum ? parsed : fallback;
+}
+
+function number(value) {
+  const parsed = finiteNumber(value);
+  return parsed === null ? '–' : numFormatter.format(parsed);
+}
+
+function formatCurrency(value) {
+  const parsed = finiteNumber(value, null, 0);
+  return parsed === null ? '–' : `$${numFormatter.format(parsed)}`;
+}
+
+function safeStorageGet(key, fallback = null) {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw === null ? fallback : JSON.parse(raw);
+  } catch (error) {
+    console.warn('LOCAL STORAGE READ FAILED', error);
+    return fallback;
+  }
+}
+
+function safeStorageSet(key, value) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn('LOCAL STORAGE WRITE FAILED', error);
+  }
+}
+
+
+let ecoMode = false;
+let ecoPreference = 'auto';
+let ecoMeasureToken = 0;
+let ecoResizeTimer = null;
+
+function setEcoMode(on) {
+  ecoMode = Boolean(on);
+  document.documentElement.classList.toggle('eco', ecoMode);
+  if (ecoMode) startEcoTicker();
+  else stopEcoTicker();
+  updateEcoToggleLabel();
+}
+
+function updateEcoToggleLabel() {
+  const button = els.ecoToggleBtn;
+  if (!button) return;
+  const span = button.querySelector('span');
+  const label = ecoPreference === 'auto' ? 'FX: AUTO' : (ecoPreference === 'on' ? 'FX: LOW' : 'FX: FULL');
+  if (span) span.textContent = label;
+  button.classList.toggle('eco-active', ecoMode);
+  button.setAttribute('aria-pressed', ecoMode ? 'true' : 'false');
+  button.setAttribute('aria-label', `Visual effects mode: ${ecoPreference === 'auto' ? 'automatic' : (ecoPreference === 'on' ? 'reduced' : 'full')}`);
+}
+
+function scheduleEcoAutoDetect(delay = 700) {
+  if (!FEATURES.ecoMode || ecoPreference !== 'auto') return;
+  const token = ++ecoMeasureToken;
+  clearTimeout(ecoResizeTimer);
+  ecoResizeTimer = setTimeout(() => {
+    if (token !== ecoMeasureToken || ecoPreference !== 'auto') return;
+    if (prefersReducedMotion.matches) { setEcoMode(true); return; }
+    if (document.visibilityState === 'hidden') return;
+
+    const start = performance.now();
+    let frames = 0;
+    const sampleMs = 1800;
+    function tick(now) {
+      if (token !== ecoMeasureToken || ecoPreference !== 'auto') return;
+      frames += 1;
+      const elapsed = now - start;
+      if (elapsed < sampleMs) { requestAnimationFrame(tick); return; }
+      const fps = frames / Math.max(0.001, elapsed / 1000);
+      setEcoMode(fps < 42);
+    }
+    requestAnimationFrame(tick);
+  }, delay);
+}
+
+function cycleEcoPreference() {
+  ecoPreference = ecoPreference === 'auto' ? 'on' : (ecoPreference === 'on' ? 'off' : 'auto');
+  safeStorageSet(STORAGE_KEYS.eco, ecoPreference);
+  ecoMeasureToken += 1;
+  if (ecoPreference === 'on') setEcoMode(true);
+  else if (ecoPreference === 'off') setEcoMode(false);
+  else scheduleEcoAutoDetect(150);
+  updateEcoToggleLabel();
+}
+
+function initEcoMode() {
+  if (!FEATURES.ecoMode) {
+    if (els.ecoToggleBtn) els.ecoToggleBtn.hidden = true;
+    return;
+  }
+  const saved = safeStorageGet(STORAGE_KEYS.eco, 'auto');
+  ecoPreference = ['auto', 'on', 'off'].includes(saved) ? saved : 'auto';
+  els.ecoToggleBtn?.addEventListener('click', cycleEcoPreference);
+  if (ecoPreference === 'on') setEcoMode(true);
+  else if (ecoPreference === 'off') setEcoMode(false);
+  else scheduleEcoAutoDetect(1200);
+  updateEcoToggleLabel();
+
+  window.addEventListener('resize', () => {
+    if (ecoPreference === 'auto') scheduleEcoAutoDetect(850);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') stopEcoTicker();
+    else if (ecoMode) startEcoTicker();
+    if (document.visibilityState === 'visible' && ecoPreference === 'auto') scheduleEcoAutoDetect(350);
+  });
+}
+
+function applyFeatureVisibility() {
+  const showExternal = Boolean(FEATURES.fixedLogistics || FEATURES.marketScan);
+  if (els.externalLogisticsPanel) els.externalLogisticsPanel.hidden = !showExternal;
+  if (els.fixedLogisticsSection) els.fixedLogisticsSection.hidden = !FEATURES.fixedLogistics;
+  if (els.marketScanSection) els.marketScanSection.hidden = !FEATURES.marketScan;
+  if (els.newswirePanel) els.newswirePanel.hidden = !FEATURES.newswire;
+  if (els.ecoToggleBtn) els.ecoToggleBtn.hidden = !FEATURES.ecoMode;
+
+  if (els.externalTargetsMeta) {
+    const targetParts = [];
+    if (FEATURES.fixedLogistics) targetParts.push(`${REMOTE_FACILITIES.length} FIXED LINKS`);
+    if (FEATURES.marketScan) targetParts.push(`${MARKET_SCAN.length} MARKET CHANNELS`);
+    els.externalTargetsMeta.textContent = targetParts.join(' + ') || 'NO TARGETS';
+  }
+  if (els.externalSystemsMeta) {
+    const systems = FEATURES.fixedLogistics ? REMOTE_FACILITIES.map(f => f.system.toUpperCase()) : [];
+    if (FEATURES.marketScan) systems.push('ALL REGISTERED BASES');
+    els.externalSystemsMeta.textContent = systems.join(' // ') || 'NONE';
+  }
+  if (els.externalModeMeta) {
+    const modes = [];
+    if (FEATURES.fixedLogistics) modes.push('FIXED LOGISTICS');
+    if (FEATURES.marketScan) modes.push('REGIONAL MARKET SCAN');
+    els.externalModeMeta.textContent = modes.join(' + ') || 'STANDBY';
+  }
+
+  if (els.shipyardControl) {
+    els.shipyardControl.hidden = !FEATURES.capitalShipyard;
+  }
+}
+
+function saveViewPreferences() {
+  safeStorageSet(STORAGE_KEYS.view, {
+    search: els.search?.value || '',
+    role: els.roleFilter?.value || 'all',
+    sortCol,
+    sortAsc,
+    marketSort
+  });
+}
+
+function restoreViewPreferences() {
+  const saved = safeStorageGet(STORAGE_KEYS.view, {});
+  const validColumns = new Set(['name', 'role', 'status', 'quantity', 'sell', 'buy']);
+  const validRoles = new Set(['all', 'maintenance', 'procurement', 'export', 'shipyard', 'byproduct', 'confiscated']);
+
+  if (els.search && typeof saved?.search === 'string') els.search.value = saved.search.slice(0, 200);
+  if (els.roleFilter && validRoles.has(saved?.role)) els.roleFilter.value = saved.role;
+  if (validColumns.has(saved?.sortCol)) sortCol = saved.sortCol;
+  if (typeof saved?.sortAsc === 'boolean') sortAsc = saved.sortAsc;
+  if (['price', 'stock'].includes(saved?.marketSort)) marketSort = saved.marketSort;
+}
+
+function itemName(item) { return item?.name || item?.item_name || item?.nickname || String(item?.id || 'Unknown Asset'); }
+const COMMODITY_ALIASES = { 'super alloys': 'super alloy', 'multi-mode focusing chambers': 'multi-mode focusing chamber' };
+
+function cleanCommodityKey(rawName) {
+  const raw = normalize(rawName);
+  const idx = raw.indexOf('(');
+  const cleaned = (idx >= 0 ? raw.slice(0, idx) : raw).trim();
+  return COMMODITY_ALIASES[cleaned] || cleaned;
+}
+
+function commodityKey(item) { return cleanCommodityKey(itemName(item)); }
+function keyFromName(name) { return cleanCommodityKey(name); }
+function displayName(item) { const key = commodityKey(item); return CANONICAL_NAMES[key] || itemName(item); }
+function quantity(item) { return finiteNumber(item?.quantity ?? item?.amount ?? item?.stock, 0, 0); }
+function minStock(item) { return finiteNumber(item?.min_stock ?? item?.min, 0, 0); }
+
+function firstFiniteApiStockValue(item, keys) {
+  if (!item || item.missing) return null;
+  for (const key of keys) {
+    if (!Object.prototype.hasOwnProperty.call(item, key)) continue;
+    const raw = item[key];
+    if (raw === null || raw === undefined || raw === '') continue;
+    const value = Number(raw);
+    if (Number.isFinite(value) && value >= 0) return value;
+  }
+  return null;
+}
+
+function apiStockBoundary(item) {
+  const min = firstFiniteApiStockValue(item, ['min_stock', 'min']);
+  const max = firstFiniteApiStockValue(item, ['max_stock', 'max', 'maxStock', 'max_quantity', 'maxQuantity']);
+  return {
+    min,
+    max,
+    valid: min !== null && max !== null && max > 0 && min <= max
+  };
+}
+
+function needAmount(item) {
+  const nm = commodityKey(item);
+  const custom = CUSTOM_ALERTS[nm];
+  const q = quantity(item);
+  if (custom && custom.type === 'max') return Math.max(0, q - custom.yellow);
+  if (custom && custom.type === 'min') return Math.max(0, custom.yellow - q);
+  return Math.max(0, minStock(item) - q);
+}
+
+function maxStock(item) {
+  const value = item?.max_stock ?? item?.max ?? item?.maxStock ?? item?.max_quantity ?? item?.maxQuantity ?? 0;
+  return finiteNumber(value, 0, 0);
+}
+
+function barMaxFor(item) {
+  const nm = commodityKey(item);
+  const role = assetRole(item);
+  if (role === 'byproduct') return CUSTOM_ALERTS[nm]?.max || BAR_MAX_FALLBACKS[nm] || CUSTOM_ALERTS[nm]?.red || 15000;
+  return maxStock(item) || BAR_MAX_FALLBACKS[nm] || 1;
+}
+
+function progressMeta(item, roleOverride = null) {
+  const role = roleOverride || assetRole(item);
+  const q = quantity(item);
+  const max = barMaxFor(item);
+  const percent = max > 0 ? Math.min(100, (q / max) * 100) : 0;
+  const state = stateForRole(item, role);
+  let cls = state;
+  if (role === 'byproduct') cls = 'waste';
+  if (role === 'confiscated' && state === 'ok') cls = 'confiscated-bar';
+  return { percent: Math.max(0, Math.round(percent)), cls, max };
+}
+
+function renderProgress(item, options = {}) {
+  const meta = progressMeta(item, options.role || null);
+  const fillClass = options.stateOverride || meta.cls;
+  const showApiReserve = options.showApiReserve !== false;
+  const q = quantity(item);
+
+  // The marker deliberately uses only live API values. Fallback capacities may size a
+  // normal bar, but they must never invent an in-game trade boundary. A real API
+  // min_stock of 0 is valid and is shown at the left edge of the scale.
+  const boundary = showApiReserve ? apiStockBoundary(item) : { min: null, max: null, valid: false };
+
+  if (!boundary.valid) {
+    const tooltip = `${meta.percent}% OF MAX ${number(meta.max)}`;
+    return `<div class="progress-wrap" data-tooltip="${tooltip}" aria-label="${tooltip}"><div class="progress-fill ${fillClass}" style="width:${meta.percent}%"></div></div>`;
+  }
+
+  const apiMin = boundary.min;
+  const apiMax = boundary.max;
+  const reservePercent = Math.max(0.5, Math.min(99.5, (apiMin / apiMax) * 100));
+  const sellable = Math.max(0, q - apiMin);
+  const tooltip = `STOCK ${number(q)} // BASE RESERVE ${number(apiMin)} // FOR SALE ${number(sellable)} // MAX ${number(apiMax)}`;
+  const markerTooltip = apiMin > 0
+    ? `API MIN STOCK ${number(apiMin)} // STOCK AT OR BELOW THIS MARK IS RESERVED`
+    : `API MIN STOCK 0 // NO STOCK IS SEALED AS BASE RESERVE`;
+
+  return `<div class="progress-wrap" data-tooltip="${tooltip}" aria-label="${tooltip}">` +
+    `<div class="progress-reserve-marker" style="left:${reservePercent.toFixed(2)}%" data-tooltip="${markerTooltip}" aria-label="${markerTooltip}" role="img" tabindex="0"></div>` +
+    `<div class="progress-fill ${fillClass}" style="width:${meta.percent}%"></div>` +
+  `</div>`;
+}
+
+function renderFeedstockProgress(item, state, fallbackKey) {
+  if (item) return renderProgress(item, { role: 'procurement', stateOverride: state, showApiReserve: true });
+  const max = BAR_MAX_FALLBACKS[fallbackKey] || 1;
+  return `<div class="progress-wrap" data-tooltip="0% OF MAX ${number(max)}" aria-label="0% OF MAX ${number(max)}"><div class="progress-fill ${state}" style="width:0%"></div></div>`;
+}
+
+function formatBaseHealth(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '–';
+  if (n <= 100) return `${n.toFixed(n % 1 ? 1 : 0)}%`;
+  const pct = Math.max(0, Math.min(100, (n / 24000000) * 100));
+  return `${pct.toFixed(pct % 1 ? 1 : 0)}%`;
+}
+
+function formatPosition(value) {
+  if (!value) return '–';
+  if (typeof value === 'string') {
+    const cleaned = value.split(',').map(s => s.trim()).filter(Boolean);
+    return cleaned.length ? cleaned.join(' // ') : '–';
+  }
+  if (typeof value === 'object') {
+    const arr = [value.x ?? value.X, value.y ?? value.Y, value.z ?? value.Z].filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+    return arr.length ? arr.join(' // ') : '–';
+  }
+  return String(value);
+}
+
