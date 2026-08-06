@@ -10,6 +10,7 @@ permissions:
   pages: write
   id-token: write
 
+# One Pages deployment at a time. A new RHW deploy replaces stale older runs.
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -20,6 +21,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
