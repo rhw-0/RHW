@@ -24,3 +24,4 @@ Keep the script and stylesheet order in `index.html`. Most future data/configura
 Deployment to GitHub Pages is automated by `.github/workflows/pages.yml` whenever `main` changes.
 
 The public dashboard version remains **V3.5**.
+<!-- RHW deploy trigger -->
