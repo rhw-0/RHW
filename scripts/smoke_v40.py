@@ -117,13 +117,38 @@ def build_inline_document(route: str) -> str:
     return source.replace('</body>', f'{v4_scripts}\n</body>')
 
 
-def evaluate_snapshot(cdp: CDP) -> dict:
+def evaluate_json(cdp: CDP, expression: str) -> dict:
     result = cdp.call('Runtime.evaluate', {
-        'expression': "JSON.stringify({ready:document.documentElement.dataset.v40Ready||'',error:document.documentElement.dataset.v40Error||'',workspace:document.body?.dataset.workspace||'',commandNode:document.body?.dataset.commandNode||'',operationsNode:document.body?.dataset.operationsNode||'',commsNode:document.body?.dataset.commsNode||'',recipeCount:window.RHWV4?.operationsCore?.state?.catalog?.meta?.recipeCount||0,smoke:window.__RHW_V4_SMOKE__||null})",
+        'expression': f'JSON.stringify({expression})',
         'returnByValue': True,
+        'awaitPromise': True,
     })
     raw = result.get('result', {}).get('value')
     return json.loads(raw) if raw else {}
+
+
+def evaluate_snapshot(cdp: CDP) -> dict:
+    return evaluate_json(cdp, "({ready:document.documentElement.dataset.v40Ready||'',error:document.documentElement.dataset.v40Error||'',workspace:document.body?.dataset.workspace||'',commandNode:document.body?.dataset.commandNode||'',operationsNode:document.body?.dataset.operationsNode||'',commsNode:document.body?.dataset.commsNode||'',recipeCount:window.RHWV4?.operationsCore?.state?.catalog?.meta?.recipeCount||0,smoke:window.__RHW_V4_SMOKE__||null})")
+
+
+def verify_operations_costing(cdp: CDP) -> None:
+    trigger = evaluate_json(cdp, "(() => { const search=document.getElementById('opsRecipeSearch'); if(!search) return {ok:false,reason:'missing-search'}; search.value='Superstr'; search.dispatchEvent(new Event('input',{bubbles:true})); return {ok:true}; })()")
+    if not trigger.get('ok'):
+        raise RuntimeError(f'Operations costing search unavailable: {trigger}')
+    time.sleep(0.35)
+    selected = evaluate_json(cdp, "({recipe:document.getElementById('opsRecipe')?.selectedOptions?.[0]?.textContent||'',target:document.querySelector('.ops-selected-target strong')?.textContent||'',materialInputs:document.querySelectorAll('[data-material-price]').length,hasVariant:[...document.querySelectorAll('span')].some(el=>el.textContent.trim()==='RECIPE VARIANT')})")
+    if 'superstructure' not in selected.get('recipe', '').lower() or 'superstructure' not in selected.get('target', '').lower():
+        raise RuntimeError(f'Superstructure recipe search selected wrong recipe: {selected}')
+    if 'dunkirk' in selected.get('recipe', '').lower() or selected.get('hasVariant'):
+        raise RuntimeError(f'Obsolete/mismatched recipe variant surfaced: {selected}')
+    if selected.get('materialInputs', 0) <= 0:
+        raise RuntimeError(f'No material-price inputs rendered for Superstructure Systems: {selected}')
+
+    evaluate_json(cdp, "(() => { document.querySelectorAll('[data-material-price]').forEach(input=>{input.value='1000';input.dispatchEvent(new Event('input',{bubbles:true}));}); const margin=document.getElementById('opsMargin'); if(margin){margin.value='20';margin.dispatchEvent(new Event('input',{bubbles:true}));} return {ok:true}; })()")
+    quote = evaluate_json(cdp, "({coverage:document.getElementById('opsPriceCoverage')?.textContent||'',sell:document.getElementById('opsSellUnit')?.textContent||'',profit:document.getElementById('opsProfit')?.textContent||''})")
+    if '—' in quote.get('sell', '') or 'CR' not in quote.get('sell', '') or 'CR' not in quote.get('profit', ''):
+        raise RuntimeError(f'Cost/margin quote did not resolve after pricing materials: {quote}')
+    print('V4 interaction smoke passed: operations recipe search + material pricing + margin')
 
 
 def launch_browser() -> tuple[subprocess.Popen, str, int, str, str]:
@@ -212,6 +237,8 @@ def main() -> int:
                 if (snapshot.get('smoke') or {}).get('errors'):
                     raise RuntimeError(f"Runtime self-test errors on {workspace}/{node}: {snapshot['smoke']['errors']}")
                 print(f'V4 runtime smoke passed: {workspace}/{node}')
+                if workspace == 'operations':
+                    verify_operations_costing(cdp)
         finally:
             cdp.close()
     finally:
