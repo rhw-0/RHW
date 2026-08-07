@@ -29,7 +29,7 @@ const RHW_APP_CONFIG = Object.freeze({
       name: 'Alistair Thorne',
       title: 'CEO | Thorne Industrial Group',
       location: 'Resolution Heavy Works, New London',
-      encryption: 'Crown-Command-Channel-01',
+      encryption: 'RHW/SOVEREIGN-MK-IV // ML-KEM-1024 + AES-256-GCM // KEYSET THORNE-07',
       closing: 'Yours faithfully,'
     })
   ]),
@@ -37,9 +37,11 @@ const RHW_APP_CONFIG = Object.freeze({
     Object.freeze({
       key: 'formal',
       label: 'FORMAL TRANSMISSION',
-      description: 'Official RHW correspondence with full sender and channel metadata.',
+      description: 'Official RHW correspondence with full sender and encryption metadata.',
       recipient: '',
-      encryption: 'Crown-Command-Channel-01',
+      encryption: 'CROWN/TYPEX-MK-VIII // ML-KEM-1024 + AES-256-GCM // KEYSET LION-01',
+      classification: 'RHW OFFICIAL',
+      accent: '#d4af37',
       subjectPlaceholder: 'Transmission subject'
     }),
     Object.freeze({
@@ -47,7 +49,9 @@ const RHW_APP_CONFIG = Object.freeze({
       label: 'PROCUREMENT',
       description: 'Formal procurement or military-industrial correspondence.',
       recipient: 'Bretonia Armed Forces | Admiralty Procurement Office',
-      encryption: 'Crown-Command-Channel-01',
+      encryption: 'ADMIRALTY/IRONCLAD-MK-VI // ML-KEM-1024 + AES-256-GCM // KEYSET VICTORIA-03',
+      classification: 'CROWN RESTRICTED',
+      accent: '#d4af37',
       subjectPlaceholder: 'Procurement subject'
     }),
     Object.freeze({
@@ -55,7 +59,9 @@ const RHW_APP_CONFIG = Object.freeze({
       label: 'TRADE OFFER',
       description: 'Commercial offer, supply proposal or trading communication.',
       recipient: '',
-      encryption: 'RHW-Commercial-Channel-01',
+      encryption: 'BMM/BLACKTHORN-MK-IV // X25519 + CHACHA20-POLY1305 // KEYSET THAMES-11',
+      classification: 'COMMERCIAL CONFIDENTIAL',
+      accent: '#c6a75a',
       subjectPlaceholder: 'Commercial subject'
     }),
     Object.freeze({
@@ -63,7 +69,9 @@ const RHW_APP_CONFIG = Object.freeze({
       label: 'OPERATIONS BULLETIN',
       description: 'Internal production, logistics or yard operations message.',
       recipient: 'RHW Operations Network',
-      encryption: 'RHW-Internal-Channel-01',
+      encryption: 'RHW/RESOLUTION-MK-V // X25519 + AES-256-GCM // KEYSET NEW-LONDON-06',
+      classification: 'RHW INTERNAL',
+      accent: '#7da7ea',
       subjectPlaceholder: 'Operations subject'
     }),
     Object.freeze({
@@ -71,7 +79,9 @@ const RHW_APP_CONFIG = Object.freeze({
       label: 'INCIDENT REPORT',
       description: 'Priority incident, security or facility-status transmission.',
       recipient: 'RHW Command',
-      encryption: 'RHW-Command-Priority-01',
+      encryption: 'CROWN/SOVEREIGN-MK-IX // ML-KEM-1024 + AES-256-GCM // KEYSET RED-LION-01',
+      classification: 'PRIORITY // RESTRICTED',
+      accent: '#c75e5e',
       subjectPlaceholder: 'Incident subject'
     }),
     Object.freeze({
@@ -79,7 +89,9 @@ const RHW_APP_CONFIG = Object.freeze({
       label: 'GENERAL ANNOUNCEMENT',
       description: 'Public-facing RHW statement or general bulletin.',
       recipient: 'Open Broadcast',
-      encryption: 'RHW-Public-Channel-01',
+      encryption: 'RHW/HERALD-MK-II // X25519 + CHACHA20-POLY1305 // KEYSET CROWN-BROADCAST-04',
+      classification: 'PUBLIC RELEASE',
+      accent: '#d4af37',
       subjectPlaceholder: 'Announcement subject'
     })
   ])
