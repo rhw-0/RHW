@@ -176,6 +176,7 @@ h1 {
   line-height: 1.02;
 }
 .market-card .supplier-commodity-row { align-items: center; }
+.market-mobile-toggle { display: none; }
 
 /* -------------------------------------------------------------------------
    MANIFEST: desktop keeps the dense command table; mobile becomes readable
@@ -362,6 +363,32 @@ h1 {
 
   .market-scan-grid { grid-template-columns: 1fr; padding: 10px; }
   .market-scan-grid > .market-card:nth-child(n) { grid-column: auto; }
+  .market-card:not(.mobile-market-expanded) .supplier-commodity-list .supplier-commodity-row:nth-child(n+4) {
+    display: none;
+  }
+  .market-mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(100% - 20px);
+    min-height: 32px;
+    margin: 0 10px 10px;
+    padding: 7px 10px;
+    border: 1px solid rgba(125,167,234,0.28);
+    clip-path: none;
+    background: rgba(125,167,234,0.07);
+    color: #b9cdf0;
+    font-family: var(--font-tech);
+    font-size: 8px;
+    letter-spacing: 0.11em;
+    box-shadow: none;
+  }
+  .market-mobile-toggle:hover,
+  .market-mobile-toggle:focus-visible {
+    background: rgba(125,167,234,0.13);
+    color: #e0eaff;
+    box-shadow: none;
+  }
 
   .manifest-panel .panel-head { padding: 14px; }
   .manifest-controls { width: 100%; }
