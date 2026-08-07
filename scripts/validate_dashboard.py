@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from html.parser import HTMLParser
 from pathlib import Path
+import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,8 +28,7 @@ V4_RUNTIME_ASSETS = [
     './js/16-app-v40-composer.js',
     './assets/recipes/catalog-v1-part-01.js', './assets/recipes/catalog-v1-part-02.js', './assets/recipes/catalog-v1-part-03.js',
     './assets/recipes/catalog-v1-part-04.js', './assets/recipes/catalog-v1-part-05.js', './assets/recipes/catalog-v1-part-06.js',
-    './js/17-app-v40-operations-core.js',
-    './js/18-app-v40-operations-ui.js', './js/19-app-v40-runtime.js',
+    './js/17-app-v40-operations-core.js', './js/18-app-v40-operations-ui.js', './js/19-app-v40-runtime.js',
 ]
 V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py']
 
@@ -97,20 +97,36 @@ def main() -> int:
         'window.RHWV4', "'operations'", 'workspaceOperations', 'app.installShell', 'app.navigate', 'app.applyRoute'
     ), 'V4 core')
     require_tokens(errors, 'js/14-app-v40-cache.js', ('app.storage', 'saveDraft', 'upsertSender', 'importPayload', 'senderSnapshotName'), 'V4 storage')
-    require_tokens(errors, 'js/15-app-v40-navigation.js', ('PRIORITY ACTIONS', 'inventory-view-nav', 'priorityActions', 'activateInventoryView'), 'V4 COMMAND module')
+    require_tokens(errors, 'js/15-app-v40-navigation.js', (
+        'PRIORITY ACTIONS', 'inventory-view-nav', 'priorityActions', 'activateInventoryView',
+        "typeof CAPITAL_SHIPYARD === 'undefined'", "typeof RECIPES === 'undefined'"
+    ), 'V4 COMMAND module')
     require_tokens(errors, 'js/16-app-v40-composer.js', ('SALUTATION / OPENING', 'comms-editor-toolbar', 'ticker-builder-preview', 'data-edit-sender', 'buildBbcode'), 'V4 COMMS module')
-    require_tokens(errors, 'js/17-app-v40-operations-core.js', ('app.operationsCore', 'loadCatalog', 'buildPlan', 'factorFor', 'telemetryQuantity'), 'V4 OPERATIONS planner')
+    require_tokens(errors, 'js/17-app-v40-operations-core.js', ('app.operationsCore', 'loadCatalog', 'buildPlan', 'factorFor', 'outputPerCycle: rootOutputPerCycle'), 'V4 OPERATIONS planner')
     require_tokens(errors, 'js/18-app-v40-operations-ui.js', (
         'ITEM CALCULATOR', 'SEARCH RECIPE', 'PRICE / UNIT', 'TARGET PROFIT MARGIN', 'materialPrices',
-        'installShipyardBridge', 'PRICE / PLAN 1 HULL'
+        'NO MATCHING RECIPE', 'Math.ceil(unitCost', 'installShipyardBridge', 'PRICE / PLAN 1 HULL'
     ), 'V4 OPERATIONS UI')
     require_tokens(errors, 'js/19-app-v40-runtime.js', ('workspaceOperations', 'operations-calculator', '__RHW_V4_SMOKE__', 'app.runtime'), 'V4 runtime')
     for idx in range(1, 7):
         require_tokens(errors, f'assets/recipes/catalog-v1-part-{idx:02d}.js', ('__RHW_RECIPE_CATALOG_GZIP_BASE64__',), f'V4 recipe catalog chunk {idx}')
 
+    command_ui = (ROOT / 'js/15-app-v40-navigation.js').read_text(encoding='utf-8')
+    if 'window.RECIPES' in command_ui or 'window.CAPITAL_SHIPYARD' in command_ui:
+        errors.append('V4 COMMAND must not probe stable lexical const values through window.*.')
+
     operations_ui = (ROOT / 'js/18-app-v40-operations-ui.js').read_text(encoding='utf-8')
     if 'RECIPE VARIANT' in operations_ui:
         errors.append('V4 Item Calculator must not expose the obsolete RECIPE VARIANT control.')
+    if 'ALTERNATIVE INPUTS' in operations_ui or '.ops-alternatives' in operations_ui:
+        errors.append('V4 Item Calculator must not expose alternative-input routing in simple costing mode.')
+
+    operations_css = (ROOT / 'css/16-app-v40-operations.css').read_text(encoding='utf-8')
+    if re.search(r'(^|})\.(good|warn)\{', operations_css):
+        errors.append('V4 OPERATIONS status colors leak through unscoped global .good/.warn selectors.')
+
+    if (ROOT / 'js/17-app-v40-audit.js').exists():
+        errors.append('Obsolete duplicate V4 runtime file js/17-app-v40-audit.js must not be present.')
 
     for path in (
         'js/13-app-v40.js', 'js/14-app-v40-cache.js', 'js/15-app-v40-navigation.js',
