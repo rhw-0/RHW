@@ -45,11 +45,13 @@ V4_DYNAMIC_ASSETS = [
     "./css/12-app-v40.css",
     "./css/13-app-v40-navigation.css",
     "./css/14-app-v40-composer.css",
+    "./css/15-app-v40-audit.css",
     "./js/12-app-config.js",
     "./js/13-app-v40.js",
     "./js/14-app-v40-cache.js",
     "./js/15-app-v40-navigation.js",
     "./js/16-app-v40-composer.js",
+    "./js/17-app-v40-audit.js",
 ]
 
 
@@ -108,11 +110,15 @@ def main() -> int:
     bootstrap = (ROOT / "js/00-bootstrap.js").read_text(encoding="utf-8")
     for required in (
         "./css/12-app-v40.css",
+        "./css/13-app-v40-navigation.css",
+        "./css/14-app-v40-composer.css",
+        "./css/15-app-v40-audit.css",
         "./js/12-app-config.js",
         "./js/13-app-v40.js",
         "./js/14-app-v40-cache.js",
         "./js/15-app-v40-navigation.js",
         "./js/16-app-v40-composer.js",
+        "./js/17-app-v40-audit.js",
     ):
         if required not in bootstrap:
             fail(errors, f"V4 bootstrap does not reference required asset: {required}")
@@ -155,6 +161,17 @@ def main() -> int:
     ):
         if required_hook not in composer_js:
             fail(errors, f"V4 composer polish is incomplete: {required_hook}")
+
+    audit_js = (ROOT / "js/17-app-v40-audit.js").read_text(encoding="utf-8")
+    for required_hook in (
+        "v40AuditRebindSenderSelect",
+        "v40AuditSnapshotSenderReferences",
+        "v40AuditUpdateCommsHeading",
+        "v40AuditUpdateCommandOverview",
+        "v40AuditImportLocalCacheFile",
+    ):
+        if required_hook not in audit_js:
+            fail(errors, f"V4 preview audit hardening is incomplete: {required_hook}")
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     if ".github/workflows/rhw-pages-deploy.yml" not in readme:
