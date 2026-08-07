@@ -44,10 +44,12 @@ EXPECTED_JS = [
 V4_DYNAMIC_ASSETS = [
     "./css/12-app-v40.css",
     "./css/13-app-v40-navigation.css",
+    "./css/14-app-v40-composer.css",
     "./js/12-app-config.js",
     "./js/13-app-v40.js",
     "./js/14-app-v40-cache.js",
     "./js/15-app-v40-navigation.js",
+    "./js/16-app-v40-composer.js",
 ]
 
 
@@ -110,6 +112,7 @@ def main() -> int:
         "./js/13-app-v40.js",
         "./js/14-app-v40-cache.js",
         "./js/15-app-v40-navigation.js",
+        "./js/16-app-v40-composer.js",
     ):
         if required not in bootstrap:
             fail(errors, f"V4 bootstrap does not reference required asset: {required}")
@@ -117,7 +120,7 @@ def main() -> int:
     app_config = (ROOT / "js/12-app-config.js").read_text(encoding="utf-8")
     if "RHW_APP_VERSION = 'V4.0 PREVIEW'" not in app_config or "alistair-thorne" not in app_config:
         fail(errors, "V4 app configuration is missing the preview version or built-in Alistair sender profile.")
-    for required_config in ("classification:", "accent:", "ML-KEM-1024"):
+    for required_config in ("classification:", "accent:", "closing:", "RHW-RESOLUTION/V"):
         if required_config not in app_config:
             fail(errors, f"V4 transmission configuration is incomplete: {required_config}")
 
@@ -141,6 +144,17 @@ def main() -> int:
     ):
         if required_hook not in nav_js:
             fail(errors, f"V4 node/navigation controls are incomplete: {required_hook}")
+
+    composer_js = (ROOT / "js/16-app-v40-composer.js").read_text(encoding="utf-8")
+    for required_hook in (
+        "v40InstallClosingSelector",
+        "v40InstallSignatureAutomation",
+        "v40InstallDocumentControlCard",
+        "v40InstallNewswireClarity",
+        "RHW_V40_CLOSING_PRESETS",
+    ):
+        if required_hook not in composer_js:
+            fail(errors, f"V4 composer polish is incomplete: {required_hook}")
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     if ".github/workflows/rhw-pages-deploy.yml" not in readme:
