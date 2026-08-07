@@ -22,6 +22,7 @@ EXPECTED_CSS = [
     "./css/08-headings.css",
     "./css/09-v35.css",
     "./css/10-maintenance.css",
+    "./css/11-layout-v36.css",
 ]
 
 EXPECTED_JS = [
@@ -37,6 +38,7 @@ EXPECTED_JS = [
     "./js/08-data.js",
     "./js/09-newswire.js",
     "./js/10-maintenance.js",
+    "./js/11-layout-v36.js",
 ]
 
 
@@ -87,6 +89,10 @@ def main() -> int:
     config = (ROOT / "js/config.js").read_text(encoding="utf-8")
     if "baseHealthMax:" not in config:
         fail(errors, "js/config.js must define baseHealthMax.")
+
+    layout_js = (ROOT / "js/11-layout-v36.js").read_text(encoding="utf-8")
+    if "arrangeV36CommandFlow" not in layout_js or "initProductionDetailsToggle" not in layout_js:
+        fail(errors, "V3.6 layout controls are incomplete.")
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     if ".github/workflows/rhw-pages-deploy.yml" not in readme:
