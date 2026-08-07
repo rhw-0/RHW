@@ -10,19 +10,26 @@ if (typeof window.debounce !== 'function') {
 }
 
 /* V4 is intentionally layered on top of the stable V3.6 command dashboard.
-   Load the presentation stylesheet immediately, but wait until every legacy
-   dashboard script has finished before booting the app shell and COMMS tools. */
+   Load every V4 stylesheet immediately to avoid an unstyled app-shell flash,
+   but wait until the stable dashboard has initialized before booting V4 JS. */
 (function bootstrapRhwV4Preview() {
-  if (!document.querySelector('link[data-rhw-v4-app]')) {
+  [
+    ['./css/12-app-v40.css', 'rhwV4App'],
+    ['./css/13-app-v40-navigation.css', 'rhwV40Nodes'],
+    ['./css/14-app-v40-composer.css', 'rhwV40Composer'],
+    ['./css/15-app-v40-audit.css', 'rhwV40Audit']
+  ].forEach(([href, dataKey]) => {
+    if (document.querySelector(`link[href="${href}"]`)) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = './css/12-app-v40.css';
-    link.dataset.rhwV4App = 'true';
+    link.href = href;
+    link.dataset[dataKey] = 'true';
     document.head.appendChild(link);
-  }
+  });
 
   window.addEventListener('DOMContentLoaded', () => {
     if (document.documentElement.dataset.rhwApp === 'v4') return;
+
     const config = document.createElement('script');
     config.src = './js/12-app-config.js';
     config.dataset.rhwV4Config = 'true';
@@ -42,6 +49,12 @@ if (typeof window.debounce !== 'function') {
             const composer = document.createElement('script');
             composer.src = './js/16-app-v40-composer.js';
             composer.dataset.rhwV4Composer = 'true';
+            composer.addEventListener('load', () => {
+              const audit = document.createElement('script');
+              audit.src = './js/17-app-v40-audit.js';
+              audit.dataset.rhwV40Audit = 'true';
+              document.body.appendChild(audit);
+            }, { once: true });
             document.body.appendChild(composer);
           }, { once: true });
           document.body.appendChild(nodes);
