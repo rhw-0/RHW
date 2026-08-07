@@ -145,6 +145,7 @@ html[data-rhw-app="v4"] body[data-workspace="comms"] .rhw-workspace-root {
 .forum-preview[data-template="announcement"] { background-image: radial-gradient(circle at 50% 0%, rgba(120,173,138,.065), transparent 34%); }
 
 /* TICKER builder */
+#v40TickerMessage { min-height: 124px; }
 .ticker-builder-preview { display: grid; gap: 7px; padding: 0 18px 18px; }
 .ticker-builder-preview > small { color: rgba(125,167,234,.68); font-family: var(--font-tech); font-size: 8px; letter-spacing: .1em; }
 .ticker-builder-bar {
