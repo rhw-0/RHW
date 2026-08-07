@@ -56,23 +56,19 @@
     try {
       const roles = typeof window.assetRoles === 'function' ? window.assetRoles(item) : [];
       const states = roles.map(role => ({ role, state: window.stateForRole?.(item, role) || 'ok' }));
-      const critical = states.find(entry => entry.state === 'critical');
-      if (critical) return critical;
-      const low = states.find(entry => entry.state === 'low');
-      return low || states[0] || { role: 'other', state: 'ok' };
-    } catch {
-      return { role: 'other', state: 'ok' };
-    }
+      return states.find(entry => entry.state === 'critical') || states.find(entry => entry.state === 'low') || states[0] || { role: 'other', state: 'ok' };
+    } catch { return { role: 'other', state: 'ok' }; }
   }
 
   function shipyardAnalysis() {
     try {
-      if (!window.CAPITAL_SHIPYARD?.components?.length || typeof window.stockFor !== 'function') return null;
+      /* CAPITAL_SHIPYARD is a top-level const in the stable dashboard. Classic-script
+         lexical globals are visible by identifier to later scripts, but not as window properties. */
+      if (typeof CAPITAL_SHIPYARD === 'undefined' || !CAPITAL_SHIPYARD?.components?.length || typeof window.stockFor !== 'function') return null;
       const data = CAPITAL_SHIPYARD.components.map(component => {
         const required = Math.max(1, Number(component.required) || 1);
         const stock = Number(stockFor(component.name)) || 0;
-        const coverage = Math.floor(stock / required);
-        return { ...component, required, stock, coverage };
+        return { ...component, required, stock, coverage: Math.floor(stock / required) };
       });
       const buildable = Math.min(...data.map(component => component.coverage));
       const next = buildable + 1;
@@ -87,66 +83,48 @@
         return current.gap > best.gap ? current : best;
       }, null);
       return { buildable, bottleneck };
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
 
   function productionAnalysis() {
     try {
-      if (!Array.isArray(window.RECIPES) || typeof window.analyzeRecipe !== 'function') return [];
-      return RECIPES.map(analyzeRecipe).sort((a, b) => a.possibleCycles - b.possibleCycles);
-    } catch {
-      return [];
-    }
+      /* RECIPES is also a top-level const from the stable classic-script bundle. */
+      if (typeof RECIPES === 'undefined' || !Array.isArray(RECIPES) || typeof window.analyzeRecipe !== 'function') return [];
+      return RECIPES.map(recipe => window.analyzeRecipe(recipe)).sort((a, b) => a.possibleCycles - b.possibleCycles);
+    } catch { return []; }
   }
 
   function priorityActions() {
     const actions = [];
     const verified = typeof window.hasVerifiedTelemetry === 'function' ? window.hasVerifiedTelemetry() : false;
-    if (!verified) {
-      actions.push({ state: 'critical', node: 'inventory', title: 'RESTORE VERIFIED TELEMETRY', meta: 'LOCAL INVENTORY HAS NOT BEEN VERIFIED' });
-      return actions;
-    }
+    if (!verified) return [{ state: 'critical', node: 'inventory', title: 'RESTORE VERIFIED TELEMETRY', meta: 'LOCAL INVENTORY HAS NOT BEEN VERIFIED' }];
 
-    const items = safeOperationalItems();
-    items.forEach(item => {
+    safeOperationalItems().forEach(item => {
       const severity = roleSeverity(item);
       if (!['critical', 'low'].includes(severity.state)) return;
       let name = item?.name || 'UNKNOWN ASSET';
-      try { if (typeof window.displayName === 'function') name = displayName(item); } catch {}
+      try { if (typeof window.displayName === 'function') name = window.displayName(item); } catch {}
       let deficit = 0;
-      try { if (typeof window.needAmount === 'function') deficit = Number(needAmount(item)) || 0; } catch {}
+      try { if (typeof window.needAmount === 'function') deficit = Number(window.needAmount(item)) || 0; } catch {}
       const node = severity.role === 'shipyard' ? 'shipyard' : 'inventory';
-      const role = String(severity.role || 'asset').toUpperCase();
-      actions.push({
-        state: severity.state,
-        node,
-        title: `${role} // ${String(name).toUpperCase()}`,
-        meta: deficit > 0 ? `DEFICIT ${app.util.number(deficit)} UNITS` : `${severity.state.toUpperCase()} THRESHOLD BREACH`
-      });
+      actions.push({ state: severity.state, node, title: `${String(severity.role || 'asset').toUpperCase()} // ${String(name).toUpperCase()}`, meta: deficit > 0 ? `DEFICIT ${app.util.number(deficit)} UNITS` : `${severity.state.toUpperCase()} THRESHOLD BREACH` });
     });
 
-    const production = productionAnalysis();
-    const constrained = production.find(entry => entry.cardState !== 'ok');
-    if (constrained?.bottleneck) {
-      actions.push({
-        state: constrained.cardState,
-        node: 'production',
-        title: `PRODUCTION // ${String(constrained.recipe.product).toUpperCase()}`,
-        meta: `BOTTLENECK ${String(constrained.bottleneck.displayName || constrained.bottleneck.name).toUpperCase()} // NEXT CYCLE +${app.util.number(constrained.nextCycleGap)}`
-      });
-    }
+    const constrained = productionAnalysis().find(entry => entry.cardState !== 'ok');
+    if (constrained?.bottleneck) actions.push({
+      state: constrained.cardState,
+      node: 'production',
+      title: `PRODUCTION // ${String(constrained.recipe.product).toUpperCase()}`,
+      meta: `BOTTLENECK ${String(constrained.bottleneck.displayName || constrained.bottleneck.name).toUpperCase()} // NEXT CYCLE +${app.util.number(constrained.nextCycleGap)}`
+    });
 
     const yard = shipyardAnalysis();
-    if (yard && yard.buildable <= 1 && yard.bottleneck) {
-      actions.push({
-        state: yard.buildable <= 0 ? 'critical' : 'low',
-        node: 'shipyard',
-        title: `SHIPYARD // ${yard.buildable <= 0 ? 'NO HULL READY' : 'RESERVE THIN'}`,
-        meta: `NEXT HULL NEEDS +${app.util.number(yard.bottleneck.gap)} ${String(yard.bottleneck.name).toUpperCase()}`
-      });
-    }
+    if (yard && yard.buildable <= 1 && yard.bottleneck) actions.push({
+      state: yard.buildable <= 0 ? 'critical' : 'low',
+      node: 'shipyard',
+      title: `SHIPYARD // ${yard.buildable <= 0 ? 'NO HULL READY' : 'RESERVE THIN'}`,
+      meta: `NEXT HULL NEEDS +${app.util.number(yard.bottleneck.gap)} ${String(yard.bottleneck.name).toUpperCase()}`
+    });
 
     const order = { critical: 0, low: 1, ok: 2 };
     return actions.sort((a, b) => (order[a.state] ?? 9) - (order[b.state] ?? 9)).slice(0, 6);
@@ -158,22 +136,28 @@
     if (!list || !count) return;
     const actions = priorityActions();
     count.textContent = `${actions.length} ACTIVE`;
-    if (!actions.length) {
-      list.innerHTML = '<div class="command-priority-empty"><strong>NO PRIORITY ACTIONS</strong><span>ALL MONITORED COMMAND THRESHOLDS ARE NOMINAL</span></div>';
-      return;
-    }
-    list.innerHTML = actions.map(action => `<button type="button" class="command-priority-item state-${action.state}" data-priority-jump="${action.node}"><span class="priority-state">${action.state.toUpperCase()}</span><span><strong>${app.util.escape(action.title)}</strong><small>${app.util.escape(action.meta)}</small></span><b>OPEN</b></button>`).join('');
+    list.innerHTML = actions.length
+      ? actions.map(action => `<button type="button" class="command-priority-item state-${action.state}" data-priority-jump="${action.node}"><span class="priority-state">${action.state.toUpperCase()}</span><span><strong>${app.util.escape(action.title)}</strong><small>${app.util.escape(action.meta)}</small></span><b>OPEN</b></button>`).join('')
+      : '<div class="command-priority-empty"><strong>NO PRIORITY ACTIONS</strong><span>ALL MONITORED COMMAND THRESHOLDS ARE NOMINAL</span></div>';
+  }
+
+  function write(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
   }
 
   function updateOverview() {
     if (!document.getElementById('v40OverviewInventory')) return;
     const verified = typeof window.hasVerifiedTelemetry === 'function' ? window.hasVerifiedTelemetry() : false;
     if (!verified) {
-      document.getElementById('v40OverviewInventory').textContent = 'AWAITING TELEMETRY';
-      document.getElementById('v40OverviewInventoryMeta').textContent = 'NO VERIFIED LOCAL INVENTORY';
-      document.getElementById('v40OverviewShipyard').textContent = 'AWAITING UPLINK';
-      document.getElementById('v40OverviewProduction').textContent = 'SCANNING';
-      document.getElementById('v40OverviewLogistics').textContent = 'SAT-LINK SCANNING';
+      write('v40OverviewInventory', 'AWAITING TELEMETRY');
+      write('v40OverviewInventoryMeta', 'NO VERIFIED LOCAL INVENTORY');
+      write('v40OverviewShipyard', 'AWAITING UPLINK');
+      write('v40OverviewShipyardMeta', 'NO VERIFIED YARD INVENTORY');
+      write('v40OverviewProduction', 'SCANNING');
+      write('v40OverviewProductionMeta', 'AWAITING VERIFIED PRODUCTION INPUTS');
+      write('v40OverviewLogistics', 'SAT-LINK SCANNING');
+      write('v40OverviewLogisticsMeta', 'AWAITING VERIFIED REMOTE STATUS');
       renderPriorities();
       return;
     }
@@ -183,22 +167,20 @@
     const critical = states.filter(entry => entry.state === 'critical').length;
     const low = states.filter(entry => entry.state === 'low').length;
     const exports = items.filter(item => { try { return window.hasAssetRole?.(item, 'export'); } catch { return false; } }).length;
-    document.getElementById('v40OverviewInventory').textContent = critical ? `${critical} CRITICAL` : (low ? `${low} LOW` : 'INVENTORY NOMINAL');
-    document.getElementById('v40OverviewInventoryMeta').textContent = `${critical} CRITICAL // ${low} LOW // ${exports} EXPORT LINES`;
+    write('v40OverviewInventory', critical ? `${critical} CRITICAL` : (low ? `${low} LOW` : 'INVENTORY NOMINAL'));
+    write('v40OverviewInventoryMeta', `${critical} CRITICAL // ${low} LOW // ${exports} EXPORT LINES`);
 
     const yard = shipyardAnalysis();
-    document.getElementById('v40OverviewShipyard').textContent = yard ? `${app.util.number(yard.buildable)} HULL${yard.buildable === 1 ? '' : 'S'} READY` : 'YARD ONLINE';
-    document.getElementById('v40OverviewShipyardMeta').textContent = yard?.bottleneck ? `NEXT HULL // ${String(yard.bottleneck.name).toUpperCase()} +${app.util.number(yard.bottleneck.gap)}` : 'CAPITAL CONTROL AVAILABLE';
+    write('v40OverviewShipyard', yard ? `${app.util.number(yard.buildable)} HULL${yard.buildable === 1 ? '' : 'S'} READY` : 'YARD ONLINE');
+    write('v40OverviewShipyardMeta', yard?.bottleneck ? `NEXT HULL // ${String(yard.bottleneck.name).toUpperCase()} +${app.util.number(yard.bottleneck.gap)}` : 'CAPITAL CONTROL AVAILABLE');
 
     const production = productionAnalysis();
     const weakest = production[0];
-    document.getElementById('v40OverviewProduction').textContent = weakest ? `MIN ${app.util.number(weakest.possibleCycles)} CYCLES` : 'MODULES ONLINE';
-    document.getElementById('v40OverviewProductionMeta').textContent = weakest?.bottleneck ? `${String(weakest.recipe.product).toUpperCase()} // ${String(weakest.bottleneck.displayName || weakest.bottleneck.name).toUpperCase()}` : 'LIVE CAPACITY + BOTTLENECK CONTROL';
+    write('v40OverviewProduction', weakest ? `MIN ${app.util.number(weakest.possibleCycles)} CYCLES` : 'MODULES ONLINE');
+    write('v40OverviewProductionMeta', weakest?.bottleneck ? `${String(weakest.recipe.product).toUpperCase()} // ${String(weakest.bottleneck.displayName || weakest.bottleneck.name).toUpperCase()}` : 'LIVE CAPACITY + BOTTLENECK CONTROL');
 
-    const logisticsState = document.getElementById('supplierLinkText')?.textContent?.trim() || 'SAT-LINK ONLINE';
-    const marketState = document.getElementById('marketScanMeta')?.textContent?.trim() || 'MARKET RADAR READY';
-    document.getElementById('v40OverviewLogistics').textContent = logisticsState;
-    document.getElementById('v40OverviewLogisticsMeta').textContent = marketState;
+    write('v40OverviewLogistics', document.getElementById('supplierLinkText')?.textContent?.trim() || 'SAT-LINK ONLINE');
+    write('v40OverviewLogisticsMeta', document.getElementById('marketScanMeta')?.textContent?.trim() || 'MARKET RADAR READY');
     renderPriorities();
   }
 
@@ -251,7 +233,6 @@
     host.id = 'commandNodeHost';
     host.className = 'command-node-host';
     main.prepend(host);
-
     const panels = {};
     NODES.forEach(([key]) => {
       const panel = document.createElement('section');
@@ -275,25 +256,19 @@
     if (production) panels.production.appendChild(production);
     if (logistics) panels.logistics.appendChild(logistics);
 
-    nav.addEventListener('click', event => {
-      const button = event.target.closest('[data-command-node]');
-      if (button) app.navigate('command', button.dataset.commandNode);
-    });
+    nav.addEventListener('click', event => { const button = event.target.closest('[data-command-node]'); if (button) app.navigate('command', button.dataset.commandNode); });
     panels.overview.addEventListener('click', event => {
       const target = event.target.closest('[data-command-jump], [data-priority-jump]');
       const node = target?.dataset.commandJump || target?.dataset.priorityJump;
       if (node) app.navigate('command', node);
     });
-    panels.inventory.addEventListener('click', event => {
-      const button = event.target.closest('[data-inventory-view]');
-      if (button) activateInventoryView(button.dataset.inventoryView);
-    });
+    panels.inventory.addEventListener('click', event => { const button = event.target.closest('[data-inventory-view]'); if (button) activateInventoryView(button.dataset.inventoryView); });
 
     activateInventoryView(app.store.get(app.config.storageKeys.inventoryView, 'status'));
     updateOverview();
     clearInterval(app.commandOverviewTimer);
     app.commandOverviewTimer = setInterval(() => {
-      if (app.state.commandNode === 'overview') updateOverview();
+      if (app.state.activeWorkspace === 'command' && app.state.commandNode === 'overview') updateOverview();
     }, 2000);
   }
 
