@@ -38,6 +38,12 @@ if (typeof window.debounce !== 'function') {
           const nodes = document.createElement('script');
           nodes.src = './js/15-app-v40-navigation.js';
           nodes.dataset.rhwV4Nodes = 'true';
+          nodes.addEventListener('load', () => {
+            const composer = document.createElement('script');
+            composer.src = './js/16-app-v40-composer.js';
+            composer.dataset.rhwV4Composer = 'true';
+            document.body.appendChild(composer);
+          }, { once: true });
           document.body.appendChild(nodes);
         }, { once: true });
         document.body.appendChild(cacheTools);
