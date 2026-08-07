@@ -43,9 +43,11 @@ EXPECTED_JS = [
 
 V4_DYNAMIC_ASSETS = [
     "./css/12-app-v40.css",
+    "./css/13-app-v40-navigation.css",
     "./js/12-app-config.js",
     "./js/13-app-v40.js",
     "./js/14-app-v40-cache.js",
+    "./js/15-app-v40-navigation.js",
 ]
 
 
@@ -102,13 +104,22 @@ def main() -> int:
         fail(errors, "V3.6 layout controls are incomplete.")
 
     bootstrap = (ROOT / "js/00-bootstrap.js").read_text(encoding="utf-8")
-    for required in ("./css/12-app-v40.css", "./js/12-app-config.js", "./js/13-app-v40.js", "./js/14-app-v40-cache.js"):
+    for required in (
+        "./css/12-app-v40.css",
+        "./js/12-app-config.js",
+        "./js/13-app-v40.js",
+        "./js/14-app-v40-cache.js",
+        "./js/15-app-v40-navigation.js",
+    ):
         if required not in bootstrap:
             fail(errors, f"V4 bootstrap does not reference required asset: {required}")
 
     app_config = (ROOT / "js/12-app-config.js").read_text(encoding="utf-8")
     if "RHW_APP_VERSION = 'V4.0 PREVIEW'" not in app_config or "alistair-thorne" not in app_config:
         fail(errors, "V4 app configuration is missing the preview version or built-in Alistair sender profile.")
+    for required_config in ("classification:", "accent:", "ML-KEM-1024"):
+        if required_config not in app_config:
+            fail(errors, f"V4 transmission configuration is incomplete: {required_config}")
 
     app_js = (ROOT / "js/13-app-v40.js").read_text(encoding="utf-8")
     for required_hook in ("appInstallShell", "appBuildForumBbcode", "appSaveLocalSender", "appSaveNamedDraft"):
@@ -119,6 +130,17 @@ def main() -> int:
     for required_hook in ("appExportLocalCache", "appImportLocalCacheFile"):
         if required_hook not in cache_js:
             fail(errors, f"V4 local-cache portability is incomplete: {required_hook}")
+
+    nav_js = (ROOT / "js/15-app-v40-navigation.js").read_text(encoding="utf-8")
+    for required_hook in (
+        "v40GenerateCipher",
+        "v40InstallCommandNodes",
+        "v40InstallCommsNodes",
+        "v40BodyToBbcode",
+        "v40RenderSenderRegistry",
+    ):
+        if required_hook not in nav_js:
+            fail(errors, f"V4 node/navigation controls are incomplete: {required_hook}")
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     if ".github/workflows/rhw-pages-deploy.yml" not in readme:
