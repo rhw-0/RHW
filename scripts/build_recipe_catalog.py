@@ -8,6 +8,7 @@ from collections import defaultdict
 import gzip
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 
@@ -218,7 +219,7 @@ def main() -> int:
     parser.add_argument('items_cfg', type=Path)
     parser.add_argument('modules_cfg', type=Path)
     parser.add_argument('--output-dir', type=Path, default=Path('assets/recipes'))
-    parser.add_argument('--chunk-size', type=int, default=6000)
+    parser.add_argument('--chunks', type=int, default=6, help='Exact number of browser catalog chunks to emit (default: 6).')
     args = parser.parse_args()
 
     catalog = build_catalog(args.items_cfg, args.modules_cfg)
@@ -226,8 +227,12 @@ def main() -> int:
     compressed = gzip.compress(raw, compresslevel=9, mtime=0)
     encoded = base64.b64encode(compressed).decode('ascii')
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    chunk_size = max(1000, args.chunk_size)
-    chunks = [encoded[i:i + chunk_size] for i in range(0, len(encoded), chunk_size)]
+
+    chunk_count = max(1, int(args.chunks))
+    chunk_size = max(1, math.ceil(len(encoded) / chunk_count))
+    chunks = [encoded[index * chunk_size:(index + 1) * chunk_size] for index in range(chunk_count)]
+    if ''.join(chunks) != encoded:
+        raise RuntimeError('CATALOG CHUNK SPLIT FAILED TO RECONSTRUCT SOURCE PAYLOAD')
 
     for stale in args.output_dir.glob('catalog-v1-part-*.js'):
         stale.unlink()
@@ -243,7 +248,7 @@ def main() -> int:
     print(
         f"Built {catalog['meta']['recipeCount']} recipes, "
         f"{catalog['meta']['productCount']} products and {catalog['meta']['factionCount']} IFF profiles "
-        f"into {len(chunks)} deterministic catalog chunks -> {args.output_dir}"
+        f"into exactly {len(chunks)} deterministic catalog chunks -> {args.output_dir}"
     )
     return 0
 
