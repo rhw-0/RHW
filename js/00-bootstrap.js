@@ -30,6 +30,12 @@ if (typeof window.debounce !== 'function') {
       const app = document.createElement('script');
       app.src = './js/13-app-v40.js';
       app.dataset.rhwV4App = 'true';
+      app.addEventListener('load', () => {
+        const cacheTools = document.createElement('script');
+        cacheTools.src = './js/14-app-v40-cache.js';
+        cacheTools.dataset.rhwV4Cache = 'true';
+        document.body.appendChild(cacheTools);
+      }, { once: true });
       document.body.appendChild(app);
     }, { once: true });
     document.body.appendChild(config);
