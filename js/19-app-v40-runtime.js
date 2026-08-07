@@ -28,6 +28,7 @@
     if (typeof app.operationsCore?.buildPlan !== 'function') failures.push('feature:operations-planner');
     if (!app.operationsCore?.state?.catalog?.meta?.recipeCount) failures.push('feature:recipe-catalog');
     if (typeof app.comms?.activate !== 'function') failures.push('module:comms');
+    if (typeof app.commsSafety?.init !== 'function') failures.push('module:comms-safety');
     if (typeof app.storage?.saveDraft !== 'function') failures.push('module:storage');
     if (typeof app.comms?.buildBbcode !== 'function') failures.push('feature:bbcode');
     if (!document.querySelector('[data-command-panel="overview"]')) failures.push('route:command-overview');
@@ -61,6 +62,7 @@
       if (!app.installShell()) throw new Error('V4 APP SHELL COULD NOT FIND THE STABLE DASHBOARD MOUNTS');
       app.command?.init();
       app.comms?.init();
+      app.commsSafety?.init();
       await app.operations?.init();
       app.applyRoute({ replace: true });
       app.ready = true;
