@@ -81,13 +81,28 @@
   }
 
   function iffEntries(recipe, selectedId) {
+    const bonuses = [...(recipe?.bonuses || [])];
+    if (recipe?.restricted) {
+      return bonuses
+        .sort((a, b) => {
+          if (a.id === 'br_m_grp') return -1;
+          if (b.id === 'br_m_grp') return 1;
+          return String(a.name || a.id).localeCompare(String(b.name || b.id));
+        })
+        .map(bonus => ({
+          id: bonus.id,
+          factor: Number(bonus.factor || 1),
+          name: `${bonus.id === 'br_m_grp' ? 'BMM · RHW DEFAULT' : (bonus.name || bonus.id)} · AUTHORIZED IFF${Number(bonus.factor || 1) !== 1 ? ` · ${Number(bonus.factor || 1).toFixed(2)}×` : ''}`
+        }));
+    }
+
     const entries = [];
     const seen = new Set();
     const add = (id, name, factor) => { if (!id || seen.has(id)) return; seen.add(id); entries.push({ id, name, factor }); };
     const bmmFactor = core.factorFor(recipe, 'br_m_grp');
     add('br_m_grp', bmmFactor !== 1 ? `BMM · RHW DEFAULT · ${bmmFactor.toFixed(2)}×` : 'BMM · RHW DEFAULT · NO BONUS', bmmFactor);
     add('__none__', 'NO IFF BONUS · 1.00×', 1);
-    for (const bonus of recipe?.bonuses || []) {
+    for (const bonus of bonuses) {
       if (bonus.id !== 'br_m_grp') add(bonus.id, `${bonus.name || bonus.id} · ${Number(bonus.factor || 1).toFixed(2)}×`, Number(bonus.factor || 1));
     }
     if (selectedId && !seen.has(selectedId)) {
@@ -109,8 +124,10 @@
     const output = primaryOutput(recipe);
     calc.recipeId = recipe.id;
     calc.productId = output?.id || calc.productId;
-    const allowed = new Set(iffEntries(recipe, calc.affiliationId).map(entry => entry.id));
-    if (!allowed.has(calc.affiliationId)) calc.affiliationId = app.config.operations.defaultAffiliation;
+    const iff = iffEntries(recipe, calc.affiliationId);
+    if (!iff.some(entry => entry.id === calc.affiliationId)) {
+      calc.affiliationId = iff.find(entry => entry.id === app.config.operations.defaultAffiliation)?.id || iff[0]?.id || '__none__';
+    }
     return { calc, matches, recipe };
   }
 
@@ -151,8 +168,6 @@
     const totalCost = complete ? knownCost : null;
     const unitCost = complete && actualOutput > 0 ? totalCost / actualOutput : null;
     const marginRatio = clampMargin(calc.marginPercent) / 100;
-    /* Recommended prices are whole credits. Revenue/profit use that same displayed
-       whole-credit price so the quote always reconciles exactly for the user. */
     const sellPerUnit = unitCost === null ? null : Math.ceil(unitCost / Math.max(0.05, 1 - marginRatio));
     const profitUnit = sellPerUnit === null || unitCost === null ? null : sellPerUnit - unitCost;
     const revenue = sellPerUnit === null ? null : sellPerUnit * actualOutput;
@@ -211,6 +226,13 @@
 
     const recipe = resolved.recipe;
     if (!recipe) { mount.innerHTML = '<div class="ops-empty danger">NO RECIPE AVAILABLE</div>'; return; }
+    const iff = iffEntries(recipe, calc.affiliationId);
+    if (recipe.restricted && !iff.length) {
+      mount.className = 'operations-calculator';
+      mount.innerHTML = `<div class="ops-empty danger">RESTRICTED RECIPE<small>NO AUTHORIZED IFF PROFILE IS PRESENT IN THE MASTER RECIPE</small></div>`;
+      return;
+    }
+
     let plan;
     try { plan = buildQuote(calc); }
     catch (error) { mount.innerHTML = `<div class="ops-empty danger">CALCULATION FAILED<small>${esc(error.message)}</small></div>`; return; }
@@ -218,12 +240,13 @@
     core.state.currentPlan = plan;
     const rows = materialRows(plan);
     const pricing = pricingFor(rows, calc, plan.actualOutput);
-    const iff = iffEntries(recipe, calc.affiliationId);
     const outputPerCycle = Math.max(1, Number(plan.tree?.outputPerCycle) || Number(primaryOutput(recipe)?.qty) || 1);
     const matches = resolved.matches.length ? resolved.matches : matchingRecipes('');
+    const iffHint = recipe.restricted ? 'RESTRICTED RECIPE // ONLY AUTHORIZED IFF PROFILES ARE SHOWN' : 'BMM IS PRESELECTED FOR RHW';
+    const recipeHint = `${matches.length} MATCH${matches.length === 1 ? '' : 'ES'} // ${esc(recipe.craftType || recipe.sourceType || 'GENERAL')}${recipe.restricted ? ' // RESTRICTED IFF' : ''}`;
 
     mount.className = 'operations-calculator';
-    mount.innerHTML = `<div class="operations-layout-simple"><section class="ops-panel ops-setup-panel"><div class="ops-panel-head"><div><span>01</span><strong>RECIPE</strong></div><small>${fmt(catalog.meta.recipeCount)} MASTER RECIPES</small></div><div class="ops-form-grid"><label class="comms-field ops-wide"><span>SEARCH RECIPE</span><input id="opsRecipeSearch" type="search" value="${esc(calc.search)}" placeholder="Superstructure, Reactor, Gold, Docking Module…" autocomplete="off"><small>TYPE A NAME OR RECIPE ID // FIRST MATCH IS SELECTED AUTOMATICALLY</small></label><label class="comms-field ops-wide"><span>SELECTED RECIPE</span><select id="opsRecipe">${recipeOptions(matches, calc.recipeId)}</select><small>${matches.length} MATCH${matches.length === 1 ? '' : 'ES'} // ${esc(recipe.craftType || recipe.sourceType || 'GENERAL')}</small></label><label class="comms-field"><span>OUTPUT QUANTITY</span><input id="opsQuantity" type="number" inputmode="numeric" min="1" step="1" value="${calc.quantity}"><small>EXAMPLE: 200 REACTORS</small></label><label class="comms-field"><span>AFFILIATION / IFF</span><select id="opsAffiliation">${iff.map(entry => `<option value="${esc(entry.id)}"${entry.id === calc.affiliationId ? ' selected' : ''}>${esc(entry.name)}</option>`).join('')}</select><small>BMM IS PRESELECTED FOR RHW</small></label></div><div class="ops-recipe-meta"><div><small>OUTPUT / CYCLE</small><strong>${fmt(outputPerCycle)}</strong></div><div><small>CYCLES</small><strong>${fmt(plan.cycles)}</strong></div><div><small>ACTUAL OUTPUT</small><strong>${fmt(plan.actualOutput)}</strong></div><div><small>PROCESS TIME</small><strong>${timeLabel(plan.totalTime)}</strong></div></div></section><section class="ops-panel ops-cost-panel"><div class="ops-panel-head"><div><span>02</span><strong>MATERIAL COST</strong></div><small>ENTER YOUR UNIT PRICES</small></div>${materialsMarkup(rows, calc)}<div class="ops-price-memory">MATERIAL PRICES ARE SAVED LOCALLY IN THIS BROWSER AND REUSED IN OTHER RECIPES.</div>${notesMarkup(plan)}</section><section class="ops-panel ops-quote-panel"><div class="ops-panel-head"><div><span>03</span><strong>PRICE CALCULATION</strong></div><small>COST → MARGIN → SELL PRICE</small></div>${quoteMarkup(pricing, calc, rows, plan.actualOutput)}</section></div>`;
+    mount.innerHTML = `<div class="operations-layout-simple"><section class="ops-panel ops-setup-panel"><div class="ops-panel-head"><div><span>01</span><strong>RECIPE</strong></div><small>${fmt(catalog.meta.recipeCount)} MASTER RECIPES</small></div><div class="ops-form-grid"><label class="comms-field ops-wide"><span>SEARCH RECIPE</span><input id="opsRecipeSearch" type="search" value="${esc(calc.search)}" placeholder="Superstructure, Reactor, Gold, Docking Module…" autocomplete="off"><small>TYPE A NAME OR RECIPE ID // FIRST MATCH IS SELECTED AUTOMATICALLY</small></label><label class="comms-field ops-wide"><span>SELECTED RECIPE</span><select id="opsRecipe">${recipeOptions(matches, calc.recipeId)}</select><small>${recipeHint}</small></label><label class="comms-field"><span>OUTPUT QUANTITY</span><input id="opsQuantity" type="number" inputmode="numeric" min="1" step="1" value="${calc.quantity}"><small>EXAMPLE: 200 REACTORS</small></label><label class="comms-field"><span>AFFILIATION / IFF</span><select id="opsAffiliation">${iff.map(entry => `<option value="${esc(entry.id)}"${entry.id === calc.affiliationId ? ' selected' : ''}>${esc(entry.name)}</option>`).join('')}</select><small>${iffHint}</small></label></div><div class="ops-recipe-meta"><div><small>OUTPUT / CYCLE</small><strong>${fmt(outputPerCycle)}</strong></div><div><small>CYCLES</small><strong>${fmt(plan.cycles)}</strong></div><div><small>ACTUAL OUTPUT</small><strong>${fmt(plan.actualOutput)}</strong></div><div><small>PROCESS TIME</small><strong>${timeLabel(plan.totalTime)}</strong></div></div></section><section class="ops-panel ops-cost-panel"><div class="ops-panel-head"><div><span>02</span><strong>MATERIAL COST</strong></div><small>ENTER YOUR UNIT PRICES</small></div>${materialsMarkup(rows, calc)}<div class="ops-price-memory">MATERIAL PRICES ARE SAVED LOCALLY IN THIS BROWSER AND REUSED IN OTHER RECIPES.</div>${notesMarkup(plan)}</section><section class="ops-panel ops-quote-panel"><div class="ops-panel-head"><div><span>03</span><strong>PRICE CALCULATION</strong></div><small>COST → MARGIN → SELL PRICE</small></div>${quoteMarkup(pricing, calc, rows, plan.actualOutput)}</section></div>`;
     bindCalculator(plan, rows);
     if (focusSearch) {
       const search = document.getElementById('opsRecipeSearch');
