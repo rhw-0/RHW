@@ -31,7 +31,7 @@ V4_CSS = [
 ]
 V4_JS = [
     'js/12-app-config.js', 'js/13-app-v40.js', 'js/14-app-v40-cache.js', 'js/15-app-v40-navigation.js',
-    'js/16-app-v40-composer.js',
+    'js/16-app-v40-composer.js', 'js/16a-app-v40-comms-safety.js',
     'assets/recipes/catalog-v1-part-01.js', 'assets/recipes/catalog-v1-part-02.js', 'assets/recipes/catalog-v1-part-03.js',
     'assets/recipes/catalog-v1-part-04.js', 'assets/recipes/catalog-v1-part-05.js', 'assets/recipes/catalog-v1-part-06.js',
     'js/17-app-v40-operations-core.js', 'js/18-app-v40-operations-ui.js', 'js/19-app-v40-runtime.js',
@@ -142,7 +142,6 @@ def verify_command_overview(cdp: CDP) -> None:
         raise RuntimeError(f'Command overview did not consume shipyard constants: {result}')
     if not result.get('production', '').startswith('MIN ') or result.get('production') == 'MODULES ONLINE':
         raise RuntimeError(f'Command overview did not consume production recipes: {result}')
-
     stale = evaluate_json(cdp, "(() => { window.hasVerifiedTelemetry=()=>false; window.RHWV4.command.updateOverview(); return {ship:document.getElementById('v40OverviewShipyard')?.textContent||'',shipMeta:document.getElementById('v40OverviewShipyardMeta')?.textContent||'',productionMeta:document.getElementById('v40OverviewProductionMeta')?.textContent||'',logisticsMeta:document.getElementById('v40OverviewLogisticsMeta')?.textContent||''}; })()")
     if stale.get('ship') != 'AWAITING UPLINK' or 'NO VERIFIED' not in stale.get('shipMeta', ''):
         raise RuntimeError(f'Command overview retained stale shipyard telemetry: {stale}')
@@ -163,7 +162,6 @@ def verify_restricted_iff(cdp: CDP) -> None:
         raise RuntimeError(f'Restricted recipe did not select an authorized IFF: target={target} state={state}')
     if 'RESTRICTED RECIPE' not in state.get('hint', ''):
         raise RuntimeError(f'Restricted recipe UI does not explain IFF restriction: {state}')
-
     core_guard = evaluate_json(cdp, f"(() => {{ const core=window.RHWV4.operationsCore; const r=core.recipe({json.dumps(target['id'])}); try {{ core.buildPlan({{productId:{json.dumps(target['product'])},recipeId:r.id,quantity:1,affiliationId:'br_m_grp',useInventory:false,recursive:false,routingPolicy:'first'}}); return {{blocked:false}}; }} catch(error) {{ return {{blocked:true,message:String(error.message||error)}}; }} }})()")
     if not core_guard.get('blocked') or 'AUTHORIZED IFF' not in core_guard.get('message', ''):
         raise RuntimeError(f'Restricted recipe core did not reject unauthorized IFF: {core_guard}')
@@ -223,6 +221,22 @@ def verify_comms(cdp: CDP) -> None:
     if route.get('hash') != '#comms/ticker' or route.get('workspace') != 'comms' or route.get('node') != 'ticker':
         raise RuntimeError(f'COMMS navigation did not canonicalize correctly: {route}')
     print('V4 interaction smoke passed: COMMS form + BBCode + draft snapshot + navigation')
+
+
+def verify_ticker(cdp: CDP) -> None:
+    result = evaluate_json(cdp, "(() => { const tag=document.getElementById('v40TickerTag'); const message=document.getElementById('v40TickerMessage'); if(!tag||!message)return {ok:false}; tag.value='BAD | TAG] [WITH EXTRA TEXT THAT IS DEFINITELY TOO LONG'; message.value='LINE ONE\\nLINE TWO ' + 'X'.repeat(300); tag.dispatchEvent(new Event('input',{bubbles:true})); message.dispatchEvent(new Event('input',{bubbles:true})); return {ok:true,tag:tag.value,message:message.value,tagMax:tag.maxLength,messageMax:message.maxLength,output:document.getElementById('v40TickerOutput')?.value||'',preview:document.getElementById('v40TickerPreviewText')?.textContent||''}; })()")
+    if not result.get('ok'):
+        raise RuntimeError('Ticker Builder controls missing')
+    if result.get('tagMax') != 40 or result.get('messageMax') != 240:
+        raise RuntimeError(f'Ticker limits not installed: {result}')
+    if any(char in result.get('tag', '') for char in '[]|') or len(result.get('tag', '')) > 40:
+        raise RuntimeError(f'Ticker tag was not parser-sanitized: {result}')
+    if '\n' in result.get('message', '') or '\r' in result.get('message', '') or len(result.get('message', '')) > 240:
+        raise RuntimeError(f'Ticker message was not flattened/truncated: {result}')
+    output = result.get('output', '')
+    if output.count('\n') != 1 or result.get('message') not in output or result.get('tag') not in output:
+        raise RuntimeError(f'Ticker source block is not a single parser-safe bullet: {result}')
+    print('V4 interaction smoke passed: ticker output matches stable Newswire parser constraints')
 
 
 def launch_browser() -> tuple[subprocess.Popen, str, int, str, str]:
@@ -317,6 +331,8 @@ def main() -> int:
                     verify_operations_costing(cdp)
                 if workspace == 'comms' and node == 'forum':
                     verify_comms(cdp)
+                if workspace == 'comms' and node == 'ticker':
+                    verify_ticker(cdp)
         finally:
             cdp.close()
     finally:
