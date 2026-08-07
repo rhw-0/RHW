@@ -100,10 +100,17 @@ def main() -> int:
     require_tokens(errors, 'js/15-app-v40-navigation.js', ('PRIORITY ACTIONS', 'inventory-view-nav', 'priorityActions', 'activateInventoryView'), 'V4 COMMAND module')
     require_tokens(errors, 'js/16-app-v40-composer.js', ('SALUTATION / OPENING', 'comms-editor-toolbar', 'ticker-builder-preview', 'data-edit-sender', 'buildBbcode'), 'V4 COMMS module')
     require_tokens(errors, 'js/17-app-v40-operations-core.js', ('app.operationsCore', 'loadCatalog', 'buildPlan', 'factorFor', 'telemetryQuantity'), 'V4 OPERATIONS planner')
-    require_tokens(errors, 'js/18-app-v40-operations-ui.js', ('ITEM CALCULATOR', 'installShipyardBridge', 'PLAN 1 HULL', 'CREATE PROCUREMENT TRANSMISSION'), 'V4 OPERATIONS UI')
+    require_tokens(errors, 'js/18-app-v40-operations-ui.js', (
+        'ITEM CALCULATOR', 'SEARCH RECIPE', 'PRICE / UNIT', 'TARGET PROFIT MARGIN', 'materialPrices',
+        'installShipyardBridge', 'PRICE / PLAN 1 HULL'
+    ), 'V4 OPERATIONS UI')
     require_tokens(errors, 'js/19-app-v40-runtime.js', ('workspaceOperations', 'operations-calculator', '__RHW_V4_SMOKE__', 'app.runtime'), 'V4 runtime')
     for idx in range(1, 7):
         require_tokens(errors, f'assets/recipes/catalog-v1-part-{idx:02d}.js', ('__RHW_RECIPE_CATALOG_GZIP_BASE64__',), f'V4 recipe catalog chunk {idx}')
+
+    operations_ui = (ROOT / 'js/18-app-v40-operations-ui.js').read_text(encoding='utf-8')
+    if 'RECIPE VARIANT' in operations_ui:
+        errors.append('V4 Item Calculator must not expose the obsolete RECIPE VARIANT control.')
 
     for path in (
         'js/13-app-v40.js', 'js/14-app-v40-cache.js', 'js/15-app-v40-navigation.js',
