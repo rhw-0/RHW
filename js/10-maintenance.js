@@ -81,27 +81,39 @@ buildIndustrialNewswireMessages = function() {
   }
 
   const recipeAnalyses = RECIPES.map(analyzeRecipe);
-  const messages = [...buildPriorityWire(recipeAnalyses)];
-  const usedTexts = new Set(messages.map(message => message.text));
-
-  [
+  const priorityMessages = buildPriorityWire(recipeAnalyses);
+  const operationalMessages = [
     buildFinanceDeskMessage(),
     ...REMOTE_FACILITIES.map(facility => buildRemoteMarketMessage(facility.key)),
     buildProductionDeskMessage(recipeAnalyses)
-  ].forEach(message => {
-    if (messages.length >= TICKER_DYNAMIC_SLOT_COUNT) return;
-    messages.push(message);
-    usedTexts.add(message.text);
-  });
+  ];
+  const messages = [];
+  const usedTexts = new Set();
 
   const selected = rhwNewswireFilter === 'all'
     ? RHW_NEWSWIRE_FILTER_CATEGORIES
     : [rhwNewswireFilter].filter(category => RHW_NEWSWIRE_FILTER_CATEGORIES.includes(category));
   const available = selected.filter(category => (activeNewswirePools[category] || []).length);
-  const openSlots = Math.max(0, TICKER_DYNAMIC_SLOT_COUNT - messages.length);
 
+  // A selected editorial filter should feel immediate: put one matching story
+  // first, then preserve all priority/live operational messages behind it.
+  if (rhwNewswireFilter !== 'all' && available.length) {
+    const lead = pickNewswireMessage(available[0], []);
+    messages.push(lead);
+    usedTexts.add(lead.text);
+  }
+
+  [...priorityMessages, ...operationalMessages].forEach(message => {
+    if (messages.length >= TICKER_DYNAMIC_SLOT_COUNT) return;
+    messages.push(message);
+    usedTexts.add(message.text);
+  });
+
+  const openSlots = Math.max(0, TICKER_DYNAMIC_SLOT_COUNT - messages.length);
   for (let slot = 0; slot < openSlots && available.length; slot++) {
-    const category = available[(rhwEditorialCategoryCursor + slot) % available.length];
+    const category = rhwNewswireFilter === 'all'
+      ? available[(rhwEditorialCategoryCursor + slot) % available.length]
+      : available[slot % available.length];
     const message = pickNewswireMessage(category, [...usedTexts]);
     messages.push(message);
     usedTexts.add(message.text);
@@ -120,6 +132,40 @@ buildIndustrialNewswireMessages = function() {
   return messages.slice(0, TICKER_DYNAMIC_SLOT_COUNT);
 };
 
+function restartNewswireTickerAtStart() {
+  ecoTickerIndex = 0;
+  renderEcoTickerMessage(0);
+  if (ecoMode) startEcoTicker();
+
+  if (!tickerContainer || ecoMode || prefersReducedMotion.matches) return;
+  tickerContainer.style.animation = 'none';
+  tickerContainer.style.transform = 'translateX(0)';
+  void tickerContainer.offsetWidth;
+  tickerContainer.style.removeProperty('animation');
+  tickerContainer.style.removeProperty('transform');
+}
+
+function installNewswireFilterUx() {
+  const filter = document.getElementById('newswireFilter');
+  if (!filter) return;
+
+  if (!filter.querySelector('.newswire-filter-label')) {
+    const label = document.createElement('span');
+    label.className = 'newswire-filter-label';
+    label.textContent = 'NEWS:';
+    label.setAttribute('aria-hidden', 'true');
+    filter.prepend(label);
+  }
+
+  // The original button listener rebuilds the messages first. This parent
+  // listener runs afterwards and makes that change immediately visible.
+  filter.addEventListener('click', event => {
+    const button = event.target.closest('button[data-newswire-category]');
+    if (!button) return;
+    window.requestAnimationFrame(restartNewswireTickerAtStart);
+  });
+}
+
 function installCrestFallback() {
   const crest = document.querySelector('.crest');
   const frame = crest?.closest('.crest-frame');
@@ -137,4 +183,5 @@ function installCrestFallback() {
 // V3.5 originally injected these styles from JavaScript. They now live in the
 // normal stylesheet cascade, so remove the temporary runtime copy if present.
 document.getElementById('rhwV35EnhancementStyles')?.remove();
+installNewswireFilterUx();
 installCrestFallback();
