@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dependency-free structural checks for the static RHW dashboard."""
+"""Dependency-free structural checks for the static RHW dashboard and web app."""
 
 from __future__ import annotations
 
@@ -41,6 +41,12 @@ EXPECTED_JS = [
     "./js/11-layout-v36.js",
 ]
 
+V4_DYNAMIC_ASSETS = [
+    "./css/12-app-v40.css",
+    "./js/12-app-config.js",
+    "./js/13-app-v40.js",
+]
+
 
 class DashboardParser(HTMLParser):
     def __init__(self) -> None:
@@ -77,7 +83,7 @@ def main() -> int:
     if parser.js != EXPECTED_JS:
         fail(errors, "JavaScript load order differs from the documented RHW order.")
 
-    for ref in [*parser.css, *parser.js, "./assets/RHW_Newswire.md"]:
+    for ref in [*parser.css, *parser.js, *V4_DYNAMIC_ASSETS, "./assets/RHW_Newswire.md"]:
         local_path = ROOT / ref.removeprefix("./")
         if not local_path.is_file():
             fail(errors, f"Referenced local file is missing: {ref}")
@@ -94,6 +100,20 @@ def main() -> int:
     if "arrangeV36CommandFlow" not in layout_js or "initProductionDetailsToggle" not in layout_js:
         fail(errors, "V3.6 layout controls are incomplete.")
 
+    bootstrap = (ROOT / "js/00-bootstrap.js").read_text(encoding="utf-8")
+    for required in ("./css/12-app-v40.css", "./js/12-app-config.js", "./js/13-app-v40.js"):
+        if required not in bootstrap:
+            fail(errors, f"V4 bootstrap does not reference required asset: {required}")
+
+    app_config = (ROOT / "js/12-app-config.js").read_text(encoding="utf-8")
+    if "RHW_APP_VERSION = 'V4.0 PREVIEW'" not in app_config or "alistair-thorne" not in app_config:
+        fail(errors, "V4 app configuration is missing the preview version or built-in Alistair sender profile.")
+
+    app_js = (ROOT / "js/13-app-v40.js").read_text(encoding="utf-8")
+    for required_hook in ("appInstallShell", "appBuildForumBbcode", "appSaveLocalSender", "appSaveNamedDraft"):
+        if required_hook not in app_js:
+            fail(errors, f"V4 COMMS controls are incomplete: {required_hook}")
+
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     if ".github/workflows/rhw-pages-deploy.yml" not in readme:
         fail(errors, "README deployment documentation does not name the active workflow.")
@@ -103,7 +123,11 @@ def main() -> int:
             print(f"ERROR: {message}", file=sys.stderr)
         return 1
 
-    print(f"RHW validation passed: {len(parser.css)} stylesheets, {len(parser.js)} scripts, {len(parser.ids)} unique ids.")
+    print(
+        f"RHW validation passed: {len(parser.css)} static stylesheets, "
+        f"{len(parser.js)} static scripts, {len(V4_DYNAMIC_ASSETS)} V4 dynamic assets, "
+        f"{len(parser.ids)} unique ids."
+    )
     return 0
 
 
