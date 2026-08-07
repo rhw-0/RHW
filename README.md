@@ -47,9 +47,9 @@ The normalized recipe catalog is generated from Discovery Freelancer's public ga
 
 - source inputs: `base_recipe_items.cfg` and `base_recipe_modules.cfg`
 - builder: `scripts/build_recipe_catalog.py`
-- browser assets: `assets/recipes/manifest.json` plus deterministic gzip catalog chunks
+- browser assets: six deterministic compressed chunks at `assets/recipes/catalog-v1-part-01.js` through `catalog-v1-part-06.js`
 
-The current catalog contains 289 recipes, including item and base-module recipes, alternative inputs, retained catalysts/personnel, multiple outputs/byproducts, restrictions and affiliation/IFF factors.
+The current catalog contains **289 recipes, 247 build targets and 65 affiliation/IFF profiles**, including item and base-module recipes, alternative inputs, retained catalysts/personnel, multiple outputs/byproducts and restrictions.
 
 The calculator supports:
 
@@ -85,40 +85,17 @@ COMMS is split into:
 - `#comms/drafts` - browser-local named drafts and cache portability
 - `#comms/senders` - built-in and browser-local sender identity registry with local-profile editing
 
-### Forum Composer
-
-The composer supports:
-
-- document-type presets with distinct labels, accents and defaults
-- independent security classification
-- selectable built-in/local senders; the sender profile owns signature name and role
-- short Bretonian/BMM/RHW cipher designations via `ROLL CIPHER`
-- recipient-context salutation/opening presets and sign-off presets
-- formatting toolbar for headings, bold text, status callouts, warnings and lists
-- smart source syntax: `## Heading`, `**bold**`, `!status`, `!warning`, `- item`
-- template-specific live preview with RHW logo fallback
-- generated BBCode v2 with routing metadata, subject block, body, signature and security footer
-
-Drafts preserve a sender name/title snapshot, so deleting a browser-local sender does not damage old saved transmissions. Cache import merges with existing drafts and senders rather than silently replacing them.
-
 ## Validation and runtime smoke testing
 
-`scripts/validate_dashboard.py` checks the stable static load order, file references, duplicate static IDs, recipe-catalog integrity, required V4 module hooks and rejects the old V4 override-chain pattern.
+`scripts/validate_dashboard.py` checks the stable static load order, file references, duplicate static IDs, V4 calculator/runtime assets and required module hooks.
 
 `scripts/smoke_v40.py` launches headless Chrome/Chromium through the Chrome DevTools Protocol and boots an inline copy of the actual repository site. It verifies all current V4 routes:
 
 - five COMMAND nodes
-- one OPERATIONS calculator node with the embedded recipe catalog
+- `OPERATIONS / ITEM CALCULATOR` with the 289-recipe catalog
 - four COMMS nodes
-- runtime self-test state and route/workspace activation
 
-GitHub Actions runs structure validation, JavaScript syntax checks and the browser runtime smoke test before deployment. Pull requests validate only; deployment is skipped for PRs.
-
-```bash
-python3 scripts/validate_dashboard.py
-python3 -m pip install websocket-client
-python3 scripts/smoke_v40.py
-```
+GitHub Actions runs structure validation, JavaScript syntax checks and this browser runtime smoke test before deployment. Pull requests validate only; deployment is skipped for PRs.
 
 GitHub Pages deployment remains handled by `.github/workflows/rhw-pages-deploy.yml`.
 
