@@ -114,24 +114,65 @@ def evaluate_snapshot(cdp: CDP) -> dict:
     return json.loads(raw) if raw else {}
 
 
+def launch_browser() -> tuple[subprocess.Popen, str, int, str, str]:
+    candidates = []
+    for name in ("google-chrome-stable", "google-chrome", "chromium", "chromium-browser"):
+        path = shutil.which(name)
+        if path and path not in candidates:
+            candidates.append(path)
+    if not candidates:
+        raise RuntimeError("Chrome/Chromium not found")
+
+    attempts = []
+    for browser in candidates:
+        for headless in ("--headless=new", "--headless"):
+            debug_port = free_port()
+            user_dir = tempfile.mkdtemp(prefix="rhw-v40-chrome-")
+            log_path = str(Path(user_dir) / "chrome.log")
+            log_file = open(log_path, "w+b")
+            args = [
+                browser, headless, "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage",
+                "--disable-software-rasterizer", "--disable-background-networking", "--disable-component-update",
+                "--disable-default-apps", "--disable-sync", "--no-first-run", "--no-zygote",
+                f"--remote-debugging-port={debug_port}", "--remote-allow-origins=*",
+                f"--user-data-dir={user_dir}", "about:blank",
+            ]
+            chrome = subprocess.Popen(args, stdout=log_file, stderr=log_file)
+            url = f"http://127.0.0.1:{debug_port}/json/version"
+            deadline = time.time() + 5
+            while time.time() < deadline:
+                if chrome.poll() is not None:
+                    break
+                try:
+                    wait_url(url, timeout=0.35)
+                    log_file.close()
+                    return chrome, browser, debug_port, user_dir, log_path
+                except Exception:
+                    time.sleep(0.12)
+            try:
+                chrome.terminate()
+                chrome.wait(timeout=1)
+            except Exception:
+                chrome.kill()
+            log_file.flush(); log_file.seek(0)
+            log = log_file.read().decode("utf-8", errors="replace")[-4000:]
+            log_file.close()
+            attempts.append(f"{browser} {headless} exit={chrome.poll()}\n{log}")
+            shutil.rmtree(user_dir, ignore_errors=True)
+    raise RuntimeError("Unable to launch a CDP-capable browser. Attempts:\n\n" + "\n\n---\n\n".join(attempts))
+
+
 def main() -> int:
-    browser = next((shutil.which(name) for name in ("google-chrome-stable", "google-chrome", "chromium", "chromium-browser") if shutil.which(name)), None)
-    if not browser:
-        print("ERROR: Chrome/Chromium not found", file=sys.stderr)
+    try:
+        chrome, browser, debug_port, user_dir, log_path = launch_browser()
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    debug_port = free_port()
-    user_dir = tempfile.mkdtemp(prefix="rhw-v40-chrome-")
-    chrome_log = tempfile.TemporaryFile()
-    chrome = subprocess.Popen([
-        browser, "--headless=new", "--no-sandbox", "--disable-gpu", "--disable-background-networking",
-        "--disable-component-update", "--disable-default-apps", "--disable-sync", "--no-first-run",
-        f"--remote-debugging-port={debug_port}", "--remote-allow-origins=*", f"--user-data-dir={user_dir}", "about:blank",
-    ], stdout=chrome_log, stderr=chrome_log)
-
+    print(f"V4 smoke browser: {browser}")
     try:
-        wait_url(f"http://127.0.0.1:{debug_port}/json/version")
-        targets = json.loads(wait_url(f"http://127.0.0.1:{debug_port}/json/list"))
+        wait_url(f"http://127.0.0.1:{debug_port}/json/version", timeout=3)
+        targets = json.loads(wait_url(f"http://127.0.0.1:{debug_port}/json/list", timeout=3))
         page = next(target for target in targets if target.get("type") == "page")
         cdp = CDP(page["webSocketDebuggerUrl"])
         try:
@@ -168,8 +209,13 @@ def main() -> int:
             chrome.wait(timeout=3)
         except subprocess.TimeoutExpired:
             chrome.kill()
+        if chrome.poll() not in (0, None):
+            try:
+                log = Path(log_path).read_text(encoding="utf-8", errors="replace")[-2000:]
+                if log.strip(): print(f"Chrome log tail:\n{log}", file=sys.stderr)
+            except Exception:
+                pass
         shutil.rmtree(user_dir, ignore_errors=True)
-        chrome_log.close()
     return 0
 
 
