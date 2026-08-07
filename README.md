@@ -10,6 +10,7 @@ This repository powers the RHW command dashboard and the in-development RHW Web 
 - `css/11-layout-v36.css` - V3.6 visual hierarchy, responsive layout, mobile manifest and production density layer
 - `css/12-app-v40.css` - V4.0 application navigation and COMMS workspace styling
 - `css/13-app-v40-navigation.css` - V4.0 COMMAND/COMMS node navigation, executive overview and tool styling
+- `css/14-app-v40-composer.css` - V4.0 document-control, signature, sign-off and forum-preview polish
 - `js/config.js` - recipes, thresholds, tracked commodities, facilities, hull aliases and base-level constants
 - `js/00-bootstrap.js` - early-load utility plus safe V4 dynamic bootstrap after the stable dashboard has initialized
 - `js/01-wire.js` through `js/09-newswire.js` - dashboard logic in load order
@@ -18,7 +19,8 @@ This repository powers the RHW command dashboard and the in-development RHW Web 
 - `js/12-app-config.js` - V4.0 app settings, forum presets, classifications and built-in sender identities
 - `js/13-app-v40.js` - V4.0 application shell and COMMS Forum Transmission Composer
 - `js/14-app-v40-cache.js` - V4.0 local draft/sender cache export and import
-- `js/15-app-v40-navigation.js` - V4.0 node routing, cipher generator, smart BBCode, Newswire tool and sender registry
+- `js/15-app-v40-navigation.js` - V4.0 node routing, cipher generator, smart BBCode, ticker tool and sender registry
+- `js/16-app-v40-composer.js` - V4.0 BBCode v2, automatic signatures, sign-off presets and document-control clarity
 - `assets/RHW_Newswire.md` - editable editorial ticker messages
 - `scripts/validate_dashboard.py` - dependency-free structural validation for local use and CI
 
@@ -39,7 +41,7 @@ The RHW header and industrial Newswire remain global. V4 then exposes two primar
 ### COMMS
 
 - `#comms/forum` - Forum Transmission Composer with live preview and generated BBCode
-- `#comms/newswire` - generator for ready-to-paste `RHW_Newswire.md` blocks
+- `#comms/newswire` - Ticker Builder for ready-to-paste `RHW_Newswire.md` entries; it does not publish automatically
 - `#comms/drafts` - browser-local named transmission archive plus cache portability tools
 - `#comms/senders` - built-in and browser-local sender identity registry
 
@@ -49,7 +51,13 @@ Named COMMS drafts and locally saved sender profiles use browser `localStorage`;
 
 ## Forum transmission system
 
-Forum presets provide template-specific recipient defaults, classification banners, accent colors and plausible in-universe encryption designations. The `ROLL CIPHER` control generates a roleplay cipher identifier using RHW/BMM/Bretonian naming plus recognizable cryptographic-suite notation; it labels the forum transmission and does not encrypt the post itself.
+Forum presets provide template-specific recipient defaults, security classifications, accent colors, sign-off defaults and short in-universe Bretonian cipher designations. `ROLL CIPHER` produces RP designations such as `ADMIRALTY-IRONCLAD/VI · KEY VICTORIA-03`; it labels the transmission and does not cryptographically encrypt the post.
+
+Sender profiles own their signature identity. A built-in or saved sender automatically supplies the signature name and registered role/title. Only a temporary/custom sender exposes an editable role/title field.
+
+The sign-off control offers recipient-context presets for formal correspondence, the Crown, military/Admiralty recipients, business partners, suppliers/contractors, internal RHW/BMM traffic and neutral correspondence. A custom sign-off remains available.
+
+BBCode v2 separates the **document type** from the **security classification**, keeps sender/recipient/location/encryption metadata in the routing table, gives the subject its own title block and mirrors the selected sender profile in the signature.
 
 The message editor supports lightweight authoring syntax before conversion to BBCode:
 
