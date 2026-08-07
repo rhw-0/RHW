@@ -187,7 +187,11 @@ h1 {
    MID-SIZE DESKTOP / TABLET
    ------------------------------------------------------------------------- */
 @media (max-width: 1180px) and (min-width: 981px) {
-  .command-header-inner { gap: 18px; }
+  .command-header-inner {
+    flex-direction: row;
+    align-items: center;
+    gap: 18px;
+  }
   .crest-frame { width: 112px; }
   .crest-frame::before { width: 96px; height: 96px; }
   .crest { width: 102px; }
@@ -231,6 +235,7 @@ h1 {
   .uplink-actions > .uplink-stat { grid-column: auto; }
 
   .newswire-filter {
+    display: flex;
     margin-left: var(--layout-gutter);
     max-width: calc(100vw - (var(--layout-gutter) * 2));
   }
@@ -298,6 +303,7 @@ h1 {
     padding: 8px 9px;
   }
   .telemetry-divider { display: none; }
+  .base-telemetry-stat:first-child { grid-column: auto; }
   .base-telemetry-stat {
     min-width: 0;
     padding: 0 7px;
@@ -464,7 +470,7 @@ h1 {
 }
 
 @media (max-width: 390px) {
-  .command-brand { grid-template-columns: 66px minmax(0, 1fr); gap-column: 9px; }
+  .command-brand { grid-template-columns: 66px minmax(0, 1fr); column-gap: 9px; }
   .crest-frame { width: 66px; }
   .crest-frame::before { width: 58px; height: 58px; }
   .crest { width: 62px; }
