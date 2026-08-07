@@ -1,0 +1,41 @@
+/* =========================================
+   RHW WEB APP · V4.0 PREVIEW AUDIT POLISH
+   Small pre-release corrections found during the V4 UI/UX audit.
+   ========================================= */
+
+/* DOCUMENT CONTROL already lives inside the padded composer form. Do not
+   double-inset it relative to the remaining fields. */
+.comms-document-control {
+  margin: 0 0 16px;
+}
+
+/* Sub-navigation is intentionally scrollable on smaller screens. Give each
+   node a stable snap point and keep the currently activated node visible. */
+.workspace-subnav-tabs {
+  scroll-snap-type: x proximity;
+}
+.workspace-subnav button {
+  scroll-snap-align: center;
+}
+
+.app-active-node {
+  font-size: 8px !important;
+  color: rgba(212,175,55,0.80) !important;
+}
+
+/* A stacked COMMS layout should lead with the thing the user can edit. The V4
+   prototype previously put an empty preview before the composer below 1100px. */
+@media (max-width: 1100px) {
+  .composer-panel { order: 0; }
+  .preview-panel { order: 1; }
+}
+
+@media (max-width: 760px) {
+  .comms-document-control {
+    margin: 0 0 13px;
+  }
+
+  .workspace-subnav-tabs {
+    scroll-padding-inline: 18px;
+  }
+}
