@@ -9,11 +9,23 @@ const RHW_APP_CONFIG = Object.freeze({
     activeWorkspace: 'rhw-webapp-v4:workspace',
     commandNode: 'rhw-webapp-v4:command-node',
     inventoryView: 'rhw-webapp-v4:inventory-view',
+    operationsNode: 'rhw-webapp-v4:operations-node',
+    calculatorState: 'rhw-webapp-v4:calculator-state',
     commsNode: 'rhw-webapp-v4:comms-node',
     commsCurrent: 'rhw-webapp-v4:comms-current',
     commsDrafts: 'rhw-webapp-v4:comms-drafts',
     localSenders: 'rhw-webapp-v4:local-senders',
     tickerComposer: 'rhw-webapp-v4:ticker-composer'
+  }),
+  operations: Object.freeze({
+    defaultProduct: 'dsy_br_battleship_package',
+    defaultAffiliation: 'br_m_grp',
+    maxTreeDepth: 18,
+    catalogAsset: './assets/recipes/catalog-v1.js',
+    shipyardTargets: Object.freeze({
+      dunkirk: 'dsy_br_battleship_package',
+      invincible: 'dsy_br_carrier_package'
+    })
   }),
   forum: Object.freeze({
     logoUrl: 'https://i.imgur.com/TFXQ1So.png',
