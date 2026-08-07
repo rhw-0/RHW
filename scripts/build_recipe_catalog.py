@@ -217,22 +217,33 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('items_cfg', type=Path)
     parser.add_argument('modules_cfg', type=Path)
-    parser.add_argument('--output', type=Path, default=Path('assets/recipes/catalog-v1.js'))
+    parser.add_argument('--output-dir', type=Path, default=Path('assets/recipes'))
+    parser.add_argument('--chunk-size', type=int, default=6000)
     args = parser.parse_args()
 
     catalog = build_catalog(args.items_cfg, args.modules_cfg)
     raw = json.dumps(catalog, separators=(',', ':'), ensure_ascii=False).encode('utf-8')
     compressed = gzip.compress(raw, compresslevel=9, mtime=0)
     encoded = base64.b64encode(compressed).decode('ascii')
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        "/* Generated from Discovery public game config. Do not hand-edit. */\n"
-        f"window.__RHW_RECIPE_CATALOG_GZIP_BASE64__ = '{encoded}';\n",
-        encoding='utf-8',
-    )
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    chunk_size = max(1000, args.chunk_size)
+    chunks = [encoded[i:i + chunk_size] for i in range(0, len(encoded), chunk_size)]
+
+    for stale in args.output_dir.glob('catalog-v1-part-*.js'):
+        stale.unlink()
+    for index, chunk in enumerate(chunks, 1):
+        path = args.output_dir / f'catalog-v1-part-{index:02d}.js'
+        path.write_text(
+            '/* RHW V4 recipe catalog chunk. Generated; do not hand-edit. */\n'
+            "window.__RHW_RECIPE_CATALOG_GZIP_BASE64__ = (window.__RHW_RECIPE_CATALOG_GZIP_BASE64__ || '') + "
+            + repr(chunk) + ';\n',
+            encoding='utf-8',
+        )
+
     print(
         f"Built {catalog['meta']['recipeCount']} recipes, "
-        f"{catalog['meta']['productCount']} products and {catalog['meta']['factionCount']} IFF profiles -> {args.output}"
+        f"{catalog['meta']['productCount']} products and {catalog['meta']['factionCount']} IFF profiles "
+        f"into {len(chunks)} deterministic catalog chunks -> {args.output_dir}"
     )
     return 0
 
