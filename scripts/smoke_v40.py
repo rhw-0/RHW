@@ -136,19 +136,25 @@ def verify_operations_costing(cdp: CDP) -> None:
     if not trigger.get('ok'):
         raise RuntimeError(f'Operations costing search unavailable: {trigger}')
     time.sleep(0.35)
-    selected = evaluate_json(cdp, "({recipe:document.getElementById('opsRecipe')?.selectedOptions?.[0]?.textContent||'',target:document.querySelector('.ops-selected-target strong')?.textContent||'',materialInputs:document.querySelectorAll('[data-material-price]').length,hasVariant:[...document.querySelectorAll('span')].some(el=>el.textContent.trim()==='RECIPE VARIANT')})")
-    if 'superstructure' not in selected.get('recipe', '').lower() or 'superstructure' not in selected.get('target', '').lower():
+    selected = evaluate_json(cdp, "({recipe:document.getElementById('opsRecipe')?.selectedOptions?.[0]?.textContent||'',materialInputs:document.querySelectorAll('[data-material-price]').length,hasVariant:[...document.querySelectorAll('span')].some(el=>el.textContent.trim()==='RECIPE VARIANT'),hasAlternatives:!!document.querySelector('.ops-alternatives')||[...document.querySelectorAll('*')].some(el=>el.children.length===0&&el.textContent.trim()==='ALTERNATIVE INPUTS'),hasPricingFlow:!!document.querySelector('.ops-pricing-flow'),outputCycle:document.querySelector('.ops-recipe-meta strong')?.textContent||''})")
+    if 'superstructure' not in selected.get('recipe', '').lower():
         raise RuntimeError(f'Superstructure recipe search selected wrong recipe: {selected}')
     if 'dunkirk' in selected.get('recipe', '').lower() or selected.get('hasVariant'):
         raise RuntimeError(f'Obsolete/mismatched recipe variant surfaced: {selected}')
+    if selected.get('hasAlternatives'):
+        raise RuntimeError(f'Alternative-input control should not be exposed in simple costing mode: {selected}')
+    if not selected.get('hasPricingFlow'):
+        raise RuntimeError(f'Cost-to-margin-to-sale pricing flow is missing: {selected}')
+    if selected.get('outputCycle', '').strip() in {'', '0'}:
+        raise RuntimeError(f'Output-per-cycle display is invalid: {selected}')
     if selected.get('materialInputs', 0) <= 0:
         raise RuntimeError(f'No material-price inputs rendered for Superstructure Systems: {selected}')
 
     evaluate_json(cdp, "(() => { document.querySelectorAll('[data-material-price]').forEach(input=>{input.value='1000';input.dispatchEvent(new Event('input',{bubbles:true}));}); const margin=document.getElementById('opsMargin'); if(margin){margin.value='20';margin.dispatchEvent(new Event('input',{bubbles:true}));} return {ok:true}; })()")
-    quote = evaluate_json(cdp, "({coverage:document.getElementById('opsPriceCoverage')?.textContent||'',sell:document.getElementById('opsSellUnit')?.textContent||'',profit:document.getElementById('opsProfit')?.textContent||''})")
-    if '—' in quote.get('sell', '') or 'CR' not in quote.get('sell', '') or 'CR' not in quote.get('profit', ''):
+    quote = evaluate_json(cdp, "({coverage:document.getElementById('opsPriceCoverage')?.textContent||'',total:document.getElementById('opsTotalCost')?.textContent||'',sell:document.getElementById('opsSellUnit')?.textContent||'',profitUnit:document.getElementById('opsProfitUnit')?.textContent||'',profit:document.getElementById('opsProfit')?.textContent||''})")
+    if '—' in quote.get('sell', '') or 'CR' not in quote.get('total', '') or 'CR' not in quote.get('sell', '') or 'CR' not in quote.get('profitUnit', '') or 'CR' not in quote.get('profit', ''):
         raise RuntimeError(f'Cost/margin quote did not resolve after pricing materials: {quote}')
-    print('V4 interaction smoke passed: operations recipe search + material pricing + margin')
+    print('V4 interaction smoke passed: recipe search + simple materials + cost/margin/sale flow')
 
 
 def launch_browser() -> tuple[subprocess.Popen, str, int, str, str]:
