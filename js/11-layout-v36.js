@@ -64,6 +64,44 @@ function initProductionDetailsToggle() {
   applyState();
 }
 
+function enhanceMobileMarketCards() {
+  const grid = document.getElementById('marketScanGrid');
+  if (!grid) return;
+
+  grid.querySelectorAll('.market-card').forEach((card, cardIndex) => {
+    const list = card.querySelector('.supplier-commodity-list');
+    if (!list || card.querySelector('.market-mobile-toggle')) return;
+
+    const rows = [...list.querySelectorAll('.supplier-commodity-row')];
+    if (rows.length <= 3) return;
+
+    const hiddenCount = rows.length - 3;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'market-mobile-toggle';
+    button.setAttribute('aria-expanded', 'false');
+    button.setAttribute('aria-label', `Show ${hiddenCount} more market offers in channel ${cardIndex + 1}`);
+    button.textContent = `SHOW ${hiddenCount} MORE OFFERS`;
+
+    button.addEventListener('click', () => {
+      const expanded = card.classList.toggle('mobile-market-expanded');
+      button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      button.textContent = expanded ? 'SHOW FEWER OFFERS' : `SHOW ${hiddenCount} MORE OFFERS`;
+    });
+
+    card.appendChild(button);
+  });
+}
+
+function initMobileMarketDisclosure() {
+  const grid = document.getElementById('marketScanGrid');
+  if (!grid) return;
+
+  const observer = new MutationObserver(() => enhanceMobileMarketCards());
+  observer.observe(grid, { childList: true, subtree: true });
+  enhanceMobileMarketCards();
+}
+
 function tagLayoutVersion() {
   document.documentElement.dataset.rhwLayout = 'v3.6';
 }
@@ -71,3 +109,4 @@ function tagLayoutVersion() {
 tagLayoutVersion();
 arrangeV36CommandFlow();
 initProductionDetailsToggle();
+initMobileMarketDisclosure();
