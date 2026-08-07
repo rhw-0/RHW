@@ -25,7 +25,7 @@ V4_RUNTIME_ASSETS = [
     './css/12-app-v40.css', './css/13-app-v40-navigation.css', './css/14-app-v40-composer.css',
     './css/15-app-v40-audit.css', './css/16-app-v40-operations.css',
     './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
-    './js/16-app-v40-composer.js',
+    './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js',
     './assets/recipes/catalog-v1-part-01.js', './assets/recipes/catalog-v1-part-02.js', './assets/recipes/catalog-v1-part-03.js',
     './assets/recipes/catalog-v1-part-04.js', './assets/recipes/catalog-v1-part-05.js', './assets/recipes/catalog-v1-part-06.js',
     './js/17-app-v40-operations-core.js', './js/18-app-v40-operations-ui.js', './js/19-app-v40-runtime.js',
@@ -102,6 +102,9 @@ def main() -> int:
         "typeof CAPITAL_SHIPYARD === 'undefined'", "typeof RECIPES === 'undefined'"
     ), 'V4 COMMAND module')
     require_tokens(errors, 'js/16-app-v40-composer.js', ('SALUTATION / OPENING', 'comms-editor-toolbar', 'ticker-builder-preview', 'data-edit-sender', 'buildBbcode'), 'V4 COMMS module')
+    require_tokens(errors, 'js/16a-app-v40-comms-safety.js', (
+        'MAX_TAG = 40', 'MAX_MESSAGE = 240', 'normalizeTag', 'normalizeMessage', 'app.commsSafety'
+    ), 'V4 COMMS safety module')
     require_tokens(errors, 'js/17-app-v40-operations-core.js', (
         'app.operationsCore', 'loadCatalog', 'buildPlan', 'factorFor', 'authorizedFor',
         'RESTRICTED RECIPE REQUIRES AN AUTHORIZED IFF', 'outputPerCycle: rootOutputPerCycle'
@@ -111,7 +114,9 @@ def main() -> int:
         'NO MATCHING RECIPE', 'Math.ceil(unitCost', 'AUTHORIZED IFF', 'RESTRICTED RECIPE',
         'installShipyardBridge', 'PRICE / PLAN 1 HULL'
     ), 'V4 OPERATIONS UI')
-    require_tokens(errors, 'js/19-app-v40-runtime.js', ('workspaceOperations', 'operations-calculator', '__RHW_V4_SMOKE__', 'app.runtime'), 'V4 runtime')
+    require_tokens(errors, 'js/19-app-v40-runtime.js', (
+        'workspaceOperations', 'operations-calculator', '__RHW_V4_SMOKE__', 'app.commsSafety?.init()', 'app.runtime'
+    ), 'V4 runtime')
     require_tokens(errors, 'scripts/build_recipe_catalog.py', (
         "parser.add_argument('--chunks'", 'chunk_count = max(1, int(args.chunks))', "if ''.join(chunks) != encoded"
     ), 'Recipe catalog builder')
@@ -137,7 +142,8 @@ def main() -> int:
 
     for path in (
         'js/13-app-v40.js', 'js/14-app-v40-cache.js', 'js/15-app-v40-navigation.js',
-        'js/16-app-v40-composer.js', 'js/17-app-v40-operations-core.js', 'js/18-app-v40-operations-ui.js', 'js/19-app-v40-runtime.js'
+        'js/16-app-v40-composer.js', 'js/16a-app-v40-comms-safety.js', 'js/17-app-v40-operations-core.js',
+        'js/18-app-v40-operations-ui.js', 'js/19-app-v40-runtime.js'
     ):
         text = (ROOT / path).read_text(encoding='utf-8')
         if 'BaseApply' in text or 'BaseActivate' in text or 'const v40Base' in text:
