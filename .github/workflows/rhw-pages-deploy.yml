@@ -3,21 +3,43 @@ name: RHW Pages Deploy
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-# Intentionally reuse the original Pages concurrency group once so this fresh
-# workflow can supersede stale RHW Pages runs left by the previous workflow.
-concurrency:
-  group: pages
-  cancel-in-progress: true
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate dashboard structure
+        run: python3 scripts/validate_dashboard.py
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in js/*.js; do
+            echo "Checking ${file}"
+            node --check "${file}"
+          done
+
   deploy:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

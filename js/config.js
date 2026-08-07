@@ -6,6 +6,7 @@ const DASHBOARD_VERSION = 'V3.5';
 const DASHBOARD_CONFIG = Object.freeze({
   apiUrl: 'https://darkstat.dd84ai.com/api/pobs',
   baseName: 'resolution heavy works',
+  baseHealthMax: 24000000,
   newswireUrl: './assets/RHW_Newswire.md',
   newswireRefreshMs: 900000,
   autoRefreshMs: 300000,
