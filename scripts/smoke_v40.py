@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Runtime smoke test for RHW V4 using Chrome DevTools and an inline site bundle."""
+"""Runtime and interaction smoke tests for RHW V4 using Chrome DevTools."""
 from __future__ import annotations
 
 import html
@@ -128,7 +128,7 @@ def evaluate_json(cdp: CDP, expression: str) -> dict:
 
 
 def evaluate_snapshot(cdp: CDP) -> dict:
-    return evaluate_json(cdp, "({ready:document.documentElement.dataset.v40Ready||'',error:document.documentElement.dataset.v40Error||'',workspace:document.body?.dataset.workspace||'',commandNode:document.body?.dataset.commandNode||'',operationsNode:document.body?.dataset.operationsNode||'',commsNode:document.body?.dataset.commsNode||'',recipeCount:window.RHWV4?.operationsCore?.state?.catalog?.meta?.recipeCount||0,smoke:window.__RHW_V4_SMOKE__||null})")
+    return evaluate_json(cdp, "({ready:document.documentElement.dataset.v40Ready||'',error:document.documentElement.dataset.v40Error||'',workspace:document.body?.dataset.workspace||'',commandNode:document.body?.dataset.commandNode||'',operationsNode:document.body?.dataset.operationsNode||'',commsNode:document.body?.dataset.commsNode||'',recipeCount:window.RHWV4?.operationsCore?.state?.catalog?.meta?.recipeCount||0,productCount:window.RHWV4?.operationsCore?.state?.catalog?.meta?.productCount||0,smoke:window.__RHW_V4_SMOKE__||null})")
 
 
 def cr_number(value: str) -> int:
@@ -151,6 +151,25 @@ def verify_command_overview(cdp: CDP) -> None:
     print('V4 interaction smoke passed: command overview shipyard + production telemetry analysis')
 
 
+def verify_restricted_iff(cdp: CDP) -> None:
+    target = evaluate_json(cdp, "(() => { const recipes=window.RHWV4.operationsCore.state.catalog?.recipes||[]; const recipe=recipes.find(r=>r.restricted&&(r.bonuses||[]).length&&!(r.bonuses||[]).some(b=>b.id==='br_m_grp')); if(!recipe)return {ok:false,reason:'no-non-bmm-restricted-recipe'}; const search=document.getElementById('opsRecipeSearch'); if(!search)return {ok:false,reason:'missing-search'}; search.value=recipe.id; search.dispatchEvent(new Event('input',{bubbles:true})); return {ok:true,id:recipe.id,authorized:(recipe.bonuses||[]).map(b=>b.id),product:recipe.outputs?.[0]?.id||''}; })()")
+    if not target.get('ok'):
+        raise RuntimeError(f'Restricted-IFF test target unavailable: {target}')
+    time.sleep(0.4)
+    state = evaluate_json(cdp, "({values:[...document.getElementById('opsAffiliation')?.options||[]].map(o=>o.value),labels:[...document.getElementById('opsAffiliation')?.options||[]].map(o=>o.textContent),selected:document.getElementById('opsAffiliation')?.value||'',hint:document.getElementById('opsAffiliation')?.closest('label')?.querySelector('small')?.textContent||''})")
+    if 'br_m_grp' in state.get('values', []) or '__none__' in state.get('values', []):
+        raise RuntimeError(f'Restricted recipe exposed unauthorized BMM/no-IFF profiles: {state}')
+    if state.get('selected') not in target.get('authorized', []):
+        raise RuntimeError(f'Restricted recipe did not select an authorized IFF: target={target} state={state}')
+    if 'RESTRICTED RECIPE' not in state.get('hint', ''):
+        raise RuntimeError(f'Restricted recipe UI does not explain IFF restriction: {state}')
+
+    core_guard = evaluate_json(cdp, f"(() => {{ const core=window.RHWV4.operationsCore; const r=core.recipe({json.dumps(target['id'])}); try {{ core.buildPlan({{productId:{json.dumps(target['product'])},recipeId:r.id,quantity:1,affiliationId:'br_m_grp',useInventory:false,recursive:false,routingPolicy:'first'}}); return {{blocked:false}}; }} catch(error) {{ return {{blocked:true,message:String(error.message||error)}}; }} }})()")
+    if not core_guard.get('blocked') or 'AUTHORIZED IFF' not in core_guard.get('message', ''):
+        raise RuntimeError(f'Restricted recipe core did not reject unauthorized IFF: {core_guard}')
+    print('V4 interaction smoke passed: restricted recipes expose only authorized IFF profiles')
+
+
 def verify_operations_costing(cdp: CDP) -> None:
     trigger = evaluate_json(cdp, "(() => { const search=document.getElementById('opsRecipeSearch'); if(!search) return {ok:false,reason:'missing-search'}; search.value='Superstr'; search.dispatchEvent(new Event('input',{bubbles:true})); return {ok:true}; })()")
     if not trigger.get('ok'):
@@ -170,9 +189,7 @@ def verify_operations_costing(cdp: CDP) -> None:
     if selected.get('materialInputs', 0) <= 0:
         raise RuntimeError(f'No material-price inputs rendered for Superstructure Systems: {selected}')
 
-    no_match = evaluate_json(cdp, "(() => { const search=document.getElementById('opsRecipeSearch'); search.value='zzzz-no-such-rhw-recipe'; search.dispatchEvent(new Event('input',{bubbles:true})); return {ok:true}; })()")
-    if not no_match.get('ok'):
-        raise RuntimeError('Unable to exercise recipe no-match state')
+    evaluate_json(cdp, "(() => { const search=document.getElementById('opsRecipeSearch'); search.value='zzzz-no-such-rhw-recipe'; search.dispatchEvent(new Event('input',{bubbles:true})); return {ok:true}; })()")
     time.sleep(0.35)
     no_match_state = evaluate_json(cdp, "({empty:document.querySelector('.ops-no-match')?.textContent||'',materialInputs:document.querySelectorAll('[data-material-price]').length})")
     if 'NO MATCHING RECIPE' not in no_match_state.get('empty', '') or no_match_state.get('materialInputs') != 0:
@@ -190,6 +207,22 @@ def verify_operations_costing(cdp: CDP) -> None:
     if cr_number(quote.get('revenue', '')) != cr_number(quote.get('sell', '')) * actual:
         raise RuntimeError(f'Displayed sell price and revenue do not reconcile: {quote}')
     print('V4 interaction smoke passed: recipe search + no-match + pricing + margin clamp')
+    verify_restricted_iff(cdp)
+
+
+def verify_comms(cdp: CDP) -> None:
+    result = evaluate_json(cdp, "(() => { const app=window.RHWV4; const subject=document.getElementById('commsSubject'); const message=document.getElementById('commsMessage'); const recipient=document.getElementById('commsRecipient'); if(!subject||!message||!recipient)return {ok:false,reason:'missing-composer'}; subject.value='Audit Transmission'; recipient.value='Admiralty Test Office'; message.value='## Audit Heading\\n!status Systems nominal\\n- Test line'; message.dispatchEvent(new Event('input',{bubbles:true})); subject.dispatchEvent(new Event('input',{bubbles:true})); recipient.dispatchEvent(new Event('input',{bubbles:true})); const bb=app.comms.buildBbcode(); const sender=app.storage.upsertSender({name:'Audit Sender',title:'Audit Role',organisation:'RHW',location:'New London',encryption:'AUDIT-01'}); app.state.comms.senderKey=sender.key; app.state.comms.senderSnapshotName=sender.name; app.state.comms.senderSnapshotTitle=sender.title; const draftName=app.storage.saveDraft(app.state.comms,'__RHW_SMOKE_DRAFT__'); const draft=app.state.drafts.find(d=>d.name===draftName); app.storage.removeSender(sender.key); const resolved=app.storage.resolveSender(draft.state); app.storage.deleteDraft(draft.id); return {ok:true,bb,preview:document.getElementById('forumLivePreview')?.textContent||'',draftSender:resolved.name,draftTitle:resolved.title}; })()")
+    if not result.get('ok'):
+        raise RuntimeError(f'COMMS interaction test unavailable: {result}')
+    bb = result.get('bb', '')
+    if 'Audit Heading' not in bb or 'STATUS //' not in bb or 'Admiralty Test Office' not in bb:
+        raise RuntimeError(f'COMMS BBCode did not track form input: {result}')
+    if result.get('draftSender') != 'Audit Sender' or result.get('draftTitle') != 'Audit Role':
+        raise RuntimeError(f'Draft sender snapshot did not survive sender deletion: {result}')
+    route = evaluate_json(cdp, "(() => { window.RHWV4.navigate('comms','ticker'); return {hash:location.hash,workspace:document.body.dataset.workspace,node:document.body.dataset.commsNode}; })()")
+    if route.get('hash') != '#comms/ticker' or route.get('workspace') != 'comms' or route.get('node') != 'ticker':
+        raise RuntimeError(f'COMMS navigation did not canonicalize correctly: {route}')
+    print('V4 interaction smoke passed: COMMS form + BBCode + draft snapshot + navigation')
 
 
 def launch_browser() -> tuple[subprocess.Popen, str, int, str, str]:
@@ -277,11 +310,13 @@ def main() -> int:
                     raise RuntimeError(f'Recipe catalog missing on {workspace}/{node}: {snapshot}')
                 if (snapshot.get('smoke') or {}).get('errors'):
                     raise RuntimeError(f"Runtime self-test errors on {workspace}/{node}: {snapshot['smoke']['errors']}")
-                print(f'V4 runtime smoke passed: {workspace}/{node}')
+                print(f"V4 runtime smoke passed: {workspace}/{node} (recipes={snapshot.get('recipeCount',0)} products={snapshot.get('productCount',0)})")
                 if workspace == 'command' and node == 'overview':
                     verify_command_overview(cdp)
                 if workspace == 'operations':
                     verify_operations_costing(cdp)
+                if workspace == 'comms' and node == 'forum':
+                    verify_comms(cdp)
         finally:
             cdp.close()
     finally:
