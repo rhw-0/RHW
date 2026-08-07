@@ -6,6 +6,13 @@
 (function initRhwV4Core() {
   'use strict';
 
+  const WORKSPACES = Object.freeze(['command', 'operations', 'comms']);
+  const WORKSPACE_META = Object.freeze({
+    command: Object.freeze({ nodeKey: 'commandNode', fallback: 'overview' }),
+    operations: Object.freeze({ nodeKey: 'operationsNode', fallback: 'calculator' }),
+    comms: Object.freeze({ nodeKey: 'commsNode', fallback: 'forum' })
+  });
+
   const app = window.RHWV4 = {
     version: RHW_APP_VERSION,
     config: RHW_APP_CONFIG,
@@ -13,6 +20,8 @@
       activeWorkspace: 'command',
       commandNode: 'overview',
       inventoryView: 'status',
+      operationsNode: 'calculator',
+      calculator: null,
       commsNode: 'forum',
       localSenders: [],
       drafts: [],
@@ -104,36 +113,58 @@
   };
 
   app.notify = function notify(message, tone = 'good') {
-    const status = document.getElementById('commsStatus');
+    const status = app.state.activeWorkspace === 'operations'
+      ? document.getElementById('operationsStatus')
+      : (document.getElementById('commsStatus') || document.getElementById('operationsStatus'));
     if (!status) return;
     status.textContent = message;
     status.dataset.tone = tone;
     clearTimeout(app.notifyTimer);
     app.notifyTimer = setTimeout(() => {
-      status.textContent = 'LOCAL COMMAND CACHE READY';
-      status.dataset.tone = 'muted';
+      if (status.id === 'operationsStatus') {
+        const count = app.operationsCore?.state?.catalog?.meta?.recipeCount;
+        status.textContent = count ? `${app.util.number(count)} RECIPES // DATABASE READY` : 'RECIPE DATABASE READY';
+        status.dataset.tone = 'good';
+      } else {
+        status.textContent = 'LOCAL COMMAND CACHE READY';
+        status.dataset.tone = 'muted';
+      }
     }, 2600);
   };
 
   app.route = {
     parse() {
       const parts = location.hash.replace(/^#/, '').toLowerCase().split('/').filter(Boolean);
-      const workspace = ['command', 'comms'].includes(parts[0]) ? parts[0] : null;
+      const workspace = WORKSPACES.includes(parts[0]) ? parts[0] : null;
       let node = parts[1] || null;
       if (workspace === 'comms' && node === 'newswire') node = 'ticker';
       return { workspace, node };
     },
     write(workspace, node, { replace = false } = {}) {
-      const next = `#${workspace}/${node}`;
+      const safeWorkspace = WORKSPACES.includes(workspace) ? workspace : 'command';
+      const safeNode = node || WORKSPACE_META[safeWorkspace].fallback;
+      const next = `#${safeWorkspace}/${safeNode}`;
       if (location.hash === next) return;
       const method = replace ? 'replaceState' : 'pushState';
-      history[method]({ rhwWorkspace: workspace, rhwNode: node }, '', next);
+      history[method]({ rhwWorkspace: safeWorkspace, rhwNode: safeNode }, '', next);
     }
   };
 
   app.setActiveNode = function setActiveNode(value) {
     const target = document.getElementById('appActiveNode');
     if (target) target.textContent = `ACTIVE NODE: ${value}`;
+  };
+
+  app.workspaceModule = function workspaceModule(workspace) {
+    if (workspace === 'command') return app.command;
+    if (workspace === 'operations') return app.operations;
+    return app.comms;
+  };
+
+  app.workspaceStoredNode = function workspaceStoredNode(workspace) {
+    const meta = WORKSPACE_META[workspace] || WORKSPACE_META.command;
+    const storageKey = app.config.storageKeys[meta.nodeKey];
+    return app.store.get(storageKey, meta.fallback);
   };
 
   app.installShell = function installShell() {
@@ -155,6 +186,7 @@
         </div>
         <div class="app-tabs" role="tablist" aria-label="RHW workspaces">
           <button type="button" role="tab" data-workspace="command" aria-controls="workspaceCommand"><span>COMMAND</span><small>LIVE OPERATIONS</small></button>
+          <button type="button" role="tab" data-workspace="operations" aria-controls="workspaceOperations"><span>OPERATIONS</span><small>FABRICATION PLANNING</small></button>
           <button type="button" role="tab" data-workspace="comms" aria-controls="workspaceComms"><span>COMMS</span><small>TRANSMISSION STUDIO</small></button>
         </div>
       </div>`;
@@ -174,6 +206,14 @@
     command.appendChild(strip);
     command.appendChild(main);
 
+    const operations = document.createElement('section');
+    operations.id = 'workspaceOperations';
+    operations.className = 'app-workspace operations-workspace';
+    operations.setAttribute('role', 'tabpanel');
+    operations.setAttribute('aria-label', 'Operations workspace');
+    operations.hidden = true;
+    root.appendChild(operations);
+
     const comms = document.createElement('section');
     comms.id = 'workspaceComms';
     comms.className = 'app-workspace comms-workspace';
@@ -186,10 +226,7 @@
       const button = event.target.closest('[data-workspace]');
       if (!button) return;
       const workspace = button.dataset.workspace;
-      const key = workspace === 'command' ? app.config.storageKeys.commandNode : app.config.storageKeys.commsNode;
-      const fallback = workspace === 'command' ? 'overview' : 'forum';
-      const node = app.store.get(key, fallback);
-      app.navigate(workspace, node);
+      app.navigate(workspace, app.workspaceStoredNode(workspace));
     });
 
     nav.addEventListener('keydown', event => {
@@ -205,7 +242,7 @@
   };
 
   app.activateWorkspace = function activateWorkspace(workspace) {
-    const safe = ['command', 'comms'].includes(workspace) ? workspace : 'command';
+    const safe = WORKSPACES.includes(workspace) ? workspace : 'command';
     app.state.activeWorkspace = safe;
     app.store.set(app.config.storageKeys.activeWorkspace, safe);
     document.body.dataset.workspace = safe;
@@ -224,24 +261,23 @@
   app.applyRoute = function applyRoute({ replace = false } = {}) {
     const route = app.route.parse();
     const workspace = route.workspace || app.store.get(app.config.storageKeys.activeWorkspace, 'command');
-    app.activateWorkspace(workspace);
-    if (workspace === 'command') {
-      const node = route.node || app.store.get(app.config.storageKeys.commandNode, 'overview');
-      app.command?.activate(node, { updateRoute: false });
-      if (!route.workspace) app.route.write('command', app.state.commandNode || 'overview', { replace: true });
-    } else {
-      const node = route.node || app.store.get(app.config.storageKeys.commsNode, 'forum');
-      app.comms?.activate(node, { updateRoute: false });
-      if (!route.workspace) app.route.write('comms', app.state.commsNode || 'forum', { replace: true });
-    }
-    if (replace && route.workspace) app.route.write(workspace, route.node || (workspace === 'command' ? 'overview' : 'forum'), { replace: true });
+    const safeWorkspace = WORKSPACES.includes(workspace) ? workspace : 'command';
+    app.activateWorkspace(safeWorkspace);
+
+    const meta = WORKSPACE_META[safeWorkspace];
+    const node = route.node || app.workspaceStoredNode(safeWorkspace);
+    app.workspaceModule(safeWorkspace)?.activate(node, { updateRoute: false });
+    const activeNode = app.state[meta.nodeKey] || meta.fallback;
+
+    if (!route.workspace || replace) app.route.write(safeWorkspace, activeNode, { replace: true });
   };
 
   app.navigate = function navigate(workspace, node, { replace = false } = {}) {
-    app.activateWorkspace(workspace);
-    if (workspace === 'command') app.command?.activate(node, { updateRoute: false });
-    else app.comms?.activate(node, { updateRoute: false });
-    app.route.write(workspace, workspace === 'command' ? app.state.commandNode : app.state.commsNode, { replace });
+    const safeWorkspace = WORKSPACES.includes(workspace) ? workspace : 'command';
+    app.activateWorkspace(safeWorkspace);
+    const meta = WORKSPACE_META[safeWorkspace];
+    app.workspaceModule(safeWorkspace)?.activate(node || meta.fallback, { updateRoute: false });
+    app.route.write(safeWorkspace, app.state[meta.nodeKey] || meta.fallback, { replace });
   };
 
   window.addEventListener('popstate', () => app.applyRoute());
