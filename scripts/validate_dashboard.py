@@ -45,6 +45,7 @@ V4_DYNAMIC_ASSETS = [
     "./css/12-app-v40.css",
     "./js/12-app-config.js",
     "./js/13-app-v40.js",
+    "./js/14-app-v40-cache.js",
 ]
 
 
@@ -101,7 +102,7 @@ def main() -> int:
         fail(errors, "V3.6 layout controls are incomplete.")
 
     bootstrap = (ROOT / "js/00-bootstrap.js").read_text(encoding="utf-8")
-    for required in ("./css/12-app-v40.css", "./js/12-app-config.js", "./js/13-app-v40.js"):
+    for required in ("./css/12-app-v40.css", "./js/12-app-config.js", "./js/13-app-v40.js", "./js/14-app-v40-cache.js"):
         if required not in bootstrap:
             fail(errors, f"V4 bootstrap does not reference required asset: {required}")
 
@@ -113,6 +114,11 @@ def main() -> int:
     for required_hook in ("appInstallShell", "appBuildForumBbcode", "appSaveLocalSender", "appSaveNamedDraft"):
         if required_hook not in app_js:
             fail(errors, f"V4 COMMS controls are incomplete: {required_hook}")
+
+    cache_js = (ROOT / "js/14-app-v40-cache.js").read_text(encoding="utf-8")
+    for required_hook in ("appExportLocalCache", "appImportLocalCacheFile"):
+        if required_hook not in cache_js:
+            fail(errors, f"V4 local-cache portability is incomplete: {required_hook}")
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     if ".github/workflows/rhw-pages-deploy.yml" not in readme:
