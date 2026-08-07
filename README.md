@@ -78,5 +78,5 @@ python3 scripts/validate_dashboard.py
 
 GitHub Pages deployment is handled by `.github/workflows/rhw-pages-deploy.yml`. Pull requests run validation only; pushes to `main` validate first and deploy only after the checks pass.
 
-The live site remains on the current released version until the V4 branch is reviewed and merged. The active development line is **V4.0 PREVIEW**.
+**V4.0 is not released while this work remains on `agent/rhw-v40-webapp` / Draft PR #3.** The production `main` branch and public Pages site remain on the current released V3.6 layout until V4 is explicitly reviewed and merged. The active development line is **V4.0 PREVIEW**.
 <!-- RHW deploy trigger -->
