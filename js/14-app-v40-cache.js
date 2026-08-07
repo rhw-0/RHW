@@ -1,84 +1,252 @@
 /* ==========================================================================
-   RHW WEB APP · V4.0 LOCAL CACHE PORTABILITY
-   Move COMMS drafts and local sender profiles between preview/live origins.
+   RHW WEB APP · V4.0 STORAGE
+   Browser-local drafts, sender identities, migration and cache portability.
    ========================================================================== */
+(function initRhwV4Storage() {
+  'use strict';
+  const app = window.RHWV4;
+  if (!app) return;
+  const keys = app.config.storageKeys;
 
-function appInstallCachePortability() {
-  const draftsPanel = document.querySelector('.drafts-panel');
-  const draftList = document.getElementById('commsDraftList');
-  if (!draftsPanel || !draftList || document.getElementById('exportCommsCacheBtn')) return;
+  function defaultState() {
+    const sender = app.config.senders[0];
+    const template = app.config.templates[0];
+    return {
+      templateKey: template.key,
+      senderKey: sender.key,
+      customSenderName: '',
+      signatureTitle: sender.title || '',
+      senderSnapshotName: sender.name || '',
+      senderSnapshotTitle: sender.title || '',
+      recipient: template.recipient || '',
+      location: sender.location || '',
+      encryption: template.encryption || sender.encryption || '',
+      classification: template.classification || 'RHW OFFICIAL',
+      salutation: template.salutation || 'Dear Sir or Madam,',
+      subject: '',
+      message: '',
+      closing: template.closing || 'Yours faithfully,',
+      systemDate: '',
+      draftName: '',
+      footerMotto: app.config.forum.footerMotto
+    };
+  }
 
-  const tools = document.createElement('div');
-  tools.className = 'comms-actions comms-cache-tools';
-  tools.innerHTML = `
-    <button type="button" id="exportCommsCacheBtn"><span>EXPORT LOCAL CACHE</span></button>
-    <button type="button" id="importCommsCacheBtn"><span>IMPORT LOCAL CACHE</span></button>
-    <input type="file" id="importCommsCacheInput" accept="application/json,.json" hidden />`;
-  draftList.insertAdjacentElement('beforebegin', tools);
+  function normalizeState(raw) {
+    const fallback = defaultState();
+    if (!raw || typeof raw !== 'object') return fallback;
+    const state = { ...fallback };
+    Object.keys(fallback).forEach(key => {
+      if (typeof raw[key] === 'string') state[key] = raw[key];
+    });
+    if (!app.config.templates.some(template => template.key === state.templateKey)) state.templateKey = fallback.templateKey;
+    if (!state.classification) state.classification = app.template(state.templateKey).classification || fallback.classification;
+    if (!state.salutation) state.salutation = app.template(state.templateKey).salutation || fallback.salutation;
+    if (!state.closing) state.closing = app.template(state.templateKey).closing || fallback.closing;
+    return state;
+  }
 
-  const hint = document.createElement('div');
-  hint.className = 'bbcode-hint';
-  hint.textContent = 'EXPORT MOVES BROWSER-LOCAL DRAFTS + CUSTOM SENDERS BETWEEN THE V4 PREVIEW AND THE EVENTUAL LIVE APP.';
-  tools.insertAdjacentElement('afterend', hint);
+  function normalizeSender(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const name = String(raw.name || '').trim();
+    if (!name) return null;
+    return {
+      key: String(raw.key || app.util.uid('local-sender')),
+      name,
+      title: String(raw.title || '').trim(),
+      organisation: String(raw.organisation || '').trim(),
+      location: String(raw.location || '').trim(),
+      encryption: String(raw.encryption || '').trim()
+    };
+  }
 
-  document.getElementById('exportCommsCacheBtn')?.addEventListener('click', appExportLocalCache);
-  document.getElementById('importCommsCacheBtn')?.addEventListener('click', () => document.getElementById('importCommsCacheInput')?.click());
-  document.getElementById('importCommsCacheInput')?.addEventListener('change', appImportLocalCacheFile);
-}
+  function senderByKey(key) {
+    const builtIn = app.config.senders.find(sender => sender.key === key);
+    if (builtIn) return { ...builtIn, source: 'BUILT-IN' };
+    const local = app.state.localSenders.find(sender => sender.key === key);
+    return local ? { ...local, source: 'LOCAL' } : null;
+  }
 
-function appExportLocalCache() {
-  appSyncFromForm();
-  appSaveCurrentState();
-  const payload = {
-    format: 'rhw-webapp-local-cache',
-    version: 1,
-    appVersion: RHW_APP_VERSION,
-    exportedAt: new Date().toISOString(),
-    current: rhwCommsState,
-    drafts: rhwCommsDrafts,
-    localSenders: rhwLocalSenders
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `rhw-comms-cache-${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  appNotify('LOCAL CACHE EXPORTED');
-}
+  function resolveSender(state = app.state.comms) {
+    if (!state) return { name: '', title: '', organisation: '' };
+    if (state.senderKey === '__custom__') {
+      return {
+        name: state.customSenderName?.trim() || state.senderSnapshotName?.trim() || 'UNASSIGNED SENDER',
+        title: state.signatureTitle?.trim() || state.senderSnapshotTitle?.trim() || '',
+        organisation: ''
+      };
+    }
+    const sender = senderByKey(state.senderKey);
+    if (sender) return sender;
+    return {
+      name: state.senderSnapshotName?.trim() || 'UNASSIGNED SENDER',
+      title: state.senderSnapshotTitle?.trim() || '',
+      organisation: ''
+    };
+  }
 
-async function appImportLocalCacheFile(event) {
-  const input = event.currentTarget;
-  const file = input.files?.[0];
-  if (!file) return;
-  try {
-    const raw = JSON.parse(await file.text());
+  function snapshotSender(state) {
+    const sender = resolveSender(state);
+    state.senderSnapshotName = sender.name || state.senderSnapshotName || '';
+    state.senderSnapshotTitle = sender.title || state.senderSnapshotTitle || '';
+    return state;
+  }
+
+  function normalizeDraft(raw) {
+    if (!raw || typeof raw !== 'object' || !raw.id) return null;
+    const state = snapshotSender(normalizeState(raw.state));
+    return {
+      id: String(raw.id),
+      name: String(raw.name || state.draftName || state.subject || 'Transmission').trim(),
+      state,
+      updatedAt: Number(raw.updatedAt) || Date.now()
+    };
+  }
+
+  function saveLocalSenders() {
+    app.store.set(keys.localSenders, app.state.localSenders);
+  }
+
+  function saveDrafts() {
+    app.store.set(keys.commsDrafts, app.state.drafts);
+  }
+
+  function saveCurrent() {
+    if (!app.state.comms) return;
+    snapshotSender(app.state.comms);
+    app.store.set(keys.commsCurrent, app.state.comms);
+  }
+
+  function saveDraft(state, name) {
+    const nextState = snapshotSender(normalizeState(state));
+    const nextName = String(name || nextState.draftName || nextState.subject || `Transmission ${new Date().toLocaleDateString('de-DE')}`).trim();
+    nextState.draftName = nextName;
+    const existing = app.state.drafts.find(draft => app.util.normalize(draft.name) === app.util.normalize(nextName));
+    if (existing) {
+      existing.state = nextState;
+      existing.updatedAt = Date.now();
+    } else {
+      app.state.drafts.push({ id: app.util.uid('draft'), name: nextName, state: nextState, updatedAt: Date.now() });
+    }
+    saveDrafts();
+    return nextName;
+  }
+
+  function deleteDraft(id) {
+    app.state.drafts = app.state.drafts.filter(draft => draft.id !== id);
+    saveDrafts();
+  }
+
+  function upsertSender(profile, preferredKey = null) {
+    const normalized = normalizeSender({ ...profile, key: preferredKey || profile?.key });
+    if (!normalized) return null;
+    const byKey = preferredKey ? app.state.localSenders.findIndex(sender => sender.key === preferredKey) : -1;
+    const byName = app.state.localSenders.findIndex(sender => app.util.normalize(sender.name) === app.util.normalize(normalized.name));
+    const index = byKey >= 0 ? byKey : byName;
+    if (index >= 0) {
+      normalized.key = app.state.localSenders[index].key;
+      app.state.localSenders[index] = normalized;
+    } else {
+      app.state.localSenders.push(normalized);
+    }
+    saveLocalSenders();
+    return normalized;
+  }
+
+  function snapshotReferences(sender) {
+    if (!sender?.key) return;
+    let changed = false;
+    app.state.drafts.forEach(draft => {
+      if (draft.state?.senderKey !== sender.key) return;
+      draft.state.senderSnapshotName = sender.name || draft.state.senderSnapshotName || '';
+      draft.state.senderSnapshotTitle = sender.title || draft.state.senderSnapshotTitle || '';
+      changed = true;
+    });
+    if (changed) saveDrafts();
+    if (app.state.comms?.senderKey === sender.key) {
+      app.state.comms.senderSnapshotName = sender.name || app.state.comms.senderSnapshotName || '';
+      app.state.comms.senderSnapshotTitle = sender.title || app.state.comms.senderSnapshotTitle || '';
+      saveCurrent();
+    }
+  }
+
+  function removeSender(key) {
+    const sender = app.state.localSenders.find(entry => entry.key === key);
+    if (!sender) return null;
+    snapshotReferences(sender);
+    app.state.localSenders = app.state.localSenders.filter(entry => entry.key !== key);
+    saveLocalSenders();
+    return sender;
+  }
+
+  function mergeByKey(existing, incoming, keyFn) {
+    const map = new Map(existing.map(item => [keyFn(item), item]));
+    incoming.forEach(item => {
+      const key = keyFn(item);
+      if (!key) return;
+      const current = map.get(key);
+      if (!current || Number(item.updatedAt || 0) >= Number(current.updatedAt || 0)) map.set(key, item);
+    });
+    return [...map.values()];
+  }
+
+  function importPayload(raw) {
     if (!raw || raw.format !== 'rhw-webapp-local-cache' || Number(raw.version) !== 1) {
       throw new Error('UNSUPPORTED CACHE FILE');
     }
-    const nextDrafts = Array.isArray(raw.drafts) ? raw.drafts.filter(draft => draft && typeof draft.id === 'string') : [];
-    const nextSenders = Array.isArray(raw.localSenders) ? raw.localSenders.filter(sender => sender && typeof sender.key === 'string' && typeof sender.name === 'string') : [];
-    const nextCurrent = appNormalizeCommsState(raw.current || appDefaultCommsState());
+    const incomingSenders = (Array.isArray(raw.localSenders) ? raw.localSenders : []).map(normalizeSender).filter(Boolean);
+    const incomingDrafts = (Array.isArray(raw.drafts) ? raw.drafts : []).map(normalizeDraft).filter(Boolean);
+    app.state.localSenders = mergeByKey(app.state.localSenders, incomingSenders, sender => sender.key);
+    app.state.drafts = mergeByKey(app.state.drafts, incomingDrafts, draft => draft.id);
+    saveLocalSenders();
+    saveDrafts();
 
-    rhwCommsDrafts = nextDrafts;
-    rhwLocalSenders = nextSenders;
-    safeStorageSet(RHW_APP_KEYS.commsDrafts, rhwCommsDrafts);
-    safeStorageSet(RHW_APP_KEYS.localSenders, rhwLocalSenders);
-
-    const senderValid = nextCurrent.senderKey === '__custom__' || Boolean(appSenderByKey(nextCurrent.senderKey));
-    if (!senderValid) nextCurrent.senderKey = RHW_APP_CONFIG.senders[0].key;
-    appApplyCommsState(nextCurrent, { persist: true });
-    appRenderDrafts();
-    appNotify(`CACHE IMPORTED // ${rhwCommsDrafts.length} DRAFTS // ${rhwLocalSenders.length} LOCAL SENDERS`);
-  } catch (error) {
-    console.error('RHW CACHE IMPORT FAILED', error);
-    appNotify(`CACHE IMPORT FAILED // ${String(error?.message || 'INVALID FILE').toUpperCase()}`, 'danger');
-  } finally {
-    input.value = '';
+    if (raw.current && typeof raw.current === 'object') {
+      const incomingCurrent = snapshotSender(normalizeState(raw.current));
+      const valid = incomingCurrent.senderKey === '__custom__' || Boolean(senderByKey(incomingCurrent.senderKey));
+      if (!valid && !incomingCurrent.senderSnapshotName) incomingCurrent.senderKey = app.config.senders[0].key;
+      app.state.comms = incomingCurrent;
+      saveCurrent();
+    }
+    return { drafts: app.state.drafts.length, senders: app.state.localSenders.length };
   }
-}
 
-appInstallCachePortability();
+  function exportPayload() {
+    if (app.comms?.syncFromForm) app.comms.syncFromForm();
+    saveCurrent();
+    return {
+      format: 'rhw-webapp-local-cache',
+      version: 1,
+      appVersion: app.version,
+      exportedAt: new Date().toISOString(),
+      current: app.state.comms,
+      drafts: app.state.drafts,
+      localSenders: app.state.localSenders
+    };
+  }
+
+  app.storage = {
+    defaultState,
+    normalizeState,
+    normalizeSender,
+    normalizeDraft,
+    senderByKey,
+    resolveSender,
+    snapshotSender,
+    saveCurrent,
+    saveDraft,
+    deleteDraft,
+    upsertSender,
+    removeSender,
+    importPayload,
+    exportPayload,
+    init() {
+      app.state.localSenders = (app.store.get(keys.localSenders, []) || []).map(normalizeSender).filter(Boolean);
+      app.state.drafts = (app.store.get(keys.commsDrafts, []) || []).map(normalizeDraft).filter(Boolean);
+      app.state.comms = snapshotSender(normalizeState(app.store.get(keys.commsCurrent, null)));
+      saveLocalSenders();
+      saveDrafts();
+      saveCurrent();
+    }
+  };
+})();

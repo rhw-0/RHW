@@ -1,41 +1,215 @@
 /* =========================================
-   RHW WEB APP · V4.0 PREVIEW AUDIT POLISH
-   Small pre-release corrections found during the V4 UI/UX audit.
+   RHW WEB APP · V4.0 FINAL PREVIEW POLISH
+   Executive command hierarchy, COMMS authoring tools and responsive refinement.
    ========================================= */
 
-/* DOCUMENT CONTROL already lives inside the padded composer form. Do not
-   double-inset it relative to the remaining fields. */
-.comms-document-control {
-  margin: 0 0 16px;
+html[data-rhw-app="v4"] body[data-workspace="command"] .rhw-workspace-root {
+  background: radial-gradient(circle at 12% 0%, rgba(212,175,55,.035), transparent 28%);
+}
+html[data-rhw-app="v4"] body[data-workspace="comms"] .rhw-workspace-root {
+  background: radial-gradient(circle at 86% 0%, rgba(125,167,234,.045), transparent 30%);
 }
 
-/* Sub-navigation is intentionally scrollable on smaller screens. Give each
-   node a stable snap point and keep the currently activated node visible. */
-.workspace-subnav-tabs {
-  scroll-snap-type: x proximity;
-}
-.workspace-subnav button {
-  scroll-snap-align: center;
-}
-
-.app-active-node {
-  font-size: 8px !important;
-  color: rgba(212,175,55,0.80) !important;
+.app-active-node { font-size: 8px !important; color: rgba(212,175,55,.78) !important; }
+.workspace-subnav button span { font-size: 10.5px; }
+.workspace-subnav button small { font-size: 7.5px; }
+.workspace-subnav button.active {
+  border-color: rgba(212,175,55,.12);
+  box-shadow: inset 0 -2px 0 var(--gold), inset 0 0 28px rgba(212,175,55,.035);
 }
 
-/* A stacked COMMS layout should lead with the thing the user can edit. The V4
-   prototype previously put an empty preview before the composer below 1100px. */
+/* COMMAND / Executive priorities */
+.command-priority-panel {
+  margin: 0 16px 16px;
+  border: 1px solid rgba(212,175,55,.13);
+  background: rgba(5,7,9,.74);
+}
+.command-priority-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 15px;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  background: linear-gradient(90deg, rgba(212,175,55,.055), transparent);
+}
+.command-priority-head small,
+.command-priority-head strong { display: block; }
+.command-priority-head small { color: rgba(212,175,55,.55); font-family: var(--font-tech); font-size: 8px; letter-spacing: .12em; }
+.command-priority-head strong { margin-top: 2px; color: #eee9da; font-family: var(--font-title); font-size: 22px; letter-spacing: .055em; }
+.command-priority-head > span { color: rgba(184,189,195,.7); font-family: var(--font-tech); font-size: 8px; letter-spacing: .1em; }
+.command-priority-list { display: grid; gap: 7px; padding: 11px; }
+.command-priority-item {
+  display: grid;
+  grid-template-columns: 86px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.055);
+  clip-path: none;
+  background: rgba(9,11,14,.76);
+  text-align: left;
+  box-shadow: none;
+}
+.command-priority-item:hover { border-color: rgba(212,175,55,.24); background: rgba(212,175,55,.04); }
+.command-priority-item .priority-state { font-family: var(--font-tech); font-size: 8px; font-weight: 700; letter-spacing: .09em; }
+.command-priority-item.state-critical .priority-state { color: #df8585; }
+.command-priority-item.state-low .priority-state { color: #d7a654; }
+.command-priority-item strong { display: block; color: #e4e6e8; font-family: var(--font-tech); font-size: 10px; letter-spacing: .07em; }
+.command-priority-item small { display: block; margin-top: 4px; color: rgba(151,157,164,.68); font-family: var(--font-tech); font-size: 8px; letter-spacing: .055em; }
+.command-priority-item > b { color: rgba(212,175,55,.72); font-family: var(--font-tech); font-size: 8px; letter-spacing: .1em; }
+.command-priority-empty { min-height: 94px; display: grid; place-content: center; text-align: center; }
+.command-priority-empty strong { color: #78ad8a; font-family: var(--font-tech); font-size: 10px; letter-spacing: .1em; }
+.command-priority-empty span { margin-top: 5px; color: rgba(151,157,164,.58); font-family: var(--font-tech); font-size: 8px; letter-spacing: .07em; }
+
+/* COMMAND / Inventory views */
+.inventory-view-nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  width: min(100%, 720px);
+  margin: 0 auto 14px;
+  border: 1px solid rgba(212,175,55,.14);
+  background: rgba(5,7,9,.82);
+}
+.inventory-view-nav button {
+  min-height: 48px;
+  padding: 8px 14px;
+  border: 0;
+  border-right: 1px solid rgba(255,255,255,.05);
+  clip-path: none;
+  background: transparent;
+  text-align: left;
+  box-shadow: none;
+}
+.inventory-view-nav button:last-child { border-right: 0; }
+.inventory-view-nav span,
+.inventory-view-nav small { display: block; font-family: var(--font-tech); }
+.inventory-view-nav span { color: rgba(220,222,224,.72); font-size: 9px; font-weight: 700; letter-spacing: .1em; }
+.inventory-view-nav small { margin-top: 3px; color: rgba(139,145,152,.54); font-size: 7px; letter-spacing: .08em; }
+.inventory-view-nav button.active { background: rgba(212,175,55,.085); box-shadow: inset 0 -2px 0 var(--gold); }
+.inventory-view-nav button.active span { color: #f0d994; }
+.inventory-view-panel { display: flex; flex-direction: column; gap: var(--layout-gap, 18px); }
+
+/* COMMS authoring controls */
+.comms-custom-sender {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 12px;
+}
+.comms-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px;
+  border: 1px solid rgba(125,167,234,.14);
+  border-bottom: 0;
+  background: rgba(125,167,234,.035);
+}
+.comms-editor-toolbar button {
+  min-height: 29px;
+  padding: 5px 8px;
+  border: 1px solid rgba(125,167,234,.18);
+  clip-path: none;
+  background: rgba(125,167,234,.045);
+  color: rgba(200,216,243,.82);
+  box-shadow: none;
+  font-family: var(--font-tech);
+  font-size: 7.5px;
+  letter-spacing: .08em;
+}
+.comms-editor-toolbar button:hover { color: #e8f0ff; background: rgba(125,167,234,.10); }
+.comms-editor-toolbar + textarea { border-top-color: rgba(125,167,234,.12); }
+#commsSalutationCustom,
+#commsClosingCustom { margin-top: 7px; }
+.forum-preview-salutation { margin-bottom: 16px !important; font-weight: 600; }
+
+.forum-preview-logo-wrap { min-height: 80px; display: grid; place-items: center; }
+.forum-preview-logo-fallback {
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 64px;
+  border: 1px solid rgba(212,175,55,.36);
+  color: var(--gold);
+  font-family: var(--font-title);
+  font-size: 34px;
+  letter-spacing: .08em;
+  background: radial-gradient(circle, rgba(212,175,55,.07), transparent 70%);
+}
+.forum-preview[data-template="procurement"] { background-image: radial-gradient(circle at 50% 0%, rgba(212,175,55,.07), transparent 34%); }
+.forum-preview[data-template="trade"] { background-image: radial-gradient(circle at 50% 0%, rgba(198,167,90,.065), transparent 34%); }
+.forum-preview[data-template="operations"] { background-image: radial-gradient(circle at 50% 0%, rgba(125,167,234,.07), transparent 34%); }
+.forum-preview[data-template="incident"] { background-image: radial-gradient(circle at 50% 0%, rgba(199,94,94,.09), transparent 36%); }
+.forum-preview[data-template="announcement"] { background-image: radial-gradient(circle at 50% 0%, rgba(120,173,138,.065), transparent 34%); }
+
+/* TICKER builder */
+.ticker-builder-preview { display: grid; gap: 7px; padding: 0 18px 18px; }
+.ticker-builder-preview > small { color: rgba(125,167,234,.68); font-family: var(--font-tech); font-size: 8px; letter-spacing: .1em; }
+.ticker-builder-bar {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr);
+  min-height: 48px;
+  border: 1px solid rgba(255,255,255,.065);
+  background: rgba(2,3,4,.92);
+  overflow: hidden;
+}
+.ticker-builder-label { display: flex; align-items: center; padding: 9px 12px; color: #e4d39c; background: rgba(212,175,55,.08); border-right: 1px solid rgba(212,175,55,.16); font-family: var(--font-tech); font-size: 8px; font-weight: 700; letter-spacing: .08em; }
+.ticker-builder-copy { min-width: 0; display: flex; align-items: center; gap: 10px; padding: 9px 13px; font-family: var(--font-tech); font-size: 9px; }
+.ticker-builder-copy b { flex: 0 0 auto; color: var(--ticker-tone, #8b9198); letter-spacing: .08em; }
+.ticker-builder-copy span { min-width: 0; color: #d8dce1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Sender editor */
+.sender-editor { margin: 0 18px 18px; border: 1px solid rgba(125,167,234,.17); background: rgba(7,10,14,.84); }
+.sender-editor-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid rgba(125,167,234,.11); }
+.sender-editor-head small,
+.sender-editor-head strong { display: block; }
+.sender-editor-head small { color: rgba(125,167,234,.66); font-family: var(--font-tech); font-size: 7px; letter-spacing: .1em; }
+.sender-editor-head strong { margin-top: 2px; color: #e7ebf0; font-family: var(--font-title); font-size: 20px; letter-spacing: .05em; }
+.sender-editor-head button { min-height: 29px; padding: 5px 8px; border: 1px solid rgba(255,255,255,.09); clip-path: none; color: rgba(202,209,218,.7); background: rgba(255,255,255,.025); font-family: var(--font-tech); font-size: 7px; }
+.sender-editor > .comms-actions { margin: 0 18px 18px; }
+
+/* Slightly calmer typography: functional microcopy should remain readable. */
+.comms-field > span,
+.comms-custom-sender label > span { font-size: 8.5px; }
+.comms-field small,
+.workspace-heading p,
+.sender-registry-card dd { line-height: 1.45; }
+
 @media (max-width: 1100px) {
-  .composer-panel { order: 0; }
-  .preview-panel { order: 1; }
+  /* Writing first, preview second: the user should not scroll through an empty letter to reach the editor. */
+  .preview-panel { order: 0 !important; }
+  .composer-panel { order: -1; }
 }
 
 @media (max-width: 760px) {
-  .comms-document-control {
-    margin: 0 0 13px;
-  }
-
-  .workspace-subnav-tabs {
-    scroll-padding-inline: 18px;
-  }
+  .command-priority-panel { margin: 0 11px 11px; }
+  .command-priority-item { grid-template-columns: 68px minmax(0,1fr); }
+  .command-priority-item > b { display: none; }
+  .inventory-view-nav { width: calc(100% - 22px); }
+  .inventory-view-nav small { display: none; }
+  .comms-custom-sender { grid-template-columns: 1fr; }
+  .comms-editor-toolbar { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .comms-editor-toolbar::-webkit-scrollbar { display: none; }
+  .comms-editor-toolbar button { flex: 0 0 auto; }
+  .ticker-builder-bar { grid-template-columns: 1fr; }
+  .ticker-builder-label { border-right: 0; border-bottom: 1px solid rgba(212,175,55,.13); }
+  .sender-editor { margin-inline: 13px; }
 }
+
+@media (max-width: 430px) {
+  .workspace-subnav button { min-width: 118px; }
+  .workspace-subnav button span { font-size: 9.5px; }
+  .command-priority-head { align-items: flex-start; flex-direction: column; }
+  .command-priority-item { grid-template-columns: 1fr; gap: 5px; }
+  .command-priority-item .priority-state { font-size: 7px; }
+  .inventory-view-nav { grid-template-columns: 1fr 1fr; }
+  .inventory-view-nav button { padding-inline: 9px; text-align: center; }
+  .ticker-builder-copy { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .ticker-builder-copy span { white-space: normal; }
+}
+
+.v40-smoke-mode *,
+.v40-smoke-mode *::before,
+.v40-smoke-mode *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }

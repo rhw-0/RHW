@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dependency-free structural checks for the static RHW dashboard and web app."""
+"""Dependency-free structural checks for the static RHW dashboard and V4 web app."""
 
 from __future__ import annotations
 
@@ -52,6 +52,7 @@ V4_DYNAMIC_ASSETS = [
     "./js/15-app-v40-navigation.js",
     "./js/16-app-v40-composer.js",
     "./js/17-app-v40-audit.js",
+    "./scripts/smoke_v40.py",
 ]
 
 
@@ -74,6 +75,13 @@ class DashboardParser(HTMLParser):
 
 def fail(errors: list[str], message: str) -> None:
     errors.append(message)
+
+
+def require_tokens(errors: list[str], path: str, tokens: tuple[str, ...], label: str) -> None:
+    text = (ROOT / path).read_text(encoding="utf-8")
+    for token in tokens:
+        if token not in text:
+            fail(errors, f"{label} is incomplete: {token}")
 
 
 def main() -> int:
@@ -103,75 +111,37 @@ def main() -> int:
     if "baseHealthMax:" not in config:
         fail(errors, "js/config.js must define baseHealthMax.")
 
-    layout_js = (ROOT / "js/11-layout-v36.js").read_text(encoding="utf-8")
-    if "arrangeV36CommandFlow" not in layout_js or "initProductionDetailsToggle" not in layout_js:
-        fail(errors, "V3.6 layout controls are incomplete.")
+    require_tokens(errors, "js/11-layout-v36.js", ("arrangeV36CommandFlow", "initProductionDetailsToggle"), "V3.6 layout controls")
 
     bootstrap = (ROOT / "js/00-bootstrap.js").read_text(encoding="utf-8")
-    for required in (
-        "./css/12-app-v40.css",
-        "./css/13-app-v40-navigation.css",
-        "./css/14-app-v40-composer.css",
-        "./css/15-app-v40-audit.css",
-        "./js/12-app-config.js",
-        "./js/13-app-v40.js",
-        "./js/14-app-v40-cache.js",
-        "./js/15-app-v40-navigation.js",
-        "./js/16-app-v40-composer.js",
-        "./js/17-app-v40-audit.js",
-    ):
+    for required in V4_DYNAMIC_ASSETS[:-1]:
         if required not in bootstrap:
             fail(errors, f"V4 bootstrap does not reference required asset: {required}")
 
-    app_config = (ROOT / "js/12-app-config.js").read_text(encoding="utf-8")
-    if "RHW_APP_VERSION = 'V4.0 PREVIEW'" not in app_config or "alistair-thorne" not in app_config:
-        fail(errors, "V4 app configuration is missing the preview version or built-in Alistair sender profile.")
-    for required_config in ("classification:", "accent:", "closing:", "RHW-RESOLUTION/V"):
-        if required_config not in app_config:
-            fail(errors, f"V4 transmission configuration is incomplete: {required_config}")
+    require_tokens(errors, "js/12-app-config.js", (
+        "RHW_APP_VERSION = 'V4.0 PREVIEW'", "alistair-thorne", "salutations:", "closings:", "ADMIRALTY PROCUREMENT FILE"
+    ), "V4 configuration")
+    require_tokens(errors, "js/13-app-v40.js", (
+        "window.RHWV4", "app.installShell", "app.navigate", "app.applyRoute"
+    ), "V4 core")
+    require_tokens(errors, "js/14-app-v40-cache.js", (
+        "app.storage", "saveDraft", "upsertSender", "importPayload", "senderSnapshotName"
+    ), "V4 storage")
+    require_tokens(errors, "js/15-app-v40-navigation.js", (
+        "PRIORITY ACTIONS", "inventory-view-nav", "priorityActions", "activateInventoryView"
+    ), "V4 COMMAND module")
+    require_tokens(errors, "js/16-app-v40-composer.js", (
+        "SALUTATION / OPENING", "comms-editor-toolbar", "ticker-builder-preview", "data-edit-sender", "buildBbcode"
+    ), "V4 COMMS module")
+    require_tokens(errors, "js/17-app-v40-audit.js", (
+        "dataset.v40Ready", "selfTest", "__RHW_V4_SMOKE__", "app.runtime"
+    ), "V4 runtime")
 
-    app_js = (ROOT / "js/13-app-v40.js").read_text(encoding="utf-8")
-    for required_hook in ("appInstallShell", "appBuildForumBbcode", "appSaveLocalSender", "appSaveNamedDraft"):
-        if required_hook not in app_js:
-            fail(errors, f"V4 COMMS controls are incomplete: {required_hook}")
-
-    cache_js = (ROOT / "js/14-app-v40-cache.js").read_text(encoding="utf-8")
-    for required_hook in ("appExportLocalCache", "appImportLocalCacheFile"):
-        if required_hook not in cache_js:
-            fail(errors, f"V4 local-cache portability is incomplete: {required_hook}")
-
-    nav_js = (ROOT / "js/15-app-v40-navigation.js").read_text(encoding="utf-8")
-    for required_hook in (
-        "v40GenerateCipher",
-        "v40InstallCommandNodes",
-        "v40InstallCommsNodes",
-        "v40BodyToBbcode",
-        "v40RenderSenderRegistry",
-    ):
-        if required_hook not in nav_js:
-            fail(errors, f"V4 node/navigation controls are incomplete: {required_hook}")
-
-    composer_js = (ROOT / "js/16-app-v40-composer.js").read_text(encoding="utf-8")
-    for required_hook in (
-        "v40InstallClosingSelector",
-        "v40InstallSignatureAutomation",
-        "v40InstallDocumentControlCard",
-        "v40InstallNewswireClarity",
-        "RHW_V40_CLOSING_PRESETS",
-    ):
-        if required_hook not in composer_js:
-            fail(errors, f"V4 composer polish is incomplete: {required_hook}")
-
-    audit_js = (ROOT / "js/17-app-v40-audit.js").read_text(encoding="utf-8")
-    for required_hook in (
-        "v40AuditRebindSenderSelect",
-        "v40AuditSnapshotSenderReferences",
-        "v40AuditUpdateCommsHeading",
-        "v40AuditUpdateCommandOverview",
-        "v40AuditImportLocalCacheFile",
-    ):
-        if required_hook not in audit_js:
-            fail(errors, f"V4 preview audit hardening is incomplete: {required_hook}")
+    # Consolidated V4 modules must not use the old patch-chain pattern.
+    for path in ("js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js", "js/16-app-v40-composer.js", "js/17-app-v40-audit.js"):
+        text = (ROOT / path).read_text(encoding="utf-8")
+        if "BaseApply" in text or "BaseActivate" in text or "const v40Base" in text:
+            fail(errors, f"V4 module still contains legacy override-chain hooks: {path}")
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     if ".github/workflows/rhw-pages-deploy.yml" not in readme:
@@ -185,7 +155,7 @@ def main() -> int:
     print(
         f"RHW validation passed: {len(parser.css)} static stylesheets, "
         f"{len(parser.js)} static scripts, {len(V4_DYNAMIC_ASSETS)} V4 dynamic assets, "
-        f"{len(parser.ids)} unique ids."
+        f"{len(parser.ids)} unique static ids."
     )
     return 0
 

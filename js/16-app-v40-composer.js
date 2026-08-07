@@ -1,270 +1,272 @@
 /* ==========================================================================
-   RHW WEB APP · V4.0 COMPOSER POLISH
-   Signature automation, sign-off presets, shorter Bretonian cipher IDs,
-   clearer document controls and BBCode presentation v2.
+   RHW WEB APP · V4.0 COMMS
+   Forum composer, smart BBCode, ticker builder, drafts and sender registry.
    ========================================================================== */
+(function initRhwV4Comms() {
+  'use strict';
+  const app = window.RHWV4;
+  if (!app) return;
 
-const RHW_V40_CLOSING_PRESETS = Object.freeze([
-  Object.freeze({ label: 'FORMAL / UNKNOWN RECIPIENT — Yours faithfully,', value: 'Yours faithfully,' }),
-  Object.freeze({ label: 'NAMED RECIPIENT — Yours sincerely,', value: 'Yours sincerely,' }),
-  Object.freeze({ label: 'CROWN / ROYAL OFFICE — In loyal service to the Crown,', value: 'In loyal service to the Crown,' }),
-  Object.freeze({ label: 'MILITARY / ADMIRALTY — Respectfully,', value: 'Respectfully,' }),
-  Object.freeze({ label: 'BUSINESS PARTNER — With highest regards,', value: 'With highest regards,' }),
-  Object.freeze({ label: 'SUPPLIER / CONTRACTOR — Kind regards,', value: 'Kind regards,' }),
-  Object.freeze({ label: 'INTERNAL RHW / BMM — For Resolution Heavy Works,', value: 'For Resolution Heavy Works,' }),
-  Object.freeze({ label: 'NEUTRAL — Regards,', value: 'Regards,' })
-]);
+  const NODES = Object.freeze([
+    ['forum', 'FORUM', 'TRANSMISSION COMPOSER'],
+    ['ticker', 'TICKER', 'DASHBOARD BULLETIN'],
+    ['drafts', 'DRAFTS', 'LOCAL ARCHIVE'],
+    ['senders', 'SENDERS', 'IDENTITY REGISTRY']
+  ]);
 
-const RHW_V40_CLASSIFICATION_COLORS = Object.freeze({
-  'PUBLIC RELEASE': '#78ad8a',
-  'RHW OFFICIAL': '#d4af37',
-  'RHW INTERNAL': '#7da7ea',
-  'COMMERCIAL CONFIDENTIAL': '#c6a75a',
-  'BMM CONFIDENTIAL': '#c6a75a',
-  'CROWN RESTRICTED': '#c98b2c',
-  'ADMIRALTY EYES ONLY': '#c75e5e',
-  'RHW EXECUTIVE': '#d4af37',
-  'PRIORITY // RESTRICTED': '#c75e5e'
-});
-
-function v40ClassificationColor(value) {
-  return RHW_V40_CLASSIFICATION_COLORS[value] || '#d4af37';
-}
-
-/* Shorter RP cipher designations: British/Bretonian-flavoured code names plus
-   a key reference, rather than a full modern cryptographic suite string. */
-v40GenerateCipher = function(templateKey = rhwCommsState?.templateKey || 'formal') {
-  const authorities = RHW_V40_CIPHER.authorities[templateKey] || RHW_V40_CIPHER.authorities.formal;
-  const authority = v40Pick(authorities);
-  const family = v40Pick(RHW_V40_CIPHER.families);
-  const keyset = v40Pick(RHW_V40_CIPHER.keysets);
-  const mark = v40Roman(2 + Math.floor(Math.random() * 9));
-  const serial = String(1 + Math.floor(Math.random() * 98)).padStart(2, '0');
-  return `${authority}-${family}/${mark} · KEY ${keyset}-${serial}`;
-};
-
-function v40TemplateClosing(templateKey) {
-  return appTemplate(templateKey)?.closing || 'Yours faithfully,';
-}
-
-function v40KnownClosing(value) {
-  return RHW_V40_CLOSING_PRESETS.some(entry => entry.value === value);
-}
-
-function v40ClosingValue() {
-  const select = document.getElementById('commsClosing');
-  const custom = document.getElementById('commsClosingCustom');
-  if (!select) return '';
-  return select.value === '__custom__' ? (custom?.value || '').trim() : select.value;
-}
-
-function v40SetClosingControl(value) {
-  const select = document.getElementById('commsClosing');
-  const custom = document.getElementById('commsClosingCustom');
-  if (!select) return;
-  const next = String(value || '').trim() || 'Yours faithfully,';
-  if (v40KnownClosing(next)) {
-    select.value = next;
-    if (custom) {
-      custom.hidden = true;
-      custom.value = '';
-    }
-  } else {
-    select.value = '__custom__';
-    if (custom) {
-      custom.hidden = false;
-      custom.value = next;
-    }
-  }
-}
-
-/* Sender profile owns the signature name + role. Only temporary/custom senders
-   use the editable role field. */
-appResolvedSender = function(state = rhwCommsState) {
-  if (!state) return { name: '', title: '' };
-  if (state.senderKey === '__custom__') {
-    return {
-      name: state.customSenderName?.trim() || 'UNASSIGNED SENDER',
-      title: state.signatureTitle?.trim() || ''
-    };
-  }
-  const sender = appSenderByKey(state.senderKey);
-  return {
-    name: sender?.name || 'UNASSIGNED SENDER',
-    title: sender?.title || ''
-  };
-};
-
-const v40ComposerBaseReadCommsForm = appReadCommsForm;
-appReadCommsForm = function() {
-  const state = v40ComposerBaseReadCommsForm();
-  state.closing = v40ClosingValue() || state.closing || 'Yours faithfully,';
-  if (state.senderKey !== '__custom__') {
-    const sender = appSenderByKey(state.senderKey);
-    if (sender) state.signatureTitle = sender.title || '';
-  }
-  return state;
-};
-
-const v40ComposerBaseToggleSenderControls = appToggleSenderControls;
-appToggleSenderControls = function() {
-  v40ComposerBaseToggleSenderControls();
-  v40SyncSignatureUi();
-};
-
-const v40ComposerBaseApplyCommsState = appApplyCommsState;
-appApplyCommsState = function(state, options = {}) {
-  v40ComposerBaseApplyCommsState(state, options);
-  const sender = rhwCommsState?.senderKey === '__custom__' ? null : appSenderByKey(rhwCommsState?.senderKey);
-  if (sender) {
-    rhwCommsState.signatureTitle = sender.title || '';
-    const title = document.getElementById('commsSignatureTitle');
-    if (title) title.value = sender.title || '';
-  }
-  v40SetClosingControl(rhwCommsState?.closing || v40TemplateClosing(rhwCommsState?.templateKey));
-  v40SyncSignatureUi();
-  v40UpdateDocumentControlSummary();
-  appRenderForumPreview();
-  appRenderBbcode();
-  if (options.persist) appSaveCurrentState();
-};
-
-function v40InstallClosingSelector() {
-  const old = document.getElementById('commsClosing');
-  if (!old || old.tagName === 'SELECT') return;
-  const field = old.closest('.comms-field');
-  const current = old.value || rhwCommsState?.closing || 'Yours faithfully,';
-  const select = document.createElement('select');
-  select.id = 'commsClosing';
-  select.innerHTML = RHW_V40_CLOSING_PRESETS
-    .map(entry => `<option value="${appEscape(entry.value)}">${appEscape(entry.label)}</option>`)
-    .join('') + '<option value="__custom__">CUSTOM CLOSING…</option>';
-  old.replaceWith(select);
-
-  const custom = document.createElement('input');
-  custom.id = 'commsClosingCustom';
-  custom.type = 'text';
-  custom.maxLength = 100;
-  custom.placeholder = 'Custom sign-off';
-  custom.hidden = true;
-  select.insertAdjacentElement('afterend', custom);
-
-  const label = field?.querySelector(':scope > span');
-  if (label) label.textContent = 'SIGN-OFF / CLOSING';
-  const hint = document.createElement('small');
-  hint.textContent = 'PRESETS BY RECIPIENT CONTEXT // STILL EDITABLE VIA CUSTOM';
-  field?.appendChild(hint);
-
-  select.addEventListener('change', () => {
-    custom.hidden = select.value !== '__custom__';
-    if (!custom.hidden) custom.focus();
-    appSyncFromForm();
+  const HEADING = Object.freeze({
+    forum: ['FORUM TRANSMISSION COMPOSER', 'WRITE NORMAL TEXT // RHW BUILDS THE FORUM BB CODE'],
+    ticker: ['BMM INDUSTRIAL NEWSWIRE BUILDER', 'BUILD ONE READY-TO-PASTE DASHBOARD TICKER ENTRY'],
+    drafts: ['LOCAL DRAFT ARCHIVE', 'SAVED TRANSMISSIONS // CACHE EXPORT + IMPORT'],
+    senders: ['SENDER IDENTITY REGISTRY', 'BUILT-IN + BROWSER-LOCAL RHW CHARACTERS']
   });
-  custom.addEventListener('input', appSyncFromForm);
-  v40SetClosingControl(current);
-}
 
-function v40InstallSignatureAutomation() {
-  const senderField = document.getElementById('commsSender')?.closest('.comms-field');
-  const title = document.getElementById('commsSignatureTitle');
-  const titleField = title?.closest('.comms-field');
-  if (!senderField || !title || !titleField) return;
+  const TICKER_TONES = Object.freeze({
+    good: '#78ad8a', warn: '#c98b2c', danger: '#c75e5e', remote: '#7da7ea', lore: '#c6a75a', muted: '#8b9198'
+  });
 
-  const senderHint = senderField.querySelector('small');
-  if (senderHint) senderHint.textContent = 'SENDER PROFILE ALSO CONTROLS THE SIGNATURE';
+  let autosaveTimer = null;
 
-  const titleLabel = titleField.querySelector(':scope > span');
-  if (titleLabel) titleLabel.textContent = 'SENDER ROLE / TITLE';
-
-  if (!document.getElementById('v40SignatureAuto')) {
-    const summary = document.createElement('div');
-    summary.id = 'v40SignatureAuto';
-    summary.className = 'comms-signature-auto';
-    senderField.insertAdjacentElement('afterend', summary);
-  }
-  v40SyncSignatureUi();
-}
-
-function v40SyncSignatureUi() {
-  const title = document.getElementById('commsSignatureTitle');
-  const titleField = title?.closest('.comms-field');
-  const summary = document.getElementById('v40SignatureAuto');
-  const key = document.getElementById('commsSender')?.value || rhwCommsState?.senderKey;
-  const custom = key === '__custom__';
-  if (titleField) titleField.hidden = !custom;
-
-  if (custom) {
-    if (summary) summary.innerHTML = '<small>AUTO SIGNATURE</small><strong>CUSTOM SENDER</strong><span>NAME + ROLE ARE TAKEN FROM THE CUSTOM PROFILE FIELDS</span>';
-    return;
+  function senderOptions(selected = app.state.comms?.senderKey) {
+    const builtIn = app.config.senders.map(sender => `<option value="${app.util.escape(sender.key)}">${app.util.escape(sender.name)} · BUILT-IN</option>`).join('');
+    const local = app.state.localSenders.map(sender => `<option value="${app.util.escape(sender.key)}">${app.util.escape(sender.name)} · LOCAL</option>`).join('');
+    return { html: `${builtIn}${local}<option value="__custom__">CUSTOM / TEMPORARY SENDER…</option>`, selected };
   }
 
-  const sender = appSenderByKey(key);
-  if (title && sender) title.value = sender.title || '';
-  if (summary) {
-    summary.innerHTML = `<small>AUTO SIGNATURE</small><strong>${appEscape(sender?.name || 'UNASSIGNED SENDER')}</strong><span>${appEscape(sender?.title || 'NO ROLE REGISTERED')}</span>`;
+  function selectOptions(entries, includeCustom = true) {
+    const options = entries.map(entry => `<option value="${app.util.escape(entry.value)}">${app.util.escape(entry.label)}</option>`).join('');
+    return options + (includeCustom ? '<option value="__custom__">CUSTOM…</option>' : '');
   }
-}
 
-function v40InstallDocumentControlCard() {
-  const template = document.getElementById('commsTemplate');
-  const classification = document.getElementById('commsClassification');
-  const grid = document.querySelector('#commsForm .comms-field-grid');
-  if (!template || !classification || !grid || document.getElementById('v40DocumentControl')) return;
+  function classificationOptions() {
+    return app.config.classifications.map(value => `<option value="${app.util.escape(value)}">${app.util.escape(value)}</option>`).join('');
+  }
 
-  const templateField = template.closest('.comms-field');
-  const classificationField = classification.closest('.comms-field');
-  const card = document.createElement('section');
-  card.id = 'v40DocumentControl';
-  card.className = 'comms-document-control';
-  card.innerHTML = '<div class="comms-document-control-head"><div><small>DOCUMENT CONTROL</small><strong>TRANSMISSION PROFILE</strong></div><span id="v40DocumentControlSummary"></span></div><div class="comms-document-control-grid"></div>';
-  grid.insertAdjacentElement('beforebegin', card);
-  const cardGrid = card.querySelector('.comms-document-control-grid');
-  if (templateField) cardGrid.appendChild(templateField);
-  if (classificationField) cardGrid.appendChild(classificationField);
+  function templateOptions() {
+    return app.config.templates.map(template => `<option value="${app.util.escape(template.key)}">${app.util.escape(template.label)}</option>`).join('');
+  }
 
-  const templateLabel = templateField?.querySelector(':scope > span');
-  const classificationLabel = classificationField?.querySelector(':scope > span');
-  if (templateLabel) templateLabel.textContent = 'DOCUMENT TYPE';
-  if (classificationLabel) classificationLabel.textContent = 'SECURITY CLASSIFICATION';
-  const classificationHint = classificationField?.querySelector('small');
-  if (classificationHint) classificationHint.textContent = 'DISPLAYED AS ITS OWN SECURITY BANNER';
-  v40UpdateDocumentControlSummary();
-}
+  function subnavMarkup() {
+    return `<nav id="commsNodeNav" class="workspace-subnav comms-subnav" aria-label="Communications tools"><div class="workspace-subnav-label">COMMS NODES</div><div class="workspace-subnav-tabs">${NODES.map(([key, label, sub]) => `<button type="button" data-comms-node="${key}"><span>${label}</span><small>${sub}</small></button>`).join('')}</div></nav>`;
+  }
 
-function v40UpdateDocumentControlSummary() {
-  const target = document.getElementById('v40DocumentControlSummary');
-  if (!target) return;
-  const template = appTemplate(document.getElementById('commsTemplate')?.value || rhwCommsState?.templateKey);
-  const classification = document.getElementById('commsClassification')?.value || rhwCommsState?.classification || v40DefaultClassification(template?.key);
-  target.textContent = `${template?.label || 'TRANSMISSION'} // ${classification}`;
-  target.style.setProperty('--classification-color', v40ClassificationColor(classification));
-}
+  function forumMarkup() {
+    return `<section class="comms-node-panel" data-comms-panel="forum">
+      <div class="comms-grid">
+        <section class="comms-panel composer-panel" id="commsComposerPanel">
+          <div class="comms-panel-head"><div><span>01</span><strong>TRANSMISSION PARAMETERS</strong></div><small>AUTOSAVE ACTIVE</small></div>
+          <form id="commsForm" autocomplete="off">
+            <section class="comms-document-control">
+              <div class="comms-document-control-head"><div><small>DOCUMENT CONTROL</small><strong>TRANSMISSION PROFILE</strong></div><span id="v40DocumentControlSummary"></span></div>
+              <div class="comms-document-control-grid">
+                <label class="comms-field"><span>DOCUMENT TYPE</span><select id="commsTemplate">${templateOptions()}</select><small id="templateDescription"></small></label>
+                <label class="comms-field"><span>SECURITY CLASSIFICATION</span><select id="commsClassification">${classificationOptions()}</select><small>DISPLAYED AS ITS OWN SECURITY BANNER</small></label>
+              </div>
+            </section>
 
-/* BBCode V2: template and classification are separate; subject gets a proper
-   document-title block; signature always follows the sender profile. */
-appBuildForumBbcode = function(state = rhwCommsState) {
-  const f = RHW_APP_CONFIG.forum;
-  const sender = appResolvedSender(state);
-  const template = appTemplate(state.templateKey);
-  const accent = v40TemplateAccent(state.templateKey);
-  const classification = state.classification?.trim() || v40DefaultClassification(state.templateKey);
-  const classificationColor = v40ClassificationColor(classification);
-  const recipient = state.recipient.trim() || 'UNSPECIFIED RECIPIENT';
-  const location = state.location.trim() || 'Resolution Heavy Works, New London';
-  const encryption = state.encryption.trim() || template.encryption || 'RHW-RESOLUTION/V · KEY NEW-LONDON-01';
-  const subject = state.subject.trim() || 'UNTITLED TRANSMISSION';
-  const body = v40BodyToBbcode(state.message.trim(), accent);
-  const closing = state.closing.trim() || v40TemplateClosing(state.templateKey);
-  const systemDate = state.systemDate.trim() || 'UNSET';
-  const footerMotto = state.footerMotto.trim() || f.footerMotto;
+            <div class="comms-field-grid">
+              <label class="comms-field"><span>SENDER PROFILE</span><select id="commsSender"></select><small>SENDER PROFILE CONTROLS THE SIGNATURE</small></label>
+              <div class="comms-signature-auto" id="v40SignatureAuto"></div>
+              <div class="comms-custom-sender" id="customSenderWrap" hidden>
+                <label class="comms-field"><span>CUSTOM SENDER NAME</span><input id="customSenderName" type="text" maxlength="80" placeholder="Character name" /></label>
+                <label class="comms-field"><span>SENDER ROLE / TITLE</span><input id="commsSignatureTitle" type="text" maxlength="120" placeholder="Role / organisation" /></label>
+              </div>
+              <label class="comms-field comms-wide"><span>RECIPIENT ID</span><input id="commsRecipient" type="text" maxlength="180" placeholder="Recipient / office / organisation" /></label>
+              <label class="comms-field"><span>LOCATION</span><input id="commsLocation" type="text" maxlength="160" /></label>
+              <label class="comms-field"><span>ENCRYPTION</span><div class="comms-inline-control"><input id="commsEncryption" type="text" maxlength="120" /><button type="button" id="randomizeCipherBtn" class="comms-mini-action">↻ ROLL CIPHER</button></div><small>RP CIPHER DESIGNATION // DOES NOT ENCRYPT THE POST</small></label>
+              <label class="comms-field comms-wide"><span>SALUTATION / OPENING</span><select id="commsSalutation">${selectOptions(app.config.salutations)}</select><input id="commsSalutationCustom" type="text" maxlength="160" placeholder="Custom opening" hidden /><small>OPTIONAL OPENING BASED ON RECIPIENT CONTEXT</small></label>
+              <label class="comms-field comms-wide"><span>SUBJECT</span><input id="commsSubject" type="text" maxlength="180" /></label>
+              <label class="comms-field comms-wide message-field"><span>MESSAGE</span>
+                <div class="comms-editor-toolbar" role="toolbar" aria-label="Message formatting">
+                  <button type="button" data-format="heading">HEADING</button><button type="button" data-format="bold">BOLD</button><button type="button" data-format="status">STATUS</button><button type="button" data-format="warning">WARNING</button><button type="button" data-format="list">LIST</button>
+                </div>
+                <textarea id="commsMessage" rows="14" placeholder="Write the actual forum post here — no BB code required."></textarea><small>SMART MARKUP ALSO WORKS: ## HEADING · **BOLD** · !WARNING · !STATUS · - LIST ITEM</small>
+              </label>
+              <label class="comms-field"><span>SIGN-OFF / CLOSING</span><select id="commsClosing">${selectOptions(app.config.closings)}</select><input id="commsClosingCustom" type="text" maxlength="100" placeholder="Custom sign-off" hidden /><small>PRESETS BY RECIPIENT CONTEXT</small></label>
+              <label class="comms-field"><span>RP SYSTEM DATE</span><input id="commsSystemDate" type="text" maxlength="40" placeholder="05/08/836" /></label>
+              <label class="comms-field comms-wide"><span>DRAFT NAME</span><input id="commsDraftName" type="text" maxlength="100" placeholder="e.g. BAF Dunkirk Offer" /></label>
+            </div>
+            <details class="comms-advanced"><summary>ADVANCED TRANSMISSION SETTINGS</summary><label class="comms-field"><span>FOOTER / SECURITY STAMP</span><input id="commsFooterMotto" type="text" maxlength="180" /></label></details>
+            <div class="comms-actions">
+              <button class="comms-primary" type="button" id="copyBbcodeBtn"><span>COPY BB CODE</span></button>
+              <button type="button" id="saveDraftBtn"><span>SAVE NAMED DRAFT</span></button>
+              <button type="button" id="saveSenderBtn" hidden><span>SAVE SENDER PROFILE</span></button>
+              <button type="button" id="newTransmissionBtn"><span>NEW TRANSMISSION</span></button>
+            </div>
+          </form>
+        </section>
 
-  return `[align=center]\n` +
+        <section class="comms-panel preview-panel">
+          <div class="comms-panel-head"><div><span>02</span><strong>LIVE FORUM PREVIEW</strong></div><small>APPROXIMATE RENDER</small></div>
+          <div class="forum-preview" id="forumLivePreview"></div>
+        </section>
+      </div>
+
+      <section class="comms-panel bbcode-panel">
+        <div class="comms-panel-head"><div><span>03</span><strong>GENERATED BB CODE</strong></div><small>FORUM READY</small></div>
+        <textarea id="forumBbcodeOutput" readonly spellcheck="false" aria-label="Generated forum BB code"></textarea>
+        <div class="bbcode-hint">THE PREVIEW REPRODUCES RHW STYLING, BUT THE FORUM REMAINS THE FINAL RENDERER FOR ITS CUSTOM BB CODE.</div>
+      </section>
+    </section>`;
+  }
+
+  function tickerMarkup() {
+    return `<section class="comms-node-panel" data-comms-panel="ticker" hidden>
+      <section class="comms-panel v40-tool-panel">
+        <div class="comms-panel-head"><div><span>NW</span><strong>BMM INDUSTRIAL NEWSWIRE BUILDER</strong></div><small>MOVING DASHBOARD TICKER</small></div>
+        <div class="v40-newswire-explainer"><strong>WHAT IS THIS?</strong><span>BUILDS ONE READY-TO-PASTE ENTRY FOR THE MOVING BMM INDUSTRIAL NEWSWIRE ABOVE THE RHW APP. IT DOES NOT CREATE A FORUM POST AND IT DOES NOT PUBLISH AUTOMATICALLY.</span></div>
+        <div class="v40-tool-grid">
+          <label class="comms-field"><span>CATEGORY</span><select id="v40TickerCategory"><option value="market">MARKET</option><option value="regional">REGIONAL</option><option value="security">SECURITY</option><option value="operations">OPERATIONS</option><option value="corporate">CORPORATE</option></select></label>
+          <label class="comms-field"><span>TONE</span><select id="v40TickerTone"><option value="good">GOOD</option><option value="warn">WARN</option><option value="danger">DANGER</option><option value="remote">REMOTE</option><option value="lore">LORE</option><option value="muted">MUTED</option></select></label>
+          <label class="comms-field"><span>TAG</span><input id="v40TickerTag" type="text" maxlength="50" value="RHW OPERATIONS" /></label>
+          <label class="comms-field comms-wide"><span>MESSAGE</span><textarea id="v40TickerMessage" rows="5" maxlength="500" placeholder="Transmission headline..."></textarea></label>
+        </div>
+        <div class="ticker-builder-preview"><small>LIVE TICKER PREVIEW</small><div class="ticker-builder-bar"><span class="ticker-builder-label">BMM INDUSTRIAL NEWSWIRE</span><span class="ticker-builder-copy"><b id="v40TickerPreviewTag">RHW OPERATIONS</b><span id="v40TickerPreviewText">AWAITING BULLETIN</span></span></div></div>
+        <div class="v40-generated-block"><small>TICKER SOURCE BLOCK // RHW_NEWSWIRE.MD</small><textarea id="v40TickerOutput" readonly spellcheck="false"></textarea></div>
+        <div class="comms-actions"><button class="comms-primary" type="button" id="v40CopyTickerBtn"><span>COPY TICKER BLOCK</span></button></div>
+      </section>
+    </section>`;
+  }
+
+  function draftsMarkup() {
+    return `<section class="comms-node-panel" data-comms-panel="drafts" hidden>
+      <section class="comms-panel drafts-panel">
+        <div class="comms-panel-head"><div><span>DR</span><strong>LOCAL DRAFT ARCHIVE</strong></div><small>THIS BROWSER ONLY</small></div>
+        <div class="comms-actions comms-cache-tools"><button type="button" id="exportCommsCacheBtn"><span>EXPORT LOCAL CACHE</span></button><button type="button" id="importCommsCacheBtn"><span>IMPORT LOCAL CACHE</span></button><input type="file" id="importCommsCacheInput" accept="application/json,.json" hidden /></div>
+        <div class="bbcode-hint">IMPORT MERGES WITH EXISTING DRAFTS + LOCAL SENDERS; IT DOES NOT SILENTLY WIPE THE CURRENT CACHE.</div>
+        <div id="commsDraftList" class="comms-draft-list"></div>
+      </section>
+    </section>`;
+  }
+
+  function sendersMarkup() {
+    return `<section class="comms-node-panel" data-comms-panel="senders" hidden>
+      <section class="comms-panel v40-tool-panel">
+        <div class="comms-panel-head"><div><span>ID</span><strong>SENDER IDENTITY REGISTRY</strong></div><small>BUILT-IN + LOCAL PROFILES</small></div>
+        <div class="sender-registry-intro">SENDER PROFILES OWN NAME, ROLE, LOCATION AND DEFAULT CIPHER IDENTITY. THE FORUM COMPOSER USES THEM FOR SIGNATURES.</div>
+        <div id="v40SenderRegistry" class="sender-registry"></div>
+        <form id="v40SenderEditor" class="sender-editor" hidden>
+          <div class="sender-editor-head"><div><small>LOCAL IDENTITY EDITOR</small><strong id="v40SenderEditorTitle">NEW SENDER PROFILE</strong></div><button type="button" id="v40SenderEditorCancel">CANCEL</button></div>
+          <div class="v40-tool-grid">
+            <label class="comms-field"><span>NAME</span><input id="v40SenderEditName" type="text" maxlength="80" /></label>
+            <label class="comms-field"><span>ROLE / TITLE</span><input id="v40SenderEditTitle" type="text" maxlength="120" /></label>
+            <label class="comms-field"><span>ORGANISATION</span><input id="v40SenderEditOrganisation" type="text" maxlength="120" /></label>
+            <label class="comms-field"><span>DEFAULT LOCATION</span><input id="v40SenderEditLocation" type="text" maxlength="160" /></label>
+            <label class="comms-field comms-wide"><span>DEFAULT CIPHER</span><input id="v40SenderEditCipher" type="text" maxlength="120" /></label>
+          </div>
+          <div class="comms-actions"><button class="comms-primary" type="submit"><span>SAVE LOCAL SENDER</span></button></div>
+        </form>
+        <div class="comms-actions"><button class="comms-primary" type="button" id="v40CreateSenderBtn"><span>CREATE LOCAL SENDER</span></button></div>
+      </section>
+    </section>`;
+  }
+
+  function workspaceMarkup() {
+    return `<div class="workspace-frame comms-frame">
+      <header class="workspace-heading"><div><div class="workspace-kicker"><span>COMMS</span> RHW COMMUNICATION NETWORK</div><h2 id="commsWorkspaceTitle">FORUM TRANSMISSION COMPOSER</h2><p id="commsWorkspaceSubtitle">WRITE NORMAL TEXT // RHW BUILDS THE FORUM BB CODE</p></div><div class="workspace-status" id="commsStatus" data-tone="muted">LOCAL COMMAND CACHE READY</div></header>
+      ${subnavMarkup()}
+      <div id="commsNodeHost" class="comms-node-host">${forumMarkup()}${tickerMarkup()}${draftsMarkup()}${sendersMarkup()}</div>
+    </div>`;
+  }
+
+  function resolvePresetControl(selectId, customId) {
+    const select = document.getElementById(selectId);
+    const custom = document.getElementById(customId);
+    if (!select) return '';
+    return select.value === '__custom__' ? String(custom?.value || '').trim() : select.value;
+  }
+
+  function setPresetControl(selectId, customId, value, entries) {
+    const select = document.getElementById(selectId);
+    const custom = document.getElementById(customId);
+    if (!select) return;
+    const next = String(value ?? '').trim();
+    const known = entries.some(entry => entry.value === next);
+    if (known) {
+      select.value = next;
+      if (custom) { custom.hidden = true; custom.value = ''; }
+    } else {
+      select.value = '__custom__';
+      if (custom) { custom.hidden = false; custom.value = next; }
+    }
+  }
+
+  function resolvedSalutation(state = app.state.comms) {
+    const raw = String(state?.salutation || '').trim();
+    if (!raw || raw === '__none__') return '';
+    if (raw === '__recipient__') {
+      const recipient = String(state?.recipient || '').trim();
+      return recipient ? `To ${recipient},` : 'To the appropriate recipient,';
+    }
+    return raw;
+  }
+
+  function inlineBbcode(value) {
+    return String(value || '').replace(/\*\*(.+?)\*\*/g, '[b]$1[/b]');
+  }
+
+  function bodyToBbcode(value, accent) {
+    return String(value || '').replace(/\r/g, '').split('\n').map(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return '';
+      if (trimmed.startsWith('## ')) return `[font=Agency FB][size=large][b][color=${accent}]${inlineBbcode(trimmed.slice(3))}[/color][/b][/size][/font]`;
+      if (/^!warning\s+/i.test(trimmed)) return `[color=#c98b2c][b]WARNING //[/b] ${inlineBbcode(trimmed.replace(/^!warning\s+/i, ''))}[/color]`;
+      if (/^!status\s+/i.test(trimmed)) return `[color=#78ad8a][b]STATUS //[/b] ${inlineBbcode(trimmed.replace(/^!status\s+/i, ''))}[/color]`;
+      if (/^-\s+/.test(trimmed)) return `[b]•[/b] ${inlineBbcode(trimmed.replace(/^-\s+/, ''))}`;
+      return inlineBbcode(line);
+    }).join('\n');
+  }
+
+  function inlinePreview(value) {
+    return app.util.escape(value).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  function bodyToPreview(value) {
+    const blocks = [];
+    let paragraph = [];
+    const flush = () => {
+      if (!paragraph.length) return;
+      blocks.push(`<p>${paragraph.map(inlinePreview).join('<br>')}</p>`);
+      paragraph = [];
+    };
+    String(value || '').replace(/\r/g, '').split('\n').forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) { flush(); return; }
+      if (trimmed.startsWith('## ')) { flush(); blocks.push(`<h3>${inlinePreview(trimmed.slice(3))}</h3>`); return; }
+      if (/^!warning\s+/i.test(trimmed)) { flush(); blocks.push(`<div class="forum-preview-callout warning"><strong>WARNING //</strong> ${inlinePreview(trimmed.replace(/^!warning\s+/i, ''))}</div>`); return; }
+      if (/^!status\s+/i.test(trimmed)) { flush(); blocks.push(`<div class="forum-preview-callout status"><strong>STATUS //</strong> ${inlinePreview(trimmed.replace(/^!status\s+/i, ''))}</div>`); return; }
+      if (/^-\s+/.test(trimmed)) { flush(); blocks.push(`<div class="forum-preview-bullet"><b>•</b><span>${inlinePreview(trimmed.replace(/^-\s+/, ''))}</span></div>`); return; }
+      paragraph.push(line);
+    });
+    flush();
+    return blocks.join('');
+  }
+
+  function buildBbcode(state = app.state.comms) {
+    const f = app.config.forum;
+    const sender = app.storage.resolveSender(state);
+    const template = app.template(state.templateKey);
+    const accent = template.accent || f.brandColor;
+    const classification = state.classification || template.classification;
+    const classificationColor = app.classificationColor(classification);
+    const recipient = String(state.recipient || '').trim() || 'UNSPECIFIED RECIPIENT';
+    const location = String(state.location || '').trim() || 'Resolution Heavy Works, New London';
+    const encryption = String(state.encryption || '').trim() || template.encryption;
+    const subject = String(state.subject || '').trim() || 'UNTITLED TRANSMISSION';
+    const salutation = resolvedSalutation(state);
+    const body = bodyToBbcode(state.message, accent);
+    const bodyWithOpening = [salutation, body].filter(Boolean).join('\n\n');
+    const closing = String(state.closing || '').trim() || template.closing;
+    const systemDate = String(state.systemDate || '').trim() || 'UNSET';
+    const footerMotto = String(state.footerMotto || '').trim() || f.footerMotto;
+
+    return `[align=center]\n` +
 `[img]${f.logoUrl}[/img]\n` +
 `[size=xx-large][font=Agency FB][b][color=${f.brandColor}]${f.organisation}[/color][/b][/font][/size]\n` +
 `[size=small][font=Consolas][color=${f.mutedColor}]${f.subline}[/color][/font][/size]\n` +
 `[/align]\n\n` +
 `[hrc]${f.brandColor}[/hrc]\n` +
-`[align=center][font=Consolas][size=x-small][color=${f.mutedColor}]RHW SECURE TRANSMISSION // ${template.label}[/color][/size][/font][br]\n` +
+`[align=center][font=Consolas][size=x-small][color=${f.mutedColor}]${template.documentLabel} // ${template.label}[/color][/size][/font][br]\n` +
 `[font=Consolas][size=small][b][color=${classificationColor}]CLASSIFICATION // ${classification}[/color][/b][/size][/font][/align]\n` +
 `[hrc]${f.darkLineColor}[/hrc]\n\n` +
 `[align=center]\n[table=${f.brandColor}]\n` +
@@ -277,124 +279,491 @@ appBuildForumBbcode = function(state = rhwCommsState) {
 `[align=center][font=Consolas][size=x-small][color=${f.mutedColor}]SUBJECT[/color][/size][/font][br]\n` +
 `[font=Agency FB][size=x-large][b][color=${accent}]${subject}[/color][/b][/size][/font][/align]\n` +
 `[hrc]${accent}[/hrc]\n[br]\n` +
-`[pi amount=12][font=Tahoma][color=${f.textColor}]\n\n${body}\n\n[/color][/font][/pi]\n` +
+`[pi amount=12][font=Tahoma][color=${f.textColor}]\n\n${bodyWithOpening}\n\n[/color][/font][/pi]\n` +
 `[br]\n[align=right]\n` +
 `[font=Agency FB][size=large][i]${closing}[/i][/size][/font]\n` +
 `[size=large][b][font=Agency FB][color=${f.brandColor}]${sender.name}[/color][/font][/b][/size]\n` +
-`[font=Consolas][size=small][color=${f.mutedColor}]${sender.title}[/color][/size][/font]\n` +
+`[font=Consolas][size=small][color=${f.mutedColor}]${sender.title || ''}[/color][/size][/font]\n` +
 `[/align]\n\n[hrc]${f.darkLineColor}[/hrc]\n` +
 `[align=center][font=Consolas][size=x-small][color=${f.footerColor}]\n${footerMotto}\nTRANSMISSION CLASS // ${classification}\n[RHW] SYSTEM TIME: ${systemDate}\n[/color][/size][/font][/align]`;
-};
-
-appRenderForumPreview = function(state = rhwCommsState) {
-  const target = document.getElementById('forumLivePreview');
-  if (!target || !state) return;
-  const f = RHW_APP_CONFIG.forum;
-  const sender = appResolvedSender(state);
-  const template = appTemplate(state.templateKey);
-  const accent = v40TemplateAccent(state.templateKey);
-  const classification = state.classification || v40DefaultClassification(state.templateKey);
-  const classificationColor = v40ClassificationColor(classification);
-  const rows = [
-    ['SENDER ID', sender.name || '—'],
-    ['RECIPIENT ID', state.recipient || '—'],
-    ['LOCATION', state.location || '—'],
-    ['ENCRYPTION', state.encryption || '—']
-  ];
-  target.style.setProperty('--comms-accent', accent);
-  target.style.setProperty('--classification-color', classificationColor);
-  target.innerHTML = `
-    <div class="forum-preview-identity">
-      <img src="${appEscape(f.logoUrl)}" alt="" loading="lazy" />
-      <div class="forum-preview-title">${appEscape(f.organisation)}</div>
-      <div class="forum-preview-subline">${appEscape(f.subline)}</div>
-      <div class="forum-preview-document-type">RHW SECURE TRANSMISSION // ${appEscape(template.label)}</div>
-      <div class="forum-preview-classification">CLASSIFICATION // ${appEscape(classification)}</div>
-    </div>
-    <div class="forum-preview-rule"></div>
-    <div class="forum-preview-meta">
-      ${rows.map(([label, value], index) => `<div class="forum-preview-meta-row"><strong>${label}:</strong><span class="${index === 3 ? 'encryption' : ''}">${appEscape(value)}</span></div>`).join('')}
-    </div>
-    <div class="forum-preview-subject"><small>SUBJECT</small><strong>${appEscape(state.subject || 'UNTITLED TRANSMISSION')}</strong></div>
-    <div class="forum-preview-rule"></div>
-    <div class="forum-preview-body">${state.message.trim() ? v40BodyToPreview(state.message.trim()) : '<span class="preview-placeholder">AWAITING TRANSMISSION BODY</span>'}</div>
-    <div class="forum-preview-signature">
-      <em>${appEscape(state.closing || v40TemplateClosing(state.templateKey))}</em>
-      <strong>${appEscape(sender.name)}</strong>
-      <small>${appEscape(sender.title)}</small>
-    </div>
-    <div class="forum-preview-footer">
-      <span>${appEscape(state.footerMotto || f.footerMotto)}</span>
-      <span>TRANSMISSION CLASS // ${appEscape(classification)}</span>
-      <span>[RHW] SYSTEM TIME: ${appEscape(state.systemDate || 'UNSET')}</span>
-    </div>`;
-};
-
-function v40InstallNewswireClarity() {
-  const tab = document.querySelector('[data-comms-node="newswire"]');
-  if (tab) {
-    const label = tab.querySelector('span');
-    const sub = tab.querySelector('small');
-    if (label) label.textContent = 'TICKER';
-    if (sub) sub.textContent = 'DASHBOARD BULLETIN';
   }
-  const panel = document.querySelector('[data-comms-panel="newswire"] .v40-tool-panel');
-  if (!panel) return;
-  const title = panel.querySelector('.comms-panel-head strong');
-  const meta = panel.querySelector('.comms-panel-head small');
-  if (title) title.textContent = 'BMM INDUSTRIAL NEWSWIRE BUILDER';
-  if (meta) meta.textContent = 'MOVING DASHBOARD TICKER';
-  if (!panel.querySelector('.v40-newswire-explainer')) {
-    const explainer = document.createElement('div');
-    explainer.className = 'v40-newswire-explainer';
-    explainer.innerHTML = '<strong>WHAT IS THIS?</strong><span>BUILDS ONE READY-TO-PASTE ENTRY FOR THE MOVING BMM INDUSTRIAL NEWSWIRE ABOVE THE RHW APP. IT DOES NOT CREATE A FORUM POST AND IT DOES NOT PUBLISH AUTOMATICALLY.</span>';
-    panel.querySelector('.comms-panel-head')?.insertAdjacentElement('afterend', explainer);
+
+  function renderPreview(state = app.state.comms) {
+    const target = document.getElementById('forumLivePreview');
+    if (!target || !state) return;
+    const f = app.config.forum;
+    const sender = app.storage.resolveSender(state);
+    const template = app.template(state.templateKey);
+    const classification = state.classification || template.classification;
+    const salutation = resolvedSalutation(state);
+    target.dataset.template = template.key;
+    target.style.setProperty('--comms-accent', template.accent || f.brandColor);
+    target.style.setProperty('--classification-color', app.classificationColor(classification));
+    target.innerHTML = `
+      <div class="forum-preview-identity">
+        <div class="forum-preview-logo-wrap"><img src="${app.util.escape(f.logoUrl)}" alt="RHW communication crest" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false" /><div class="forum-preview-logo-fallback" hidden>RHW</div></div>
+        <div class="forum-preview-title">${app.util.escape(f.organisation)}</div>
+        <div class="forum-preview-subline">${app.util.escape(f.subline)}</div>
+        <div class="forum-preview-document-type">${app.util.escape(template.documentLabel)} // ${app.util.escape(template.label)}</div>
+        <div class="forum-preview-classification">CLASSIFICATION // ${app.util.escape(classification)}</div>
+      </div>
+      <div class="forum-preview-rule"></div>
+      <div class="forum-preview-meta">
+        <div class="forum-preview-meta-row"><strong>SENDER ID:</strong><span>${app.util.escape(sender.name || '—')}</span></div>
+        <div class="forum-preview-meta-row"><strong>RECIPIENT ID:</strong><span>${app.util.escape(state.recipient || '—')}</span></div>
+        <div class="forum-preview-meta-row"><strong>LOCATION:</strong><span>${app.util.escape(state.location || '—')}</span></div>
+        <div class="forum-preview-meta-row"><strong>ENCRYPTION:</strong><span class="encryption">${app.util.escape(state.encryption || '—')}</span></div>
+      </div>
+      <div class="forum-preview-subject"><small>SUBJECT</small><strong>${app.util.escape(state.subject || 'UNTITLED TRANSMISSION')}</strong></div>
+      <div class="forum-preview-rule"></div>
+      <div class="forum-preview-body">${salutation ? `<p class="forum-preview-salutation">${app.util.escape(salutation)}</p>` : ''}${String(state.message || '').trim() ? bodyToPreview(state.message) : '<span class="preview-placeholder">AWAITING TRANSMISSION BODY</span>'}</div>
+      <div class="forum-preview-signature"><em>${app.util.escape(state.closing || template.closing)}</em><strong>${app.util.escape(sender.name)}</strong><small>${app.util.escape(sender.title || '')}</small></div>
+      <div class="forum-preview-footer"><span>${app.util.escape(state.footerMotto || f.footerMotto)}</span><span>TRANSMISSION CLASS // ${app.util.escape(classification)}</span><span>[RHW] SYSTEM TIME: ${app.util.escape(state.systemDate || 'UNSET')}</span></div>`;
   }
-  const generated = panel.querySelector('.v40-generated-block small');
-  if (generated) generated.textContent = 'TICKER SOURCE BLOCK // RHW_NEWSWIRE.MD';
-}
 
-function v40InstallComposerPolish() {
-  v40InstallClosingSelector();
-  v40InstallSignatureAutomation();
-  v40InstallDocumentControlCard();
-  v40InstallNewswireClarity();
-
-  const templateSelect = document.getElementById('commsTemplate');
-  const senderSelect = document.getElementById('commsSender');
-  const classification = document.getElementById('commsClassification');
-
-  templateSelect?.addEventListener('change', () => {
-    v40SetClosingControl(v40TemplateClosing(templateSelect.value));
-    v40UpdateDocumentControlSummary();
-    appSyncFromForm();
-  });
-  senderSelect?.addEventListener('change', () => {
-    const sender = appSenderByKey(senderSelect.value);
-    if (sender) v40SetClosingControl(sender.closing || v40TemplateClosing(templateSelect?.value));
-    v40SyncSignatureUi();
-    appSyncFromForm();
-  });
-  classification?.addEventListener('change', () => {
-    v40UpdateDocumentControlSummary();
-    appSyncFromForm();
-  });
-
-  const current = appNormalizeCommsState(rhwCommsState || appDefaultCommsState());
-  if (/ML-KEM|X25519|AES-256|CHACHA20/i.test(current.encryption || '')) {
-    current.encryption = appTemplate(current.templateKey)?.encryption || current.encryption;
+  function renderBbcode() {
+    const output = document.getElementById('forumBbcodeOutput');
+    if (output) output.value = buildBbcode(app.state.comms);
   }
-  appApplyCommsState(current, { persist: true });
-}
 
-function v40LoadComposerPolishStyles() {
-  if (document.querySelector('link[data-rhw-v40-composer]')) return;
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = './css/14-app-v40-composer.css';
-  link.dataset.rhwV40Composer = 'true';
-  document.head.appendChild(link);
-}
+  function refreshSenderSelect() {
+    const select = document.getElementById('commsSender');
+    if (!select) return;
+    const current = app.state.comms?.senderKey || app.config.senders[0].key;
+    select.innerHTML = senderOptions(current).html;
+    select.value = [...select.options].some(option => option.value === current) ? current : app.config.senders[0].key;
+  }
 
-v40LoadComposerPolishStyles();
-v40InstallComposerPolish();
+  function renderSignature() {
+    const target = document.getElementById('v40SignatureAuto');
+    const wrap = document.getElementById('customSenderWrap');
+    const custom = app.state.comms?.senderKey === '__custom__';
+    if (wrap) wrap.hidden = !custom;
+    const saveSender = document.getElementById('saveSenderBtn');
+    if (saveSender) saveSender.hidden = !custom;
+    if (!target) return;
+    const sender = app.storage.resolveSender(app.state.comms);
+    target.innerHTML = `<small>AUTO SIGNATURE</small><strong>${app.util.escape(custom ? 'CUSTOM SENDER' : sender.name)}</strong><span>${app.util.escape(custom ? 'NAME + ROLE COME FROM THE CUSTOM FIELDS' : (sender.title || 'NO ROLE REGISTERED'))}</span>`;
+  }
+
+  function renderDocumentSummary() {
+    const target = document.getElementById('v40DocumentControlSummary');
+    if (!target) return;
+    const template = app.template(app.state.comms.templateKey);
+    const classification = app.state.comms.classification || template.classification;
+    target.textContent = `${template.label} // ${classification}`;
+    target.style.setProperty('--classification-color', app.classificationColor(classification));
+  }
+
+  function renderForm() {
+    const state = app.state.comms;
+    if (!state) return;
+    refreshSenderSelect();
+    const map = {
+      commsTemplate: state.templateKey, commsClassification: state.classification, customSenderName: state.customSenderName,
+      commsSignatureTitle: state.signatureTitle, commsRecipient: state.recipient, commsLocation: state.location,
+      commsEncryption: state.encryption, commsSubject: state.subject, commsMessage: state.message,
+      commsSystemDate: state.systemDate, commsDraftName: state.draftName, commsFooterMotto: state.footerMotto
+    };
+    Object.entries(map).forEach(([id, value]) => { const el = document.getElementById(id); if (el) el.value = value ?? ''; });
+    setPresetControl('commsClosing', 'commsClosingCustom', state.closing, app.config.closings);
+    setPresetControl('commsSalutation', 'commsSalutationCustom', state.salutation, app.config.salutations);
+    const subject = document.getElementById('commsSubject');
+    const description = document.getElementById('templateDescription');
+    const template = app.template(state.templateKey);
+    if (subject) subject.placeholder = template.subjectPlaceholder;
+    if (description) description.textContent = template.description;
+    renderSignature();
+    renderDocumentSummary();
+    renderPreview();
+    renderBbcode();
+  }
+
+  function readForm() {
+    const value = id => document.getElementById(id)?.value ?? '';
+    const state = app.storage.normalizeState({
+      ...app.state.comms,
+      templateKey: value('commsTemplate'),
+      senderKey: value('commsSender'),
+      customSenderName: value('customSenderName'),
+      signatureTitle: value('commsSignatureTitle'),
+      recipient: value('commsRecipient'),
+      location: value('commsLocation'),
+      encryption: value('commsEncryption'),
+      classification: value('commsClassification'),
+      salutation: resolvePresetControl('commsSalutation', 'commsSalutationCustom'),
+      subject: value('commsSubject'),
+      message: value('commsMessage'),
+      closing: resolvePresetControl('commsClosing', 'commsClosingCustom'),
+      systemDate: value('commsSystemDate'),
+      draftName: value('commsDraftName'),
+      footerMotto: value('commsFooterMotto')
+    });
+    return app.storage.snapshotSender(state);
+  }
+
+  function syncFromForm() {
+    app.state.comms = readForm();
+    renderSignature();
+    renderDocumentSummary();
+    renderPreview();
+    renderBbcode();
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(app.storage.saveCurrent, 320);
+  }
+
+  function applyTemplate(nextKey) {
+    const previous = app.template(app.state.comms?.templateKey);
+    const state = readForm();
+    const next = app.template(nextKey);
+    state.templateKey = next.key;
+    if (!state.recipient.trim() || state.recipient === previous.recipient) state.recipient = next.recipient || '';
+    if (!state.encryption.trim() || state.encryption === previous.encryption) state.encryption = next.encryption || '';
+    state.classification = next.classification;
+    state.salutation = next.salutation;
+    state.closing = next.closing;
+    app.state.comms = state;
+    renderForm();
+    app.storage.saveCurrent();
+  }
+
+  function applySender(key) {
+    const state = readForm();
+    state.senderKey = key;
+    if (key === '__custom__') {
+      state.customSenderName = '';
+      state.signatureTitle = '';
+    } else {
+      const sender = app.storage.senderByKey(key);
+      if (sender) {
+        state.location = sender.location || state.location;
+        state.signatureTitle = sender.title || '';
+        state.senderSnapshotName = sender.name || '';
+        state.senderSnapshotTitle = sender.title || '';
+      }
+    }
+    app.state.comms = state;
+    renderForm();
+    app.storage.saveCurrent();
+    if (key === '__custom__') setTimeout(() => document.getElementById('customSenderName')?.focus(), 0);
+  }
+
+  function saveCustomSender() {
+    const state = readForm();
+    const name = state.customSenderName.trim();
+    if (!name) { app.notify('ENTER A SENDER NAME FIRST', 'warn'); return; }
+    const profile = app.storage.upsertSender({
+      name,
+      title: state.signatureTitle.trim(),
+      organisation: '',
+      location: state.location.trim(),
+      encryption: state.encryption.trim()
+    });
+    if (!profile) return;
+    state.senderKey = profile.key;
+    state.senderSnapshotName = profile.name;
+    state.senderSnapshotTitle = profile.title;
+    app.state.comms = state;
+    renderForm();
+    renderSenderRegistry();
+    app.storage.saveCurrent();
+    app.notify('LOCAL SENDER PROFILE SAVED');
+  }
+
+  function saveDraft() {
+    app.state.comms = readForm();
+    const name = app.storage.saveDraft(app.state.comms, app.state.comms.draftName);
+    renderDrafts();
+    renderForm();
+    app.notify(`DRAFT SAVED // ${name.toUpperCase()}`);
+  }
+
+  function loadDraft(id) {
+    const draft = app.state.drafts.find(entry => entry.id === id);
+    if (!draft) return;
+    app.state.comms = app.storage.normalizeState(draft.state);
+    app.storage.snapshotSender(app.state.comms);
+    renderForm();
+    app.storage.saveCurrent();
+    app.navigate('comms', 'forum');
+    app.notify(`DRAFT LOADED // ${draft.name.toUpperCase()}`);
+  }
+
+  function renderDrafts() {
+    const target = document.getElementById('commsDraftList');
+    if (!target) return;
+    if (!app.state.drafts.length) {
+      target.innerHTML = '<div class="comms-empty-state">NO NAMED DRAFTS IN LOCAL CACHE<small>THE CURRENT TRANSMISSION IS STILL AUTOSAVED</small></div>';
+      return;
+    }
+    target.innerHTML = app.state.drafts.slice().sort((a, b) => b.updatedAt - a.updatedAt).map(draft => {
+      const sender = app.storage.resolveSender(draft.state);
+      const date = new Date(draft.updatedAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+      return `<article class="comms-draft-card"><div><strong>${app.util.escape(draft.name)}</strong><small>${app.util.escape(sender.name)} // ${app.util.escape(draft.state.subject || 'NO SUBJECT')} // ${app.util.escape(date)}</small></div><div class="comms-draft-actions"><button type="button" data-load-draft="${app.util.escape(draft.id)}">LOAD</button><button type="button" data-delete-draft="${app.util.escape(draft.id)}">DELETE</button></div></article>`;
+    }).join('');
+  }
+
+  function renderTicker() {
+    const category = document.getElementById('v40TickerCategory')?.value || 'operations';
+    const tone = document.getElementById('v40TickerTone')?.value || 'good';
+    const tag = document.getElementById('v40TickerTag')?.value.trim() || 'RHW NEWSWIRE';
+    const message = document.getElementById('v40TickerMessage')?.value.trim() || 'AWAITING BULLETIN';
+    const output = document.getElementById('v40TickerOutput');
+    if (output) output.value = `## ${category}\n- [${tag} | ${tone}] ${message}`;
+    const previewTag = document.getElementById('v40TickerPreviewTag');
+    const previewText = document.getElementById('v40TickerPreviewText');
+    const bar = document.querySelector('.ticker-builder-bar');
+    if (previewTag) previewTag.textContent = tag;
+    if (previewText) previewText.textContent = message;
+    if (bar) bar.style.setProperty('--ticker-tone', TICKER_TONES[tone] || TICKER_TONES.muted);
+    app.store.set(app.config.storageKeys.tickerComposer, { category, tone, tag, message });
+  }
+
+  function renderSenderRegistry() {
+    const target = document.getElementById('v40SenderRegistry');
+    if (!target) return;
+    const profiles = [
+      ...app.config.senders.map(sender => ({ ...sender, source: 'BUILT-IN' })),
+      ...app.state.localSenders.map(sender => ({ ...sender, source: 'LOCAL' }))
+    ];
+    target.innerHTML = profiles.map(sender => `<article class="sender-registry-card"><div class="sender-registry-head"><div><small>${sender.source}</small><strong>${app.util.escape(sender.name)}</strong></div><span>${sender.source === 'LOCAL' ? 'LOCAL CACHE' : 'RHW REGISTRY'}</span></div><dl><div><dt>ROLE</dt><dd>${app.util.escape(sender.title || '—')}</dd></div><div><dt>ORGANISATION</dt><dd>${app.util.escape(sender.organisation || '—')}</dd></div><div><dt>LOCATION</dt><dd>${app.util.escape(sender.location || '—')}</dd></div><div><dt>DEFAULT CIPHER</dt><dd>${app.util.escape(sender.encryption || '—')}</dd></div></dl><div class="sender-registry-actions"><button type="button" data-use-sender="${app.util.escape(sender.key)}">USE IN COMPOSER</button>${sender.source === 'LOCAL' ? `<button type="button" data-edit-sender="${app.util.escape(sender.key)}">EDIT</button><button type="button" data-remove-sender="${app.util.escape(sender.key)}">REMOVE</button>` : ''}</div></article>`).join('');
+  }
+
+  function openSenderEditor(key = null) {
+    const form = document.getElementById('v40SenderEditor');
+    if (!form) return;
+    const sender = key ? app.state.localSenders.find(entry => entry.key === key) : null;
+    app.state.editingSenderKey = sender?.key || null;
+    form.hidden = false;
+    document.getElementById('v40SenderEditorTitle').textContent = sender ? `EDIT // ${sender.name.toUpperCase()}` : 'NEW SENDER PROFILE';
+    document.getElementById('v40SenderEditName').value = sender?.name || '';
+    document.getElementById('v40SenderEditTitle').value = sender?.title || '';
+    document.getElementById('v40SenderEditOrganisation').value = sender?.organisation || '';
+    document.getElementById('v40SenderEditLocation').value = sender?.location || 'Resolution Heavy Works, New London';
+    document.getElementById('v40SenderEditCipher').value = sender?.encryption || app.generateCipher('formal');
+    form.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function closeSenderEditor() {
+    app.state.editingSenderKey = null;
+    const form = document.getElementById('v40SenderEditor');
+    if (form) form.hidden = true;
+  }
+
+  function saveSenderEditor(event) {
+    event.preventDefault();
+    const name = document.getElementById('v40SenderEditName')?.value.trim();
+    if (!name) { app.notify('ENTER A SENDER NAME FIRST', 'warn'); return; }
+    const profile = app.storage.upsertSender({
+      name,
+      title: document.getElementById('v40SenderEditTitle')?.value.trim() || '',
+      organisation: document.getElementById('v40SenderEditOrganisation')?.value.trim() || '',
+      location: document.getElementById('v40SenderEditLocation')?.value.trim() || '',
+      encryption: document.getElementById('v40SenderEditCipher')?.value.trim() || ''
+    }, app.state.editingSenderKey);
+    if (!profile) return;
+    if (app.state.comms?.senderKey === profile.key) {
+      app.state.comms.senderSnapshotName = profile.name;
+      app.state.comms.senderSnapshotTitle = profile.title;
+      app.state.comms.signatureTitle = profile.title;
+      app.state.comms.location = profile.location || app.state.comms.location;
+      app.storage.saveCurrent();
+    }
+    closeSenderEditor();
+    refreshSenderSelect();
+    renderSenderRegistry();
+    renderForm();
+    app.notify(`SENDER SAVED // ${profile.name.toUpperCase()}`);
+  }
+
+  function insertFormat(kind) {
+    const area = document.getElementById('commsMessage');
+    if (!area) return;
+    const start = area.selectionStart ?? area.value.length;
+    const end = area.selectionEnd ?? start;
+    const selected = area.value.slice(start, end);
+    const lineStart = area.value.lastIndexOf('\n', start - 1) + 1;
+    let before = '', after = '', replaceStart = start, replaceEnd = end;
+    if (kind === 'bold') { before = '**'; after = '**'; }
+    else {
+      replaceStart = lineStart;
+      const prefix = { heading: '## ', status: '!status ', warning: '!warning ', list: '- ' }[kind] || '';
+      if (area.value.slice(lineStart, start).trim()) before = `\n${prefix}`;
+      else before = prefix;
+    }
+    const inserted = before + selected + after;
+    area.setRangeText(inserted, replaceStart, replaceEnd, 'end');
+    area.focus();
+    syncFromForm();
+  }
+
+  function bindForum() {
+    const form = document.getElementById('commsForm');
+    if (!form) return;
+    form.addEventListener('input', event => {
+      if (['commsTemplate', 'commsSender', 'commsClassification', 'commsClosing', 'commsSalutation'].includes(event.target.id)) return;
+      syncFromForm();
+    });
+    document.getElementById('commsTemplate')?.addEventListener('change', event => applyTemplate(event.target.value));
+    document.getElementById('commsSender')?.addEventListener('change', event => applySender(event.target.value));
+    document.getElementById('commsClassification')?.addEventListener('change', syncFromForm);
+    document.getElementById('commsClosing')?.addEventListener('change', event => {
+      const custom = document.getElementById('commsClosingCustom');
+      if (custom) custom.hidden = event.target.value !== '__custom__';
+      if (!custom?.hidden) custom.focus();
+      syncFromForm();
+    });
+    document.getElementById('commsSalutation')?.addEventListener('change', event => {
+      const custom = document.getElementById('commsSalutationCustom');
+      if (custom) custom.hidden = event.target.value !== '__custom__';
+      if (!custom?.hidden) custom.focus();
+      syncFromForm();
+    });
+    document.getElementById('randomizeCipherBtn')?.addEventListener('click', () => {
+      document.getElementById('commsEncryption').value = app.generateCipher(document.getElementById('commsTemplate')?.value);
+      syncFromForm();
+      app.notify('NEW CIPHER DESIGNATION ISSUED');
+    });
+    document.querySelector('.comms-editor-toolbar')?.addEventListener('click', event => {
+      const button = event.target.closest('[data-format]');
+      if (button) insertFormat(button.dataset.format);
+    });
+    document.getElementById('copyBbcodeBtn')?.addEventListener('click', async () => { const copied = await app.util.copy(buildBbcode()); app.notify(copied ? 'BB CODE COPIED TO CLIPBOARD' : 'COPY FAILED', copied ? 'good' : 'warn'); });
+    document.getElementById('saveDraftBtn')?.addEventListener('click', saveDraft);
+    document.getElementById('saveSenderBtn')?.addEventListener('click', saveCustomSender);
+    document.getElementById('newTransmissionBtn')?.addEventListener('click', () => {
+      if ((app.state.comms?.message || app.state.comms?.subject) && !window.confirm('Start a new transmission? The current transmission is autosaved.')) return;
+      app.state.comms = app.storage.defaultState();
+      renderForm();
+      app.storage.saveCurrent();
+      app.notify('NEW TRANSMISSION INITIALIZED');
+    });
+  }
+
+  function bindTicker() {
+    const saved = app.store.get(app.config.storageKeys.tickerComposer, {}) || {};
+    ['Category', 'Tone', 'Tag', 'Message'].forEach(name => {
+      const el = document.getElementById(`v40Ticker${name}`);
+      const key = name.toLowerCase();
+      if (el && typeof saved[key] === 'string') el.value = saved[key];
+      el?.addEventListener('input', renderTicker);
+      el?.addEventListener('change', renderTicker);
+    });
+    document.getElementById('v40CopyTickerBtn')?.addEventListener('click', async () => {
+      const output = document.getElementById('v40TickerOutput');
+      const copied = await app.util.copy(output?.value || '');
+      app.notify(copied ? 'TICKER BLOCK COPIED' : 'COPY FAILED', copied ? 'good' : 'warn');
+    });
+    renderTicker();
+  }
+
+  function bindDrafts() {
+    document.getElementById('commsDraftList')?.addEventListener('click', event => {
+      const load = event.target.closest('[data-load-draft]');
+      const remove = event.target.closest('[data-delete-draft]');
+      if (load) loadDraft(load.dataset.loadDraft);
+      if (remove) {
+        const draft = app.state.drafts.find(entry => entry.id === remove.dataset.deleteDraft);
+        if (draft && window.confirm(`Delete draft “${draft.name}” from this browser?`)) {
+          app.storage.deleteDraft(draft.id);
+          renderDrafts();
+          app.notify('DRAFT REMOVED', 'warn');
+        }
+      }
+    });
+    document.getElementById('exportCommsCacheBtn')?.addEventListener('click', () => {
+      const payload = app.storage.exportPayload();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `rhw-comms-cache-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(anchor); anchor.click(); anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      app.notify('LOCAL CACHE EXPORTED');
+    });
+    document.getElementById('importCommsCacheBtn')?.addEventListener('click', () => document.getElementById('importCommsCacheInput')?.click());
+    document.getElementById('importCommsCacheInput')?.addEventListener('change', async event => {
+      const input = event.currentTarget;
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const result = app.storage.importPayload(JSON.parse(await file.text()));
+        renderDrafts(); renderSenderRegistry(); renderForm();
+        app.notify(`CACHE MERGED // ${result.drafts} DRAFTS // ${result.senders} LOCAL SENDERS`);
+      } catch (error) {
+        app.notify(`CACHE IMPORT FAILED // ${String(error?.message || 'INVALID FILE').toUpperCase()}`, 'danger');
+      } finally { input.value = ''; }
+    });
+  }
+
+  function bindSenders() {
+    document.getElementById('v40SenderRegistry')?.addEventListener('click', event => {
+      const use = event.target.closest('[data-use-sender]');
+      const edit = event.target.closest('[data-edit-sender]');
+      const remove = event.target.closest('[data-remove-sender]');
+      if (use) { applySender(use.dataset.useSender); app.navigate('comms', 'forum'); app.notify('SENDER ACTIVE'); }
+      if (edit) openSenderEditor(edit.dataset.editSender);
+      if (remove) {
+        const sender = app.state.localSenders.find(entry => entry.key === remove.dataset.removeSender);
+        if (sender && window.confirm(`Remove local sender profile “${sender.name}”? Existing drafts keep a sender snapshot.`)) {
+          app.storage.removeSender(sender.key);
+          if (app.state.comms?.senderKey === sender.key) {
+            const fallback = app.config.senders[0];
+            app.state.comms.senderKey = fallback.key;
+            app.state.comms.senderSnapshotName = fallback.name;
+            app.state.comms.senderSnapshotTitle = fallback.title || '';
+            app.state.comms.signatureTitle = fallback.title || '';
+            app.state.comms.location = fallback.location || app.state.comms.location;
+            app.storage.saveCurrent();
+          }
+          renderSenderRegistry(); renderForm();
+          app.notify('LOCAL SENDER PROFILE REMOVED', 'warn');
+        }
+      }
+    });
+    document.getElementById('v40CreateSenderBtn')?.addEventListener('click', () => openSenderEditor());
+    document.getElementById('v40SenderEditorCancel')?.addEventListener('click', closeSenderEditor);
+    document.getElementById('v40SenderEditor')?.addEventListener('submit', saveSenderEditor);
+  }
+
+  function activate(node, { updateRoute = true } = {}) {
+    const valid = NODES.some(([key]) => key === node) ? node : 'forum';
+    app.state.commsNode = valid;
+    app.store.set(app.config.storageKeys.commsNode, valid);
+    document.body.dataset.commsNode = valid;
+    document.querySelectorAll('[data-comms-panel]').forEach(panel => { panel.hidden = panel.dataset.commsPanel !== valid; });
+    document.querySelectorAll('[data-comms-node]').forEach(button => {
+      const active = button.dataset.commsNode === valid;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-current', active ? 'page' : 'false');
+      if (active) requestAnimationFrame(() => button.scrollIntoView?.({ block: 'nearest', inline: 'center' }));
+    });
+    const copy = HEADING[valid] || HEADING.forum;
+    const title = document.getElementById('commsWorkspaceTitle');
+    const subtitle = document.getElementById('commsWorkspaceSubtitle');
+    if (title) title.textContent = copy[0];
+    if (subtitle) subtitle.textContent = copy[1];
+    if (valid === 'drafts') renderDrafts();
+    if (valid === 'senders') renderSenderRegistry();
+    if (app.state.activeWorkspace === 'comms') {
+      app.setActiveNode(`COMMS / ${valid.toUpperCase()}`);
+      document.title = `RHW COMMS ${valid.toUpperCase()} · ${app.version}`;
+      if (updateRoute) app.route.write('comms', valid);
+    }
+  }
+
+  function init() {
+    const workspace = document.getElementById('workspaceComms');
+    if (!workspace || document.getElementById('commsNodeNav')) return;
+    workspace.innerHTML = workspaceMarkup();
+    workspace.querySelector('#commsNodeNav')?.addEventListener('click', event => {
+      const button = event.target.closest('[data-comms-node]');
+      if (button) app.navigate('comms', button.dataset.commsNode);
+    });
+    bindForum(); bindTicker(); bindDrafts(); bindSenders();
+    renderForm(); renderDrafts(); renderSenderRegistry();
+  }
+
+  app.comms = { init, activate, syncFromForm, renderForm, renderPreview, renderDrafts, renderSenderRegistry, buildBbcode, resolvedSalutation, nodes: NODES };
+})();

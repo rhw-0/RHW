@@ -1,90 +1,85 @@
 # Resolution Heavy Works Web App - V4.0 Preview
 
-This repository powers the RHW command dashboard and the in-development RHW Web App workspaces.
+This repository powers the live RHW dashboard and the in-development V4.0 Web App. The public Pages site remains on the released V3.6 layout until V4.0 is explicitly reviewed and merged.
 
-## Structure
+## Stable dashboard layer
 
-- `index.html` - stable page structure and the authoritative V3.x stylesheet/script load order
-- `css/01-core.css` through `css/09-v35.css` - visual system and responsive layouts
-- `css/10-maintenance.css` - maintenance overrides, mobile newswire support and graceful visual fallbacks
-- `css/11-layout-v36.css` - V3.6 visual hierarchy, responsive layout, mobile manifest and production density layer
-- `css/12-app-v40.css` - V4.0 application navigation and COMMS workspace styling
-- `css/13-app-v40-navigation.css` - V4.0 COMMAND/COMMS node navigation, executive overview and tool styling
-- `css/14-app-v40-composer.css` - V4.0 document-control, signature, sign-off and forum-preview polish
-- `js/config.js` - recipes, thresholds, tracked commodities, facilities, hull aliases and base-level constants
-- `js/00-bootstrap.js` - early-load utility plus safe V4 dynamic bootstrap after the stable dashboard has initialized
-- `js/01-wire.js` through `js/09-newswire.js` - dashboard logic in load order
-- `js/10-maintenance.js` - behavior-preserving hardening for shared calculations and late feature compatibility
-- `js/11-layout-v36.js` - V3.6 presentation controls, production detail toggle and command-flow ordering
-- `js/12-app-config.js` - V4.0 app settings, forum presets, classifications and built-in sender identities
-- `js/13-app-v40.js` - V4.0 application shell and COMMS Forum Transmission Composer
-- `js/14-app-v40-cache.js` - V4.0 local draft/sender cache export and import
-- `js/15-app-v40-navigation.js` - V4.0 node routing, cipher generator, smart BBCode, ticker tool and sender registry
-- `js/16-app-v40-composer.js` - V4.0 BBCode v2, automatic signatures, sign-off presets and document-control clarity
-- `assets/RHW_Newswire.md` - editable editorial ticker messages
-- `scripts/validate_dashboard.py` - dependency-free structural validation for local use and CI
+- `index.html` - stable page structure and authoritative V3.x stylesheet/script order
+- `css/01-core.css` through `css/11-layout-v36.css` - released dashboard visual system and responsive layout
+- `js/config.js` - recipes, thresholds, tracked commodities, facilities, hull aliases and base constants
+- `js/00-bootstrap.js` - early utility plus the isolated V4 preview bootstrap
+- `js/01-wire.js` through `js/11-layout-v36.js` - released dashboard logic and V3.6 presentation controls
+- `assets/RHW_Newswire.md` - editable dashboard ticker source
 
-The stable dashboard load order in `index.html` is part of the dashboard contract. V4 is layered on after `DOMContentLoaded` so the V3.6 COMMAND dashboard remains the fallback if an app-layer asset fails.
+The stable V3.x load order remains unchanged. V4 starts only after the stable dashboard has initialized, so COMMAND still has the released dashboard as a fallback if a V4 asset fails.
 
-## V4.0 workspace model
+## V4.0 architecture
 
-The RHW header and industrial Newswire remain global. V4 then exposes two primary application workspaces with their own nodes.
+V4 uses one shared `window.RHWV4` application object. Feature modules register their own responsibilities instead of replacing functions from earlier files.
 
-### COMMAND
+- `js/12-app-config.js` - app identity, COMMS templates, classifications, salutations, sign-offs, built-in senders and cipher pools
+- `js/13-app-v40.js` - shared app core, shell, utilities and route model
+- `js/14-app-v40-cache.js` - browser-local state, sender identities, draft snapshots, migration and cache import/export
+- `js/15-app-v40-navigation.js` - COMMAND nodes, executive overview, priority actions and Inventory subviews
+- `js/16-app-v40-composer.js` - COMMS nodes, Forum Composer, BBCode, Ticker Builder, drafts and sender editor
+- `js/17-app-v40-audit.js` - deterministic runtime boot, self-test and browser-smoke diagnostics
+- `css/12-app-v40.css` through `css/15-app-v40-audit.css` - V4 app shell, navigation, composer and final preview polish
 
-- `#command/overview` - Executive Status Board with shortcuts into live operational chapters
-- `#command/inventory` - facility maintenance, export inventory, feedstock, waste, confiscated assets and the full manifest
+## COMMAND
+
+V4 COMMAND is split into bookmarkable nodes:
+
+- `#command/overview` - Executive Status Board with live health cards and **Priority Actions**
+- `#command/inventory` - Inventory workspace with `STATUS BOARD` and `FULL MANIFEST` views
 - `#command/shipyard` - Capital Shipyard Control
-- `#command/production` - Production Modules and recipe details
-- `#command/logistics` - fixed remote logistics and Regional Market Scan
+- `#command/production` - compact Production Modules with expandable recipe detail
+- `#command/logistics` - fixed remote facilities and Regional Market Scan
 
-### COMMS
+The Executive Status Board summarizes critical/low inventory state, capital-hull readiness, the weakest production recipe and remote logistics status. Priority Actions link directly to the affected workspace.
 
-- `#comms/forum` - Forum Transmission Composer with live preview and generated BBCode
-- `#comms/newswire` - Ticker Builder for ready-to-paste `RHW_Newswire.md` entries; it does not publish automatically
-- `#comms/drafts` - browser-local named transmission archive plus cache portability tools
-- `#comms/senders` - built-in and browser-local sender identity registry
+## COMMS
 
-The first built-in COMMS sender is **Alistair Thorne**. Temporary characters can be entered through `CUSTOM / TEMPORARY SENDER` and saved as browser-local sender profiles without changing repository code. Additional permanent RHW characters belong in `js/12-app-config.js`.
+COMMS is split into:
 
-Named COMMS drafts and locally saved sender profiles use browser `localStorage`; they are not uploaded to GitHub and remain specific to that browser/profile. The cache export/import tool can move them between the V4 preview origin and the eventual live app.
+- `#comms/forum` - Forum Transmission Composer
+- `#comms/ticker` - BMM Industrial Newswire / dashboard ticker builder with a live ticker preview
+- `#comms/drafts` - browser-local named drafts plus cache export/import
+- `#comms/senders` - built-in and browser-local sender identity registry with local-profile editing
 
-## Forum transmission system
+### Forum Composer
 
-Forum presets provide template-specific recipient defaults, security classifications, accent colors, sign-off defaults and short in-universe Bretonian cipher designations. `ROLL CIPHER` produces RP designations such as `ADMIRALTY-IRONCLAD/VI · KEY VICTORIA-03`; it labels the transmission and does not cryptographically encrypt the post.
+The composer supports:
 
-Sender profiles own their signature identity. A built-in or saved sender automatically supplies the signature name and registered role/title. Only a temporary/custom sender exposes an editable role/title field.
+- document-type presets with distinct document labels, accents and defaults
+- independent security classification
+- selectable built-in/local senders; the sender profile owns signature name and role
+- short Bretonian/BMM/RHW cipher designations via `ROLL CIPHER`
+- recipient-context **salutation/opening** presets and sign-off presets
+- formatting toolbar for headings, bold text, status callouts, warnings and lists
+- smart source syntax: `## Heading`, `**bold**`, `!status`, `!warning`, `- item`
+- template-specific live preview ambience and an RHW logo fallback
+- generated BBCode v2 with routing metadata, subject block, body, signature and security footer
 
-The sign-off control offers recipient-context presets for formal correspondence, the Crown, military/Admiralty recipients, business partners, suppliers/contractors, internal RHW/BMM traffic and neutral correspondence. A custom sign-off remains available.
+Drafts preserve a sender name/title snapshot, so deleting a local sender profile does not damage old saved transmissions. Cache import merges with existing local drafts and senders instead of silently replacing them.
 
-BBCode v2 separates the **document type** from the **security classification**, keeps sender/recipient/location/encryption metadata in the routing table, gives the subject its own title block and mirrors the selected sender profile in the signature.
+## Validation and runtime smoke testing
 
-The message editor supports lightweight authoring syntax before conversion to BBCode:
+`scripts/validate_dashboard.py` checks the stable static load order, file references, duplicate static IDs, required V4 module hooks and rejects the old V4 override-chain pattern.
 
-- `## Heading` - styled section heading
-- `**bold**` - bold text
-- `!warning message` - amber warning callout
-- `!status message` - green status callout
-- `- item` - formatted bullet line
+`scripts/smoke_v40.py` launches headless Chrome/Chromium through the Chrome DevTools Protocol and boots an inline copy of the actual repository site. It verifies every current V4 route:
 
-## Current capital hull API codes
+- five COMMAND nodes
+- four COMMS nodes
+- runtime self-test state and route/workspace activation
 
-- Dunkirk-Class Battleship: `dsy_br_battleship`
-- Invincible-Class Dreadnought: `dsy_br_carrier`
-
-Stock, `min_stock` and `max_stock` are read from the live telemetry API. The thin blue line in stock bars marks the live in-game minimum reserve boundary. The configured raw maximum for RHW structural health is stored as `baseHealthMax` in `js/config.js`.
-
-## Editing
-
-Most dashboard data/configuration changes should be made in `js/config.js`. Newswire text can be changed independently in `assets/RHW_Newswire.md`. V4 app identities and COMMS presets live in `js/12-app-config.js`.
-
-Before deployment, CI checks JavaScript syntax plus the dashboard's local file references, stylesheet/script order, V4 bootstrap assets and duplicate static HTML IDs. The same structural check can be run with:
+GitHub Actions runs structure validation, JavaScript syntax checks and this browser runtime smoke test before deployment. Pull requests validate only; deployment is skipped for PRs.
 
 ```bash
 python3 scripts/validate_dashboard.py
+python3 -m pip install websocket-client
+python3 scripts/smoke_v40.py
 ```
 
-GitHub Pages deployment is handled by `.github/workflows/rhw-pages-deploy.yml`. Pull requests run validation only; pushes to `main` validate first and deploy only after the checks pass.
+GitHub Pages deployment remains handled by `.github/workflows/rhw-pages-deploy.yml`.
 
-**V4.0 is not released while this work remains on `agent/rhw-v40-webapp` / Draft PR #3.** The production `main` branch and public Pages site remain on the current released V3.6 layout until V4 is explicitly reviewed and merged. The active development line is **V4.0 PREVIEW**.
-<!-- RHW deploy trigger -->
+**V4.0 is not released while this work remains on `agent/rhw-v40-webapp` / Draft PR #3.** Production `main` and the public Pages site remain on V3.6 until an explicit merge is requested.
