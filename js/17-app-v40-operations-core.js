@@ -15,9 +15,7 @@
     loadPromise: null
   };
 
-  function displayName(item) {
-    return item?.name || item?.id || 'UNASSIGNED ITEM';
-  }
+  function displayName(item) { return item?.name || item?.id || 'UNASSIGNED ITEM'; }
 
   function indexCatalog(catalog) {
     state.catalog = catalog;
@@ -109,26 +107,26 @@
     const generated = new Map();
     function key(option) { return option.id || option.name; }
     function base(option) {
-      const k = key(option);
-      if (!quantities.has(k)) quantities.set(k, useInventory ? telemetryQuantity(option) : 0);
-      return quantities.get(k) || 0;
+      const id = key(option);
+      if (!quantities.has(id)) quantities.set(id, useInventory ? telemetryQuantity(option) : 0);
+      return quantities.get(id) || 0;
     }
     return {
       take(option, wanted) {
         const amount = Math.max(0, Number(wanted) || 0);
-        const k = key(option);
-        const gen = generated.get(k) || 0;
-        const fromGenerated = Math.min(gen, amount);
-        if (fromGenerated) generated.set(k, gen - fromGenerated);
-        const remain = amount - fromGenerated;
-        const currentBase = base(option);
-        const fromBase = Math.min(currentBase, remain);
-        if (fromBase) quantities.set(k, currentBase - fromBase);
+        const id = key(option);
+        const generatedAmount = generated.get(id) || 0;
+        const fromGenerated = Math.min(generatedAmount, amount);
+        if (fromGenerated) generated.set(id, generatedAmount - fromGenerated);
+        const remaining = amount - fromGenerated;
+        const baseAmount = base(option);
+        const fromBase = Math.min(baseAmount, remaining);
+        if (fromBase) quantities.set(id, baseAmount - fromBase);
         return { used: fromGenerated + fromBase, fromGenerated, fromBase, missing: amount - fromGenerated - fromBase };
       },
       add(option, amount) {
-        const k = key(option);
-        generated.set(k, (generated.get(k) || 0) + Math.max(0, Number(amount) || 0));
+        const id = key(option);
+        generated.set(id, (generated.get(id) || 0) + Math.max(0, Number(amount) || 0));
       },
       original(option) { return useInventory ? telemetryQuantity(option) : 0; }
     };
@@ -170,13 +168,11 @@
     function fabricate(productIdInner, requiredQty, chosenRecipe, depth, stack) {
       const recipeEntry = chosenRecipe || recipesFor(productIdInner)[0];
       if (!recipeEntry) {
-        const item = product(productIdInner);
-        addMap(external, item, requiredQty);
+        const item = product(productIdInner); addMap(external, item, requiredQty);
         return { type: 'external', item, required: requiredQty, usedStock: 0, missing: requiredQty, children: [] };
       }
       if (depth > context.maxDepth || stack.includes(productIdInner)) {
-        const item = product(productIdInner);
-        addMap(external, item, requiredQty);
+        const item = product(productIdInner); addMap(external, item, requiredQty);
         return { type: 'circular', item, required: requiredQty, usedStock: 0, missing: requiredQty, children: [] };
       }
       const output = mainOutput(recipeEntry, productIdInner);
@@ -200,10 +196,7 @@
         if (usage.missing > 0 && context.recursive && recipesFor(selected.id).length) {
           const nested = fabricate(selected.id, usage.missing, null, depth + 1, [...stack, productIdInner]);
           child = { ...child, type: 'crafted', crafted: nested, children: [nested], missing: 0 };
-        } else if (usage.missing > 0) {
-          addMap(external, selected, usage.missing);
-          child.type = 'external';
-        }
+        } else if (usage.missing > 0) { addMap(external, selected, usage.missing); child.type = 'external'; }
         children.push(child);
       }
 
@@ -211,20 +204,16 @@
       for (const outputEntry of recipeEntry.outputs || []) {
         if (outputEntry.id === productIdInner) continue;
         const amount = Math.max(0, Number(outputEntry.qty) || 0) * cycles;
-        addMap(byproducts, outputEntry, amount);
-        pool.add(outputEntry, amount);
+        addMap(byproducts, outputEntry, amount); pool.add(outputEntry, amount);
       }
-      if (surplus) {
-        const productEntry = product(productIdInner);
-        pool.add(productEntry, surplus);
-        addMap(generatedOutputs, productEntry, surplus);
-      }
+      if (surplus) { const productEntry = product(productIdInner); pool.add(productEntry, surplus); addMap(generatedOutputs, productEntry, surplus); }
       return { type: 'recipe', item: product(productIdInner), recipe: recipeEntry, required: requiredQty, cycles, outputPerCycle, actualOutput, surplus, factor, processTime: adjustedPerCycle(recipeEntry.cookingRate, factor) * cycles, children };
     }
 
     const rootOutput = mainOutput(rootRecipe, productId);
-    const rootCycles = Math.ceil(targetQty / Math.max(1, Number(rootOutput.qty) || 1));
-    const rootActual = rootCycles * Math.max(1, Number(rootOutput.qty) || 1);
+    const rootOutputPerCycle = Math.max(1, Number(rootOutput.qty) || 1);
+    const rootCycles = Math.ceil(targetQty / rootOutputPerCycle);
+    const rootActual = rootCycles * rootOutputPerCycle;
     const rootSurplus = Math.max(0, rootActual - targetQty);
     const rootFactor = factorFor(rootRecipe, affiliationId);
     processCount += 1;
@@ -244,12 +233,8 @@
       if (usage.missing > 0 && recursive && recipesFor(selected.id).length) {
         const nested = fabricate(selected.id, usage.missing, null, 1, [productId]);
         node = { ...node, type: 'crafted', crafted: nested, children: [nested], missing: 0 };
-      } else if (usage.missing > 0) {
-        addMap(external, selected, usage.missing);
-        node.type = 'external';
-      }
-      directRequirements.push(direct);
-      rootChildren.push(node);
+      } else if (usage.missing > 0) { addMap(external, selected, usage.missing); node.type = 'external'; }
+      directRequirements.push(direct); rootChildren.push(node);
     }
 
     for (const catalyst of rootRecipe.catalysts || []) maxMap(catalysts, catalyst, Number(catalyst.qty) || 0);
@@ -267,7 +252,7 @@
     return {
       product: product(productId), targetQty, rootRecipe, rootFactor, cycles: rootCycles, actualOutput: rootActual, surplus: rootSurplus,
       useInventory, telemetryReady: telemetryReady(), recursive, directRequirements,
-      tree: { type: 'recipe', item: product(productId), recipe: rootRecipe, required: targetQty, cycles: rootCycles, actualOutput: rootActual, surplus: rootSurplus, factor: rootFactor, processTime: adjustedPerCycle(rootRecipe.cookingRate, rootFactor) * rootCycles, children: rootChildren },
+      tree: { type: 'recipe', item: product(productId), recipe: rootRecipe, required: targetQty, cycles: rootCycles, outputPerCycle: rootOutputPerCycle, actualOutput: rootActual, surplus: rootSurplus, factor: rootFactor, processTime: adjustedPerCycle(rootRecipe.cookingRate, rootFactor) * rootCycles, children: rootChildren },
       external: externalRows, catalysts: catalystRows, byproducts: [...byproducts.values()], generatedSurplus: [...generatedOutputs.values()], totalTime, processCount, directCoverage, affiliationId
     };
   }
