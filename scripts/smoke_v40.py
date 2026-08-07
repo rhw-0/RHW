@@ -131,11 +131,31 @@ def evaluate_snapshot(cdp: CDP) -> dict:
     return evaluate_json(cdp, "({ready:document.documentElement.dataset.v40Ready||'',error:document.documentElement.dataset.v40Error||'',workspace:document.body?.dataset.workspace||'',commandNode:document.body?.dataset.commandNode||'',operationsNode:document.body?.dataset.operationsNode||'',commsNode:document.body?.dataset.commsNode||'',recipeCount:window.RHWV4?.operationsCore?.state?.catalog?.meta?.recipeCount||0,smoke:window.__RHW_V4_SMOKE__||null})")
 
 
+def cr_number(value: str) -> int:
+    digits = re.sub(r'[^0-9-]', '', value or '')
+    return int(digits) if digits and digits != '-' else 0
+
+
+def verify_command_overview(cdp: CDP) -> None:
+    result = evaluate_json(cdp, "(() => { window.hasVerifiedTelemetry=()=>true; window.operationalItems=()=>[]; window.stockFor=()=>100; window.analyzeRecipe=(recipe)=>({recipe,possibleCycles:recipe.product==='Reactor Systems'?2:3,cardState:'low',bottleneck:{name:'test material',displayName:'Test Material'},nextCycleGap:5}); window.RHWV4.command.updateOverview(); return {ship:document.getElementById('v40OverviewShipyard')?.textContent||'',shipMeta:document.getElementById('v40OverviewShipyardMeta')?.textContent||'',production:document.getElementById('v40OverviewProduction')?.textContent||'',productionMeta:document.getElementById('v40OverviewProductionMeta')?.textContent||''}; })()")
+    if 'HULL' not in result.get('ship', '') or result.get('ship') == 'YARD ONLINE':
+        raise RuntimeError(f'Command overview did not consume shipyard constants: {result}')
+    if not result.get('production', '').startswith('MIN ') or result.get('production') == 'MODULES ONLINE':
+        raise RuntimeError(f'Command overview did not consume production recipes: {result}')
+
+    stale = evaluate_json(cdp, "(() => { window.hasVerifiedTelemetry=()=>false; window.RHWV4.command.updateOverview(); return {ship:document.getElementById('v40OverviewShipyard')?.textContent||'',shipMeta:document.getElementById('v40OverviewShipyardMeta')?.textContent||'',productionMeta:document.getElementById('v40OverviewProductionMeta')?.textContent||'',logisticsMeta:document.getElementById('v40OverviewLogisticsMeta')?.textContent||''}; })()")
+    if stale.get('ship') != 'AWAITING UPLINK' or 'NO VERIFIED' not in stale.get('shipMeta', ''):
+        raise RuntimeError(f'Command overview retained stale shipyard telemetry: {stale}')
+    if 'AWAITING VERIFIED' not in stale.get('productionMeta', '') or 'AWAITING VERIFIED' not in stale.get('logisticsMeta', ''):
+        raise RuntimeError(f'Command overview retained stale metadata after telemetry loss: {stale}')
+    print('V4 interaction smoke passed: command overview shipyard + production telemetry analysis')
+
+
 def verify_operations_costing(cdp: CDP) -> None:
     trigger = evaluate_json(cdp, "(() => { const search=document.getElementById('opsRecipeSearch'); if(!search) return {ok:false,reason:'missing-search'}; search.value='Superstr'; search.dispatchEvent(new Event('input',{bubbles:true})); return {ok:true}; })()")
     if not trigger.get('ok'):
         raise RuntimeError(f'Operations costing search unavailable: {trigger}')
-    time.sleep(0.35)
+    time.sleep(0.4)
     selected = evaluate_json(cdp, "({recipe:document.getElementById('opsRecipe')?.selectedOptions?.[0]?.textContent||'',materialInputs:document.querySelectorAll('[data-material-price]').length,hasVariant:[...document.querySelectorAll('span')].some(el=>el.textContent.trim()==='RECIPE VARIANT'),hasAlternatives:!!document.querySelector('.ops-alternatives')||[...document.querySelectorAll('*')].some(el=>el.children.length===0&&el.textContent.trim()==='ALTERNATIVE INPUTS'),hasPricingFlow:!!document.querySelector('.ops-pricing-flow'),outputCycle:document.querySelector('.ops-recipe-meta strong')?.textContent||''})")
     if 'superstructure' not in selected.get('recipe', '').lower():
         raise RuntimeError(f'Superstructure recipe search selected wrong recipe: {selected}')
@@ -150,11 +170,26 @@ def verify_operations_costing(cdp: CDP) -> None:
     if selected.get('materialInputs', 0) <= 0:
         raise RuntimeError(f'No material-price inputs rendered for Superstructure Systems: {selected}')
 
-    evaluate_json(cdp, "(() => { document.querySelectorAll('[data-material-price]').forEach(input=>{input.value='1000';input.dispatchEvent(new Event('input',{bubbles:true}));}); const margin=document.getElementById('opsMargin'); if(margin){margin.value='20';margin.dispatchEvent(new Event('input',{bubbles:true}));} return {ok:true}; })()")
-    quote = evaluate_json(cdp, "({coverage:document.getElementById('opsPriceCoverage')?.textContent||'',total:document.getElementById('opsTotalCost')?.textContent||'',sell:document.getElementById('opsSellUnit')?.textContent||'',profitUnit:document.getElementById('opsProfitUnit')?.textContent||'',profit:document.getElementById('opsProfit')?.textContent||''})")
+    no_match = evaluate_json(cdp, "(() => { const search=document.getElementById('opsRecipeSearch'); search.value='zzzz-no-such-rhw-recipe'; search.dispatchEvent(new Event('input',{bubbles:true})); return {ok:true}; })()")
+    if not no_match.get('ok'):
+        raise RuntimeError('Unable to exercise recipe no-match state')
+    time.sleep(0.35)
+    no_match_state = evaluate_json(cdp, "({empty:document.querySelector('.ops-no-match')?.textContent||'',materialInputs:document.querySelectorAll('[data-material-price]').length})")
+    if 'NO MATCHING RECIPE' not in no_match_state.get('empty', '') or no_match_state.get('materialInputs') != 0:
+        raise RuntimeError(f'No-match search retained stale recipe materials: {no_match_state}')
+
+    evaluate_json(cdp, "(() => { const search=document.getElementById('opsRecipeSearch'); search.value='Superstr'; search.dispatchEvent(new Event('input',{bubbles:true})); return {ok:true}; })()")
+    time.sleep(0.4)
+    evaluate_json(cdp, "(() => { document.querySelectorAll('[data-material-price]').forEach(input=>{input.value='1000';input.dispatchEvent(new Event('input',{bubbles:true}));}); const margin=document.getElementById('opsMargin'); if(margin){margin.value='99';margin.dispatchEvent(new Event('input',{bubbles:true}));} return {ok:true}; })()")
+    quote = evaluate_json(cdp, "({coverage:document.getElementById('opsPriceCoverage')?.textContent||'',total:document.getElementById('opsTotalCost')?.textContent||'',sell:document.getElementById('opsSellUnit')?.textContent||'',profitUnit:document.getElementById('opsProfitUnit')?.textContent||'',profit:document.getElementById('opsProfit')?.textContent||'',revenue:document.getElementById('opsRevenue')?.textContent||'',margin:document.getElementById('opsMargin')?.value||'',actual:[...document.querySelectorAll('.ops-recipe-meta>div')].find(el=>el.querySelector('small')?.textContent==='ACTUAL OUTPUT')?.querySelector('strong')?.textContent||''})")
     if '—' in quote.get('sell', '') or 'CR' not in quote.get('total', '') or 'CR' not in quote.get('sell', '') or 'CR' not in quote.get('profitUnit', '') or 'CR' not in quote.get('profit', ''):
         raise RuntimeError(f'Cost/margin quote did not resolve after pricing materials: {quote}')
-    print('V4 interaction smoke passed: recipe search + simple materials + cost/margin/sale flow')
+    if quote.get('margin') != '95':
+        raise RuntimeError(f'Margin clamp is not reflected in the visible input: {quote}')
+    actual = max(1, cr_number(quote.get('actual', '1')))
+    if cr_number(quote.get('revenue', '')) != cr_number(quote.get('sell', '')) * actual:
+        raise RuntimeError(f'Displayed sell price and revenue do not reconcile: {quote}')
+    print('V4 interaction smoke passed: recipe search + no-match + pricing + margin clamp')
 
 
 def launch_browser() -> tuple[subprocess.Popen, str, int, str, str]:
@@ -243,6 +278,8 @@ def main() -> int:
                 if (snapshot.get('smoke') or {}).get('errors'):
                     raise RuntimeError(f"Runtime self-test errors on {workspace}/{node}: {snapshot['smoke']['errors']}")
                 print(f'V4 runtime smoke passed: {workspace}/{node}')
+                if workspace == 'command' and node == 'overview':
+                    verify_command_overview(cdp)
                 if workspace == 'operations':
                     verify_operations_costing(cdp)
         finally:
