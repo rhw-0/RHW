@@ -51,19 +51,7 @@ The normalized recipe catalog is generated from Discovery Freelancer's public ga
 
 The current catalog contains **289 recipes, 247 build targets and 65 affiliation/IFF profiles**, including item and base-module recipes, alternative inputs, retained catalysts/personnel, multiple outputs/byproducts and restrictions.
 
-The calculator supports:
-
-- searchable targets across items, modules and capital hulls
-- recipe-variant selection for products with multiple recipes
-- selectable affiliation/IFF profile with BMM as the RHW default
-- IFF factors applied to consumed inputs and cooking time, rounded up to avoid underestimating requirements
-- optional verified RHW inventory deduction
-- recursive expansion of craftable intermediate products
-- alternative-input routing by local stock/craftability or first-listed master option
-- direct requirements, expandable production tree, raw/external totals and byproduct/catalyst views
-- cycle rounding, actual output, surplus, total process time and material-coverage summary
-- copyable procurement list
-- one-click creation of a prefilled COMMS procurement transmission
+The calculator supports searchable item/module/capital-hull targets, quantity and recipe-variant selection, BMM-default affiliation/IFF processing, optional verified RHW inventory deduction, recursive intermediate crafting, alternative-input routing, direct requirements, a production tree, raw/external totals, outputs/byproducts/catalysts, procurement-list copying and a one-click prefilled COMMS procurement transmission.
 
 Catalysts/personnel are treated as retained availability rather than consumed once per production cycle; the UI states this policy explicitly.
 
@@ -89,13 +77,9 @@ COMMS is split into:
 
 `scripts/validate_dashboard.py` checks the stable static load order, file references, duplicate static IDs, V4 calculator/runtime assets and required module hooks.
 
-`scripts/smoke_v40.py` launches headless Chrome/Chromium through the Chrome DevTools Protocol and boots an inline copy of the actual repository site. It verifies all current V4 routes:
+`scripts/smoke_v40.py` launches headless Chrome/Chromium through the Chrome DevTools Protocol and verifies all ten current V4 routes: five COMMAND nodes, `OPERATIONS / ITEM CALCULATOR` with the 289-recipe catalog, and four COMMS nodes.
 
-- five COMMAND nodes
-- `OPERATIONS / ITEM CALCULATOR` with the 289-recipe catalog
-- four COMMS nodes
-
-GitHub Actions runs structure validation, JavaScript syntax checks and this browser runtime smoke test before deployment. Pull requests validate only; deployment is skipped for PRs.
+GitHub Actions runs structure validation, JavaScript syntax checks and the browser runtime smoke test before deployment. Pull requests validate only; deployment is skipped for PRs.
 
 GitHub Pages deployment remains handled by `.github/workflows/rhw-pages-deploy.yml`.
 
