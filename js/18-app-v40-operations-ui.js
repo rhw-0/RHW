@@ -1,6 +1,6 @@
 /* ==========================================================================
    RHW WEB APP · V4.0 OPERATIONS UI
-   Item Calculator / Fabrication Planner + Shipyard planning bridge.
+   Recipe lookup, IFF-aware material costing and sale-price calculator.
    ========================================================================== */
 (function initRhwV4OperationsUi() {
   'use strict';
@@ -8,11 +8,20 @@
   const core = app?.operationsCore;
   if (!app || !core) return;
 
-  const NODES = Object.freeze([['calculator', 'ITEM CALCULATOR', 'FABRICATION PLANNER']]);
+  const NODES = Object.freeze([['calculator', 'ITEM CALCULATOR', 'RECIPE + COSTING']]);
   let rerenderTimer = null;
 
   function esc(value) { return app.util.escape(value); }
   function fmt(value) { return app.util.number(Math.max(0, Number(value) || 0)); }
+  function numberValue(value, fallback = 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  function clampMargin(value) { return Math.max(0, Math.min(95, numberValue(value, 20))); }
+  function money(value) {
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
+    return `${Math.round(Number(value)).toLocaleString('en-US')} CR`;
+  }
   function timeLabel(seconds) {
     let total = Math.max(0, Math.round(Number(seconds) || 0));
     const hours = Math.floor(total / 3600); total %= 3600;
@@ -26,11 +35,13 @@
     const base = app.state.calculator || {};
     return {
       productId: base.productId || app.config.operations.defaultProduct,
-      recipeId: base.recipeId || '', quantity: Math.max(1, Number(base.quantity) || 1),
+      recipeId: base.recipeId || '',
+      quantity: Math.max(1, Math.floor(numberValue(base.quantity, 1))),
       affiliationId: base.affiliationId || app.config.operations.defaultAffiliation,
-      useInventory: base.useInventory !== false, recursive: base.recursive !== false,
-      routingPolicy: base.routingPolicy === 'first' ? 'first' : 'stock', activeView: base.activeView || 'requirements',
-      search: base.search || '', altSelections: { ...(base.altSelections || {}) }
+      search: typeof base.search === 'string' ? base.search : '',
+      marginPercent: clampMargin(base.marginPercent),
+      materialPrices: base.materialPrices && typeof base.materialPrices === 'object' ? { ...base.materialPrices } : {},
+      altSelections: base.altSelections && typeof base.altSelections === 'object' ? { ...base.altSelections } : {}
     };
   }
 
@@ -42,158 +53,385 @@
   function workspaceMarkup() {
     return `<div class="operations-frame">
       <header class="workspace-heading operations-heading">
-        <div><div class="workspace-kicker"><span>OPERATIONS</span> RHW INDUSTRIAL PLANNING NETWORK</div><h2>ITEM CALCULATOR</h2><p>DISCOVERY RECIPE DATABASE // IFF-AWARE FABRICATION PLANNING</p></div>
+        <div><div class="workspace-kicker"><span>OPERATIONS</span> RHW INDUSTRIAL COSTING NETWORK</div><h2>ITEM CALCULATOR</h2><p>RECIPE LOOKUP // IFF MATERIAL REQUIREMENTS // BUILD COST // SALE PRICE</p></div>
         <div class="workspace-status" id="operationsStatus" data-tone="muted">LOADING RECIPE DATABASE</div>
       </header>
-      <nav id="operationsNodeNav" class="workspace-subnav operations-subnav" aria-label="Operations tools"><div class="workspace-subnav-label">OPERATIONS NODES</div><div class="workspace-subnav-tabs"><button type="button" data-operations-node="calculator" class="active"><span>ITEM CALCULATOR</span><small>FABRICATION PLANNER</small></button></div></nav>
+      <nav id="operationsNodeNav" class="workspace-subnav operations-subnav" aria-label="Operations tools"><div class="workspace-subnav-label">OPERATIONS NODES</div><div class="workspace-subnav-tabs"><button type="button" data-operations-node="calculator" class="active"><span>ITEM CALCULATOR</span><small>RECIPE + COSTING</small></button></div></nav>
       <div id="operationsNodeHost" class="operations-node-host"><section data-operations-panel="calculator" class="operations-node-panel"><div id="operationsCalculatorMount" class="ops-loading">LOADING DISCOVERY RECIPE DATABASE…</div></section></div>
     </div>`;
   }
 
-  function productOptions(catalog, calc) {
-    const q = app.util.normalize(calc.search);
-    const products = (catalog.products || []).filter(product => !q || app.util.normalize(`${product.name} ${product.id}`).includes(q));
-    return products.slice(0, 250).map(product => `<option value="${esc(product.id)}"${product.id === calc.productId ? ' selected' : ''}>${esc(product.name)}${product.recipeIds?.length > 1 ? ` · ${product.recipeIds.length} RECIPES` : ''}</option>`).join('');
+  function primaryOutput(recipe) {
+    return recipe?.outputs?.[0] || null;
   }
 
-  function factionOptions(catalog, calc) {
-    const factions = [{ id: '__none__', name: 'NO AFFILIATION BONUS' }, ...(catalog.factions || [])];
-    return factions.map(faction => `<option value="${esc(faction.id)}"${faction.id === calc.affiliationId ? ' selected' : ''}>${esc(faction.name)}${faction.id === 'br_m_grp' ? ' · RHW / BMM' : ''}</option>`).join('');
+  function recipeProduct(recipe) {
+    const output = primaryOutput(recipe);
+    return output ? core.product(output.id) : null;
   }
 
-  function recipeOptions(productId, calc) {
-    const recipes = core.recipesFor(productId);
-    return recipes.map((recipe, index) => `<option value="${esc(recipe.id)}"${recipe.id === calc.recipeId || (!calc.recipeId && index === 0) ? ' selected' : ''}>${esc(recipe.name)}${recipe.craftType ? ` · ${esc(recipe.craftType)}` : ''}</option>`).join('');
+  function recipeSearchText(recipe) {
+    const product = recipeProduct(recipe);
+    return app.util.normalize([
+      product?.name, product?.id, recipe?.name, recipe?.id, recipe?.craftType,
+      ...(recipe?.outputs || []).map(output => output.name || output.id)
+    ].filter(Boolean).join(' '));
   }
 
-  function alternativeControls(plan, calc) {
-    const groups = (plan.rootRecipe.inputs || []).map((group, index) => ({ group, index })).filter(entry => (entry.group.options || []).length > 1);
+  function matchingRecipes(search = '') {
+    const q = app.util.normalize(search);
+    return [...(core.state.catalog?.recipes || [])]
+      .filter(recipe => !q || recipeSearchText(recipe).includes(q))
+      .sort((a, b) => {
+        const aName = recipeProduct(a)?.name || a.name || a.id;
+        const bName = recipeProduct(b)?.name || b.name || b.id;
+        return aName.localeCompare(bName) || a.id.localeCompare(b.id);
+      });
+  }
+
+  function recipeLabel(recipe) {
+    const product = recipeProduct(recipe);
+    const productName = product?.name || recipe?.name || recipe?.id || 'UNKNOWN RECIPE';
+    const variants = product ? core.recipesFor(product.id) : [];
+    if (variants.length <= 1) return productName;
+    const qualifier = recipe.craftType || recipe.name || recipe.id;
+    const same = app.util.normalize(qualifier) === app.util.normalize(productName);
+    return `${productName} · ${same ? recipe.id : qualifier}`;
+  }
+
+  function recipeOptions(recipes, selectedId) {
+    if (!recipes.length) return '<option value="">NO MATCHING RECIPES</option>';
+    return recipes.map(recipe => `<option value="${esc(recipe.id)}"${recipe.id === selectedId ? ' selected' : ''}>${esc(recipeLabel(recipe))}</option>`).join('');
+  }
+
+  function iffEntries(recipe, selectedId) {
+    const entries = [];
+    const seen = new Set();
+    const add = (id, name, factor) => {
+      if (!id || seen.has(id)) return;
+      seen.add(id);
+      entries.push({ id, name, factor });
+    };
+    const bmmFactor = core.factorFor(recipe, 'br_m_grp');
+    add('br_m_grp', bmmFactor !== 1 ? `BMM · RHW DEFAULT · ${bmmFactor.toFixed(2)}×` : 'BMM · RHW DEFAULT · NO BONUS', bmmFactor);
+    add('__none__', 'NO IFF BONUS · 1.00×', 1);
+    for (const bonus of recipe?.bonuses || []) {
+      if (bonus.id === 'br_m_grp') continue;
+      add(bonus.id, `${bonus.name || bonus.id} · ${Number(bonus.factor || 1).toFixed(2)}×`, Number(bonus.factor || 1));
+    }
+    if (selectedId && !seen.has(selectedId)) {
+      const faction = core.state.catalog?.factions?.find(entry => entry.id === selectedId);
+      add(selectedId, `${faction?.name || selectedId} · NO BONUS`, 1);
+    }
+    return entries;
+  }
+
+  function ensureState(raw) {
+    const calc = { ...raw };
+    const matches = matchingRecipes(calc.search);
+    let selected = core.recipe(calc.recipeId);
+    if (!selected || (calc.search && !matches.some(recipe => recipe.id === selected.id))) selected = matches[0] || null;
+    if (!selected && calc.productId) selected = core.recipesFor(calc.productId)[0] || null;
+    if (!selected) selected = core.state.catalog?.recipes?.[0] || null;
+    if (!selected) return calc;
+    const output = primaryOutput(selected);
+    calc.recipeId = selected.id;
+    calc.productId = output?.id || calc.productId;
+    const allowedIff = new Set(iffEntries(selected, calc.affiliationId).map(entry => entry.id));
+    if (!allowedIff.has(calc.affiliationId)) calc.affiliationId = app.config.operations.defaultAffiliation;
+    return calc;
+  }
+
+  function alternativeControls(recipe, calc) {
+    const groups = (recipe.inputs || []).map((group, index) => ({ group, index })).filter(entry => (entry.group.options || []).length > 1);
     if (!groups.length) return '';
-    return `<section class="ops-alt-controls"><div class="ops-subhead"><small>INPUT ROUTING</small><strong>ALTERNATIVE MATERIALS</strong></div>${groups.map(({ group, index }) => {
-      const key = `${plan.rootRecipe.id}:${index}`; const current = calc.altSelections[key] || '__auto__';
-      return `<label class="comms-field"><span>${esc((group.options || []).map(option => option.name).join(' / '))}</span><select data-alt-group="${esc(key)}"><option value="__auto__"${current === '__auto__' ? ' selected' : ''}>AUTO · ${calc.routingPolicy === 'stock' ? 'BEST STOCK / CRAFTABLE' : 'FIRST MASTER OPTION'}</option>${group.options.map(option => `<option value="${esc(option.id)}"${current === option.id ? ' selected' : ''}>${esc(option.name)} · ${fmt(option.qty)} / CYCLE</option>`).join('')}</select></label>`;
-    }).join('')}</section>`;
+    return `<div class="ops-alternatives"><div class="ops-mini-head"><span>ALTERNATIVE INPUTS</span><small>CHOOSE WHICH MATERIAL ROUTE YOU WANT TO PRICE</small></div>${groups.map(({ group, index }) => {
+      const key = `${recipe.id}:${index}`;
+      const selected = calc.altSelections[key] || group.options[0]?.id || '';
+      return `<label class="comms-field"><span>${esc(group.options.map(option => option.name || option.id).join(' / '))}</span><select data-alt-group="${esc(key)}">${group.options.map(option => `<option value="${esc(option.id)}"${option.id === selected ? ' selected' : ''}>${esc(option.name || option.id)} · ${fmt(option.qty)} / CYCLE</option>`).join('')}</select></label>`;
+    }).join('')}</div>`;
   }
 
-  function summaryMarkup(plan) {
-    const iffName = plan.affiliationId === '__none__' ? 'NONE' : (core.state.catalog.factions.find(f => f.id === plan.affiliationId)?.name || plan.affiliationId);
-    const externalQty = plan.external.reduce((sum, entry) => sum + entry.qty, 0);
-    return `<div class="ops-summary">
-      <div class="ops-target-name"><small>ACTIVE PRODUCTION TARGET</small><strong>${esc(plan.product.name)}</strong><span>${esc(plan.rootRecipe.name)} // ${esc(plan.rootRecipe.craftType || 'GENERAL FABRICATION')}</span></div>
-      <div class="ops-summary-grid"><div><small>TARGET</small><strong>${fmt(plan.targetQty)}</strong></div><div><small>CYCLES</small><strong>${fmt(plan.cycles)}</strong></div><div><small>ACTUAL OUTPUT</small><strong>${fmt(plan.actualOutput)}</strong></div><div><small>SURPLUS</small><strong>${fmt(plan.surplus)}</strong></div><div><small>IFF FACTOR</small><strong>${plan.rootFactor.toFixed(2)}×</strong></div><div><small>PROCESS TIME</small><strong>${timeLabel(plan.totalTime)}</strong></div></div>
-      <div class="ops-readiness"><div><span>DIRECT STOCK COVERAGE</span><strong>${plan.useInventory ? `${plan.directCoverage}%` : 'RECIPE MODE'}</strong></div><div class="ops-readiness-bar"><i style="width:${plan.useInventory ? plan.directCoverage : 100}%"></i></div></div>
-      <div class="ops-summary-flags"><span class="${plan.external.length ? 'warn' : 'good'}">${plan.external.length ? `${plan.external.length} EXTERNAL LINES // ${fmt(externalQty)} UNITS` : 'NO EXTERNAL MATERIAL DEFICIT'}</span><span>${fmt(plan.processCount)} PRODUCTION PROCESSES</span><span>${esc(iffName)}</span><span>${plan.telemetryReady ? 'LIVE RHW INVENTORY' : 'RECIPE DATABASE ONLY'}</span></div>
+  function buildQuote(calc) {
+    return core.buildPlan({
+      productId: calc.productId,
+      recipeId: calc.recipeId,
+      quantity: calc.quantity,
+      affiliationId: calc.affiliationId,
+      useInventory: false,
+      recursive: false,
+      routingPolicy: 'first',
+      altSelections: calc.altSelections
+    });
+  }
+
+  function materialRows(plan) {
+    const byId = new Map();
+    for (const row of plan.directRequirements || []) {
+      const id = row.item?.id || row.item?.name || 'unknown';
+      const current = byId.get(id) || { id, name: row.item?.name || id, required: 0 };
+      current.required += Math.max(0, Number(row.required) || 0);
+      byId.set(id, current);
+    }
+    return [...byId.values()];
+  }
+
+  function storedPrice(prices, id) {
+    if (!Object.prototype.hasOwnProperty.call(prices, id)) return null;
+    const raw = prices[id];
+    if (raw === '' || raw === null || raw === undefined) return null;
+    const value = Number(raw);
+    return Number.isFinite(value) && value >= 0 ? value : null;
+  }
+
+  function pricingFor(materials, calc, actualOutput) {
+    let knownCost = 0;
+    let pricedCount = 0;
+    for (const row of materials) {
+      const price = storedPrice(calc.materialPrices, row.id);
+      if (price === null) continue;
+      pricedCount += 1;
+      knownCost += row.required * price;
+    }
+    const missingCount = materials.length - pricedCount;
+    const complete = missingCount === 0;
+    const totalCost = complete ? knownCost : null;
+    const unitCost = complete && actualOutput > 0 ? totalCost / actualOutput : null;
+    const margin = clampMargin(calc.marginPercent) / 100;
+    const sellPerUnit = unitCost === null ? null : unitCost / Math.max(0.05, 1 - margin);
+    const revenue = sellPerUnit === null ? null : sellPerUnit * actualOutput;
+    const profit = revenue === null || totalCost === null ? null : revenue - totalCost;
+    return { knownCost, pricedCount, missingCount, complete, totalCost, unitCost, sellPerUnit, revenue, profit };
+  }
+
+  function materialsMarkup(materials, calc) {
+    if (!materials.length) return '<div class="ops-empty good">THIS RECIPE HAS NO CONSUMED MATERIAL INPUTS</div>';
+    return `<div class="ops-material-table-wrap"><table class="ops-material-table"><thead><tr><th>MATERIAL</th><th>REQUIRED</th><th>PRICE / UNIT</th><th>LINE COST</th></tr></thead><tbody>${materials.map(row => {
+      const price = storedPrice(calc.materialPrices, row.id);
+      const line = price === null ? null : row.required * price;
+      return `<tr class="ops-material-row" data-material-id="${esc(row.id)}" data-required="${row.required}"><td><strong>${esc(row.name)}</strong><small>${esc(row.id)}</small></td><td>${fmt(row.required)}</td><td><div class="ops-price-input-wrap"><input class="ops-price-input" data-material-price="${esc(row.id)}" type="number" inputmode="decimal" min="0" step="1" value="${price === null ? '' : esc(String(price))}" placeholder="0" /><span>CR</span></div></td><td data-line-cost>${money(line)}</td></tr>`;
+    }).join('')}</tbody></table></div>`;
+  }
+
+  function catalystsMarkup(plan) {
+    if (!plan.catalysts?.length && !plan.byproducts?.length) return '';
+    const catalystText = plan.catalysts?.length ? plan.catalysts.map(row => `${row.name} × ${fmt(row.qty)}`).join(' · ') : 'NONE';
+    const byproductText = plan.byproducts?.length ? plan.byproducts.map(row => `${row.name} × ${fmt(row.qty)}`).join(' · ') : 'NONE';
+    return `<details class="ops-details"><summary>RECIPE NOTES</summary><div><strong>RETAINED / NOT CONSUMED</strong><span>${esc(catalystText)}</span><strong>BYPRODUCTS / NOT CREDITED AGAINST COST</strong><span>${esc(byproductText)}</span></div></details>`;
+  }
+
+  function pricingSummaryMarkup(pricing, calc, materials) {
+    return `<div class="ops-pricing-summary">
+      <div class="ops-priced-state"><span>PRICE COVERAGE</span><strong id="opsPriceCoverage" class="${pricing.complete ? 'good' : 'warn'}">${pricing.pricedCount} / ${materials.length} MATERIALS</strong></div>
+      <div class="ops-quote-grid">
+        <div><small>TOTAL BUILD COST</small><strong id="opsTotalCost">${pricing.complete ? money(pricing.totalCost) : `${money(pricing.knownCost)} PARTIAL`}</strong></div>
+        <div><small>COST / OUTPUT</small><strong id="opsUnitCost">${money(pricing.unitCost)}</strong></div>
+        <div class="accent"><small>SELL PRICE / OUTPUT</small><strong id="opsSellUnit">${money(pricing.sellPerUnit)}</strong></div>
+        <div><small>EXPECTED REVENUE</small><strong id="opsRevenue">${money(pricing.revenue)}</strong></div>
+        <div><small>EXPECTED PROFIT</small><strong id="opsProfit">${money(pricing.profit)}</strong></div>
+      </div>
+      <label class="comms-field ops-margin-field"><span>TARGET PROFIT MARGIN</span><div class="ops-margin-input"><input id="opsMargin" type="number" inputmode="decimal" min="0" max="95" step="1" value="${esc(String(calc.marginPercent))}" /><span>%</span></div><small>MARGIN = PROFIT AS A SHARE OF THE SELLING PRICE. RHW CALCULATES THE REQUIRED SALE PRICE.</small></label>
+      <div id="opsPricingWarning" class="ops-cost-note ${pricing.complete ? 'good' : 'warn'}">${pricing.complete ? 'ALL MATERIALS PRICED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // TOTALS ARE PARTIAL`}</div>
     </div>`;
   }
 
-  function requirementsMarkup(plan) {
-    if (!plan.directRequirements.length) return '<div class="ops-empty good">NO CONSUMED INPUTS FOR THIS RECIPE</div>';
-    return `<div class="ops-table-wrap"><table class="ops-table"><thead><tr><th>MATERIAL</th><th>REQUIRED</th><th>RHW STOCK</th><th>DIRECT GAP</th></tr></thead><tbody>${plan.directRequirements.map(row => `<tr><td><strong>${esc(row.item.name)}</strong><small>${row.groupKind.includes('alternative') ? 'ALTERNATIVE INPUT' : 'DIRECT INPUT'}</small></td><td>${fmt(row.required)}</td><td>${plan.useInventory ? fmt(row.stockAvailable) : '—'}</td><td class="${row.gapBeforeCrafting ? 'ops-gap' : 'ops-covered'}">${fmt(row.gapBeforeCrafting)}</td></tr>`).join('')}</tbody></table></div><div class="ops-result-note">DIRECT GAP IS BEFORE RECURSIVE CRAFTING. OPEN PRODUCTION TREE OR RAW / EXTERNAL TO SEE THE COMPLETE PLAN.</div>`;
-  }
-
-  function treeNode(node, depth = 0) {
-    const itemName = node.item?.name || node.item?.id || 'ITEM';
-    const meta = node.type === 'recipe' ? `${fmt(node.required)} TARGET // ${fmt(node.cycles)} CYCLES // ${fmt(node.actualOutput)} OUTPUT` : `${fmt(node.required)} REQUIRED // ${fmt(node.usedStock || 0)} STOCK // ${fmt(node.missing || 0)} GAP`;
-    return `<div class="ops-tree-node status-${node.type}" style="--ops-depth:${depth}"><div class="ops-tree-line"><span>${esc(node.type.toUpperCase())}</span><div><strong>${esc(itemName)}</strong><small>${esc(meta)}</small></div></div>${(node.children || []).length ? `<div class="ops-tree-children">${node.children.map(child => treeNode(child, depth + 1)).join('')}</div>` : ''}</div>`;
-  }
-
-  function rawMarkup(plan) {
-    if (!plan.external.length) return '<div class="ops-empty good">ALL CONSUMED INPUTS ARE COVERED BY RHW STOCK AND/OR CRAFTABLE INTERMEDIATES<small>NO EXTERNAL PROCUREMENT REQUIRED</small></div>';
-    return `<div class="ops-table-wrap"><table class="ops-table"><thead><tr><th>EXTERNAL MATERIAL</th><th>DEFICIT</th></tr></thead><tbody>${plan.external.map(row => `<tr><td><strong>${esc(row.name)}</strong><small>${esc(row.id)}</small></td><td class="ops-gap">${fmt(row.qty)}</td></tr>`).join('')}</tbody></table></div>`;
-  }
-
-  function outputsMarkup(plan) {
-    const outputRows = [{ name: plan.product.name, qty: plan.actualOutput, label: plan.surplus ? `TARGET ${fmt(plan.targetQty)} // SURPLUS +${fmt(plan.surplus)}` : 'TARGET OUTPUT' }, ...plan.byproducts.map(row => ({ name: row.name, qty: row.qty, label: 'BYPRODUCT' }))];
-    return `<div class="ops-output-grid"><section><div class="ops-subhead"><small>OUTPUT LEDGER</small><strong>PRODUCTS / BYPRODUCTS</strong></div><div class="ops-output-list">${outputRows.map(row => `<div><span>${esc(row.name)}<small>${esc(row.label)}</small></span><strong>${fmt(row.qty)}</strong></div>`).join('')}</div></section><section><div class="ops-subhead"><small>RETAINED AVAILABILITY</small><strong>CATALYSTS / PERSONNEL</strong></div><div class="ops-output-list">${plan.catalysts.length ? plan.catalysts.map(row => `<div><span>${esc(row.name)}<small>${plan.useInventory ? `RHW STOCK ${fmt(row.stock)}` : 'NOT CONSUMED PER CYCLE'}</small></span><strong class="${plan.useInventory && row.stock < row.qty ? 'ops-gap' : ''}">${fmt(row.qty)}</strong></div>`).join('') : '<div><span>NO CATALYST REQUIREMENT</span><strong>—</strong></div>'}</div><div class="ops-result-note">CATALYSTS / PERSONNEL ARE TREATED AS RETAINED AVAILABILITY, NOT CONSUMED ONCE PER PRODUCTION CYCLE.</div></section></div>`;
-  }
-
-  function resultMarkup(plan, calc) {
-    const view = calc.activeView;
-    const body = view === 'tree' ? `<div class="ops-tree">${treeNode(plan.tree)}</div>` : view === 'raw' ? rawMarkup(plan) : view === 'outputs' ? outputsMarkup(plan) : requirementsMarkup(plan);
-    return `<section class="ops-panel ops-results-panel"><div class="ops-panel-head"><div><span>03</span><strong>FABRICATION ANALYSIS</strong></div><small>${plan.telemetryReady ? 'LIVE INVENTORY LINKED' : 'DATABASE MODE'}</small></div><div class="ops-result-tabs" role="tablist">${[['requirements','REQUIREMENTS'],['tree','PRODUCTION TREE'],['raw','RAW / EXTERNAL'],['outputs','OUTPUTS']].map(([key,label]) => `<button type="button" data-result-view="${key}" class="${view === key ? 'active' : ''}">${label}</button>`).join('')}</div><div class="ops-results">${body}</div></section>`;
-  }
-
-  function procurementText(plan) {
-    if (!plan.external.length) return `RHW FABRICATION PLAN // ${plan.product.name}\nNo external procurement deficit detected.`;
-    return [`RHW PROCUREMENT DEFICIT`, `TARGET: ${plan.targetQty} × ${plan.product.name}`, `IFF: ${plan.affiliationId}`, '', ...plan.external.map(row => `- ${row.name}: ${Math.ceil(row.qty)} units`)].join('\n');
-  }
-
-  function renderCalculator() {
-    const mount = document.getElementById('operationsCalculatorMount'); const catalog = core.state.catalog;
+  function renderCalculator({ focusSearch = false } = {}) {
+    const mount = document.getElementById('operationsCalculatorMount');
+    const catalog = core.state.catalog;
     if (!mount || !catalog) return;
-    let calc = currentState();
-    if (!core.recipesFor(calc.productId).length) calc.productId = catalog.products.find(product => product.recipeIds?.length)?.id || catalog.products[0]?.id;
-    const recipes = core.recipesFor(calc.productId); if (!recipes.some(recipe => recipe.id === calc.recipeId)) calc.recipeId = recipes[0]?.id || ''; saveState(calc);
-    let plan; try { plan = core.buildPlan(calc); } catch (error) { mount.innerHTML = `<div class="ops-empty danger">CALCULATION FAILED<small>${esc(error.message)}</small></div>`; return; }
+
+    const calc = ensureState(currentState());
+    saveState(calc);
+    const selectedRecipe = core.recipe(calc.recipeId);
+    if (!selectedRecipe) {
+      mount.innerHTML = '<div class="ops-empty danger">NO RECIPE AVAILABLE</div>';
+      return;
+    }
+    const matches = matchingRecipes(calc.search);
+    let plan;
+    try { plan = buildQuote(calc); }
+    catch (error) {
+      mount.innerHTML = `<div class="ops-empty danger">CALCULATION FAILED<small>${esc(error.message)}</small></div>`;
+      return;
+    }
     core.state.currentPlan = plan;
+    const materials = materialRows(plan);
+    const pricing = pricingFor(materials, calc, plan.actualOutput);
+    const product = recipeProduct(selectedRecipe) || plan.product;
+    const iff = iffEntries(selectedRecipe, calc.affiliationId);
+
     mount.className = 'operations-calculator';
-    mount.innerHTML = `<div class="operations-layout"><section class="ops-panel"><div class="ops-panel-head"><div><span>01</span><strong>PRODUCTION TARGET</strong></div><small>${fmt(catalog.meta.recipeCount)} MASTER RECIPES</small></div><div class="ops-form-grid">
-      <label class="comms-field ops-wide"><span>SEARCH CATALOG</span><input id="opsSearch" type="search" value="${esc(calc.search)}" placeholder="Dunkirk, reactor, gold, module…" /></label>
-      <label class="comms-field ops-wide"><span>ITEM / MODULE / CAPITAL HULL</span><select id="opsProduct">${productOptions(catalog, calc)}</select><small>${fmt(catalog.meta.productCount)} BUILD TARGETS // SOURCE: DISCOVERY PUBLIC GAME CONFIG</small></label>
-      <label class="comms-field"><span>QUANTITY</span><input id="opsQuantity" type="number" min="1" step="1" value="${fmt(calc.quantity).replace(/,/g,'')}" /></label>
-      <label class="comms-field"><span>RECIPE VARIANT</span><select id="opsRecipe">${recipeOptions(calc.productId, calc)}</select><small>${recipes.length > 1 ? `${recipes.length} VARIANTS AVAILABLE` : 'MASTER RECIPE'}</small></label>
-      <label class="comms-field ops-wide"><span>AFFILIATION / IFF PROFILE</span><select id="opsAffiliation">${factionOptions(catalog, calc)}</select><small>BMM IS THE RHW DEFAULT // FACTOR APPLIES TO CONSUMED INPUTS + PROCESS TIME</small></label>
-      <label class="ops-toggle"><input id="opsUseInventory" type="checkbox"${calc.useInventory ? ' checked' : ''}${core.telemetryReady() ? '' : ' disabled'} /><span><strong>USE RHW LOCAL INVENTORY</strong><small>${core.telemetryReady() ? 'VERIFIED TELEMETRY WILL BE DEDUCTED ACROSS THE FULL PRODUCTION TREE' : 'UNAVAILABLE UNTIL A VERIFIED RHW UPLINK EXISTS'}</small></span></label>
-      <label class="ops-toggle"><input id="opsRecursive" type="checkbox"${calc.recursive ? ' checked' : ''} /><span><strong>CRAFT INTERMEDIATE PRODUCTS</strong><small>RECURSIVELY RESOLVE CRAFTABLE INPUTS BEFORE DECLARING EXTERNAL DEFICIT</small></span></label>
-      <label class="comms-field ops-wide"><span>ALTERNATIVE INPUT POLICY</span><select id="opsRouting"><option value="stock"${calc.routingPolicy === 'stock' ? ' selected' : ''}>AUTO · BEST LOCAL STOCK / CRAFTABLE</option><option value="first"${calc.routingPolicy === 'first' ? ' selected' : ''}>MASTER FILE · FIRST LISTED OPTION</option></select></label>
-    </div>${alternativeControls(plan, calc)}<div class="ops-data-note"><strong>RECIPE DATABASE</strong><span>${fmt(catalog.meta.recipeCount)} RECIPES // ${fmt(catalog.meta.factionCount)} IFF PROFILES // PUBLIC SOURCE: DISCOVERYGC GAMECONFIGPUBLIC</span></div><a class="ops-catalog-source" href="${esc(catalog.meta.sourceUrl)}" target="_blank" rel="noopener">OPEN PUBLIC DISCOVERY CONFIG SOURCE ↗</a></section>
-    <section class="ops-panel"><div class="ops-panel-head"><div><span>02</span><strong>BUILD SUMMARY</strong></div><small>AUTO-RECALCULATED</small></div>${summaryMarkup(plan)}<div class="ops-actions"><button type="button" id="opsCopyProcurement" class="ops-primary">COPY PROCUREMENT LIST</button><button type="button" id="opsCreateComms"${plan.external.length ? '' : ' disabled'}>CREATE PROCUREMENT TRANSMISSION</button></div></section></div>${resultMarkup(plan, calc)}`;
-    bindCalculatorControls(plan);
+    mount.innerHTML = `<div class="operations-layout-simple">
+      <section class="ops-panel ops-setup-panel"><div class="ops-panel-head"><div><span>01</span><strong>RECIPE</strong></div><small>${fmt(catalog.meta.recipeCount)} MASTER RECIPES</small></div>
+        <div class="ops-form-grid">
+          <label class="comms-field ops-wide"><span>SEARCH RECIPE</span><input id="opsRecipeSearch" type="search" value="${esc(calc.search)}" placeholder="Superstructure, Reactor, Gold, Docking Module…" autocomplete="off" /><small>TYPE A NAME OR RECIPE ID // FIRST MATCH IS SELECTED AUTOMATICALLY</small></label>
+          <label class="comms-field ops-wide"><span>SELECTED RECIPE</span><select id="opsRecipe">${recipeOptions(matches.length ? matches : [selectedRecipe], calc.recipeId)}</select><small>${matches.length} MATCH${matches.length === 1 ? '' : 'ES'} // ${esc(selectedRecipe.craftType || selectedRecipe.sourceType || 'GENERAL')}</small></label>
+          <label class="comms-field"><span>OUTPUT QUANTITY</span><input id="opsQuantity" type="number" inputmode="numeric" min="1" step="1" value="${calc.quantity}" /><small>EXAMPLE: 200 REACTORS</small></label>
+          <label class="comms-field"><span>AFFILIATION / IFF</span><select id="opsAffiliation">${iff.map(entry => `<option value="${esc(entry.id)}"${entry.id === calc.affiliationId ? ' selected' : ''}>${esc(entry.name)}</option>`).join('')}</select><small>BMM IS PRESELECTED FOR RHW</small></label>
+        </div>
+        ${alternativeControls(selectedRecipe, calc)}
+        <div class="ops-recipe-meta"><div><small>OUTPUT / CYCLE</small><strong>${fmt(plan.tree.outputPerCycle)}</strong></div><div><small>CYCLES</small><strong>${fmt(plan.cycles)}</strong></div><div><small>ACTUAL OUTPUT</small><strong>${fmt(plan.actualOutput)}</strong></div><div><small>SURPLUS</small><strong>${fmt(plan.surplus)}</strong></div><div><small>IFF FACTOR</small><strong>${plan.rootFactor.toFixed(2)}×</strong></div><div><small>PROCESS TIME</small><strong>${timeLabel(plan.totalTime)}</strong></div></div>
+        <div class="ops-selected-target"><small>ACTIVE RECIPE</small><strong>${esc(product?.name || selectedRecipe.name)}</strong><span>${esc(selectedRecipe.id)}</span></div>
+      </section>
+
+      <section class="ops-panel ops-cost-panel"><div class="ops-panel-head"><div><span>02</span><strong>MATERIAL COST</strong></div><small>ENTER YOUR UNIT PRICES</small></div>
+        ${materialsMarkup(materials, calc)}
+        <div class="ops-price-memory">MATERIAL PRICES ARE SAVED LOCALLY IN THIS BROWSER AND REUSED IN OTHER RECIPES.</div>
+        ${catalystsMarkup(plan)}
+      </section>
+
+      <section class="ops-panel ops-quote-panel"><div class="ops-panel-head"><div><span>03</span><strong>SALE QUOTE</strong></div><small>FROM MATERIAL COST + TARGET MARGIN</small></div>
+        ${pricingSummaryMarkup(pricing, calc, materials)}
+      </section>
+    </div>`;
+
+    bindCalculatorControls(plan, materials);
+    if (focusSearch) {
+      const search = document.getElementById('opsRecipeSearch');
+      if (search) {
+        search.focus();
+        const end = search.value.length;
+        try { search.setSelectionRange(end, end); } catch { /* non-text search implementation */ }
+      }
+    }
   }
 
-  function scheduleRender(patch = {}) { saveState(patch); clearTimeout(rerenderTimer); rerenderTimer = setTimeout(renderCalculator, 30); }
+  function scheduleRender(patch = {}, { focusSearch = false, delay = 45 } = {}) {
+    saveState(patch);
+    clearTimeout(rerenderTimer);
+    rerenderTimer = setTimeout(() => renderCalculator({ focusSearch }), delay);
+  }
 
-  function bindCalculatorControls(plan) {
-    document.getElementById('opsSearch')?.addEventListener('input', event => { const search = event.target.value; saveState({ search }); const select = document.getElementById('opsProduct'); if (select) select.innerHTML = productOptions(core.state.catalog, { ...currentState(), search }); });
-    document.getElementById('opsProduct')?.addEventListener('change', event => scheduleRender({ productId: event.target.value, recipeId: '', altSelections: {} }));
-    document.getElementById('opsQuantity')?.addEventListener('change', event => scheduleRender({ quantity: Math.max(1, Math.floor(Number(event.target.value) || 1)) }));
-    document.getElementById('opsRecipe')?.addEventListener('change', event => scheduleRender({ recipeId: event.target.value, altSelections: {} }));
+  function updatePricingDisplay(plan, materials) {
+    const calc = currentState();
+    const pricing = pricingFor(materials, calc, plan.actualOutput);
+    document.querySelectorAll('.ops-material-row').forEach(row => {
+      const id = row.dataset.materialId || '';
+      const required = numberValue(row.dataset.required, 0);
+      const price = storedPrice(calc.materialPrices, id);
+      const target = row.querySelector('[data-line-cost]');
+      if (target) target.textContent = money(price === null ? null : required * price);
+    });
+    const write = (id, value) => { const target = document.getElementById(id); if (target) target.textContent = value; };
+    write('opsPriceCoverage', `${pricing.pricedCount} / ${materials.length} MATERIALS`);
+    const coverage = document.getElementById('opsPriceCoverage');
+    if (coverage) coverage.className = pricing.complete ? 'good' : 'warn';
+    write('opsTotalCost', pricing.complete ? money(pricing.totalCost) : `${money(pricing.knownCost)} PARTIAL`);
+    write('opsUnitCost', money(pricing.unitCost));
+    write('opsSellUnit', money(pricing.sellPerUnit));
+    write('opsRevenue', money(pricing.revenue));
+    write('opsProfit', money(pricing.profit));
+    const warning = document.getElementById('opsPricingWarning');
+    if (warning) {
+      warning.className = `ops-cost-note ${pricing.complete ? 'good' : 'warn'}`;
+      warning.textContent = pricing.complete ? 'ALL MATERIALS PRICED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // TOTALS ARE PARTIAL`;
+    }
+  }
+
+  function bindCalculatorControls(plan, materials) {
+    document.getElementById('opsRecipeSearch')?.addEventListener('input', event => {
+      const search = event.target.value;
+      const matches = matchingRecipes(search);
+      const select = document.getElementById('opsRecipe');
+      if (select) select.innerHTML = recipeOptions(matches, matches[0]?.id || '');
+      if (!matches.length) {
+        saveState({ search });
+        return;
+      }
+      const recipe = matches[0];
+      const output = primaryOutput(recipe);
+      scheduleRender({ search, recipeId: recipe.id, productId: output?.id || currentState().productId, altSelections: {} }, { focusSearch: true, delay: 140 });
+    });
+
+    document.getElementById('opsRecipe')?.addEventListener('change', event => {
+      const recipe = core.recipe(event.target.value);
+      if (!recipe) return;
+      const output = primaryOutput(recipe);
+      scheduleRender({ recipeId: recipe.id, productId: output?.id || currentState().productId, altSelections: {} });
+    });
+    document.getElementById('opsQuantity')?.addEventListener('change', event => scheduleRender({ quantity: Math.max(1, Math.floor(numberValue(event.target.value, 1))) }));
     document.getElementById('opsAffiliation')?.addEventListener('change', event => scheduleRender({ affiliationId: event.target.value }));
-    document.getElementById('opsUseInventory')?.addEventListener('change', event => scheduleRender({ useInventory: event.target.checked }));
-    document.getElementById('opsRecursive')?.addEventListener('change', event => scheduleRender({ recursive: event.target.checked }));
-    document.getElementById('opsRouting')?.addEventListener('change', event => scheduleRender({ routingPolicy: event.target.value, altSelections: {} }));
-    document.querySelectorAll('[data-alt-group]').forEach(select => select.addEventListener('change', event => { const calc = currentState(); const selections = { ...calc.altSelections }; if (event.target.value === '__auto__') delete selections[event.target.dataset.altGroup]; else selections[event.target.dataset.altGroup] = event.target.value; scheduleRender({ altSelections: selections }); }));
-    document.querySelectorAll('[data-result-view]').forEach(button => button.addEventListener('click', () => scheduleRender({ activeView: button.dataset.resultView })));
-    document.getElementById('opsCopyProcurement')?.addEventListener('click', async () => { const copied = await app.util.copy(procurementText(plan)); app.notify(copied ? 'PROCUREMENT LIST COPIED' : 'COPY FAILED', copied ? 'good' : 'warn'); });
-    document.getElementById('opsCreateComms')?.addEventListener('click', () => createProcurementTransmission(plan));
-  }
+    document.querySelectorAll('[data-alt-group]').forEach(select => select.addEventListener('change', event => {
+      const calc = currentState();
+      const selections = { ...calc.altSelections, [event.target.dataset.altGroup]: event.target.value };
+      scheduleRender({ altSelections: selections });
+    }));
 
-  function createProcurementTransmission(plan) {
-    if (!plan.external.length || !app.storage) return;
-    const template = app.template('procurement'); const current = app.storage.defaultState();
-    current.templateKey = 'procurement'; current.recipient = template.recipient || ''; current.encryption = template.encryption || current.encryption; current.classification = template.classification || current.classification; current.salutation = template.salutation || current.salutation; current.closing = template.closing || current.closing;
-    current.subject = `Material Procurement Request — ${plan.product.name}`;
-    current.message = [`## Production Requirement`, '', `Resolution Heavy Works is preparing production of ${plan.targetQty} × ${plan.product.name}.`, '', `!status IFF PROFILE: ${plan.affiliationId}`, '', `## External Procurement Deficit`, '', ...plan.external.map(row => `- ${row.name} — ${Math.ceil(row.qty)} units`), '', `Please advise availability, lead time and commercial terms.`].join('\n');
-    current.draftName = `Procurement — ${plan.product.name}`;
-    app.state.comms = app.storage.snapshotSender(app.storage.normalizeState(current)); app.storage.saveCurrent(); app.navigate('comms', 'forum'); app.comms?.renderForm?.(); app.notify('PROCUREMENT TRANSMISSION PREFILLED');
+    document.querySelectorAll('[data-material-price]').forEach(input => input.addEventListener('input', event => {
+      const calc = currentState();
+      const prices = { ...calc.materialPrices };
+      const key = event.target.dataset.materialPrice;
+      if (event.target.value === '') delete prices[key];
+      else prices[key] = Math.max(0, numberValue(event.target.value, 0));
+      saveState({ materialPrices: prices });
+      updatePricingDisplay(plan, materials);
+    }));
+    document.getElementById('opsMargin')?.addEventListener('input', event => {
+      saveState({ marginPercent: clampMargin(event.target.value) });
+      updatePricingDisplay(plan, materials);
+    });
   }
 
   function installShipyardBridge() {
-    const mount = document.getElementById('shipyardControl'); if (!mount || mount.dataset.v40PlannerBridge === 'true') return; mount.dataset.v40PlannerBridge = 'true';
+    const mount = document.getElementById('shipyardControl');
+    if (!mount || mount.dataset.v40PlannerBridge === 'true') return;
+    mount.dataset.v40PlannerBridge = 'true';
     const enhance = () => {
       mount.querySelectorAll('.hull-registry-row').forEach(row => {
-        if (row.querySelector('.shipyard-plan-button')) return; const label = row.querySelector('.hull-registry-name'); if (!label) return; const text = app.util.normalize(label.textContent);
-        const target = text.includes('dunkirk') ? app.config.operations.shipyardTargets.dunkirk : text.includes('invincible') ? app.config.operations.shipyardTargets.invincible : null; if (!target) return;
-        const button = document.createElement('button'); button.type = 'button'; button.className = 'shipyard-plan-button'; button.textContent = 'PLAN 1 HULL'; button.addEventListener('click', event => { event.stopPropagation(); openTarget(target, 1); }); label.appendChild(button);
+        if (row.querySelector('.shipyard-plan-button')) return;
+        const label = row.querySelector('.hull-registry-name');
+        if (!label) return;
+        const text = app.util.normalize(label.textContent);
+        const target = text.includes('dunkirk') ? app.config.operations.shipyardTargets.dunkirk : text.includes('invincible') ? app.config.operations.shipyardTargets.invincible : null;
+        if (!target) return;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'shipyard-plan-button';
+        button.textContent = 'PRICE / PLAN 1 HULL';
+        button.addEventListener('click', event => { event.stopPropagation(); openTarget(target, 1); });
+        label.appendChild(button);
       });
     };
-    enhance(); new MutationObserver(enhance).observe(mount, { childList: true, subtree: true });
+    enhance();
+    new MutationObserver(enhance).observe(mount, { childList: true, subtree: true });
   }
 
-  function openTarget(productId, quantity = 1) { saveState({ productId, quantity, recipeId: '', search: '', activeView: 'requirements', altSelections: {} }); app.navigate('operations', 'calculator'); renderCalculator(); }
+  function openTarget(productId, quantity = 1) {
+    const recipe = core.recipesFor(productId)[0];
+    const product = core.product(productId);
+    if (!recipe) return;
+    saveState({ productId, recipeId: recipe.id, quantity, search: product?.name || '', altSelections: {} });
+    app.navigate('operations', 'calculator');
+    renderCalculator();
+  }
 
   function activate(node, { updateRoute = true } = {}) {
-    const valid = node === 'calculator' ? 'calculator' : 'calculator'; app.state.operationsNode = valid; app.store.set(app.config.storageKeys.operationsNode, valid); document.body.dataset.operationsNode = valid; app.setActiveNode('OPERATIONS / ITEM CALCULATOR'); document.title = `RHW OPERATIONS CALCULATOR · ${app.version}`;
-    if (updateRoute && app.state.activeWorkspace === 'operations') app.route.write('operations', valid); if (core.state.catalog) renderCalculator();
+    const valid = node === 'calculator' ? 'calculator' : 'calculator';
+    app.state.operationsNode = valid;
+    app.store.set(app.config.storageKeys.operationsNode, valid);
+    document.body.dataset.operationsNode = valid;
+    app.setActiveNode('OPERATIONS / ITEM CALCULATOR');
+    document.title = `RHW ITEM CALCULATOR · ${app.version}`;
+    if (updateRoute && app.state.activeWorkspace === 'operations') app.route.write('operations', valid);
+    if (core.state.catalog) renderCalculator();
   }
 
   async function init() {
-    const workspace = document.getElementById('workspaceOperations'); if (!workspace || document.getElementById('operationsNodeNav')) return;
-    workspace.innerHTML = workspaceMarkup(); app.state.calculator = { ...currentState(), ...(app.store.get(app.config.storageKeys.calculatorState, {}) || {}) };
+    const workspace = document.getElementById('workspaceOperations');
+    if (!workspace || document.getElementById('operationsNodeNav')) return;
+    workspace.innerHTML = workspaceMarkup();
+    app.state.calculator = { ...currentState(), ...(app.store.get(app.config.storageKeys.calculatorState, {}) || {}) };
     try {
-      const catalog = await core.loadCatalog(); const status = document.getElementById('operationsStatus'); if (status) { status.textContent = `${fmt(catalog.meta.recipeCount)} RECIPES // DATABASE READY`; status.dataset.tone = 'good'; } renderCalculator();
+      const catalog = await core.loadCatalog();
+      const status = document.getElementById('operationsStatus');
+      if (status) { status.textContent = `${fmt(catalog.meta.recipeCount)} RECIPES // COSTING READY`; status.dataset.tone = 'good'; }
+      renderCalculator();
     } catch (error) {
-      const mount = document.getElementById('operationsCalculatorMount'); if (mount) mount.innerHTML = `<div class="ops-empty danger">RECIPE DATABASE FAILED TO LOAD<small>${esc(error.message)}</small></div>`; const status = document.getElementById('operationsStatus'); if (status) { status.textContent = 'RECIPE DATABASE ERROR'; status.dataset.tone = 'danger'; } throw error;
+      const mount = document.getElementById('operationsCalculatorMount');
+      if (mount) mount.innerHTML = `<div class="ops-empty danger">RECIPE DATABASE FAILED TO LOAD<small>${esc(error.message)}</small></div>`;
+      const status = document.getElementById('operationsStatus');
+      if (status) { status.textContent = 'RECIPE DATABASE ERROR'; status.dataset.tone = 'danger'; }
+      throw error;
     }
     installShipyardBridge();
   }
