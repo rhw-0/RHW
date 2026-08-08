@@ -29,6 +29,8 @@
     if (!app.operationsCore?.state?.catalog?.meta?.recipeCount) failures.push('feature:recipe-catalog');
     const bustardAlias = app.operations?.recipeAliases?.ship_assembly_dsy_barge;
     if (!bustardAlias || bustardAlias.outputId !== 'dsy_barge_package' || !app.operationsCore?.recipe?.('ship_assembly_dsy_barge')) failures.push('feature:bustard-recipe-alias');
+    const iffSelect = document.getElementById('opsAffiliation');
+    if (iffSelect?.textContent?.includes('RHW DEFAULT')) failures.push('ui:bmm-iff-label');
     if (typeof app.comms?.activate !== 'function') failures.push('module:comms');
     if (typeof app.commsSafety?.init !== 'function') failures.push('module:comms-safety');
     if (typeof app.storage?.saveDraft !== 'function') failures.push('module:storage');
