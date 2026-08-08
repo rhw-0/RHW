@@ -9,6 +9,13 @@
   if (!app || !core) return;
 
   const NODES = Object.freeze([['calculator', 'ITEM CALCULATOR', 'RECIPE + COSTING']]);
+  const RECIPE_ALIASES = Object.freeze({
+    ship_assembly_dsy_barge: Object.freeze({
+      outputId: 'dsy_barge_package',
+      name: '"Bustard" Civilian Light Carrier',
+      terms: 'bustard civilian light carrier civilian carrier'
+    })
+  });
   let rerenderTimer = null;
 
   const esc = value => app.util.escape(value);
@@ -18,14 +25,6 @@
   function money(value) {
     if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
     return `${Math.round(Number(value)).toLocaleString('en-US')} CR`;
-  }
-  function timeLabel(seconds) {
-    let total = Math.max(0, Math.round(Number(seconds) || 0));
-    const hours = Math.floor(total / 3600); total %= 3600;
-    const minutes = Math.floor(total / 60); const secs = total % 60;
-    if (hours) return `${hours}H ${String(minutes).padStart(2, '0')}M ${String(secs).padStart(2, '0')}S`;
-    if (minutes) return `${minutes}M ${String(secs).padStart(2, '0')}S`;
-    return `${secs}S`;
   }
 
   function currentState() {
@@ -56,19 +55,34 @@
 
   const primaryOutput = recipe => recipe?.outputs?.[0] || null;
   const recipeProduct = recipe => { const output = primaryOutput(recipe); return output ? core.product(output.id) : null; };
+  function recipeAlias(recipe) {
+    const direct = RECIPE_ALIASES[recipe?.id];
+    if (direct) return direct;
+    const outputId = primaryOutput(recipe)?.id;
+    return Object.values(RECIPE_ALIASES).find(alias => alias.outputId === outputId) || null;
+  }
+  function recipeDisplayName(recipe) {
+    const alias = recipeAlias(recipe);
+    const product = recipeProduct(recipe);
+    return alias?.name || product?.name || recipe?.name || recipe?.id || 'UNKNOWN RECIPE';
+  }
   function recipeSearchText(recipe) {
     const product = recipeProduct(recipe);
-    return app.util.normalize([product?.name, product?.id, recipe?.name, recipe?.id, recipe?.craftType, ...(recipe?.outputs || []).map(output => output.name || output.id)].filter(Boolean).join(' '));
+    const alias = recipeAlias(recipe);
+    return app.util.normalize([
+      alias?.name, alias?.terms, product?.name, product?.id, recipe?.name, recipe?.id, recipe?.craftType,
+      ...(recipe?.outputs || []).flatMap(output => [output.name, output.id])
+    ].filter(Boolean).join(' '));
   }
   function matchingRecipes(search = '') {
     const query = app.util.normalize(search);
     return [...(core.state.catalog?.recipes || [])]
       .filter(recipe => !query || recipeSearchText(recipe).includes(query))
-      .sort((a, b) => (recipeProduct(a)?.name || a.name || a.id).localeCompare(recipeProduct(b)?.name || b.name || b.id) || a.id.localeCompare(b.id));
+      .sort((a, b) => recipeDisplayName(a).localeCompare(recipeDisplayName(b)) || a.id.localeCompare(b.id));
   }
   function recipeLabel(recipe) {
     const product = recipeProduct(recipe);
-    const name = product?.name || recipe?.name || recipe?.id || 'UNKNOWN RECIPE';
+    const name = recipeDisplayName(recipe);
     const variants = product ? core.recipesFor(product.id) : [];
     if (variants.length <= 1) return name;
     const qualifier = recipe.craftType || recipe.name || recipe.id;
@@ -192,11 +206,26 @@
 
   function quoteMarkup(pricing, calc, rows, actualOutput) {
     const total = pricing.complete ? money(pricing.totalCost) : `${money(pricing.knownCost)} PARTIAL`;
-    return `<div class="ops-pricing-summary"><div class="ops-priced-state"><span>PRICE COVERAGE</span><strong id="opsPriceCoverage" class="${pricing.complete ? 'good' : 'warn'}">${pricing.pricedCount} / ${rows.length} MATERIALS</strong></div><div class="ops-pricing-flow"><section class="ops-flow-card ops-flow-cost"><small>01 · MATERIAL COST</small><strong id="opsTotalCost">${total}</strong><span>TOTAL BUILD COST</span><div><em>COST / PRODUCED ITEM</em><b id="opsUnitCost">${money(pricing.unitCost)}</b></div></section><div class="ops-flow-arrow" aria-hidden="true">›</div><label class="ops-flow-card ops-flow-margin"><small>02 · TARGET PROFIT MARGIN</small><div class="ops-margin-input"><input id="opsMargin" type="number" inputmode="decimal" min="0" max="95" step="1" value="${esc(String(calc.marginPercent))}"><span>%</span></div><strong id="opsMarginLabel">${calc.marginPercent}% MARGIN</strong><p>PROFIT AS SHARE OF SELL PRICE</p></label><div class="ops-flow-arrow" aria-hidden="true">›</div><section class="ops-flow-card ops-flow-sell"><small>03 · RECOMMENDED SALE</small><strong id="opsSellUnit">${money(pricing.sellPerUnit)}</strong><span>SELL PRICE / ITEM</span><div><em>FOR ${fmt(actualOutput)} PRODUCED</em><b>RHW QUOTE</b></div></section></div><div class="ops-profit-strip"><div><small>PROFIT / ITEM</small><strong id="opsProfitUnit">${money(pricing.profitUnit)}</strong></div><div><small>TOTAL PROFIT</small><strong id="opsProfit">${money(pricing.profit)}</strong></div><div><small>TOTAL REVENUE</small><strong id="opsRevenue">${money(pricing.revenue)}</strong></div></div><div id="opsPricingWarning" class="ops-cost-note ${pricing.complete ? 'good' : 'warn'}">${pricing.complete ? 'ALL MATERIALS PRICED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD PRICES ABOVE TO COMPLETE THE QUOTE`}</div></div>`;
+    return `<div class="ops-pricing-summary">
+      <div class="ops-priced-state"><span>PRICE COVERAGE</span><strong id="opsPriceCoverage" class="${pricing.complete ? 'good' : 'warn'}">${pricing.pricedCount} / ${rows.length} MATERIALS</strong></div>
+      <div class="ops-pricing-flow">
+        <section class="ops-flow-card ops-flow-cost"><small>01 · MATERIAL COST</small><strong id="opsTotalCost">${total}</strong><span>TOTAL BUILD COST</span><div><em>COST / PRODUCED ITEM</em><b id="opsUnitCost">${money(pricing.unitCost)}</b></div></section>
+        <div class="ops-flow-arrow" aria-hidden="true">›</div>
+        <label class="ops-flow-card ops-flow-margin"><small>02 · TARGET PROFIT MARGIN</small><div class="ops-margin-input"><input id="opsMargin" type="number" inputmode="decimal" min="0" max="95" step="1" value="${esc(String(calc.marginPercent))}"><span>%</span></div><strong id="opsMarginLabel">${calc.marginPercent}% MARGIN</strong><p>PROFIT AS SHARE OF SELL PRICE</p></label>
+        <div class="ops-flow-arrow" aria-hidden="true">›</div>
+        <section class="ops-flow-card ops-flow-sell"><small>03 · RECOMMENDED SALE</small><strong id="opsSellUnit">${money(pricing.sellPerUnit)}</strong><span>SELL PRICE / ITEM</span><div><em>FOR ${fmt(actualOutput)} PRODUCED</em><b>RHW QUOTE</b></div></section>
+      </div>
+      <div class="ops-profit-strip">
+        <div><small>PROFIT / ITEM</small><strong id="opsProfitUnit">${money(pricing.profitUnit)}</strong></div>
+        <div><small>TOTAL PROFIT</small><strong id="opsProfit">${money(pricing.profit)}</strong></div>
+        <div class="ops-revenue-line"><small>TOTAL REVENUE // ${fmt(actualOutput)} PRODUCED</small><strong id="opsRevenue">${money(pricing.revenue)}</strong></div>
+      </div>
+      <div id="opsPricingWarning" class="ops-cost-note ${pricing.complete ? 'good' : 'warn'}">${pricing.complete ? 'ALL MATERIALS PRICED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD PRICES ABOVE TO COMPLETE THE QUOTE`}</div>
+    </div>`;
   }
 
   function noMatchMarkup(calc, catalog) {
-    return `<div class="operations-layout-simple"><section class="ops-panel ops-setup-panel"><div class="ops-panel-head"><div><span>01</span><strong>RECIPE</strong></div><small>${fmt(catalog.meta.recipeCount)} MASTER RECIPES</small></div><div class="ops-form-grid"><label class="comms-field ops-wide"><span>SEARCH RECIPE</span><input id="opsRecipeSearch" type="search" value="${esc(calc.search)}" placeholder="Superstructure, Reactor, Gold, Docking Module…" autocomplete="off"><small>TYPE A NAME OR RECIPE ID</small></label></div><div class="ops-empty ops-no-match">NO MATCHING RECIPE<small>TRY A DIFFERENT ITEM OR RECIPE NAME</small></div></section></div>`;
+    return `<div class="operations-layout-simple"><section class="ops-panel ops-setup-panel"><div class="ops-panel-head"><div><span>01</span><strong>RECIPE</strong></div><small>${fmt(catalog.meta.recipeCount)} MASTER RECIPES</small></div><div class="ops-form-grid"><label class="comms-field ops-wide"><span>SEARCH RECIPE</span><input id="opsRecipeSearch" type="search" value="${esc(calc.search)}" placeholder="Bustard, Superstructure, Reactor, Gold…" autocomplete="off"><small>TYPE A NAME OR RECIPE ID</small></label></div><div class="ops-empty ops-no-match">NO MATCHING RECIPE<small>TRY A DIFFERENT ITEM OR RECIPE NAME</small></div></section></div>`;
   }
 
   function bindSearchOnly() {
@@ -226,13 +255,6 @@
 
     const recipe = resolved.recipe;
     if (!recipe) { mount.innerHTML = '<div class="ops-empty danger">NO RECIPE AVAILABLE</div>'; return; }
-    const iff = iffEntries(recipe, calc.affiliationId);
-    if (recipe.restricted && !iff.length) {
-      mount.className = 'operations-calculator';
-      mount.innerHTML = `<div class="ops-empty danger">RESTRICTED RECIPE<small>NO AUTHORIZED IFF PROFILE IS PRESENT IN THE MASTER RECIPE</small></div>`;
-      return;
-    }
-
     let plan;
     try { plan = buildQuote(calc); }
     catch (error) { mount.innerHTML = `<div class="ops-empty danger">CALCULATION FAILED<small>${esc(error.message)}</small></div>`; return; }
@@ -240,13 +262,26 @@
     core.state.currentPlan = plan;
     const rows = materialRows(plan);
     const pricing = pricingFor(rows, calc, plan.actualOutput);
+    const iff = iffEntries(recipe, calc.affiliationId);
     const outputPerCycle = Math.max(1, Number(plan.tree?.outputPerCycle) || Number(primaryOutput(recipe)?.qty) || 1);
     const matches = resolved.matches.length ? resolved.matches : matchingRecipes('');
     const iffHint = recipe.restricted ? 'RESTRICTED RECIPE // ONLY AUTHORIZED IFF PROFILES ARE SHOWN' : 'BMM IS PRESELECTED FOR RHW';
-    const recipeHint = `${matches.length} MATCH${matches.length === 1 ? '' : 'ES'} // ${esc(recipe.craftType || recipe.sourceType || 'GENERAL')}${recipe.restricted ? ' // RESTRICTED IFF' : ''}`;
 
     mount.className = 'operations-calculator';
-    mount.innerHTML = `<div class="operations-layout-simple"><section class="ops-panel ops-setup-panel"><div class="ops-panel-head"><div><span>01</span><strong>RECIPE</strong></div><small>${fmt(catalog.meta.recipeCount)} MASTER RECIPES</small></div><div class="ops-form-grid"><label class="comms-field ops-wide"><span>SEARCH RECIPE</span><input id="opsRecipeSearch" type="search" value="${esc(calc.search)}" placeholder="Superstructure, Reactor, Gold, Docking Module…" autocomplete="off"><small>TYPE A NAME OR RECIPE ID // FIRST MATCH IS SELECTED AUTOMATICALLY</small></label><label class="comms-field ops-wide"><span>SELECTED RECIPE</span><select id="opsRecipe">${recipeOptions(matches, calc.recipeId)}</select><small>${recipeHint}</small></label><label class="comms-field"><span>OUTPUT QUANTITY</span><input id="opsQuantity" type="number" inputmode="numeric" min="1" step="1" value="${calc.quantity}"><small>EXAMPLE: 200 REACTORS</small></label><label class="comms-field"><span>AFFILIATION / IFF</span><select id="opsAffiliation">${iff.map(entry => `<option value="${esc(entry.id)}"${entry.id === calc.affiliationId ? ' selected' : ''}>${esc(entry.name)}</option>`).join('')}</select><small>${iffHint}</small></label></div><div class="ops-recipe-meta"><div><small>OUTPUT / CYCLE</small><strong>${fmt(outputPerCycle)}</strong></div><div><small>CYCLES</small><strong>${fmt(plan.cycles)}</strong></div><div><small>ACTUAL OUTPUT</small><strong>${fmt(plan.actualOutput)}</strong></div><div><small>PROCESS TIME</small><strong>${timeLabel(plan.totalTime)}</strong></div></div></section><section class="ops-panel ops-cost-panel"><div class="ops-panel-head"><div><span>02</span><strong>MATERIAL COST</strong></div><small>ENTER YOUR UNIT PRICES</small></div>${materialsMarkup(rows, calc)}<div class="ops-price-memory">MATERIAL PRICES ARE SAVED LOCALLY IN THIS BROWSER AND REUSED IN OTHER RECIPES.</div>${notesMarkup(plan)}</section><section class="ops-panel ops-quote-panel"><div class="ops-panel-head"><div><span>03</span><strong>PRICE CALCULATION</strong></div><small>COST → MARGIN → SELL PRICE</small></div>${quoteMarkup(pricing, calc, rows, plan.actualOutput)}</section></div>`;
+    mount.innerHTML = `<div class="operations-layout-simple">
+      <section class="ops-panel ops-setup-panel">
+        <div class="ops-panel-head"><div><span>01</span><strong>RECIPE</strong></div><small>${fmt(catalog.meta.recipeCount)} MASTER RECIPES</small></div>
+        <div class="ops-form-grid">
+          <label class="comms-field ops-wide"><span>SEARCH RECIPE</span><input id="opsRecipeSearch" type="search" value="${esc(calc.search)}" placeholder="Bustard, Superstructure, Reactor, Gold…" autocomplete="off"><small>TYPE A NAME OR RECIPE ID // FIRST MATCH IS SELECTED AUTOMATICALLY</small></label>
+          <label class="comms-field ops-wide"><span>SELECTED RECIPE</span><select id="opsRecipe">${recipeOptions(matches, calc.recipeId)}</select><small>${matches.length} MATCH${matches.length === 1 ? '' : 'ES'} // ${esc(recipe.craftType || recipe.sourceType || 'GENERAL')}${recipe.restricted ? ' // RESTRICTED IFF' : ''}</small></label>
+          <label class="comms-field"><span>OUTPUT QUANTITY</span><input id="opsQuantity" type="number" inputmode="numeric" min="1" step="1" value="${calc.quantity}"><small>EXAMPLE: 200 REACTORS</small></label>
+          <label class="comms-field"><span>AFFILIATION / IFF</span><select id="opsAffiliation">${iff.map(entry => `<option value="${esc(entry.id)}"${entry.id === calc.affiliationId ? ' selected' : ''}>${esc(entry.name)}</option>`).join('')}</select><small>${esc(iffHint)}</small></label>
+        </div>
+        <div class="ops-recipe-meta"><div><small>OUTPUT / CYCLE</small><strong>${fmt(outputPerCycle)}</strong></div><div><small>CYCLES</small><strong>${fmt(plan.cycles)}</strong></div><div><small>ACTUAL OUTPUT</small><strong>${fmt(plan.actualOutput)}</strong></div></div>
+      </section>
+      <section class="ops-panel ops-cost-panel"><div class="ops-panel-head"><div><span>02</span><strong>MATERIAL COST</strong></div><small>ENTER YOUR UNIT PRICES</small></div>${materialsMarkup(rows, calc)}<div class="ops-price-memory">MATERIAL PRICES ARE SAVED LOCALLY IN THIS BROWSER AND REUSED IN OTHER RECIPES.</div>${notesMarkup(plan)}</section>
+      <section class="ops-panel ops-quote-panel"><div class="ops-panel-head"><div><span>03</span><strong>PRICE CALCULATION</strong></div><small>COST → MARGIN → SELL PRICE</small></div>${quoteMarkup(pricing, calc, rows, plan.actualOutput)}</section>
+    </div>`;
     bindCalculator(plan, rows);
     if (focusSearch) {
       const search = document.getElementById('opsRecipeSearch');
@@ -339,7 +374,7 @@
   function openTarget(productId, quantity = 1) {
     const recipe = core.recipesFor(productId)[0]; const product = core.product(productId);
     if (!recipe) return;
-    saveState({ productId, recipeId: recipe.id, quantity, search: product?.name || '' });
+    saveState({ productId, recipeId: recipe.id, quantity, search: recipeDisplayName(recipe) || product?.name || '' });
     app.navigate('operations', 'calculator'); renderCalculator();
   }
 
@@ -373,5 +408,5 @@
     installShipyardBridge();
   }
 
-  app.operations = { init, activate, openTarget, renderCalculator, nodes: NODES };
+  app.operations = { init, activate, openTarget, renderCalculator, nodes: NODES, recipeAliases: RECIPE_ALIASES };
 })();
