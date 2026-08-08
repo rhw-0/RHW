@@ -69,11 +69,11 @@
       app.comms?.init();
       app.commsSafety?.init();
       await app.operations?.init();
+      app.applyRoute({ replace: true });
       app.commsSafety?.polishOperations?.();
       document.querySelectorAll('#workspaceOperations .ops-price-input-wrap > span').forEach(node => {
         if (node.textContent.trim() === 'CR') node.textContent = '$';
       });
-      app.applyRoute({ replace: true });
       app.ready = true;
       const failures = selfTest();
       exposeSmoke(failures);
