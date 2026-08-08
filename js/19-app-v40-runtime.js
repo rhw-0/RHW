@@ -33,6 +33,7 @@
     if (iffSelect?.textContent?.includes('RHW DEFAULT')) failures.push('ui:bmm-iff-label');
     if (typeof app.comms?.activate !== 'function') failures.push('module:comms');
     if (typeof app.commsSafety?.init !== 'function') failures.push('module:comms-safety');
+    (app.commsSafety?.selfTest?.() || []).forEach(failure => failures.push(`polish:${failure}`));
     if (typeof app.storage?.saveDraft !== 'function') failures.push('module:storage');
     if (typeof app.comms?.buildBbcode !== 'function') failures.push('feature:bbcode');
     if (!document.querySelector('[data-command-panel="overview"]')) failures.push('route:command-overview');
@@ -68,6 +69,7 @@
       app.comms?.init();
       app.commsSafety?.init();
       await app.operations?.init();
+      app.commsSafety?.polishOperations?.();
       app.applyRoute({ replace: true });
       app.ready = true;
       const failures = selfTest();
