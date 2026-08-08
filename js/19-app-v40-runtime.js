@@ -70,6 +70,9 @@
       app.commsSafety?.init();
       await app.operations?.init();
       app.commsSafety?.polishOperations?.();
+      document.querySelectorAll('#workspaceOperations .ops-price-input-wrap > span').forEach(node => {
+        if (node.textContent.trim() === 'CR') node.textContent = '$';
+      });
       app.applyRoute({ replace: true });
       app.ready = true;
       const failures = selfTest();
