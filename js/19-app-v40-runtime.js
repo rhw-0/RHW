@@ -27,6 +27,8 @@
     if (typeof app.operations?.activate !== 'function') failures.push('module:operations');
     if (typeof app.operationsCore?.buildPlan !== 'function') failures.push('feature:operations-planner');
     if (!app.operationsCore?.state?.catalog?.meta?.recipeCount) failures.push('feature:recipe-catalog');
+    const bustardAlias = app.operations?.recipeAliases?.ship_assembly_dsy_barge;
+    if (!bustardAlias || bustardAlias.outputId !== 'dsy_barge_package' || !app.operationsCore?.recipe?.('ship_assembly_dsy_barge')) failures.push('feature:bustard-recipe-alias');
     if (typeof app.comms?.activate !== 'function') failures.push('module:comms');
     if (typeof app.commsSafety?.init !== 'function') failures.push('module:comms-safety');
     if (typeof app.storage?.saveDraft !== 'function') failures.push('module:storage');
