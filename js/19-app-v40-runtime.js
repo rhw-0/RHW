@@ -59,6 +59,18 @@
     if (!bustardAlias || bustardAlias.outputId !== 'dsy_barge_package' || !app.operationsCore?.recipe?.('ship_assembly_dsy_barge')) failures.push('feature:bustard-recipe-alias');
     const iffSelect = document.getElementById('opsAffiliation');
     if (iffSelect?.textContent?.includes('RHW DEFAULT')) failures.push('ui:bmm-iff-label');
+
+    const requiredMarketTargets = [
+      'avionics systems', 'interior systems', 'propulsion systems',
+      'superstructure systems', 'reactor systems', 'exotic systems', 'prototype components'
+    ];
+    const marketTargets = typeof MARKET_SCAN === 'undefined'
+      ? []
+      : MARKET_SCAN.map(value => String(value || '').trim().toLowerCase());
+    if (marketTargets.length !== requiredMarketTargets.length || requiredMarketTargets.some(target => !marketTargets.includes(target))) {
+      failures.push('feature:shipyard-market-scan');
+    }
+
     if (typeof app.comms?.activate !== 'function') failures.push('module:comms');
     if (typeof app.commsSafety?.init !== 'function') failures.push('module:comms-safety');
     (app.commsSafety?.selfTest?.() || []).forEach(failure => failures.push(`polish:${failure}`));
@@ -104,6 +116,12 @@
       document.querySelectorAll('#workspaceOperations .ops-price-input-wrap > span').forEach(node => {
         if (node.textContent.trim() === 'CR') node.textContent = '$';
       });
+
+      const targetMeta = document.getElementById('externalTargetsMeta');
+      if (targetMeta && typeof MARKET_SCAN !== 'undefined' && typeof REMOTE_FACILITIES !== 'undefined') {
+        targetMeta.textContent = `${REMOTE_FACILITIES.length} FIXED LINKS + ${MARKET_SCAN.length} MARKET CHANNELS`;
+      }
+
       app.ready = true;
       const failures = selfTest();
       exposeSmoke(failures);
