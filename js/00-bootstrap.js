@@ -21,7 +21,8 @@ if (!window.__RHW_SMOKE_INLINE__) {
       ['./css/13-app-v40-navigation.css', 'rhwV40Nodes'],
       ['./css/14-app-v40-composer.css', 'rhwV40Composer'],
       ['./css/15-app-v40-audit.css', 'rhwV40Polish'],
-      ['./css/16-app-v40-operations.css', 'rhwV40Operations']
+      ['./css/16-app-v40-operations.css', 'rhwV40Operations'],
+      ['./css/17-app-v40-calculator-polish.css', 'rhwV40CalculatorPolish']
     ].forEach(([href, dataKey]) => {
       if (document.querySelector(`link[href="${href}"]`)) return;
       const link = document.createElement('link');
