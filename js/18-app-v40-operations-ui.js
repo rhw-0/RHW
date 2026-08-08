@@ -106,7 +106,7 @@
         .map(bonus => ({
           id: bonus.id,
           factor: Number(bonus.factor || 1),
-          name: `${bonus.id === 'br_m_grp' ? 'BMM · RHW DEFAULT' : (bonus.name || bonus.id)} · AUTHORIZED IFF${Number(bonus.factor || 1) !== 1 ? ` · ${Number(bonus.factor || 1).toFixed(2)}×` : ''}`
+          name: `${bonus.id === 'br_m_grp' ? 'BMM' : (bonus.name || bonus.id)} · AUTHORIZED IFF${Number(bonus.factor || 1) !== 1 ? ` · ${Number(bonus.factor || 1).toFixed(2)}×` : ''}`
         }));
     }
 
@@ -114,7 +114,7 @@
     const seen = new Set();
     const add = (id, name, factor) => { if (!id || seen.has(id)) return; seen.add(id); entries.push({ id, name, factor }); };
     const bmmFactor = core.factorFor(recipe, 'br_m_grp');
-    add('br_m_grp', bmmFactor !== 1 ? `BMM · RHW DEFAULT · ${bmmFactor.toFixed(2)}×` : 'BMM · RHW DEFAULT · NO BONUS', bmmFactor);
+    add('br_m_grp', bmmFactor !== 1 ? `BMM · ${bmmFactor.toFixed(2)}×` : 'BMM · NO BONUS', bmmFactor);
     add('__none__', 'NO IFF BONUS · 1.00×', 1);
     for (const bonus of bonuses) {
       if (bonus.id !== 'br_m_grp') add(bonus.id, `${bonus.name || bonus.id} · ${Number(bonus.factor || 1).toFixed(2)}×`, Number(bonus.factor || 1));
