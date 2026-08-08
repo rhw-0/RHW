@@ -18,6 +18,34 @@
   window.addEventListener('error', event => recordError(event.error || event.message));
   window.addEventListener('unhandledrejection', event => recordError(event.reason));
 
+  function installDesktopReadabilityCoverage() {
+    const style = document.getElementById('rhwV40ReleasePolishStyle');
+    if (!style || style.dataset.fullReadability === 'true') return;
+    style.dataset.fullReadability = 'true';
+    style.textContent += `
+      @media (min-width:1200px){
+        [data-command-panel="inventory"] .alert-list li>span>strong{font-size:13px!important}
+        [data-command-panel="inventory"] .alert-list li small{font-size:9px!important;line-height:1.35}
+        [data-command-panel="inventory"] .overview-row-qty{font-size:13px!important}
+        [data-command-panel="inventory"] .pill{font-size:9px!important}
+        [data-command-panel="inventory"] .inventory-view-nav span{font-size:10px!important}
+        [data-command-panel="inventory"] .inventory-view-nav small{font-size:8.5px!important}
+        [data-command-panel="production"] .production-kicker{font-size:11px!important}
+        [data-command-panel="production"] .module-state{font-size:10px!important}
+        [data-command-panel="production"] .recipe-column-head{font-size:9.5px!important}
+        [data-command-panel="production"] .recipe-short{font-size:9px!important}
+        [data-command-panel="production"] .byproduct-strip{font-size:10px!important}
+        [data-command-panel="production"] .footnote{font-size:12px!important}
+        [data-command-panel="logistics"] .remote-route small,
+        [data-command-panel="logistics"] .logistics-subhead-kicker,
+        [data-command-panel="logistics"] .logistics-subhead-meta{font-size:9px!important}
+        [data-command-panel="logistics"] .market-sort-button{font-size:9px!important}
+        [data-command-panel="logistics"] .supplier-grid small,
+        [data-command-panel="logistics"] .market-scan-grid small{font-size:9px!important;line-height:1.35}
+      }
+    `;
+  }
+
   function selfTest() {
     const failures = [];
     ['rhwAppNav','rhwWorkspaceRoot','workspaceCommand','workspaceOperations','workspaceComms','commandNodeNav','operationsNodeNav','commsNodeNav','commsForm','forumLivePreview'].forEach(id => {
@@ -34,6 +62,7 @@
     if (typeof app.comms?.activate !== 'function') failures.push('module:comms');
     if (typeof app.commsSafety?.init !== 'function') failures.push('module:comms-safety');
     (app.commsSafety?.selfTest?.() || []).forEach(failure => failures.push(`polish:${failure}`));
+    if (document.getElementById('rhwV40ReleasePolishStyle')?.dataset.fullReadability !== 'true') failures.push('polish:desktop-readability');
     if (typeof app.storage?.saveDraft !== 'function') failures.push('module:storage');
     if (typeof app.comms?.buildBbcode !== 'function') failures.push('feature:bbcode');
     if (!document.querySelector('[data-command-panel="overview"]')) failures.push('route:command-overview');
@@ -68,6 +97,7 @@
       app.command?.init();
       app.comms?.init();
       app.commsSafety?.init();
+      installDesktopReadabilityCoverage();
       await app.operations?.init();
       app.applyRoute({ replace: true });
       app.commsSafety?.polishOperations?.();
