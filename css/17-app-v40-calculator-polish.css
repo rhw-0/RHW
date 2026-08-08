@@ -23,6 +23,38 @@
 .ops-profit-strip > div:nth-child(1) strong,
 .ops-profit-strip > div:nth-child(2) strong { color: #86c79d; }
 
+/* COMMS / Draft archive: keep cache actions text-only and free of inherited
+   decorative button pseudo-elements. */
+.comms-cache-tools button::before,
+.comms-cache-tools button::after {
+  content: none !important;
+  display: none !important;
+}
+.comms-cache-tools button,
+.comms-cache-tools button span {
+  position: relative;
+  z-index: 1;
+}
+
+/* LOGISTICS / Regional Market Scan
+   Six capital-ship components form the primary 3×2 scan matrix. The seventh
+   configured target (Prototype Components) sits below as a secondary channel. */
+.market-scan-grid { align-items: start; }
+.market-scan-grid > .market-card {
+  align-self: start;
+  height: auto;
+  min-height: 0;
+}
+
+@media (min-width: 1101px) {
+  .market-scan-grid > .market-card:nth-child(-n+6) { grid-column: span 2; }
+  .market-scan-grid > .market-card:nth-child(7) {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    border-top-color: rgba(212,175,55,.28);
+  }
+}
+
 @media (max-width: 760px) {
   .ops-recipe-meta { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ops-profit-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
