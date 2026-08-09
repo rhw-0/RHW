@@ -289,7 +289,7 @@ function renderSupplier() {
 
     if (els.fixedLogisticsMeta) {
       const prefix = dataIsStale ? 'CACHE ONLY · ' : '';
-      els.fixedLogisticsMeta.textContent = `${cachePrefix}${readableCount}/${REMOTE_FACILITIES.length} LINKS READABLE`;
+      els.fixedLogisticsMeta.textContent = `${prefix}${readableCount}/${REMOTE_FACILITIES.length} LINKS READABLE`;
     }
   }
 
