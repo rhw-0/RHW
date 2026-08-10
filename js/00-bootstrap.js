@@ -22,7 +22,8 @@ if (!window.__RHW_SMOKE_INLINE__) {
       ['./css/14-app-v40-composer.css', 'rhwV40Composer'],
       ['./css/15-app-v40-audit.css', 'rhwV40Polish'],
       ['./css/16-app-v40-operations.css', 'rhwV40Operations'],
-      ['./css/17-app-v40-calculator-polish.css', 'rhwV40CalculatorPolish']
+      ['./css/17-app-v40-calculator-polish.css', 'rhwV40CalculatorPolish'],
+      ['./css/18-app-v40-nav-hierarchy.css', 'rhwV40NavHierarchy']
     ].forEach(([href, dataKey]) => {
       if (document.querySelector(`link[href="${href}"]`)) return;
       const link = document.createElement('link');
@@ -49,6 +50,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
         ['./assets/recipes/catalog-v1-part-06.js', 'rhwV4RecipeCatalog06'],
         ['./js/17-app-v40-operations-core.js', 'rhwV4OperationsCore'],
         ['./js/18-app-v40-operations-ui.js', 'rhwV4OperationsUi'],
+        ['./js/18a-app-v40-nav-hierarchy.js', 'rhwV4NavHierarchy'],
         ['./js/19-app-v40-runtime.js', 'rhwV4Runtime']
       ];
 
