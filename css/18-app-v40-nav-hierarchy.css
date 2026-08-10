@@ -4,6 +4,10 @@
    workspace's own node navigation.
    ========================================================================== */
 
+:root {
+  --app-nav-accent: #d4af37;
+  --app-nav-accent-rgb: 212,175,55;
+}
 body[data-workspace="command"] {
   --app-nav-accent: #d4af37;
   --app-nav-accent-rgb: 212,175,55;
@@ -18,8 +22,6 @@ body[data-workspace="comms"] {
 }
 
 .rhw-app-nav {
-  --app-nav-accent: #d4af37;
-  --app-nav-accent-rgb: 212,175,55;
   border-bottom-color: rgba(var(--app-nav-accent-rgb), .30);
   background:
     radial-gradient(circle at 8% 0%, rgba(var(--app-nav-accent-rgb), .065), transparent 30%),
@@ -163,6 +165,7 @@ body[data-workspace="comms"] {
 .app-context-nav-slot .workspace-subnav button.active {
   color: color-mix(in srgb, var(--app-nav-accent) 88%, white);
   background: linear-gradient(180deg, rgba(var(--app-nav-accent-rgb), .11), rgba(var(--app-nav-accent-rgb), .025));
+  box-shadow: inset 0 -2px 0 var(--app-nav-accent), inset 0 0 28px rgba(var(--app-nav-accent-rgb), .035);
 }
 .app-context-nav-slot .workspace-subnav button.active small {
   color: rgba(var(--app-nav-accent-rgb), .66);
