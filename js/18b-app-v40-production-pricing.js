@@ -69,14 +69,18 @@
     const workspace = document.getElementById('workspaceOperations');
     if (!workspace) return;
     workspace.querySelectorAll('[data-material-price]').forEach(input => {
-      input.placeholder = '';
+      if (input.placeholder) input.placeholder = '';
       input.removeAttribute('data-price-source');
     });
     workspace.querySelectorAll('.ops-price-source').forEach(node => node.remove());
+
+    const memoryText = 'MATERIAL PRICES APPLY TO THE CURRENT CALCULATION ONLY // THEY ARE NOT SAVED OR PRE-FILLED.';
     const memory = workspace.querySelector('.ops-price-memory');
-    if (memory) memory.textContent = 'MATERIAL PRICES APPLY TO THE CURRENT CALCULATION ONLY // THEY ARE NOT SAVED OR PRE-FILLED.';
+    if (memory && memory.textContent !== memoryText) memory.textContent = memoryText;
+
+    const costHeadText = 'ENTER YOUR UNIT PRICES';
     const costHead = workspace.querySelector('.ops-cost-panel .ops-panel-head small');
-    if (costHead) costHead.textContent = 'ENTER YOUR UNIT PRICES';
+    if (costHead && costHead.textContent !== costHeadText) costHead.textContent = costHeadText;
   }
 
   function installCalculatorLifecycle() {
