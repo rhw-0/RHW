@@ -223,17 +223,19 @@
     root.appendChild(comms);
 
     nav.addEventListener('click', event => {
-      const button = event.target.closest('[data-workspace]');
+      const button = event.target.closest('.app-tabs [data-workspace]');
       if (!button) return;
       const workspace = button.dataset.workspace;
       app.navigate(workspace, app.workspaceStoredNode(workspace));
     });
 
     nav.addEventListener('keydown', event => {
-      const button = event.target.closest('[data-workspace]');
+      const button = event.target.closest('.app-tabs [data-workspace]');
       if (!button || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
-      const buttons = [...nav.querySelectorAll('[data-workspace]')];
+      event.preventDefault();
+      const buttons = [...nav.querySelectorAll('.app-tabs [data-workspace]')];
       const current = buttons.indexOf(button);
+      if (current < 0 || !buttons.length) return;
       const next = buttons[(current + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length];
       next.focus();
       next.click();
@@ -250,7 +252,7 @@
     document.querySelectorAll('.app-workspace').forEach(panel => {
       panel.hidden = panel.id !== `workspace${safe[0].toUpperCase()}${safe.slice(1)}`;
     });
-    document.querySelectorAll('[data-workspace]').forEach(button => {
+    document.querySelectorAll('.app-tabs [data-workspace]').forEach(button => {
       const active = button.dataset.workspace === safe;
       button.classList.toggle('active', active);
       button.setAttribute('aria-selected', active ? 'true' : 'false');
@@ -268,8 +270,11 @@
     const node = route.node || app.workspaceStoredNode(safeWorkspace);
     app.workspaceModule(safeWorkspace)?.activate(node, { updateRoute: false });
     const activeNode = app.state[meta.nodeKey] || meta.fallback;
+    const canonicalHash = `#${safeWorkspace}/${activeNode}`;
 
-    if (!route.workspace || replace) app.route.write(safeWorkspace, activeNode, { replace: true });
+    /* Invalid/legacy node hashes are normalized immediately so history and copied
+       links always describe the panel that is actually visible. */
+    if (replace || location.hash !== canonicalHash) app.route.write(safeWorkspace, activeNode, { replace: true });
   };
 
   app.navigate = function navigate(workspace, node, { replace = false } = {}) {
