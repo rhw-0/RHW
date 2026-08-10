@@ -14,6 +14,8 @@
     comms: 'commsNodeNav'
   });
   let observer = null;
+  let sizeObserver = null;
+  let resizeBound = false;
 
   function safeWorkspace(value) {
     return Object.prototype.hasOwnProperty.call(SUBNAV_IDS, value) ? value : 'command';
@@ -63,6 +65,39 @@
     nav.classList.remove('app-mounted-subnav');
   }
 
+  function updateStickyOffset() {
+    const rootNav = document.getElementById('rhwAppNav');
+    const height = rootNav ? Math.ceil(rootNav.getBoundingClientRect().height) : 0;
+    document.documentElement.style.setProperty('--rhw-sticky-nav-offset', `${Math.max(0, height) + 12}px`);
+  }
+
+  function installBbcodeCollapse() {
+    const panel = document.querySelector('.bbcode-panel');
+    const head = panel?.querySelector('.comms-panel-head');
+    if (!panel || !head || document.getElementById('toggleBbcodePanelBtn')) return Boolean(panel && head);
+
+    panel.classList.add('v40-collapsed');
+    const small = head.querySelector('small');
+    const actions = document.createElement('div');
+    actions.className = 'comms-bbcode-head-actions';
+    if (small) actions.appendChild(small);
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'toggleBbcodePanelBtn';
+    button.className = 'comms-bbcode-toggle';
+    button.setAttribute('aria-expanded', 'false');
+    button.textContent = 'SHOW BB CODE';
+    button.addEventListener('click', () => {
+      const collapsed = panel.classList.toggle('v40-collapsed');
+      button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      button.textContent = collapsed ? 'SHOW BB CODE' : 'HIDE BB CODE';
+    });
+    actions.appendChild(button);
+    head.appendChild(actions);
+    return true;
+  }
+
   function sync(workspace = app.state.activeWorkspace || document.body.dataset.workspace || 'command') {
     if (!ensureShell()) return false;
     const active = safeWorkspace(workspace);
@@ -81,6 +116,7 @@
     ensureHome(target, active);
     if (target.parentElement !== slot) slot.appendChild(target);
     target.classList.add('app-mounted-subnav');
+    requestAnimationFrame(updateStickyOffset);
     return true;
   }
 
@@ -97,20 +133,35 @@
     if (slot?.dataset.activeWorkspace !== active) failures.push(`context-slot-state:${active}`);
     if (!mounted || mounted.id !== expectedId) failures.push(`mounted-subnav:${expectedId}`);
     if (!document.querySelector(`.app-tabs [data-workspace="${active}"].active`)) failures.push(`active-workspace-tab:${active}`);
+    if (!document.getElementById('toggleBbcodePanelBtn')) failures.push('missing-bbcode-collapse');
     return failures;
   }
 
   function init() {
     if (!ensureShell()) return false;
     sync();
+    installBbcodeCollapse();
+    updateStickyOffset();
+
     observer?.disconnect();
     observer = new MutationObserver(mutations => {
       if (!mutations.some(mutation => mutation.attributeName === 'data-workspace')) return;
       requestAnimationFrame(() => sync());
     });
     observer.observe(document.body, { attributes: true, attributeFilter: ['data-workspace'] });
+
+    sizeObserver?.disconnect();
+    const rootNav = document.getElementById('rhwAppNav');
+    if (rootNav && typeof ResizeObserver === 'function') {
+      sizeObserver = new ResizeObserver(updateStickyOffset);
+      sizeObserver.observe(rootNav);
+    }
+    if (!resizeBound) {
+      window.addEventListener('resize', updateStickyOffset, { passive: true });
+      resizeBound = true;
+    }
     return true;
   }
 
-  app.navHierarchy = { init, sync, selfTest };
+  app.navHierarchy = { init, sync, selfTest, updateStickyOffset, installBbcodeCollapse };
 })();
