@@ -48,7 +48,7 @@
 
   function selfTest() {
     const failures = [];
-    ['rhwAppNav','rhwWorkspaceRoot','workspaceCommand','workspaceOperations','workspaceComms','commandNodeNav','operationsNodeNav','commsNodeNav','commsForm','forumLivePreview'].forEach(id => {
+    ['rhwAppNav','rhwWorkspaceRoot','workspaceCommand','workspaceOperations','workspaceComms','commandNodeNav','operationsNodeNav','commsNodeNav','appNavigationCluster','appContextNavSlot','commsForm','forumLivePreview'].forEach(id => {
       if (!document.getElementById(id)) failures.push(`missing:${id}`);
     });
     if (typeof app.command?.activate !== 'function') failures.push('module:command');
@@ -71,6 +71,8 @@
       failures.push('feature:shipyard-market-scan');
     }
 
+    if (typeof app.navHierarchy?.sync !== 'function') failures.push('module:navigation-hierarchy');
+    (app.navHierarchy?.selfTest?.() || []).forEach(failure => failures.push(`nav:${failure}`));
     if (typeof app.comms?.activate !== 'function') failures.push('module:comms');
     if (typeof app.commsSafety?.init !== 'function') failures.push('module:comms-safety');
     (app.commsSafety?.selfTest?.() || []).forEach(failure => failures.push(`polish:${failure}`));
@@ -112,6 +114,7 @@
       installDesktopReadabilityCoverage();
       await app.operations?.init();
       app.applyRoute({ replace: true });
+      if (!app.navHierarchy?.init?.()) throw new Error('V4 NAVIGATION HIERARCHY COULD NOT MOUNT');
       app.commsSafety?.polishOperations?.();
       document.querySelectorAll('#workspaceOperations .ops-price-input-wrap > span').forEach(node => {
         if (node.textContent.trim() === 'CR') node.textContent = '$';
