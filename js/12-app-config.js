@@ -28,7 +28,7 @@ const RHW_APP_CONFIG = Object.freeze({
     })
   }),
   forum: Object.freeze({
-    logoUrl: 'https://i.imgur.com/TFXQ1So.png',
+    logoUrl: 'https://raw.githubusercontent.com/rhw-0/RHW/e935fd950906491b5128859c06dd0c62149db91e/assets/rhw-forum-logo.png',
     organisation: 'RESOLUTION HEAVY WORKS',
     subline: 'INDUSTRIAL MANUFACTURING HUB | NEW LONDON',
     brandColor: '#d4af37',
