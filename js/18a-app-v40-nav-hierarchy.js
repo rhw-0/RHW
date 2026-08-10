@@ -74,7 +74,8 @@
       if (nav !== target) restore(nav);
     });
 
-    slot.dataset.workspace = active;
+    /* data-workspace is reserved for the three actual workspace tabs. */
+    slot.dataset.activeWorkspace = active;
     if (!target) return false;
 
     ensureHome(target, active);
@@ -92,6 +93,8 @@
 
     if (!document.getElementById('appNavigationCluster')) failures.push('missing-cluster');
     if (!slot) failures.push('missing-context-slot');
+    if (slot?.hasAttribute('data-workspace')) failures.push('context-slot-workspace-collision');
+    if (slot?.dataset.activeWorkspace !== active) failures.push(`context-slot-state:${active}`);
     if (!mounted || mounted.id !== expectedId) failures.push(`mounted-subnav:${expectedId}`);
     if (!document.querySelector(`.app-tabs [data-workspace="${active}"].active`)) failures.push(`active-workspace-tab:${active}`);
     return failures;
