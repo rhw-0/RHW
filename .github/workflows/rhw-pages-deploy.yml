@@ -18,6 +18,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Temporary RHW logo mirror probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 --max-time 20 https://i.imgur.com/TFXQ1So.png -o /tmp/rhw-logo.png
+          printf 'RHW_LOGO_SHA256='
+          sha256sum /tmp/rhw-logo.png | cut -d' ' -f1
+          printf 'RHW_LOGO_BASE64='
+          base64 -w0 /tmp/rhw-logo.png
+          printf '\n'
+
       - name: Validate dashboard structure
         run: python3 scripts/validate_dashboard.py
 
