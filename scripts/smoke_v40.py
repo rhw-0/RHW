@@ -15,12 +15,15 @@ ROUTES = [
     ("command","overview"),("command","inventory"),("command","shipyard"),("command","production"),("command","logistics"),
     ("operations","calculator"),("comms","forum"),("comms","ticker"),("comms","drafts"),("comms","senders"),
 ]
-V4_CSS = ["css/12-app-v40.css","css/13-app-v40-navigation.css","css/14-app-v40-composer.css","css/15-app-v40-audit.css","css/16-app-v40-operations.css"]
+V4_CSS = [
+    "css/12-app-v40.css","css/13-app-v40-navigation.css","css/14-app-v40-composer.css","css/15-app-v40-audit.css",
+    "css/16-app-v40-operations.css","css/17-app-v40-calculator-polish.css","css/18-app-v40-nav-hierarchy.css",
+]
 V4_JS = [
     "js/12-app-config.js","js/13-app-v40.js","js/14-app-v40-cache.js","js/15-app-v40-navigation.js",
     "js/16-app-v40-composer.js","js/16a-app-v40-comms-safety.js",
     *[f"assets/recipes/catalog-v1-part-{i:02d}.js" for i in range(1,7)],
-    "js/17-app-v40-operations-core.js","js/18-app-v40-operations-ui.js","js/19-app-v40-runtime.js",
+    "js/17-app-v40-operations-core.js","js/18-app-v40-operations-ui.js","js/18a-app-v40-nav-hierarchy.js","js/19-app-v40-runtime.js",
 ]
 
 def free_port():
@@ -73,7 +76,7 @@ def ev(cdp,expression):
     raw=result.get("result",{}).get("value"); return json.loads(raw) if raw else {}
 
 def snapshot(cdp):
-    return ev(cdp,"({ready:document.documentElement.dataset.v40Ready||'',error:document.documentElement.dataset.v40Error||'',workspace:document.body?.dataset.workspace||'',commandNode:document.body?.dataset.commandNode||'',operationsNode:document.body?.dataset.operationsNode||'',commsNode:document.body?.dataset.commsNode||'',recipes:window.RHWV4?.operationsCore?.state?.catalog?.meta?.recipeCount||0,products:window.RHWV4?.operationsCore?.state?.catalog?.meta?.productCount||0,errors:window.__RHW_V4_SMOKE__?.errors||[]})")
+    return ev(cdp,"({ready:document.documentElement.dataset.v40Ready||'',error:document.documentElement.dataset.v40Error||'',workspace:document.body?.dataset.workspace||'',commandNode:document.body?.dataset.commandNode||'',operationsNode:document.body?.dataset.operationsNode||'',commsNode:document.body?.dataset.commsNode||'',mountedNav:document.querySelector('#appContextNavSlot > .workspace-subnav')?.id||'',recipes:window.RHWV4?.operationsCore?.state?.catalog?.meta?.recipeCount||0,products:window.RHWV4?.operationsCore?.state?.catalog?.meta?.productCount||0,errors:window.__RHW_V4_SMOKE__?.errors||[]})")
 
 def ui_number(value):
     digits=re.sub(r"[^0-9-]","",value or ""); return int(digits) if digits and digits!="-" else 0
@@ -162,9 +165,10 @@ def main():
                     if snap.get("ready") in {"true","false"}: break
                     time.sleep(.1)
                 key={"command":"commandNode","operations":"operationsNode","comms":"commsNode"}[workspace]
-                if snap.get("ready")!="true" or snap.get("error")=="true" or snap.get("workspace")!=workspace or snap.get(key)!=node or snap.get("errors"): raise RuntimeError(f"V4 route failed {workspace}/{node}: {snap}")
+                expected_nav={"command":"commandNodeNav","operations":"operationsNodeNav","comms":"commsNodeNav"}[workspace]
+                if snap.get("ready")!="true" or snap.get("error")=="true" or snap.get("workspace")!=workspace or snap.get(key)!=node or snap.get("mountedNav")!=expected_nav or snap.get("errors"): raise RuntimeError(f"V4 route failed {workspace}/{node}: {snap}")
                 if workspace=="operations" and snap.get("recipes")!=289: raise RuntimeError(f"Recipe catalog missing: {snap}")
-                print(f"V4 runtime smoke passed: {workspace}/{node} (recipes={snap.get('recipes',0)} products={snap.get('products',0)})")
+                print(f"V4 runtime smoke passed: {workspace}/{node} (recipes={snap.get('recipes',0)} products={snap.get('products',0)} nav={snap.get('mountedNav','')})")
                 if (workspace,node)==("command","overview"): test_overview(cdp)
                 elif workspace=="operations": test_calculator(cdp)
                 elif (workspace,node)==("comms","forum"): test_comms(cdp)
