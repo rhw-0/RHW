@@ -12,36 +12,11 @@ permissions:
 
 jobs:
   validate:
-    permissions:
-      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
-
-      - name: One-time verified RHW logo mirror
-        if: github.event_name == 'pull_request' && github.head_ref == 'agent/rhw-v40-webapp' && github.actor == 'rhw-0'
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ -f assets/rhw-forum-logo.png ]]; then
-            echo 'RHW forum logo already mirrored.'
-            exit 0
-          fi
-          curl -fsSL --retry 3 --max-time 20 https://i.imgur.com/TFXQ1So.png -o /tmp/rhw-forum-logo.png
-          actual="$(sha256sum /tmp/rhw-forum-logo.png | cut -d' ' -f1)"
-          expected='a8d664d23e2be9a4d4deb642a36b907d0dd503fac9eb7a2a85603e8060e29667'
-          echo "RHW_LOGO_SHA256=${actual}"
-          [[ "${actual}" == "${expected}" ]] || { echo 'RHW logo checksum mismatch.' >&2; exit 1; }
-          mv /tmp/rhw-forum-logo.png assets/rhw-forum-logo.png
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets/rhw-forum-logo.png
-          git commit -m 'Mirror RHW forum logo into repository'
-          git push origin HEAD:${{ github.head_ref }}
 
       - name: Validate dashboard structure
         run: python3 scripts/validate_dashboard.py
