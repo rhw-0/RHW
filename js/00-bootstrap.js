@@ -43,6 +43,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
         ['./js/16-app-v40-composer.js', 'rhwV4Comms'],
         ['./js/16a-app-v40-comms-safety.js', 'rhwV4CommsSafety'],
         ['./js/16b-app-v40-newswire-manager.js', 'rhwV4NewswireManager'],
+        ['./js/16c-app-v40-newswire-live-bridge.js', 'rhwV4NewswireLiveBridge'],
         ['./assets/recipes/catalog-v1-part-01.js', 'rhwV4RecipeCatalog01'],
         ['./assets/recipes/catalog-v1-part-02.js', 'rhwV4RecipeCatalog02'],
         ['./assets/recipes/catalog-v1-part-03.js', 'rhwV4RecipeCatalog03'],
