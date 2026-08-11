@@ -1,7 +1,7 @@
 /* ==========================================================================
    RHW WEB APP · V4.0 NEWSWIRE ORDERING + FILE-EDITOR POLISH
    Keeps the Newswire Manager strictly as a local RHW_Newswire.md editor.
-   Adds within-category ordering controls and readable file reset/reload actions.
+   Adds within-category ordering, category dividers/filters and readable actions.
    ========================================================================== */
 (function initRhwV4NewswireOrdering() {
   'use strict';
@@ -10,12 +10,16 @@
   if (!app || !manager || app.newswireOrdering) return;
 
   const state = manager.state;
+  const CATEGORIES = Object.freeze(['market', 'regional', 'security', 'operations', 'corporate']);
+  const FILTERS = Object.freeze(['all', ...CATEGORIES]);
   const STYLE_ID = 'rhwV40NewswireOrderingStyle';
   let observer = null;
   let installed = false;
   let primed = false;
   let applyingOrder = false;
   let knownIds = new Set();
+  let activeFilter = 'all';
+  let refreshQueued = false;
 
   function installStyles() {
     if (document.getElementById(STYLE_ID)) return;
@@ -39,6 +43,36 @@
       #v40NewswireResetBtn:disabled,#v40NewswireReloadBtn:disabled{
         opacity:.52!important;color:rgba(224,224,224,.52)!important;background:rgba(255,255,255,.035)!important
       }
+      .v40-newswire-category-summary{gap:7px!important;padding:10px 14px!important}
+      .v40-newswire-category-summary button{
+        min-height:30px!important;padding:6px 9px!important;border:1px solid rgba(212,175,55,.17)!important;
+        background:rgba(212,175,55,.035)!important;color:rgba(224,224,224,.58)!important;
+        font-family:var(--font-tech)!important;font-size:8.5px!important;font-weight:700!important;
+        letter-spacing:.075em!important;clip-path:none!important;box-shadow:none!important
+      }
+      .v40-newswire-category-summary button:hover,.v40-newswire-category-summary button:focus-visible{
+        background:rgba(212,175,55,.09)!important;color:#dfc471!important;border-color:rgba(212,175,55,.30)!important
+      }
+      .v40-newswire-category-summary button.active{
+        background:rgba(212,175,55,.15)!important;color:#f0d06b!important;border-color:rgba(212,175,55,.42)!important;
+        box-shadow:inset 0 -2px rgba(212,175,55,.58)!important
+      }
+      .v40-newswire-category-divider{
+        position:sticky;top:0;z-index:3;grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;
+        min-height:34px;padding:7px 11px;margin:3px 0 1px;border:1px solid rgba(125,167,234,.19);
+        border-left:3px solid rgba(125,167,234,.58);background:linear-gradient(90deg,rgba(125,167,234,.13),rgba(7,10,14,.97) 44%);
+        box-shadow:0 5px 12px rgba(0,0,0,.26)
+      }
+      .v40-newswire-category-divider strong{
+        font-family:var(--font-tech);font-size:10.5px;font-weight:700;letter-spacing:.10em;color:#bfd0ea
+      }
+      .v40-newswire-category-divider span{
+        font-family:var(--font-tech);font-size:8.5px;font-weight:700;letter-spacing:.075em;color:rgba(224,224,224,.53)
+      }
+      .v40-newswire-entry-meta span:first-child{
+        padding:3px 6px!important;border-color:rgba(125,167,234,.22)!important;background:rgba(125,167,234,.075)!important;
+        color:#aebfda!important;font-size:8px!important;font-weight:700!important
+      }
       .v40-newswire-order-actions{display:flex;gap:5px;align-items:center}
       .v40-newswire-order-actions button{
         min-width:54px!important;min-height:30px!important;padding:5px 7px!important;font-size:8px!important;
@@ -55,9 +89,12 @@
         color:rgba(224,224,224,.58)
       }
       .v40-newswire-order-note strong{color:#d8bc68}
+      .v40-newswire-filter-empty{grid-column:1/-1;margin:6px 0!important;border:1px dashed rgba(125,167,234,.18)}
       @media(max-width:900px){
         #v40NewswireReloadBtn,#v40NewswireResetBtn{font-size:9.5px!important;min-height:40px!important}
         .v40-newswire-order-actions button{min-width:64px!important;min-height:34px!important}
+        .v40-newswire-category-summary button{font-size:8px!important;min-height:32px!important}
+        .v40-newswire-category-divider{position:static}
       }
     `;
     document.head.appendChild(style);
@@ -69,7 +106,7 @@
     const note = document.createElement('div');
     note.id = 'v40NewswireOrderNote';
     note.className = 'v40-newswire-order-note';
-    note.innerHTML = '<strong>ORDER</strong> // ▲ UP / ▼ DOWN CHANGES THE ORDER INSIDE EACH CATEGORY. NEW BULLETINS START AT THE TOP OF THEIR SELECTED CATEGORY.';
+    note.innerHTML = '<strong>FILTER</strong> // USE THE CATEGORY COUNTERS ABOVE. <strong>ORDER</strong> // ▲ UP / ▼ DOWN CHANGES THE ORDER INSIDE EACH CATEGORY. NEW BULLETINS START AT THE TOP OF THEIR SELECTED CATEGORY.';
     summary.insertAdjacentElement('afterend', note);
   }
 
@@ -81,11 +118,106 @@
     return categoryEntries(entry.category).findIndex(item => item.id === entry.id);
   }
 
+  function filterCount(filter) {
+    return filter === 'all' ? (state.entries || []).length : categoryEntries(filter).length;
+  }
+
+  function filterSignature() {
+    return `${activeFilter}|${FILTERS.map(filter => `${filter}:${filterCount(filter)}`).join('|')}`;
+  }
+
+  function renderFilterControls() {
+    const summary = document.getElementById('v40NewswireCategorySummary');
+    if (!summary) return;
+    const signature = filterSignature();
+    const buttons = summary.querySelectorAll('[data-newswire-filter]');
+    if (summary.dataset.v40FilterSignature === signature && buttons.length === FILTERS.length) return;
+
+    summary.innerHTML = FILTERS.map(filter => {
+      const active = filter === activeFilter;
+      return `<button type="button" data-newswire-filter="${filter}" class="${active ? 'active' : ''}" aria-pressed="${active ? 'true' : 'false'}">${filter.toUpperCase()} // ${filterCount(filter)}</button>`;
+    }).join('');
+    summary.dataset.v40FilterSignature = signature;
+  }
+
+  function setFilter(filter, { scroll = true } = {}) {
+    const next = FILTERS.includes(filter) ? filter : 'all';
+    if (activeFilter === next) return false;
+    activeFilter = next;
+    renderFilterControls();
+    renderCategoryDividers({ force: true });
+    if (scroll) document.getElementById('v40NewswireList')?.scrollTo?.({ top: 0, behavior: 'smooth' });
+    return true;
+  }
+
+  function bindFilterControls() {
+    const summary = document.getElementById('v40NewswireCategorySummary');
+    if (!summary || summary.dataset.v40FilterBound === 'true') return;
+    summary.dataset.v40FilterBound = 'true';
+    summary.addEventListener('click', event => {
+      const button = event.target.closest('[data-newswire-filter]');
+      if (!button) return;
+      event.preventDefault();
+      setFilter(button.dataset.newswireFilter);
+    });
+  }
+
+  function rowInfo() {
+    const list = document.getElementById('v40NewswireList');
+    if (!list) return [];
+    return [...list.querySelectorAll('.v40-newswire-entry[data-newswire-id]')].map(row => {
+      const entry = (state.entries || []).find(item => item.id === row.dataset.newswireId);
+      return { row, entry };
+    }).filter(info => info.entry);
+  }
+
+  function categoryViewSignature(infos) {
+    return `${activeFilter}|${infos.map(info => `${info.entry.id}:${info.entry.category}`).join('|')}`;
+  }
+
+  function renderCategoryDividers({ force = false } = {}) {
+    const list = document.getElementById('v40NewswireList');
+    if (!list) return;
+    const infos = rowInfo();
+    const signature = categoryViewSignature(infos);
+    const categories = (activeFilter === 'all' ? CATEGORIES : [activeFilter])
+      .filter(category => infos.some(info => info.entry.category === category));
+    const existing = [...list.querySelectorAll('.v40-newswire-category-divider')];
+    const hiddenCorrect = infos.every(info => info.row.hidden === (activeFilter !== 'all' && info.entry.category !== activeFilter));
+    const dividerCorrect = existing.length === categories.length && existing.every((divider, index) => divider.dataset.newswireCategoryDivider === categories[index]);
+    const empty = list.querySelector('.v40-newswire-filter-empty');
+    const needsEmpty = activeFilter !== 'all' && !categories.length;
+
+    if (!force && list.dataset.v40CategoryViewSignature === signature && hiddenCorrect && dividerCorrect && Boolean(empty) === needsEmpty) return;
+
+    existing.forEach(node => node.remove());
+    empty?.remove();
+    infos.forEach(info => { info.row.hidden = activeFilter !== 'all' && info.entry.category !== activeFilter; });
+
+    categories.forEach(category => {
+      const first = infos.find(info => info.entry.category === category && !info.row.hidden);
+      if (!first) return;
+      const count = categoryEntries(category).length;
+      const divider = document.createElement('div');
+      divider.className = 'v40-newswire-category-divider';
+      divider.dataset.newswireCategoryDivider = category;
+      divider.innerHTML = `<strong>${category.toUpperCase()}</strong><span>${count} BULLETIN${count === 1 ? '' : 'S'}</span>`;
+      list.insertBefore(divider, first.row);
+    });
+
+    if (needsEmpty) {
+      const message = document.createElement('div');
+      message.className = 'v40-newswire-empty v40-newswire-filter-empty';
+      message.textContent = `NO ${activeFilter.toUpperCase()} BULLETINS IN WORKING COPY`;
+      list.appendChild(message);
+    }
+
+    list.dataset.v40CategoryViewSignature = signature;
+  }
+
   function commitReorder(id) {
     const entry = (state.entries || []).find(item => item.id === id);
     if (!entry) return false;
-    // applyEdit recalculates dirty/session state and re-renders the manager while
-    // preserving the order we already changed in state.entries.
     return manager.applyEdit(id, { ...entry });
   }
 
@@ -159,12 +291,18 @@
   }
 
   function primeOrDetectNewEntries() {
-    if (!state.loaded || !Array.isArray(state.entries)) return;
+    if (!state.loaded || !Array.isArray(state.entries)) {
+      renderFilterControls();
+      renderCategoryDividers();
+      return;
+    }
     const currentIds = new Set(state.entries.map(entry => entry.id));
     if (!primed) {
       knownIds = currentIds;
       primed = true;
       enhanceRows();
+      renderFilterControls();
+      renderCategoryDividers();
       return;
     }
 
@@ -174,6 +312,8 @@
     }
     knownIds = new Set((state.entries || []).map(entry => entry.id));
     enhanceRows();
+    renderFilterControls();
+    renderCategoryDividers();
   }
 
   function bindOrdering() {
@@ -188,11 +328,20 @@
     });
   }
 
+  function queueRefresh() {
+    if (refreshQueued) return;
+    refreshQueued = true;
+    queueMicrotask(() => {
+      refreshQueued = false;
+      primeOrDetectNewEntries();
+    });
+  }
+
   function observeManager() {
     const root = document.getElementById('v40NewswireManager');
     if (!root || root.dataset.v40OrderingObserver === 'true') return;
     root.dataset.v40OrderingObserver = 'true';
-    observer = new MutationObserver(() => queueMicrotask(primeOrDetectNewEntries));
+    observer = new MutationObserver(queueRefresh);
     observer.observe(root, { childList: true, subtree: true });
   }
 
@@ -201,6 +350,8 @@
     if (!document.getElementById(STYLE_ID)) failures.push('styles');
     if (!document.getElementById('v40NewswireOrderNote')) failures.push('order-note');
     if (document.getElementById('v40NewswireResetBtn') && getComputedStyle(document.getElementById('v40NewswireResetBtn')).color === 'rgba(0, 0, 0, 0)') failures.push('reset-readable');
+    const summary = document.getElementById('v40NewswireCategorySummary');
+    if (summary && summary.querySelectorAll('[data-newswire-filter]').length !== FILTERS.length) failures.push('category-filters');
     return failures;
   }
 
@@ -209,6 +360,7 @@
     installStyles();
     installOrderNote();
     bindOrdering();
+    bindFilterControls();
     observeManager();
     primeOrDetectNewEntries();
     installed = true;
@@ -235,6 +387,8 @@
     install,
     moveWithinCategory,
     moveNewEntryToCategoryTop,
+    setFilter,
+    get activeFilter() { return activeFilter; },
     enhanceRows,
     selfTest
   };
