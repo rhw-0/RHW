@@ -1,7 +1,8 @@
 /* ==========================================================================
-   RHW WEB APP · V4.0 FINAL UI POLISH
-   Disambiguates duplicate recipe names, makes per-unit costing the primary
-   quote metric, and places System Clock beside Latest Sync in the uplink grid.
+   RHW WEB APP · V4.0.1 UI CORRECTION
+   Guarantees distinct recipe variant labels, makes per-unit costing the
+   consistent primary quote metric and puts System Clock in the top-left
+   position of the uplink information grid.
    ========================================================================== */
 (function initRhwV4FinalUiPolish() {
   'use strict';
@@ -10,14 +11,16 @@
   if (!app || !core || app.finalUiPolish) return;
 
   const STYLE_ID = 'rhwV40FinalUiPolishStyle';
-  const KNOWN_RECIPE_LABELS = Object.freeze({
-    recipe_gold_basic: 'Gold refining, basic',
-    recipe_gold_advanced: 'Gold refining, advanced',
-    recipe_gold_bulk: 'Gold refining, bulk',
+  const KNOWN_FINAL_LABELS = Object.freeze({
+    recipe_gold_basic: 'Gold refining · Basic',
+    recipe_gold_advanced: 'Gold refining · Advanced',
+    recipe_gold_adv: 'Gold refining · Advanced',
+    recipe_gold_bulk: 'Gold refining · Bulk',
     recipe_gold_wildcat_conversion: 'Wildcat Gold reprocessing',
-    recipe_diamonds_basic: 'Diamonds refining, basic',
-    recipe_diamonds_advanced: 'Diamonds refining, advanced',
-    recipe_diamonds_bulk: 'Diamonds refining, bulk'
+    recipe_diamonds_basic: 'Diamonds refining · Basic',
+    recipe_diamonds_advanced: 'Diamonds refining · Advanced',
+    recipe_diamonds_adv: 'Diamonds refining · Advanced',
+    recipe_diamonds_bulk: 'Diamonds refining · Bulk'
   });
 
   let labelMap = new Map();
@@ -29,7 +32,6 @@
 
   function baseRecipeName(recipe) {
     if (!recipe) return 'UNKNOWN RECIPE';
-    if (KNOWN_RECIPE_LABELS[recipe.id]) return KNOWN_RECIPE_LABELS[recipe.id];
     const alias = app.operations?.recipeAliases?.[recipe.id];
     const output = recipe.outputs?.[0];
     const product = output ? core.product(output.id) : null;
@@ -41,6 +43,7 @@
       .replace(/[_-]+/g, ' ')
       .replace(/\badv\b/gi, 'advanced')
       .replace(/\bmk\s*(\d+)\b/gi, 'Mk $1')
+      .replace(/\bv\s*(\d+)\b/gi, 'V$1')
       .replace(/\b\w/g, char => char.toUpperCase())
       .trim();
   }
@@ -48,22 +51,23 @@
   function variantFromId(recipe, baseName) {
     const id = String(recipe?.id || '').toLowerCase();
     const suffixes = [
-      [/(?:_|-)basic$/, 'basic'],
-      [/(?:_|-)(?:advanced|adv)$/, 'advanced'],
-      [/(?:_|-)bulk$/, 'bulk'],
-      [/(?:_|-)conversion$/, 'conversion'],
-      [/(?:_|-)reprocessing$/, 'reprocessing'],
-      [/(?:_|-)standard$/, 'standard'],
-      [/(?:_|-)small$/, 'small'],
-      [/(?:_|-)medium$/, 'medium'],
-      [/(?:_|-)large$/, 'large'],
-      [/(?:_|-)heavy$/, 'heavy'],
-      [/(?:_|-)light$/, 'light'],
-      [/(?:_|-)(mk\d+)$/, '$1'],
-      [/(?:_|-)(v\d+)$/, '$1']
+      [/(?:_|-)basic$/, 'Basic'],
+      [/(?:_|-)(?:advanced|adv)$/, 'Advanced'],
+      [/(?:_|-)bulk$/, 'Bulk'],
+      [/(?:_|-)conversion$/, 'Conversion'],
+      [/(?:_|-)reprocessing$/, 'Reprocessing'],
+      [/(?:_|-)standard$/, 'Standard'],
+      [/(?:_|-)small$/, 'Small'],
+      [/(?:_|-)medium$/, 'Medium'],
+      [/(?:_|-)large$/, 'Large'],
+      [/(?:_|-)heavy$/, 'Heavy'],
+      [/(?:_|-)light$/, 'Light'],
+      [/(?:_|-)(mk\d+)$/, null],
+      [/(?:_|-)(v\d+)$/, null]
     ];
-    for (const [pattern, replacement] of suffixes) {
-      if (pattern.test(id)) return prettyToken(id.match(pattern)?.[1] || replacement);
+    for (const [pattern, fixed] of suffixes) {
+      const match = id.match(pattern);
+      if (match) return fixed || prettyToken(match[1]);
     }
 
     const craftType = String(recipe?.craftType || '').trim();
@@ -90,29 +94,29 @@
     if (labelCatalogRef === catalog && labelMap.size === catalog.recipes.length) return labelMap;
 
     const recipes = [...catalog.recipes];
-    const provisional = new Map(recipes.map(recipe => [recipe.id, baseRecipeName(recipe)]));
+    const baseNames = new Map(recipes.map(recipe => [recipe.id, baseRecipeName(recipe)]));
     const grouped = new Map();
     recipes.forEach(recipe => {
-      const key = normalize(provisional.get(recipe.id));
+      const key = normalize(baseNames.get(recipe.id));
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key).push(recipe);
     });
 
     const final = new Map();
     grouped.forEach(group => {
-      if (group.length === 1) {
-        const recipe = group[0];
-        final.set(recipe.id, provisional.get(recipe.id));
-        return;
-      }
       group.forEach(recipe => {
-        const base = provisional.get(recipe.id);
-        final.set(recipe.id, `${base} · ${variantFromId(recipe, base)}`);
+        const known = KNOWN_FINAL_LABELS[recipe.id];
+        if (known) {
+          final.set(recipe.id, known);
+          return;
+        }
+        const base = baseNames.get(recipe.id);
+        final.set(recipe.id, group.length > 1 ? `${base} · ${variantFromId(recipe, base)}` : base);
       });
     });
 
-    // Absolute uniqueness guard. Human-readable variants win; the stable
-    // recipe id is used only if two genuinely different recipes still collide.
+    // Absolute uniqueness guard across the whole catalog. Human-readable
+    // variants are preferred; recipe id is only the final fallback.
     const collisions = new Map();
     recipes.forEach(recipe => {
       const key = normalize(final.get(recipe.id));
@@ -131,7 +135,7 @@
 
   function recipeLabel(recipe) {
     if (!recipe) return 'UNKNOWN RECIPE';
-    return buildLabelMap().get(recipe.id) || baseRecipeName(recipe);
+    return buildLabelMap().get(recipe.id) || KNOWN_FINAL_LABELS[recipe.id] || baseRecipeName(recipe);
   }
 
   function duplicateFinalLabels() {
@@ -154,6 +158,7 @@
       if (!recipe) return;
       const label = recipeLabel(recipe);
       if (option.textContent !== label) option.textContent = label;
+      option.dataset.rhwRecipeLabel = label;
       const title = `${label} // ${recipe.id}`;
       if (option.title !== title) option.title = title;
     });
@@ -165,7 +170,7 @@
     return block?.querySelector('strong')?.textContent?.trim() || '1';
   }
 
-  function polishCostCard() {
+  function polishCostFlow() {
     const card = document.querySelector('#workspaceOperations .ops-flow-cost');
     if (!card) return;
     const total = card.querySelector('#opsTotalCost');
@@ -175,20 +180,43 @@
     const totalText = total.textContent || '—';
     const unitText = unit.textContent || '—';
     const actual = actualOutputText();
-    const alreadyPolished = card.querySelector(':scope > strong#opsUnitCost') && card.querySelector(':scope > div b#opsTotalCost');
+    const alreadyPolished = card.classList.contains('v401-unit-cost-flow')
+      && card.querySelector(':scope > strong#opsUnitCost')
+      && card.querySelector(':scope > div b#opsTotalCost');
 
     if (!alreadyPolished) {
-      card.innerHTML = `<small>01 · BUILD COST</small><strong id="opsUnitCost">${app.util.escape(unitText)}</strong><span>COST / UNIT</span><div><em>TOTAL BATCH COST // ${app.util.escape(actual)} PRODUCED</em><b id="opsTotalCost">${app.util.escape(totalText)}</b></div>`;
-      return;
+      card.classList.add('v401-unit-cost-flow');
+      card.innerHTML = `<small>01 · COST / UNIT</small><strong id="opsUnitCost">${app.util.escape(unitText)}</strong><span>MANUFACTURING COST / PRODUCED UNIT</span><div><em>TOTAL BATCH COST // ${app.util.escape(actual)} PRODUCED</em><b id="opsTotalCost">${app.util.escape(totalText)}</b></div>`;
+    } else {
+      const small = card.querySelector(':scope > small');
+      const span = card.querySelector(':scope > span');
+      const em = card.querySelector(':scope > div em');
+      if (small && small.textContent !== '01 · COST / UNIT') small.textContent = '01 · COST / UNIT';
+      if (span && span.textContent !== 'MANUFACTURING COST / PRODUCED UNIT') span.textContent = 'MANUFACTURING COST / PRODUCED UNIT';
+      const batchLabel = `TOTAL BATCH COST // ${actual} PRODUCED`;
+      if (em && em.textContent !== batchLabel) em.textContent = batchLabel;
     }
 
-    const small = card.querySelector(':scope > small');
-    const span = card.querySelector(':scope > span');
-    const em = card.querySelector(':scope > div em');
-    if (small && small.textContent !== '01 · BUILD COST') small.textContent = '01 · BUILD COST';
-    if (span && span.textContent !== 'COST / UNIT') span.textContent = 'COST / UNIT';
-    const batchLabel = `TOTAL BATCH COST // ${actual} PRODUCED`;
-    if (em && em.textContent !== batchLabel) em.textContent = batchLabel;
+    const margin = document.querySelector('#workspaceOperations .ops-flow-margin');
+    if (margin) {
+      const small = margin.querySelector(':scope > small');
+      const paragraph = margin.querySelector(':scope > p');
+      if (small && small.textContent !== '02 · TARGET PROFIT MARGIN') small.textContent = '02 · TARGET PROFIT MARGIN';
+      const marginCopy = 'PROFIT SHARE OF SELL PRICE // CALCULATED PER UNIT';
+      if (paragraph && paragraph.textContent !== marginCopy) paragraph.textContent = marginCopy;
+    }
+
+    const sell = document.querySelector('#workspaceOperations .ops-flow-sell');
+    if (sell) {
+      const small = sell.querySelector(':scope > small');
+      const span = sell.querySelector(':scope > span');
+      const em = sell.querySelector(':scope > div em');
+      const b = sell.querySelector(':scope > div b');
+      if (small && small.textContent !== '03 · RECOMMENDED SALE / UNIT') small.textContent = '03 · RECOMMENDED SALE / UNIT';
+      if (span && span.textContent !== 'SELL PRICE / PRODUCED UNIT') span.textContent = 'SELL PRICE / PRODUCED UNIT';
+      if (em && em.textContent !== 'MARGIN APPLIED TO UNIT QUOTE') em.textContent = 'MARGIN APPLIED TO UNIT QUOTE';
+      if (b && b.textContent !== 'UNIT QUOTE') b.textContent = 'UNIT QUOTE';
+    }
   }
 
   function fixHeaderClockLayout() {
@@ -196,14 +224,20 @@
     if (!grid) return;
     const stats = [...grid.children].filter(node => node.classList.contains('uplink-stat'));
     const byLabel = new Map(stats.map(node => [node.querySelector('small')?.textContent?.trim() || '', node]));
-    const order = ['LATEST SYNC', 'SYSTEM CLOCK', 'NEXT SYNC', 'REFRESH CYCLE'];
+    const order = ['SYSTEM CLOCK', 'LATEST SYNC', 'NEXT SYNC', 'REFRESH CYCLE'];
     const anchor = [...grid.children].find(node => node.classList.contains('uplink-actions')) || null;
     order.forEach(label => {
       const node = byLabel.get(label);
       if (node) grid.insertBefore(node, anchor);
     });
-    const clock = byLabel.get('SYSTEM CLOCK');
-    if (clock) clock.classList.add('uplink-clock-stat');
+
+    const classMap = new Map([
+      ['SYSTEM CLOCK', 'uplink-clock-stat'],
+      ['LATEST SYNC', 'uplink-latest-stat'],
+      ['NEXT SYNC', 'uplink-next-stat'],
+      ['REFRESH CYCLE', 'uplink-refresh-stat']
+    ]);
+    classMap.forEach((className, label) => byLabel.get(label)?.classList.add(className));
   }
 
   function installStyles() {
@@ -211,13 +245,23 @@
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
-      .uplink-clock-stat{border-left:1px solid rgba(212,175,55,.16);padding-left:12px}
-      .uplink-clock-stat .uplink-label{color:rgba(212,175,55,.62)}
-      .ops-flow-cost>strong{color:#e8ece9}
-      .ops-flow-cost>span{color:#9fb6a7;font-weight:700}
-      .ops-flow-cost>div b{font-size:10px;color:rgba(226,231,228,.84)}
-      .ops-flow-cost>div em{color:rgba(164,173,168,.66)}
-      @media(max-width:760px){.uplink-clock-stat{border-left:0;padding-left:0}}
+      .uplink-grid>.uplink-clock-stat{grid-column:1;grid-row:1;border-left:0!important;padding-left:0!important}
+      .uplink-grid>.uplink-latest-stat{grid-column:2;grid-row:1}
+      .uplink-grid>.uplink-next-stat{grid-column:1;grid-row:2}
+      .uplink-grid>.uplink-refresh-stat{grid-column:2;grid-row:2}
+      .uplink-grid>.uplink-actions{grid-column:1/-1;grid-row:3}
+      .uplink-clock-stat .uplink-label{color:rgba(212,175,55,.72)}
+      .uplink-clock-stat .header-clock{color:#e7c963;text-shadow:0 0 10px rgba(212,175,55,.18)}
+      .ops-flow-cost.v401-unit-cost-flow>strong{color:#eef2ef}
+      .ops-flow-cost.v401-unit-cost-flow>span{color:#9fb6a7;font-weight:700}
+      .ops-flow-cost.v401-unit-cost-flow>div b{font-size:10px;color:rgba(226,231,228,.84)}
+      .ops-flow-cost.v401-unit-cost-flow>div em{color:rgba(164,173,168,.66)}
+      @media(max-width:760px){
+        .uplink-grid>.uplink-clock-stat{grid-column:1;grid-row:1}
+        .uplink-grid>.uplink-latest-stat{grid-column:2;grid-row:1}
+        .uplink-grid>.uplink-next-stat{grid-column:1;grid-row:2}
+        .uplink-grid>.uplink-refresh-stat{grid-column:2;grid-row:2}
+      }
     `;
     document.head.appendChild(style);
   }
@@ -228,7 +272,7 @@
     queueMicrotask(() => {
       polishQueued = false;
       polishRecipeOptions();
-      polishCostCard();
+      polishCostFlow();
     });
   }
 
@@ -238,6 +282,8 @@
     workspace.dataset.v40FinalUiPolish = 'true';
     calculatorObserver = new MutationObserver(queuePolish);
     calculatorObserver.observe(workspace, { childList: true, subtree: true });
+    workspace.addEventListener('input', queuePolish, true);
+    workspace.addEventListener('change', queuePolish, true);
     queuePolish();
   }
 
@@ -259,14 +305,23 @@
     };
   }
 
+  function goldLabels() {
+    const ids = ['recipe_gold_basic', 'recipe_gold_advanced', 'recipe_gold_adv', 'recipe_gold_bulk', 'recipe_gold_wildcat_conversion'];
+    return ids.map(id => core.recipe(id)).filter(Boolean).map(recipe => recipeLabel(recipe));
+  }
+
   function selfTest() {
     const failures = [];
     if (core.state.catalog && duplicateFinalLabels().length) failures.push('duplicate-recipe-labels');
+    const gold = goldLabels();
+    if (gold.length > 1 && new Set(gold.map(normalize)).size !== gold.length) failures.push('gold-recipe-labels');
+
     const grid = document.querySelector('.uplink-grid');
     if (grid) {
       const labels = [...grid.children].filter(node => node.classList.contains('uplink-stat')).map(node => node.querySelector('small')?.textContent?.trim() || '');
-      if (labels.slice(0, 4).join('|') !== 'LATEST SYNC|SYSTEM CLOCK|NEXT SYNC|REFRESH CYCLE') failures.push('header-clock-order');
+      if (labels.slice(0, 4).join('|') !== 'SYSTEM CLOCK|LATEST SYNC|NEXT SYNC|REFRESH CYCLE') failures.push('header-clock-order');
     }
+
     const card = document.querySelector('#workspaceOperations .ops-flow-cost');
     if (card) {
       if (!card.querySelector(':scope > strong#opsUnitCost')) failures.push('unit-cost-primary');
@@ -284,8 +339,10 @@
     recipeLabel,
     duplicateFinalLabels,
     polishRecipeOptions,
-    polishCostCard,
+    polishCostCard: polishCostFlow,
+    polishCostFlow,
     fixHeaderClockLayout,
+    goldLabels,
     selfTest
   };
 })();
