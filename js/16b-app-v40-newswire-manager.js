@@ -154,6 +154,13 @@
       .v40-newswire-manager-head small,.v40-newswire-editor-head small,.v40-newswire-file-head small{font-family:var(--font-tech);font-size:8px;letter-spacing:.10em;color:rgba(224,224,224,.45)}
       .v40-newswire-manager-head strong,.v40-newswire-editor-head strong,.v40-newswire-file-head strong{font-family:var(--font-tech);font-size:11px;letter-spacing:.06em;color:#dfe5ea}
       .v40-newswire-manager-status[data-tone="dirty"]{color:#e7c963}.v40-newswire-manager-status[data-tone="warn"]{color:#c98b2c}.v40-newswire-manager-status[data-tone="good"]{color:#78ad8a}
+      .v40-newswire-publish-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 14px;border-bottom:1px solid rgba(125,167,234,.15);background:rgba(125,167,234,.055)}
+      .v40-newswire-publish-banner strong{font-family:var(--font-tech);font-size:10px;letter-spacing:.085em;color:#9fb6d9;white-space:nowrap}
+      .v40-newswire-publish-banner span{font-family:var(--font-tech);font-size:8px;line-height:1.45;letter-spacing:.055em;color:rgba(224,224,224,.62);text-align:right}
+      .v40-newswire-publish-banner[data-tone="dirty"]{border-color:rgba(212,175,55,.38);background:linear-gradient(90deg,rgba(212,175,55,.15),rgba(212,175,55,.045))}
+      .v40-newswire-publish-banner[data-tone="dirty"] strong{color:#f0d06b;text-shadow:0 0 12px rgba(212,175,55,.2)}
+      .v40-newswire-publish-banner[data-tone="warn"]{border-color:rgba(201,139,44,.34);background:rgba(201,139,44,.08)}
+      .v40-newswire-publish-banner[data-tone="warn"] strong{color:#d9a34c}
       .v40-newswire-manager button,.v40-newswire-editor-action{min-height:30px;padding:6px 10px;border:1px solid rgba(125,167,234,.20);background:rgba(125,167,234,.055);color:#a9bddb;font-family:var(--font-tech);font-size:8px;font-weight:700;letter-spacing:.07em;box-shadow:none;clip-path:none}
       .v40-newswire-manager button:hover,.v40-newswire-manager button:focus-visible,.v40-newswire-editor-action:hover,.v40-newswire-editor-action:focus-visible{background:rgba(125,167,234,.11);color:#d5e1f2}
       .v40-newswire-category-summary{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05)}
@@ -175,7 +182,7 @@
       .v40-newswire-file-actions .primary{border-color:rgba(212,175,55,.36);background:rgba(212,175,55,.075);color:#e7c963}
       .v40-newswire-file details{border-top:1px solid rgba(255,255,255,.05)}.v40-newswire-file summary{padding:10px 14px;cursor:pointer;font-family:var(--font-tech);font-size:8px;letter-spacing:.08em;color:rgba(224,224,224,.5)}
       .v40-newswire-file textarea{display:block;width:calc(100% - 28px);min-height:260px;margin:0 14px 14px;padding:12px;resize:vertical;border:1px solid rgba(212,175,55,.15);background:#06090c;color:#cfd4d7;font-family:var(--font-tech);font-size:9px;line-height:1.45}
-      @media(max-width:900px){.v40-newswire-entry{grid-template-columns:1fr}.v40-newswire-entry-actions{justify-content:flex-start}.v40-newswire-manager-head,.v40-newswire-editor-head,.v40-newswire-file-head{align-items:flex-start;flex-direction:column}.v40-newswire-list{max-height:none}}
+      @media(max-width:900px){.v40-newswire-entry{grid-template-columns:1fr}.v40-newswire-entry-actions{justify-content:flex-start}.v40-newswire-manager-head,.v40-newswire-editor-head,.v40-newswire-file-head,.v40-newswire-publish-banner{align-items:flex-start;flex-direction:column}.v40-newswire-publish-banner span{text-align:left}.v40-newswire-list{max-height:none}}
     `;
     document.head.appendChild(style);
   }
@@ -183,6 +190,7 @@
   function managerMarkup() {
     return `<section class="v40-newswire-manager" id="v40NewswireManager">
       <div class="v40-newswire-manager-head"><div><small>CURRENT / WORKING BULLETINS</small><strong id="v40NewswireManagerStatus" class="v40-newswire-manager-status" data-tone="muted">LOADING RHW_NEWSWIRE.MD</strong></div><button type="button" id="v40NewswireReloadBtn">RELOAD CURRENT FILE</button></div>
+      <div class="v40-newswire-publish-banner" id="v40NewswirePublishBanner" data-tone="clean"><strong id="v40NewswirePublishState">CURRENT FILE // READ ONLY</strong><span id="v40NewswirePublishHint">NOTHING ON THIS PAGE IS PUBLISHED AUTOMATICALLY. ADD / EDIT / DELETE CREATES A LOCAL WORKING COPY ONLY.</span></div>
       <div class="v40-newswire-category-summary" id="v40NewswireCategorySummary"></div>
       <div class="v40-newswire-list" id="v40NewswireList"><div class="v40-newswire-empty">LOADING CURRENT BULLETINS…</div></div>
     </section>`;
@@ -242,6 +250,24 @@
     return [`${state.entries.length} CURRENT BULLETINS // REPOSITORY SOURCE LOADED`, 'good'];
   }
 
+  function publishBannerCopy() {
+    if (!state.loaded) return ['LOADING CURRENT SOURCE', 'THE MANAGER HAS NOT LOADED A SOURCE FILE YET.', 'clean'];
+    if (state.sourceMode === 'fallback') return ['FALLBACK SOURCE // NOT PUBLISHED', 'THE REPOSITORY FILE COULD NOT BE LOADED. ANY CHANGES HERE ARE LOCAL ONLY; RELOAD THE CURRENT FILE BEFORE EXPORTING.', 'warn'];
+    if (state.dirty) return ['LOCAL EDITS // NOT PUBLISHED', 'YOUR CHANGES EXIST ONLY IN THIS BROWSER WORKING COPY. USE COPY UPDATED NEWSWIRE OR EXPORT RHW_NEWSWIRE.MD TO PUBLISH THEM MANUALLY.', 'dirty'];
+    return ['CURRENT FILE // READ ONLY', 'NOTHING IS PUBLISHED AUTOMATICALLY. ADD / EDIT / DELETE WILL CREATE A LOCAL WORKING COPY AND THIS BANNER WILL TURN GOLD.', 'clean'];
+  }
+
+  function renderPublishBanner() {
+    const banner = document.getElementById('v40NewswirePublishBanner');
+    const label = document.getElementById('v40NewswirePublishState');
+    const hint = document.getElementById('v40NewswirePublishHint');
+    if (!banner || !label || !hint) return;
+    const [labelText, hintText, tone] = publishBannerCopy();
+    banner.dataset.tone = tone;
+    label.textContent = labelText;
+    hint.textContent = hintText;
+  }
+
   function renderSummary() {
     const target = document.getElementById('v40NewswireCategorySummary');
     if (!target) return;
@@ -280,6 +306,7 @@
     const status = document.getElementById('v40NewswireManagerStatus');
     const [text, tone] = statusText();
     if (status) { status.textContent = text; status.dataset.tone = tone; }
+    renderPublishBanner();
     renderSummary();
     renderList();
     renderEditorMode();
@@ -486,7 +513,15 @@
     if (copy[0].message !== 'EDITED MESSAGE') failures.push('edit');
     copy.splice(1, 1);
     if (copy.length !== 2) failures.push('delete');
-    ['v40NewswireManager', 'v40NewswireList', 'v40NewswireSaveBtn', 'v40NewswireCopyFileBtn', 'v40NewswireExportBtn', 'v40NewswireFileOutput'].forEach(id => {
+    const dirtyBanner = (() => {
+      const original = state.dirty;
+      state.dirty = true;
+      const copyValue = publishBannerCopy();
+      state.dirty = original;
+      return copyValue;
+    })();
+    if (!dirtyBanner[0].includes('LOCAL EDITS') || !dirtyBanner[0].includes('NOT PUBLISHED')) failures.push('publish-banner-copy');
+    ['v40NewswireManager', 'v40NewswirePublishBanner', 'v40NewswirePublishState', 'v40NewswireList', 'v40NewswireSaveBtn', 'v40NewswireCopyFileBtn', 'v40NewswireExportBtn', 'v40NewswireFileOutput'].forEach(id => {
       if (!document.getElementById(id)) failures.push(`missing:${id}`);
     });
     return failures;
