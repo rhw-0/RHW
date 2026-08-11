@@ -37,6 +37,8 @@ const DASHBOARD_CONFIG = Object.freeze({
     'Avionics Systems',
     'Interior Systems',
     'Propulsion Systems',
+    'Superstructure Systems',
+    'Reactor Systems',
     'Exotic Systems',
     'Prototype Components'
   ]),

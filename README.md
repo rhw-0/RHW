@@ -1,53 +1,15 @@
-# Resolution Heavy Works Command Dashboard - V3.5
+# Resolution Heavy Works Web App - V4.0
 
-This repository powers the public RHW logistics, production, market and capital shipyard dashboard.
+V4.0 is the current RHW web app release.
 
-## Structure
+The app is split into three workspaces:
 
-- `index.html` - page structure and the authoritative stylesheet/script load order
-- `css/01-core.css` through `css/09-v35.css` - visual system and responsive layouts
-- `css/10-maintenance.css` - maintenance overrides, mobile newswire support and graceful visual fallbacks
-- `css/11-layout-v36.css` - V3.6 visual hierarchy, responsive layout, mobile manifest and production density layer
-- `js/config.js` - recipes, thresholds, tracked commodities, facilities, hull aliases and base-level constants
-- `js/00-bootstrap.js` - tiny early-load fallback required before the main dashboard scripts
-- `js/01-wire.js` through `js/09-newswire.js` - dashboard logic in load order
-- `js/10-maintenance.js` - behavior-preserving hardening for shared calculations and late feature compatibility
-- `js/11-layout-v36.js` - V3.6 presentation controls, production detail toggle and command-flow ordering
-- `assets/RHW_Newswire.md` - editable editorial ticker messages
-- `scripts/validate_dashboard.py` - dependency-free structural validation for local use and CI
+- **COMMAND** — Overview, Inventory, Shipyard, Production and Logistics.
+- **OPERATIONS** — recipe-first manufacturing calculator backed by Discovery's public game configuration.
+- **COMMS** — forum transmission composer, Newswire file manager, drafts and sender identities.
 
-The load order in `index.html` is part of the dashboard contract. Do not reorder the CSS or JavaScript files casually; later layers intentionally depend on earlier globals.
+`OPERATIONS / ITEM CALCULATOR` contains the corrected runtime catalog of **287 recipes / 248 build targets**. It supports recipe search, distinct recipe-variant labels, output quantity, BMM-default IFF handling, affiliation-dependent outputs, manual material prices for the current calculation, fixed recipe fees where defined, batch build cost, cost per unit, target profit margin, recommended sale price, revenue and profit.
 
-## Layout flow
+`COMMS / NEWSWIRE MANAGER` loads `assets/RHW_Newswire.md` into a local working copy. Entries can be added, edited, deleted, filtered and reordered within their category, then copied or exported as an updated Markdown file. The public static site does not publish Newswire edits back to GitHub automatically.
 
-The V3.6 presentation layer keeps the underlying dashboard data model unchanged while presenting the command surface in this operational order:
-
-1. facility / export / feedstock overview
-2. capital shipyard control
-3. production modules
-4. external logistics and regional market scan
-5. logistics manifest
-
-Production modules open in a compact command-summary state; full ingredient tables remain available through the recipe-details control. The manifest retains its dense table on larger screens and becomes a readable asset-card layout on mobile displays.
-
-## Current capital hull API codes
-
-- Dunkirk-Class Battleship: `dsy_br_battleship`
-- Invincible-Class Dreadnought: `dsy_br_carrier`
-
-Stock, `min_stock` and `max_stock` are read from the live telemetry API. The thin blue line in stock bars marks the live in-game minimum reserve boundary. The configured raw maximum for RHW structural health is stored as `baseHealthMax` in `js/config.js`.
-
-## Editing
-
-Most future data/configuration changes should be made in `js/config.js`. Newswire text can be changed independently in `assets/RHW_Newswire.md`.
-
-Before deployment, CI checks JavaScript syntax plus the dashboard's local file references, stylesheet/script order and duplicate HTML IDs. The same structural check can be run with:
-
-```bash
-python3 scripts/validate_dashboard.py
-```
-
-GitHub Pages deployment is handled by `.github/workflows/rhw-pages-deploy.yml`. Pull requests run validation only; pushes to `main` validate first and deploy only after the checks pass.
-
-The public dashboard version remains **V3.5**; `V3.6` currently names the layout/presentation layer rather than the telemetry schema.
-<!-- RHW deploy trigger -->
+Validation runs through `.github/workflows/rhw-pages-deploy.yml` and includes structural checks, JavaScript syntax validation, full headless-Chrome route/interactions, Newswire manager behavior and recipe-correctness coverage.

@@ -22,6 +22,10 @@ function marketBaseSystem(base) {
   return String(value || 'UNKNOWN SYSTEM').trim() || 'UNKNOWN SYSTEM';
 }
 
+function marketBaseIsLocal(base) {
+  return normalize(base?.name) === BASE_NAME || normalize(base?.nickname) === BASE_NAME;
+}
+
 function validMarketPrice(item) {
   const price = priceBuy(item);
   return Number.isFinite(price) && price > 0 ? price : null;
@@ -62,7 +66,6 @@ function renderMarketScan() {
 
     for (const base of allBases) {
       if (!base || !Array.isArray(base.shop_items)) continue;
-      if (normalize(base.name) === BASE_NAME || normalize(base.nickname) === BASE_NAME) continue;
       const item = base.shop_items.find(entry => commodityKey(entry) === key);
       if (!item) continue;
 
@@ -76,6 +79,7 @@ function renderMarketScan() {
       const offer = {
         baseKey,
         name,
+        local: marketBaseIsLocal(base),
         system: marketBaseSystem(base),
         q: sellable,
         total,
@@ -100,17 +104,34 @@ function renderMarketScan() {
     unlisted.sort((a, b) => (b.q - a.q) || a.name.localeCompare(b.name));
 
     let visiblePriced = priced.slice(0, 6);
-    if (marketSort === 'stock' && bestPrice !== null) {
-      const bestOffer = priced.find(offer => offer.price === bestPrice);
-      if (bestOffer && !visiblePriced.includes(bestOffer)) {
-        visiblePriced = visiblePriced.length < 6
-          ? [...visiblePriced, bestOffer]
-          : [...visiblePriced.slice(0, 5), bestOffer];
-      }
+    const bestOffer = marketSort === 'stock' && bestPrice !== null
+      ? priced.find(offer => offer.price === bestPrice)
+      : null;
+    if (bestOffer && !visiblePriced.includes(bestOffer)) {
+      visiblePriced = visiblePriced.length < 6
+        ? [...visiblePriced, bestOffer]
+        : [...visiblePriced.slice(0, 5), bestOffer];
     }
     const remainingSlots = Math.max(0, 6 - visiblePriced.length);
     const visibleUnlisted = unlisted.slice(0, remainingSlots);
-    const allVisible = [...visiblePriced, ...visibleUnlisted];
+    let allVisible = [...visiblePriced, ...visibleUnlisted];
+
+    const localOffer = [...priced, ...unlisted].find(offer => offer.local);
+    if (localOffer && !allVisible.includes(localOffer)) {
+      if (allVisible.length < 6) allVisible.push(localOffer);
+      else {
+        let replaceIndex = allVisible.length - 1;
+        if (bestOffer && allVisible[replaceIndex] === bestOffer) {
+          replaceIndex = allVisible.findLastIndex(offer => offer !== bestOffer);
+        }
+        if (replaceIndex >= 0) allVisible[replaceIndex] = localOffer;
+      }
+    }
+
+    const compareOffers = marketSort === 'stock'
+      ? ((a, b) => (b.q - a.q) || ((a.price ?? Infinity) - (b.price ?? Infinity)) || a.name.localeCompare(b.name))
+      : ((a, b) => ((a.price ?? Infinity) - (b.price ?? Infinity)) || (b.q - a.q) || a.name.localeCompare(b.name));
+    allVisible.sort(compareOffers);
     const maxQ = Math.max(0, ...allVisible.map(offer => offer.q));
 
     return { targetName, priced, unlisted, bestPrice, allVisible, maxQ };
@@ -129,10 +150,11 @@ function renderMarketScan() {
       const isBest = !isUnlisted && card.bestPrice !== null && offer.price === card.bestPrice;
       const fillPct = card.maxQ > 0 ? Math.max(3, Math.min(100, (offer.q / card.maxQ) * 100)) : 0;
       const rowClass = dataIsStale ? 'stale' : (isUnlisted ? 'unlisted' : 'info');
-      const note = `${offer.system.toUpperCase()}${isBest ? ' · BEST PRICE' : ''}${isUnlisted ? ' · STOCK DETECTED / NOT LISTED' : ''}`;
+      const localLabel = offer.local ? 'RHW LOCAL / OWN FACILITY · ' : '';
+      const note = `${localLabel}${offer.system.toUpperCase()}${isBest ? ' · BEST PRICE' : ''}${isUnlisted ? ' · STOCK DETECTED / NOT LISTED' : ''}`;
       const priceText = isUnlisted ? 'NOT LISTED' : formatCurrency(offer.price);
       return `
-        <div class="supplier-commodity-row ${rowClass}">
+        <div class="supplier-commodity-row ${rowClass}${offer.local ? ' rhw-local-offer' : ''}">
           <div class="supplier-commodity-name">
             <strong>${escapeHTML(offer.name)}</strong>
             <small class="${rowClass}">${escapeHTML(note)}</small>
@@ -290,4 +312,3 @@ function renderSupplier() {
   else if ((FEATURES.fixedLogistics && liveCount > 0) || (FEATURES.marketScan && marketStats.totalOffers > 0)) setSupplierLinkState('degraded', summary.join(' · '));
   else setSupplierLinkState('offline', summary.join(' · ') || 'UPLINK STANDBY');
 }
-
