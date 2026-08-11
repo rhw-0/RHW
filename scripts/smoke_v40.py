@@ -21,7 +21,7 @@ V4_CSS = [
 ]
 V4_JS = [
     "js/12-app-config.js","js/13-app-v40.js","js/14-app-v40-cache.js","js/15-app-v40-navigation.js",
-    "js/16-app-v40-composer.js","js/16a-app-v40-comms-safety.js",
+    "js/16-app-v40-composer.js","js/16a-app-v40-comms-safety.js","js/16b-app-v40-newswire-manager.js",
     *[f"assets/recipes/catalog-v1-part-{i:02d}.js" for i in range(1,7)],
     "js/17-app-v40-operations-core.js","js/18-app-v40-operations-ui.js","js/18a-app-v40-nav-hierarchy.js",
     "js/18b-app-v40-production-pricing.js","js/19-app-v40-runtime.js",
@@ -137,7 +137,10 @@ def test_comms(cdp):
 def test_ticker(cdp):
     result=ev(cdp,"(()=>{v40TickerTag.value='BAD | TAG] [WITH EXTRA TEXT THAT IS DEFINITELY TOO LONG';v40TickerMessage.value='LINE ONE\\nLINE TWO '+'X'.repeat(300);v40TickerTag.dispatchEvent(new Event('input',{bubbles:true}));v40TickerMessage.dispatchEvent(new Event('input',{bubbles:true}));return{tag:v40TickerTag.value,msg:v40TickerMessage.value,tm:v40TickerTag.maxLength,mm:v40TickerMessage.maxLength,out:v40TickerOutput.value}})()")
     if result["tm"]!=40 or result["mm"]!=240 or any(c in result["tag"] for c in "[]|") or len(result["tag"])>40 or "\n" in result["msg"] or len(result["msg"])>240 or result["out"].count("\n")!=1: raise RuntimeError(f"Ticker parser safety failed: {result}")
-    print("V4 interaction smoke passed: Ticker safety")
+    manager=ev(cdp,"(()=>{const m=RHWV4.newswireManager;if(!m)return{ok:false,reason:'manager missing'};m.applyLoadedSource('# RHW Industrial Newswire\\n\\n## market\\n- [MARKET TEST | lore] MARKET MESSAGE\\n\\n## operations\\n- [OPS TEST | good] OPS MESSAGE\\n','fallback');const before=m.state.entries.length;v40TickerCategory.value='security';v40TickerTone.value='warn';v40TickerTag.value='RHW TEST';v40TickerMessage.value='NEW BULLETIN';[v40TickerCategory,v40TickerTone].forEach(x=>x.dispatchEvent(new Event('change',{bubbles:true})));[v40TickerTag,v40TickerMessage].forEach(x=>x.dispatchEvent(new Event('input',{bubbles:true})));v40NewswireSaveBtn.click();const added=m.state.entries.find(x=>x.tag==='RHW TEST');const afterAdd=m.state.entries.length;if(!added)return{ok:false,reason:'add failed',before,afterAdd};document.querySelector(`[data-newswire-edit=\"${added.id}\"]`)?.click();v40TickerMessage.value='EDITED BULLETIN';v40TickerMessage.dispatchEvent(new Event('input',{bubbles:true}));v40NewswireSaveBtn.click();const edited=m.state.entries.find(x=>x.id===added.id)?.message||'';window.confirm=()=>true;document.querySelector(`[data-newswire-delete=\"${added.id}\"]`)?.click();return{ok:true,before,afterAdd,edited,afterDelete:m.state.entries.length,dirty:m.state.dirty,list:document.querySelectorAll('.v40-newswire-entry').length,source:v40NewswireFileOutput.value,copy:!!v40NewswireCopyFileBtn,export:!!v40NewswireExportBtn,title:document.querySelector('[data-comms-panel=\"ticker\"] .comms-panel-head strong')?.textContent||''}})()")
+    if not manager.get("ok") or manager.get("before")!=2 or manager.get("afterAdd")!=3 or manager.get("edited")!="EDITED BULLETIN" or manager.get("afterDelete")!=2 or manager.get("list")!=2 or "# RHW Industrial Newswire" not in manager.get("source","") or "## market" not in manager.get("source","") or not manager.get("copy") or not manager.get("export") or "MANAGER" not in manager.get("title",""):
+        raise RuntimeError(f"Newswire manager add/edit/delete failed: {manager}")
+    print("V4 interaction smoke passed: Ticker safety + Newswire manager CRUD")
 
 def launch():
     browsers=[p for n in ("google-chrome-stable","google-chrome","chromium","chromium-browser") if (p:=shutil.which(n))]
