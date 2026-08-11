@@ -42,6 +42,9 @@ jobs:
       - name: Recipe correctness smoke test
         run: python3 scripts/smoke_v40_recipes.py
 
+      - name: Recipe label diagnostics
+        run: python3 scripts/diagnose_v40_recipe_names.py
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: validate
