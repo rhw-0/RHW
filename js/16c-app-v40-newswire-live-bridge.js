@@ -181,6 +181,23 @@
     refreshPublishHint();
   }
 
+  // 16c loads before the runtime calls COMMS.init(). Wrap the manager-aware
+  // COMMS initializer so the bridge binds only after 16b has mounted its UI.
+  const baseCommsInit = app.comms.init;
+  app.comms.init = function newswireLiveBridgeAwareInit(...args) {
+    const result = baseCommsInit.apply(this, args);
+    install();
+    return result;
+  };
+
+  const baseCommsActivate = app.comms.activate;
+  app.comms.activate = function newswireLiveBridgeAwareActivate(node, options) {
+    const result = baseCommsActivate.call(this, node, options);
+    if (node === 'ticker') install();
+    return result;
+  };
+
+  // Early install is still useful for the shared styles / remote refresh guard.
   install();
 
   app.newswireLiveBridge = {
