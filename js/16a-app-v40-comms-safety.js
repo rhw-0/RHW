@@ -109,11 +109,33 @@
       .slice(0, MAX_MESSAGE);
   }
 
-  function sanitizeField(field) {
+  /* While the user is typing, preserve ordinary and trailing spaces. The
+     strict normalizers above are applied on change/save/export instead. */
+  function typingSafeTag(value) {
+    return String(value || '')
+      .replace(/[\[\]|]/g, ' ')
+      .replace(/[\r\n\t]+/g, ' ')
+      .slice(0, MAX_TAG);
+  }
+
+  function typingSafeMessage(value) {
+    return String(value || '')
+      .replace(/[\r\n\t]+/g, ' ')
+      .slice(0, MAX_MESSAGE);
+  }
+
+  function sanitizeField(field, finalize = false) {
     if (!field) return false;
-    const next = field.id === 'v40TickerTag' ? normalizeTag(field.value) : normalizeMessage(field.value);
+    const next = field.id === 'v40TickerTag'
+      ? (finalize ? normalizeTag(field.value) : typingSafeTag(field.value))
+      : (finalize ? normalizeMessage(field.value) : typingSafeMessage(field.value));
     if (field.value === next) return false;
+    const start = field.selectionStart;
+    const end = field.selectionEnd;
     field.value = next;
+    if (!finalize && Number.isInteger(start) && Number.isInteger(end)) {
+      try { field.setSelectionRange(Math.min(start, next.length), Math.min(end, next.length)); } catch {}
+    }
     return true;
   }
 
@@ -262,16 +284,20 @@
     tag.maxLength = MAX_TAG;
     message.maxLength = MAX_MESSAGE;
 
-    /* Capture-phase sanitation runs before the existing COMMS target listeners,
-       so renderTicker() sees and stores the parser-safe value on the same event. */
-    const guard = event => {
+    /* Input sanitation keeps parser-breaking characters/newlines out without
+       trimming the ordinary spaces the user is actively typing. */
+    const inputGuard = event => {
       const target = event.target;
-      if (target?.id === 'v40TickerTag' || target?.id === 'v40TickerMessage') sanitizeField(target);
+      if (target?.id === 'v40TickerTag' || target?.id === 'v40TickerMessage') sanitizeField(target, false);
     };
-    workspace.addEventListener('input', guard, true);
-    workspace.addEventListener('change', guard, true);
+    const changeGuard = event => {
+      const target = event.target;
+      if (target?.id === 'v40TickerTag' || target?.id === 'v40TickerMessage') sanitizeField(target, true);
+    };
+    workspace.addEventListener('input', inputGuard, true);
+    workspace.addEventListener('change', changeGuard, true);
 
-    const changed = sanitizeField(tag) || sanitizeField(message);
+    const changed = sanitizeField(tag, true) || sanitizeField(message, true);
     if (changed) message.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
@@ -280,6 +306,8 @@
     if (!document.getElementById('rhwV40ReleasePolishStyle')) failures.push('typography-style');
     if (!app.config.templates.some(template => template.key === LOG_TEMPLATE_KEY)) failures.push('communication-log-template');
     if (!document.getElementById('copyBbcodePreviewBtn')) failures.push('preview-copy');
+    if (typingSafeMessage('RHW ') !== 'RHW ' || typingSafeTag('RHW ') !== 'RHW ') failures.push('ticker-space-typing');
+    if (normalizeMessage('RHW   OPERATIONS ') !== 'RHW OPERATIONS' || normalizeTag('RHW   OPS ') !== 'RHW OPS') failures.push('ticker-final-normalize');
     const toolbar = document.querySelector('.comms-editor-toolbar');
     ['italic', 'underline', 'strike', 'quote', 'list', 'log', 'blur'].forEach(kind => {
       if (!toolbar?.querySelector(`[data-rhw-format="${kind}"]`)) failures.push(`toolbar:${kind}`);
