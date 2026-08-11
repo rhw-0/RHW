@@ -89,8 +89,14 @@ def main() -> int:
         if required not in bootstrap:
             errors.append(f'V4 bootstrap does not reference required asset: {required}')
 
+    app_config = (ROOT / 'js/12-app-config.js').read_text(encoding='utf-8')
+    version_match = re.search(r"RHW_APP_VERSION\s*=\s*'([^']+)'", app_config)
+    version = version_match.group(1) if version_match else ''
+    if not re.fullmatch(r'V4\.\d+(?:\.\d+)?(?: PREVIEW)?', version):
+        errors.append(f'V4 configuration has an invalid RHW_APP_VERSION: {version or "MISSING"}')
+
     require_tokens(errors, 'js/12-app-config.js', (
-        "RHW_APP_VERSION = 'V4.0'", 'alistair-thorne', 'salutations:', 'closings:',
+        'alistair-thorne', 'salutations:', 'closings:',
         'operationsNode:', 'calculatorState:', 'defaultAffiliation:', 'shipyardTargets:'
     ), 'V4 configuration')
     require_tokens(errors, 'js/13-app-v40.js', (
@@ -160,7 +166,7 @@ def main() -> int:
 
     print(
         f'RHW validation passed: {len(parser.css)} static stylesheets, {len(parser.js)} static scripts, '
-        f'{len(V4_RUNTIME_ASSETS)} V4 runtime assets, {len(parser.ids)} unique static ids.'
+        f'{len(V4_RUNTIME_ASSETS)} V4 runtime assets, {len(parser.ids)} unique static ids; app version {version}.'
     )
     return 0
 
