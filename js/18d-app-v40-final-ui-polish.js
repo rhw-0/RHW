@@ -1,7 +1,7 @@
 /* ==========================================================================
    RHW WEB APP · V4.0 FINAL UI POLISH
-   Distinguishes recipe variants, makes batch-vs-unit costing explicit and
-   moves the system clock beside Latest Sync instead of underneath it.
+   Disambiguates duplicate recipe names, makes per-unit costing the primary
+   quote metric, and places System Clock beside Latest Sync in the uplink grid.
    ========================================================================== */
 (function initRhwV4FinalUiPolish() {
   'use strict';
@@ -10,110 +10,200 @@
   if (!app || !core || app.finalUiPolish) return;
 
   const STYLE_ID = 'rhwV40FinalUiPolishStyle';
-  let operationsObserver = null;
-  let queued = false;
+  const KNOWN_RECIPE_LABELS = Object.freeze({
+    recipe_gold_basic: 'Gold refining, basic',
+    recipe_gold_advanced: 'Gold refining, advanced',
+    recipe_gold_bulk: 'Gold refining, bulk',
+    recipe_gold_wildcat_conversion: 'Wildcat Gold reprocessing',
+    recipe_diamonds_basic: 'Diamonds refining, basic',
+    recipe_diamonds_advanced: 'Diamonds refining, advanced',
+    recipe_diamonds_bulk: 'Diamonds refining, bulk'
+  });
+
+  let labelMap = new Map();
+  let labelCatalogRef = null;
+  let calculatorObserver = null;
+  let polishQueued = false;
 
   const normalize = value => app.util.normalize(String(value || ''));
-  const prettify = value => String(value || '')
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toUpperCase();
 
-  function aliasFor(recipe) {
-    return app.operations?.recipeAliases?.[recipe?.id] || null;
-  }
-
-  function recipeBaseName(recipe) {
+  function baseRecipeName(recipe) {
     if (!recipe) return 'UNKNOWN RECIPE';
-    const alias = aliasFor(recipe);
-    if (alias?.name) return alias.name;
-    if (String(recipe.name || '').trim()) return String(recipe.name).trim();
+    if (KNOWN_RECIPE_LABELS[recipe.id]) return KNOWN_RECIPE_LABELS[recipe.id];
+    const alias = app.operations?.recipeAliases?.[recipe.id];
     const output = recipe.outputs?.[0];
     const product = output ? core.product(output.id) : null;
-    return product?.name || output?.name || recipe.id || 'UNKNOWN RECIPE';
+    return alias?.name || product?.name || output?.name || recipe.name || recipe.id || 'UNKNOWN RECIPE';
   }
 
-  function duplicateBaseGroup(recipe) {
-    const base = normalize(recipeBaseName(recipe));
-    return (core.state.catalog?.recipes || []).filter(candidate => normalize(recipeBaseName(candidate)) === base);
+  function prettyToken(value) {
+    return String(value || '')
+      .replace(/[_-]+/g, ' ')
+      .replace(/\badv\b/gi, 'advanced')
+      .replace(/\bmk\s*(\d+)\b/gi, 'Mk $1')
+      .replace(/\b\w/g, char => char.toUpperCase())
+      .trim();
   }
 
-  function idQualifiers(recipe, baseName) {
-    const base = normalize(baseName);
-    const tokens = String(recipe?.id || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-    const rules = [
-      ['restricted', 'RESTRICTED'], ['perk', 'PERK'], ['efficient', 'EFFICIENT'],
-      ['conversion', 'CONVERSION'], ['advanced', 'ADVANCED'], ['adv', 'ADVANCED'],
-      ['basic', 'BASIC'], ['bulk', 'BULK'], ['legit', 'LEGIT']
+  function variantFromId(recipe, baseName) {
+    const id = String(recipe?.id || '').toLowerCase();
+    const suffixes = [
+      [/(?:_|-)basic$/, 'basic'],
+      [/(?:_|-)(?:advanced|adv)$/, 'advanced'],
+      [/(?:_|-)bulk$/, 'bulk'],
+      [/(?:_|-)conversion$/, 'conversion'],
+      [/(?:_|-)reprocessing$/, 'reprocessing'],
+      [/(?:_|-)standard$/, 'standard'],
+      [/(?:_|-)small$/, 'small'],
+      [/(?:_|-)medium$/, 'medium'],
+      [/(?:_|-)large$/, 'large'],
+      [/(?:_|-)heavy$/, 'heavy'],
+      [/(?:_|-)light$/, 'light'],
+      [/(?:_|-)(mk\d+)$/, '$1'],
+      [/(?:_|-)(v\d+)$/, '$1']
     ];
-    const found = [];
-    for (const [token, label] of rules) {
-      if (!tokens.includes(token)) continue;
-      if (base.includes(normalize(label))) continue;
-      if (!found.includes(label)) found.push(label);
+    for (const [pattern, replacement] of suffixes) {
+      if (pattern.test(id)) return prettyToken(id.match(pattern)?.[1] || replacement);
     }
-    return found;
+
+    const craftType = String(recipe?.craftType || '').trim();
+    if (craftType && normalize(craftType) !== normalize(baseName)) return prettyToken(craftType);
+
+    const recipeName = String(recipe?.name || '').trim();
+    if (recipeName && normalize(recipeName) !== normalize(baseName)) return recipeName;
+
+    const cleaned = id
+      .replace(/^(?:recipe|module|ship_assembly|assembly)_/, '')
+      .split('_')
+      .filter(Boolean);
+    const baseWords = new Set(normalize(baseName).split(/\s+/).filter(Boolean));
+    const remainder = cleaned.filter(token => !baseWords.has(normalize(token)));
+    if (remainder.length) return prettyToken(remainder.join(' '));
+
+    if (Number(recipe?.reqLevel) > 0) return `Level ${Number(recipe.reqLevel)}`;
+    return String(recipe?.id || 'recipe');
   }
 
-  function variantQualifier(recipe, baseName) {
-    const idLabels = idQualifiers(recipe, baseName);
-    if (idLabels.length) return idLabels.join(' + ');
+  function buildLabelMap() {
+    const catalog = core.state.catalog;
+    if (!catalog?.recipes) return new Map();
+    if (labelCatalogRef === catalog && labelMap.size === catalog.recipes.length) return labelMap;
 
-    const craft = prettify(recipe?.craftType || '');
-    if (craft && !normalize(baseName).includes(normalize(craft))) return craft;
+    const recipes = [...catalog.recipes];
+    const provisional = new Map(recipes.map(recipe => [recipe.id, baseRecipeName(recipe)]));
+    const grouped = new Map();
+    recipes.forEach(recipe => {
+      const key = normalize(provisional.get(recipe.id));
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(recipe);
+    });
 
-    const source = prettify(recipe?.sourceType || '');
-    if (source && duplicateBaseGroup(recipe).filter(candidate => prettify(candidate.sourceType || '') === source).length === 1) return source;
+    const final = new Map();
+    grouped.forEach(group => {
+      if (group.length === 1) {
+        const recipe = group[0];
+        final.set(recipe.id, provisional.get(recipe.id));
+        return;
+      }
+      group.forEach(recipe => {
+        const base = provisional.get(recipe.id);
+        final.set(recipe.id, `${base} · ${variantFromId(recipe, base)}`);
+      });
+    });
 
-    return prettify(recipe?.id || 'VARIANT');
+    // Absolute uniqueness guard. Human-readable variants win; the stable
+    // recipe id is used only if two genuinely different recipes still collide.
+    const collisions = new Map();
+    recipes.forEach(recipe => {
+      const key = normalize(final.get(recipe.id));
+      if (!collisions.has(key)) collisions.set(key, []);
+      collisions.get(key).push(recipe);
+    });
+    collisions.forEach(group => {
+      if (group.length < 2) return;
+      group.forEach(recipe => final.set(recipe.id, `${final.get(recipe.id)} · ${recipe.id}`));
+    });
+
+    labelCatalogRef = catalog;
+    labelMap = final;
+    return final;
   }
 
   function recipeLabel(recipe) {
-    const baseName = recipeBaseName(recipe);
-    if (duplicateBaseGroup(recipe).length <= 1) return baseName;
-    return `${baseName} · ${variantQualifier(recipe, baseName)}`;
+    if (!recipe) return 'UNKNOWN RECIPE';
+    return buildLabelMap().get(recipe.id) || baseRecipeName(recipe);
   }
 
-  function relabelRecipeOptions() {
+  function duplicateFinalLabels() {
+    const recipes = core.state.catalog?.recipes || [];
+    const grouped = new Map();
+    recipes.forEach(recipe => {
+      const label = recipeLabel(recipe);
+      const key = normalize(label);
+      if (!grouped.has(key)) grouped.set(key, { label, ids: [] });
+      grouped.get(key).ids.push(recipe.id);
+    });
+    return [...grouped.values()].filter(group => group.ids.length > 1).map(group => [group.label, group.ids]);
+  }
+
+  function polishRecipeOptions() {
     const select = document.getElementById('opsRecipe');
     if (!select || !core.state.catalog) return;
     [...select.options].forEach(option => {
       const recipe = core.recipe(option.value);
       if (!recipe) return;
-      const next = recipeLabel(recipe);
-      if (option.textContent !== next) option.textContent = next;
-      option.title = `${next} // ${recipe.id}`;
+      const label = recipeLabel(recipe);
+      if (option.textContent !== label) option.textContent = label;
+      const title = `${label} // ${recipe.id}`;
+      if (option.title !== title) option.title = title;
     });
   }
 
   function actualOutputText() {
     const block = [...document.querySelectorAll('#workspaceOperations .ops-recipe-meta > div')]
       .find(entry => entry.querySelector('small')?.textContent?.trim() === 'ACTUAL OUTPUT');
-    return block?.querySelector('strong')?.textContent?.trim() || 'CURRENT OUTPUT';
+    return block?.querySelector('strong')?.textContent?.trim() || '1';
   }
 
-  function polishCostSummary() {
+  function polishCostCard() {
     const card = document.querySelector('#workspaceOperations .ops-flow-cost');
     if (!card) return;
-    const heading = card.querySelector(':scope > small');
-    const totalLabel = card.querySelector(':scope > span');
-    const unitLabel = card.querySelector(':scope > div:not(.ops-margin-input) em');
-    if (heading && heading.textContent !== '01 · PRODUCTION COST') heading.textContent = '01 · PRODUCTION COST';
-    const totalText = `BATCH COST // TOTAL FOR ${actualOutputText()} PRODUCED`;
-    if (totalLabel && totalLabel.textContent !== totalText) totalLabel.textContent = totalText;
-    if (unitLabel && unitLabel.textContent !== 'COST / UNIT') unitLabel.textContent = 'COST / UNIT';
-    card.dataset.costSemantics = 'batch-total-and-unit';
+    const total = card.querySelector('#opsTotalCost');
+    const unit = card.querySelector('#opsUnitCost');
+    if (!total || !unit) return;
+
+    const totalText = total.textContent || '—';
+    const unitText = unit.textContent || '—';
+    const actual = actualOutputText();
+    const alreadyPolished = card.querySelector(':scope > strong#opsUnitCost') && card.querySelector(':scope > div b#opsTotalCost');
+
+    if (!alreadyPolished) {
+      card.innerHTML = `<small>01 · BUILD COST</small><strong id="opsUnitCost">${app.util.escape(unitText)}</strong><span>COST / UNIT</span><div><em>TOTAL BATCH COST // ${app.util.escape(actual)} PRODUCED</em><b id="opsTotalCost">${app.util.escape(totalText)}</b></div>`;
+      return;
+    }
+
+    const small = card.querySelector(':scope > small');
+    const span = card.querySelector(':scope > span');
+    const em = card.querySelector(':scope > div em');
+    if (small && small.textContent !== '01 · BUILD COST') small.textContent = '01 · BUILD COST';
+    if (span && span.textContent !== 'COST / UNIT') span.textContent = 'COST / UNIT';
+    const batchLabel = `TOTAL BATCH COST // ${actual} PRODUCED`;
+    if (em && em.textContent !== batchLabel) em.textContent = batchLabel;
   }
 
-  function moveHeaderClock() {
+  function fixHeaderClockLayout() {
     const grid = document.querySelector('.uplink-grid');
-    const latest = document.getElementById('syncTimeVal')?.closest('.uplink-stat');
-    const clock = document.getElementById('headerClock')?.closest('.uplink-stat');
-    if (!grid || !latest || !clock || latest.parentElement !== grid || clock.parentElement !== grid) return;
-    clock.classList.add('rhw-system-clock-stat');
-    if (latest.nextElementSibling !== clock) grid.insertBefore(clock, latest.nextElementSibling);
+    if (!grid) return;
+    const stats = [...grid.children].filter(node => node.classList.contains('uplink-stat'));
+    const byLabel = new Map(stats.map(node => [node.querySelector('small')?.textContent?.trim() || '', node]));
+    const order = ['LATEST SYNC', 'SYSTEM CLOCK', 'NEXT SYNC', 'REFRESH CYCLE'];
+    const anchor = [...grid.children].find(node => node.classList.contains('uplink-actions')) || null;
+    order.forEach(label => {
+      const node = byLabel.get(label);
+      if (node) grid.insertBefore(node, anchor);
+    });
+    const clock = byLabel.get('SYSTEM CLOCK');
+    if (clock) clock.classList.add('uplink-clock-stat');
   }
 
   function installStyles() {
@@ -121,98 +211,81 @@
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
-      .ops-flow-cost[data-cost-semantics="batch-total-and-unit"]{border-color:rgba(125,167,234,.18);background:linear-gradient(135deg,rgba(125,167,234,.055),rgba(0,0,0,.24))}
-      .ops-flow-cost[data-cost-semantics="batch-total-and-unit"]>span{font-size:8.5px!important;color:rgba(178,194,217,.72)!important}
-      .ops-flow-cost[data-cost-semantics="batch-total-and-unit"]>div:not(.ops-margin-input){align-items:center!important;padding:11px 10px 0!important}
-      .ops-flow-cost[data-cost-semantics="batch-total-and-unit"]>div em{font-size:8px!important;color:#9fb6d9!important;font-weight:700}
-      .ops-flow-cost[data-cost-semantics="batch-total-and-unit"] #opsUnitCost{font-family:var(--font-title)!important;font-size:23px!important;line-height:1!important;color:#dce8f8!important}
-      .rhw-system-clock-stat{position:relative}
-      .rhw-system-clock-stat::before{content:'';position:absolute;left:-10px;top:2px;bottom:2px;width:1px;background:rgba(212,175,55,.16)}
-      @media(max-width:520px){.rhw-system-clock-stat::before{display:none}.ops-flow-cost[data-cost-semantics="batch-total-and-unit"] #opsUnitCost{font-size:21px!important}}
+      .uplink-clock-stat{border-left:1px solid rgba(212,175,55,.16);padding-left:12px}
+      .uplink-clock-stat .uplink-label{color:rgba(212,175,55,.62)}
+      .ops-flow-cost>strong{color:#e8ece9}
+      .ops-flow-cost>span{color:#9fb6a7;font-weight:700}
+      .ops-flow-cost>div b{font-size:10px;color:rgba(226,231,228,.84)}
+      .ops-flow-cost>div em{color:rgba(164,173,168,.66)}
+      @media(max-width:760px){.uplink-clock-stat{border-left:0;padding-left:0}}
     `;
     document.head.appendChild(style);
   }
 
-  function applyOperationsPolish() {
-    relabelRecipeOptions();
-    polishCostSummary();
-  }
-
-  function queueOperationsPolish() {
-    if (queued) return;
-    queued = true;
+  function queuePolish() {
+    if (polishQueued) return;
+    polishQueued = true;
     queueMicrotask(() => {
-      queued = false;
-      applyOperationsPolish();
+      polishQueued = false;
+      polishRecipeOptions();
+      polishCostCard();
     });
   }
 
-  function installObserver() {
+  function installCalculatorObserver() {
     const workspace = document.getElementById('workspaceOperations');
     if (!workspace || workspace.dataset.v40FinalUiPolish === 'true') return;
     workspace.dataset.v40FinalUiPolish = 'true';
-    operationsObserver = new MutationObserver(queueOperationsPolish);
-    operationsObserver.observe(workspace, { childList: true, subtree: true });
+    calculatorObserver = new MutationObserver(queuePolish);
+    calculatorObserver.observe(workspace, { childList: true, subtree: true });
+    queuePolish();
   }
 
-  function duplicateFinalLabels() {
-    const groups = new Map();
-    for (const recipe of core.state.catalog?.recipes || []) {
-      const label = normalize(recipeLabel(recipe));
-      if (!groups.has(label)) groups.set(label, []);
-      groups.get(label).push(recipe.id);
-    }
-    return [...groups.entries()].filter(([, ids]) => ids.length > 1);
-  }
-
-  function selfTest() {
-    const failures = [];
-    if (core.state.catalog) {
-      const duplicates = duplicateFinalLabels();
-      if (duplicates.length) failures.push(`duplicate-recipe-labels:${duplicates.slice(0, 3).map(([, ids]) => ids.join('+')).join(',')}`);
-      const goldLabels = ['recipe_gold_basic', 'recipe_gold_advanced', 'recipe_gold_bulk', 'recipe_gold_wildcat_conversion']
-        .map(id => core.recipe(id)).filter(Boolean).map(recipeLabel);
-      if (new Set(goldLabels).size !== goldLabels.length) failures.push('gold-variant-labels');
-    }
-    const card = document.querySelector('#workspaceOperations .ops-flow-cost');
-    if (card) {
-      if (!card.textContent.includes('BATCH COST')) failures.push('batch-cost-label');
-      if (!card.textContent.includes('COST / UNIT')) failures.push('unit-cost-label');
-    }
-    const grid = document.querySelector('.uplink-grid');
-    const latest = document.getElementById('syncTimeVal')?.closest('.uplink-stat');
-    const clock = document.getElementById('headerClock')?.closest('.uplink-stat');
-    if (grid && latest && clock && latest.nextElementSibling !== clock) failures.push('header-clock-order');
-    return failures;
-  }
-
-  function install() {
-    installStyles();
-    moveHeaderClock();
-    installObserver();
-    applyOperationsPolish();
-  }
+  const baseLoadCatalog = core.loadCatalog.bind(core);
+  core.loadCatalog = async function finalPolishCatalogLoad(...args) {
+    const catalog = await baseLoadCatalog(...args);
+    labelCatalogRef = null;
+    buildLabelMap();
+    return catalog;
+  };
 
   const baseOperationsInit = app.operations?.init;
   if (typeof baseOperationsInit === 'function') {
-    app.operations.init = async function finalUiPolishAwareInit(...args) {
+    app.operations.init = async function finalUiPolishOperationsInit(...args) {
       const result = await baseOperationsInit.apply(this, args);
-      install();
+      installCalculatorObserver();
+      queuePolish();
       return result;
     };
   }
 
-  install();
+  function selfTest() {
+    const failures = [];
+    if (core.state.catalog && duplicateFinalLabels().length) failures.push('duplicate-recipe-labels');
+    const grid = document.querySelector('.uplink-grid');
+    if (grid) {
+      const labels = [...grid.children].filter(node => node.classList.contains('uplink-stat')).map(node => node.querySelector('small')?.textContent?.trim() || '');
+      if (labels.slice(0, 4).join('|') !== 'LATEST SYNC|SYSTEM CLOCK|NEXT SYNC|REFRESH CYCLE') failures.push('header-clock-order');
+    }
+    const card = document.querySelector('#workspaceOperations .ops-flow-cost');
+    if (card) {
+      if (!card.querySelector(':scope > strong#opsUnitCost')) failures.push('unit-cost-primary');
+      if (!card.querySelector(':scope > div b#opsTotalCost')) failures.push('batch-cost-secondary');
+      if (!card.textContent.includes('COST / UNIT') || !card.textContent.includes('BATCH COST')) failures.push('cost-labels');
+    }
+    return failures;
+  }
+
+  installStyles();
+  fixHeaderClockLayout();
+  installCalculatorObserver();
 
   app.finalUiPolish = {
-    install,
-    recipeBaseName,
     recipeLabel,
-    variantQualifier,
     duplicateFinalLabels,
-    relabelRecipeOptions,
-    polishCostSummary,
-    moveHeaderClock,
+    polishRecipeOptions,
+    polishCostCard,
+    fixHeaderClockLayout,
     selfTest
   };
 })();
