@@ -244,16 +244,16 @@
   }
 
   function statusText() {
+    if (state.dirty) return [`${state.entries.length} BULLETINS // LOCAL EDITS // NOT PUBLISHED`, 'dirty'];
     if (!state.loaded) return ['LOADING RHW_NEWSWIRE.MD', 'muted'];
     if (state.sourceMode === 'fallback') return [`${state.entries.length} BULLETINS // FALLBACK SOURCE // REPOSITORY FILE UNAVAILABLE`, 'warn'];
-    if (state.dirty) return [`${state.entries.length} BULLETINS // LOCAL EDITS // NOT PUBLISHED`, 'dirty'];
     return [`${state.entries.length} CURRENT BULLETINS // REPOSITORY SOURCE LOADED`, 'good'];
   }
 
   function publishBannerCopy() {
+    if (state.dirty) return ['LOCAL EDITS // NOT PUBLISHED', 'YOUR CHANGES EXIST ONLY IN THIS BROWSER WORKING COPY. USE COPY UPDATED NEWSWIRE OR EXPORT RHW_NEWSWIRE.MD TO PUBLISH THEM MANUALLY.', 'dirty'];
     if (!state.loaded) return ['LOADING CURRENT SOURCE', 'THE MANAGER HAS NOT LOADED A SOURCE FILE YET.', 'clean'];
     if (state.sourceMode === 'fallback') return ['FALLBACK SOURCE // NOT PUBLISHED', 'THE REPOSITORY FILE COULD NOT BE LOADED. ANY CHANGES HERE ARE LOCAL ONLY; RELOAD THE CURRENT FILE BEFORE EXPORTING.', 'warn'];
-    if (state.dirty) return ['LOCAL EDITS // NOT PUBLISHED', 'YOUR CHANGES EXIST ONLY IN THIS BROWSER WORKING COPY. USE COPY UPDATED NEWSWIRE OR EXPORT RHW_NEWSWIRE.MD TO PUBLISH THEM MANUALLY.', 'dirty'];
     return ['CURRENT FILE // READ ONLY', 'NOTHING IS PUBLISHED AUTOMATICALLY. ADD / EDIT / DELETE WILL CREATE A LOCAL WORKING COPY AND THIS BANNER WILL TURN GOLD.', 'clean'];
   }
 
