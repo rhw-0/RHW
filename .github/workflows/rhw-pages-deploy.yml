@@ -45,9 +45,6 @@ jobs:
       - name: Final recipe label, costing and header smoke test
         run: python3 scripts/smoke_v40_final_polish.py
 
-      - name: Recipe label diagnostics
-        run: python3 scripts/diagnose_v40_recipe_names.py
-
   deploy:
     if: github.event_name != 'pull_request'
     needs: validate
