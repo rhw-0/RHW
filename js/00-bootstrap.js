@@ -54,6 +54,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
         ['./js/18-app-v40-operations-ui.js', 'rhwV4OperationsUi'],
         ['./js/18a-app-v40-nav-hierarchy.js', 'rhwV4NavHierarchy'],
         ['./js/18b-app-v40-production-pricing.js', 'rhwV4ProductionPricing'],
+        ['./js/18c-app-v40-recipe-corrections.js', 'rhwV4RecipeCorrections'],
         ['./js/19-app-v40-runtime.js', 'rhwV4Runtime']
       ];
 
