@@ -1,7 +1,7 @@
 /* ==========================================================================
    RHW WEB APP · V4.0 FINAL UI POLISH
    Disambiguates duplicate recipe names, makes per-unit costing the primary
-   quote metric, and places System Clock beside Latest Sync in the uplink grid.
+   quote metric, and places System Clock in the top-left uplink slot.
    ========================================================================== */
 (function initRhwV4FinalUiPolish() {
   'use strict';
@@ -11,13 +11,13 @@
 
   const STYLE_ID = 'rhwV40FinalUiPolishStyle';
   const KNOWN_RECIPE_LABELS = Object.freeze({
-    recipe_gold_basic: 'Gold refining, basic',
-    recipe_gold_advanced: 'Gold refining, advanced',
-    recipe_gold_bulk: 'Gold refining, bulk',
-    recipe_gold_wildcat_conversion: 'Wildcat Gold reprocessing',
-    recipe_diamonds_basic: 'Diamonds refining, basic',
-    recipe_diamonds_advanced: 'Diamonds refining, advanced',
-    recipe_diamonds_bulk: 'Diamonds refining, bulk'
+    recipe_gold_basic: 'Gold Refining · Basic',
+    recipe_gold_advanced: 'Gold Refining · Advanced',
+    recipe_gold_bulk: 'Gold Refining · Bulk',
+    recipe_gold_wildcat_conversion: 'Wildcat Gold Reprocessing',
+    recipe_diamonds_basic: 'Diamond Refining · Basic',
+    recipe_diamonds_advanced: 'Diamond Refining · Advanced',
+    recipe_diamonds_bulk: 'Diamond Refining · Bulk'
   });
 
   let labelMap = new Map();
@@ -111,8 +111,8 @@
       });
     });
 
-    // Absolute uniqueness guard. Human-readable variants win; the stable
-    // recipe id is used only if two genuinely different recipes still collide.
+    // Absolute uniqueness guard across the entire catalog. Human-readable
+    // variants win; the stable recipe id is used only if a collision remains.
     const collisions = new Map();
     recipes.forEach(recipe => {
       const key = normalize(final.get(recipe.id));
@@ -165,7 +165,7 @@
     return block?.querySelector('strong')?.textContent?.trim() || '1';
   }
 
-  function polishCostCard() {
+  function polishCostFlow() {
     const card = document.querySelector('#workspaceOperations .ops-flow-cost');
     if (!card) return;
     const total = card.querySelector('#opsTotalCost');
@@ -178,17 +178,36 @@
     const alreadyPolished = card.querySelector(':scope > strong#opsUnitCost') && card.querySelector(':scope > div b#opsTotalCost');
 
     if (!alreadyPolished) {
-      card.innerHTML = `<small>01 · BUILD COST</small><strong id="opsUnitCost">${app.util.escape(unitText)}</strong><span>COST / UNIT</span><div><em>TOTAL BATCH COST // ${app.util.escape(actual)} PRODUCED</em><b id="opsTotalCost">${app.util.escape(totalText)}</b></div>`;
-      return;
+      card.innerHTML = `<small>01 · COST / UNIT</small><strong id="opsUnitCost">${app.util.escape(unitText)}</strong><span>MANUFACTURING COST / UNIT</span><div><em>TOTAL BATCH COST // ${app.util.escape(actual)} PRODUCED</em><b id="opsTotalCost">${app.util.escape(totalText)}</b></div>`;
+    } else {
+      const small = card.querySelector(':scope > small');
+      const span = card.querySelector(':scope > span');
+      const em = card.querySelector(':scope > div em');
+      if (small && small.textContent !== '01 · COST / UNIT') small.textContent = '01 · COST / UNIT';
+      if (span && span.textContent !== 'MANUFACTURING COST / UNIT') span.textContent = 'MANUFACTURING COST / UNIT';
+      const batchLabel = `TOTAL BATCH COST // ${actual} PRODUCED`;
+      if (em && em.textContent !== batchLabel) em.textContent = batchLabel;
     }
 
-    const small = card.querySelector(':scope > small');
-    const span = card.querySelector(':scope > span');
-    const em = card.querySelector(':scope > div em');
-    if (small && small.textContent !== '01 · BUILD COST') small.textContent = '01 · BUILD COST';
-    if (span && span.textContent !== 'COST / UNIT') span.textContent = 'COST / UNIT';
-    const batchLabel = `TOTAL BATCH COST // ${actual} PRODUCED`;
-    if (em && em.textContent !== batchLabel) em.textContent = batchLabel;
+    const marginCard = document.querySelector('#workspaceOperations .ops-flow-margin');
+    if (marginCard) {
+      const small = marginCard.querySelector(':scope > small');
+      const copy = marginCard.querySelector(':scope > p');
+      if (small && small.textContent !== '02 · TARGET PROFIT MARGIN') small.textContent = '02 · TARGET PROFIT MARGIN';
+      const text = 'APPLIED TO COST / UNIT // PROFIT AS SHARE OF SELL PRICE';
+      if (copy && copy.textContent !== text) copy.textContent = text;
+    }
+
+    const sellCard = document.querySelector('#workspaceOperations .ops-flow-sell');
+    if (sellCard) {
+      const small = sellCard.querySelector(':scope > small');
+      const span = sellCard.querySelector(':scope > span');
+      if (small && small.textContent !== '03 · SALE PRICE / UNIT') small.textContent = '03 · SALE PRICE / UNIT';
+      if (span && span.textContent !== 'RECOMMENDED SELL / UNIT') span.textContent = 'RECOMMENDED SELL / UNIT';
+    }
+
+    const flowMeta = document.querySelector('#workspaceOperations .ops-quote-panel .ops-panel-head > small');
+    if (flowMeta && flowMeta.textContent !== 'UNIT COST → MARGIN → SELL / UNIT') flowMeta.textContent = 'UNIT COST → MARGIN → SELL / UNIT';
   }
 
   function fixHeaderClockLayout() {
@@ -196,7 +215,7 @@
     if (!grid) return;
     const stats = [...grid.children].filter(node => node.classList.contains('uplink-stat'));
     const byLabel = new Map(stats.map(node => [node.querySelector('small')?.textContent?.trim() || '', node]));
-    const order = ['LATEST SYNC', 'SYSTEM CLOCK', 'NEXT SYNC', 'REFRESH CYCLE'];
+    const order = ['SYSTEM CLOCK', 'LATEST SYNC', 'NEXT SYNC', 'REFRESH CYCLE'];
     const anchor = [...grid.children].find(node => node.classList.contains('uplink-actions')) || null;
     order.forEach(label => {
       const node = byLabel.get(label);
@@ -211,13 +230,14 @@
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
-      .uplink-clock-stat{border-left:1px solid rgba(212,175,55,.16);padding-left:12px}
-      .uplink-clock-stat .uplink-label{color:rgba(212,175,55,.62)}
+      .uplink-clock-stat{border-left:2px solid rgba(212,175,55,.34);padding-left:10px}
+      .uplink-clock-stat .uplink-label{color:rgba(212,175,55,.72)}
+      .uplink-clock-stat .uplink-value{color:var(--gold)!important}
       .ops-flow-cost>strong{color:#e8ece9}
       .ops-flow-cost>span{color:#9fb6a7;font-weight:700}
       .ops-flow-cost>div b{font-size:10px;color:rgba(226,231,228,.84)}
       .ops-flow-cost>div em{color:rgba(164,173,168,.66)}
-      @media(max-width:760px){.uplink-clock-stat{border-left:0;padding-left:0}}
+      @media(max-width:760px){.uplink-clock-stat{padding-left:8px}}
     `;
     document.head.appendChild(style);
   }
@@ -228,7 +248,7 @@
     queueMicrotask(() => {
       polishQueued = false;
       polishRecipeOptions();
-      polishCostCard();
+      polishCostFlow();
     });
   }
 
@@ -265,13 +285,13 @@
     const grid = document.querySelector('.uplink-grid');
     if (grid) {
       const labels = [...grid.children].filter(node => node.classList.contains('uplink-stat')).map(node => node.querySelector('small')?.textContent?.trim() || '');
-      if (labels.slice(0, 4).join('|') !== 'LATEST SYNC|SYSTEM CLOCK|NEXT SYNC|REFRESH CYCLE') failures.push('header-clock-order');
+      if (labels.slice(0, 4).join('|') !== 'SYSTEM CLOCK|LATEST SYNC|NEXT SYNC|REFRESH CYCLE') failures.push('header-clock-order');
     }
     const card = document.querySelector('#workspaceOperations .ops-flow-cost');
     if (card) {
       if (!card.querySelector(':scope > strong#opsUnitCost')) failures.push('unit-cost-primary');
       if (!card.querySelector(':scope > div b#opsTotalCost')) failures.push('batch-cost-secondary');
-      if (!card.textContent.includes('COST / UNIT') || !card.textContent.includes('BATCH COST')) failures.push('cost-labels');
+      if (!card.textContent.includes('MANUFACTURING COST / UNIT') || !card.textContent.includes('TOTAL BATCH COST')) failures.push('cost-labels');
     }
     return failures;
   }
@@ -284,7 +304,7 @@
     recipeLabel,
     duplicateFinalLabels,
     polishRecipeOptions,
-    polishCostCard,
+    polishCostFlow,
     fixHeaderClockLayout,
     selfTest
   };
