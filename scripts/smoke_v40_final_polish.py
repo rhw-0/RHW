@@ -98,10 +98,9 @@ def main() -> int:
             if len(gold_options) < 4 or len({text.lower() for _, text in gold_options}) != len(gold_options):
                 raise RuntimeError(f"Rendered Gold dropdown labels are not unique: {option_data}")
 
-            # Use the basic recipe so actual output is a real multi-unit batch.
             basic_id = next((rid for rid, text in gold_options if "basic" in text.lower()), gold_options[0][0])
             base.ev(cdp, f"""(()=>{{
-              opsRecipeSearch.value={json.dumps('recipe_gold_basic')};
+              opsRecipeSearch.value={json.dumps(basic_id)};
               opsRecipeSearch.dispatchEvent(new Event('input',{{bubbles:true}}));
               return{{}};
             }})()""")
@@ -123,7 +122,6 @@ def main() -> int:
               margin:document.querySelector('.ops-flow-margin')?.textContent||'',
               sellCard:document.querySelector('.ops-flow-sell')?.textContent||'',
               batch:opsTotalCost?.textContent||'',unit:opsUnitCost?.textContent||'',sell:opsSellUnit?.textContent||'',
-              unitPrimary:document.querySelector('.ops-flow-cost>:scope')?false:false,
               unitIsPrimary:!!document.querySelector('.ops-flow-cost > strong#opsUnitCost'),
               batchIsSecondary:!!document.querySelector('.ops-flow-cost > div b#opsTotalCost'),
               actual:[...document.querySelectorAll('.ops-recipe-meta>div')].find(x=>x.querySelector('small')?.textContent==='ACTUAL OUTPUT')?.querySelector('strong')?.textContent||'0'
@@ -140,8 +138,6 @@ def main() -> int:
                 raise RuntimeError(f"Margin/sell unit semantics are unclear: {costing}")
             if actual <= 1 or batch <= unit or unit <= 0 or sell <= unit:
                 raise RuntimeError(f"Batch/unit costing semantics failed: {costing}")
-            # Currency display is rounded to whole dollars, so allow one dollar
-            # of unit rounding when reconciling batch / actual output.
             expected_unit = batch / actual
             if abs(unit - expected_unit) > 1.1:
                 raise RuntimeError(f"Unit cost does not reconcile with batch cost: {costing}, expected≈{expected_unit:.2f}")
