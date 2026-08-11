@@ -90,7 +90,7 @@ def main() -> int:
             errors.append(f'V4 bootstrap does not reference required asset: {required}')
 
     require_tokens(errors, 'js/12-app-config.js', (
-        "RHW_APP_VERSION = 'V4.0 PREVIEW'", 'alistair-thorne', 'salutations:', 'closings:',
+        "RHW_APP_VERSION = 'V4.0'", 'alistair-thorne', 'salutations:', 'closings:',
         'operationsNode:', 'calculatorState:', 'defaultAffiliation:', 'shipyardTargets:'
     ), 'V4 configuration')
     require_tokens(errors, 'js/13-app-v40.js', (
