@@ -16,6 +16,9 @@ if (!window.__RHW_SMOKE_INLINE__) {
      Load every V4 stylesheet immediately to avoid an unstyled app-shell flash,
      but wait until the stable dashboard has initialized before booting V4 JS. */
   (function bootstrapRhwV4Preview() {
+    const RHW_V4_ASSET_REV = '4.0.1-preview-1';
+    const versioned = src => `${src}?v=${encodeURIComponent(RHW_V4_ASSET_REV)}`;
+
     [
       ['./css/12-app-v40.css', 'rhwV4App'],
       ['./css/13-app-v40-navigation.css', 'rhwV40Nodes'],
@@ -25,10 +28,10 @@ if (!window.__RHW_SMOKE_INLINE__) {
       ['./css/17-app-v40-calculator-polish.css', 'rhwV40CalculatorPolish'],
       ['./css/18-app-v40-nav-hierarchy.css', 'rhwV40NavHierarchy']
     ].forEach(([href, dataKey]) => {
-      if (document.querySelector(`link[href="${href}"]`)) return;
+      if (document.querySelector(`link[data-${dataKey.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}="true"]`)) return;
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = href;
+      link.href = versioned(href);
       link.dataset[dataKey] = 'true';
       document.head.appendChild(link);
     });
@@ -63,7 +66,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
         if (index >= files.length) return;
         const [src, dataKey] = files[index];
         const script = document.createElement('script');
-        script.src = src;
+        script.src = versioned(src);
         script.dataset[dataKey] = 'true';
         script.addEventListener('load', () => loadNext(index + 1), { once: true });
         script.addEventListener('error', () => console.error(`RHW V4 asset failed to load: ${src}`), { once: true });
