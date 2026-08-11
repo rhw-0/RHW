@@ -85,11 +85,10 @@
   function refreshPublishHint() {
     const banner = document.getElementById('v40NewswirePublishBanner');
     const hint = document.getElementById('v40NewswirePublishHint');
-    if (!banner || !hint) return;
-    if (state.dirty) {
-      banner.dataset.tone = 'dirty';
-      hint.textContent = 'LIVE TICKER ABOVE IS PREVIEWING THIS LOCAL WORKING COPY. IT IS NOT PUBLISHED. USE COPY UPDATED NEWSWIRE OR EXPORT RHW_NEWSWIRE.MD TO PUBLISH IT MANUALLY.';
-    }
+    if (!banner || !hint || !state.dirty) return;
+    const text = 'LIVE TICKER ABOVE IS PREVIEWING THIS LOCAL WORKING COPY. IT IS NOT PUBLISHED. USE COPY UPDATED NEWSWIRE OR EXPORT RHW_NEWSWIRE.MD TO PUBLISH IT MANUALLY.';
+    if (banner.dataset.tone !== 'dirty') banner.dataset.tone = 'dirty';
+    if (hint.textContent !== text) hint.textContent = text;
   }
 
   function installStyles() {
@@ -114,12 +113,14 @@
     const reload = document.getElementById('v40NewswireReloadBtn');
     const reset = document.getElementById('v40NewswireResetBtn');
     if (reload) {
-      reload.textContent = 'RELOAD PUBLISHED FILE';
-      reload.title = 'Reload the repository version. Local edits are protected and must be reset explicitly first.';
+      if (reload.textContent !== 'RELOAD PUBLISHED FILE') reload.textContent = 'RELOAD PUBLISHED FILE';
+      const title = 'Reload the repository version. Local edits are protected and must be reset explicitly first.';
+      if (reload.title !== title) reload.title = title;
     }
     if (reset) {
-      reset.textContent = 'RESET TO PUBLISHED FILE';
-      reset.title = 'Discard the local working copy and return to the currently published Newswire file.';
+      if (reset.textContent !== 'RESET TO PUBLISHED FILE') reset.textContent = 'RESET TO PUBLISHED FILE';
+      const title = 'Discard the local working copy and return to the currently published Newswire file.';
+      if (reset.title !== title) reset.title = title;
     }
   }
 
@@ -181,8 +182,6 @@
     refreshPublishHint();
   }
 
-  // 16c loads before the runtime calls COMMS.init(). Wrap the manager-aware
-  // COMMS initializer so the bridge binds only after 16b has mounted its UI.
   const baseCommsInit = app.comms.init;
   app.comms.init = function newswireLiveBridgeAwareInit(...args) {
     const result = baseCommsInit.apply(this, args);
@@ -197,7 +196,6 @@
     return result;
   };
 
-  // Early install is still useful for the shared styles / remote refresh guard.
   install();
 
   app.newswireLiveBridge = {
