@@ -1,8 +1,7 @@
 /* ==========================================================================
    RHW WEB APP · V4.0 PRODUCTION → CALCULATOR BRIDGE
    Keeps the Production costing shortcut while ensuring calculator material
-   prices are session-only, never restored from local storage, and start blank
-   for a new recipe/target.
+   prices are session-only and every new recipe starts from RHW's BMM IFF.
    ========================================================================== */
 (function initRhwV4ProductionCalculatorBridge() {
   'use strict';
@@ -13,6 +12,7 @@
 
   const STYLE_ID = 'rhwV40ProductionPricingStyle';
   const CALC_KEY = app.config.storageKeys.calculatorState;
+  const DEFAULT_IFF = app.config.operations.defaultAffiliation;
   let productionObserver = null;
   let operationsObserver = null;
   let installed = false;
@@ -43,10 +43,17 @@
     app.state.calculator.materialPrices = {};
   }
 
+  function resetAffiliationToDefault() {
+    if (!app.state.calculator || typeof app.state.calculator !== 'object') return;
+    app.state.calculator.affiliationId = DEFAULT_IFF;
+    const select = document.getElementById('opsAffiliation');
+    if (select && [...select.options].some(option => option.value === DEFAULT_IFF)) select.value = DEFAULT_IFF;
+  }
+
   function sanitizeStoredCalculator() {
     const stored = app.store.get(CALC_KEY, null);
-    if (!stored || typeof stored !== 'object' || !Object.prototype.hasOwnProperty.call(stored, 'materialPrices')) return;
-    const clean = { ...stored };
+    if (!stored || typeof stored !== 'object') return;
+    const clean = { ...stored, affiliationId: DEFAULT_IFF };
     delete clean.materialPrices;
     app.store.set(CALC_KEY, clean);
   }
@@ -83,6 +90,11 @@
     if (costHead && costHead.textContent !== costHeadText) costHead.textContent = costHeadText;
   }
 
+  function startFreshRecipeSession() {
+    clearSessionPrices();
+    resetAffiliationToDefault();
+  }
+
   function installCalculatorLifecycle() {
     const workspace = document.getElementById('workspaceOperations');
     if (!workspace) return;
@@ -90,22 +102,22 @@
     if (workspace.dataset.v40SessionPriceMode === 'true') return;
     workspace.dataset.v40SessionPriceMode = 'true';
 
-    // A new recipe starts as a new costing session. Quantity, margin and IFF
-    // changes deliberately keep the prices entered for the current recipe.
+    // A new recipe/target starts from RHW defaults: blank prices + BMM IFF.
+    // Quantity, margin and a deliberate IFF change keep the current session.
     workspace.addEventListener('input', event => {
-      if (event.target?.id === 'opsRecipeSearch') clearSessionPrices();
+      if (event.target?.id === 'opsRecipeSearch') startFreshRecipeSession();
     }, true);
     workspace.addEventListener('change', event => {
-      if (event.target?.id === 'opsRecipe') clearSessionPrices();
+      if (event.target?.id === 'opsRecipe') startFreshRecipeSession();
     }, true);
 
     operationsObserver = new MutationObserver(cleanCalculatorUi);
     operationsObserver.observe(workspace, { childList: true, subtree: true });
 
-    // The legacy Shipyard planner uses a lexical openTarget() helper, so clear
-    // the active costing session in capture phase before that click handler runs.
+    // The legacy Shipyard planner uses a lexical openTarget() helper, so reset
+    // RHW costing defaults in capture phase before that click handler runs.
     document.addEventListener('click', event => {
-      if (event.target?.closest?.('.shipyard-plan-button')) clearSessionPrices();
+      if (event.target?.closest?.('.shipyard-plan-button')) startFreshRecipeSession();
     }, true);
   }
 
@@ -146,6 +158,7 @@
       recipeId: recipe.id,
       quantity: Math.max(1, Math.floor(Number(quantity) || 1)),
       search: recipeDisplayName(recipe),
+      affiliationId: DEFAULT_IFF,
       materialPrices: {}
     };
     app.store.set(CALC_KEY, app.state.calculator);
@@ -204,6 +217,7 @@
     const failures = [];
     const persisted = app.store.get(CALC_KEY, {}) || {};
     if (Object.prototype.hasOwnProperty.call(persisted, 'materialPrices')) failures.push('price-persistence');
+    if (persisted.affiliationId && persisted.affiliationId !== DEFAULT_IFF) failures.push('stored-default-iff');
     if (document.querySelector('.ops-price-source')) failures.push('legacy-price-source-ui');
     document.querySelectorAll('#workspaceOperations [data-material-price]').forEach(input => {
       if (input.placeholder) failures.push('price-placeholder');
@@ -231,11 +245,13 @@
   installStorageGuard();
   sanitizeStoredCalculator();
   clearSessionPrices();
+  resetAffiliationToDefault();
 
   const originalInit = app.operations.init;
   app.operations.init = async function sessionPriceAwareInit(...args) {
     sanitizeStoredCalculator();
     clearSessionPrices();
+    resetAffiliationToDefault();
     const result = await originalInit.apply(this, args);
     install();
     const failures = selfTest();
@@ -249,6 +265,7 @@
     openProductionTarget,
     findRecipeForLabel,
     clearSessionPrices,
+    resetAffiliationToDefault,
     selfTest
   };
 })();
