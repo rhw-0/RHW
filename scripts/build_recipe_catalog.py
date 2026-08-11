@@ -233,7 +233,7 @@ def build_catalog(items_path: Path, modules_path: Path) -> dict:
             'productCount': len(products),
             'factionCount': len(factions),
             'defaultAffiliation': 'br_m_grp',
-            'generatedFor': 'RHW V4.0 PREVIEW',
+            'generatedFor': 'RHW V4.0',
             'sourceSha256': {
                 items_path.name: hashlib.sha256(items_path.read_bytes()).hexdigest(),
                 modules_path.name: hashlib.sha256(modules_path.read_bytes()).hexdigest(),
