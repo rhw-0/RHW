@@ -61,11 +61,11 @@ def main() -> int:
             }))()""")
             if labels.get("duplicates") or labels.get("self"):
                 raise RuntimeError(f"Duplicate/final label self-test failed: {labels}")
-            if len(set(labels.get("gold", []))) != 4 or not any("Gold refining, basic" in x for x in labels.get("gold", [])) or not any("Wildcat Gold reprocessing" in x for x in labels.get("gold", [])):
+            if len(set(labels.get("gold", []))) != 4 or not any("Gold Refining · Basic" in x for x in labels.get("gold", [])) or not any("Wildcat Gold Reprocessing" in x for x in labels.get("gold", [])):
                 raise RuntimeError(f"Gold recipe labels are not distinct/meaningful: {labels}")
             if len(set(labels.get("diamonds", []))) != 3:
                 raise RuntimeError(f"Diamond recipe labels are not distinct: {labels}")
-            if labels.get("header", [])[:4] != ["LATEST SYNC", "SYSTEM CLOCK", "NEXT SYNC", "REFRESH CYCLE"]:
+            if labels.get("header", [])[:4] != ["SYSTEM CLOCK", "LATEST SYNC", "NEXT SYNC", "REFRESH CYCLE"]:
                 raise RuntimeError(f"Header clock order is wrong: {labels.get('header')}")
 
             base.ev(cdp, """(()=>{
@@ -91,6 +91,9 @@ def main() -> int:
             time.sleep(.15)
             costing = base.ev(cdp, """(()=>({
               card:document.querySelector('.ops-flow-cost')?.textContent||'',
+              margin:document.querySelector('.ops-flow-margin')?.textContent||'',
+              sellCard:document.querySelector('.ops-flow-sell')?.textContent||'',
+              flowMeta:document.querySelector('.ops-quote-panel .ops-panel-head>small')?.textContent||'',
               batch:opsTotalCost?.textContent||'',unit:opsUnitCost?.textContent||'',sell:opsSellUnit?.textContent||'',
               actual:[...document.querySelectorAll('.ops-recipe-meta>div')].find(x=>x.querySelector('small')?.textContent==='ACTUAL OUTPUT')?.querySelector('strong')?.textContent||'0'
             }))()""")
@@ -98,12 +101,14 @@ def main() -> int:
             unit = number_from_money(costing.get("unit", ""))
             sell = number_from_money(costing.get("sell", ""))
             actual = int(re.sub(r"[^0-9]", "", costing.get("actual", "")) or "0")
-            if "BATCH COST" not in costing.get("card", "") or "COST / UNIT" not in costing.get("card", ""):
+            if "TOTAL BATCH COST" not in costing.get("card", "") or "MANUFACTURING COST / UNIT" not in costing.get("card", ""):
                 raise RuntimeError(f"Batch/unit costing labels missing: {costing}")
+            if "COST / UNIT" not in costing.get("margin", "") or "SALE PRICE / UNIT" not in costing.get("sellCard", "") or "UNIT COST" not in costing.get("flowMeta", ""):
+                raise RuntimeError(f"Per-unit quote flow is not explicit: {costing}")
             if actual <= 1 or batch <= unit or unit <= 0 or sell <= unit:
                 raise RuntimeError(f"Batch/unit costing semantics failed: {costing}")
 
-            print("V4 interaction smoke passed: unique recipe labels + batch/unit costing + header clock layout")
+            print("V4 interaction smoke passed: unique recipe labels + unit-first costing + top-left header clock")
         finally:
             cdp.close()
     finally:
