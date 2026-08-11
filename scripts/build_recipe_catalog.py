@@ -23,14 +23,20 @@ def split_value_comment(raw: str) -> tuple[str, str]:
 def parse_cfg(path: Path, source_type: str) -> list[dict]:
     recipes: list[dict] = []
     current: dict | None = None
+    pending_deprecated = False
     for raw in path.read_text(encoding='utf-8', errors='replace').splitlines():
         line = raw.strip()
-        if not line or line.startswith(';'):
+        if not line:
+            continue
+        if line.startswith(';'):
+            if 'deprecated' in line[1:].strip().lower():
+                pending_deprecated = True
             continue
         if line.startswith('[') and line.endswith(']'):
             if current and current.get('nickname'):
                 recipes.append(current)
-            current = {'sourceType': source_type} if line.lower() == '[recipe]' else None
+            current = {'sourceType': source_type, 'deprecated': pending_deprecated} if line.lower() == '[recipe]' else None
+            pending_deprecated = False
             continue
         if current is None or '=' not in line:
             continue
@@ -78,6 +84,8 @@ def build_catalog(items_path: Path, modules_path: Path) -> dict:
     normalized: list[dict] = []
 
     for raw in raw_recipes:
+        if raw.get('deprecated'):
+            continue
         recipe_id = raw['nickname']
         outputs: list[dict] = []
         for value, comment in raw.get('produced_item', []):
@@ -98,23 +106,26 @@ def build_catalog(items_path: Path, modules_path: Path) -> dict:
                     'base': item(base_id, base_qty),
                     'alternate': item(alt_id, alt_qty),
                 })
-                if not outputs:
-                    outputs = [item(base_id, base_qty, clean_name(raw.get('infotext')) or base_id)]
-        if not outputs:
+                product_names.setdefault(base_id, base_id)
+                product_names.setdefault(alt_id, alt_id)
+        if not outputs and not affiliation_outputs:
             continue
 
         info_name = clean_name(raw.get('infotext'))
-        if info_name:
+        if info_name and outputs and not affiliation_outputs:
             outputs[0]['name'] = info_name
         for output in outputs:
-            product_names[output['id']] = output['name']
+            product_names.setdefault(output['id'], output['name'])
 
         inputs: list[dict] = []
         for value, comment in raw.get('consumed', []):
             parts = tokens(value)
             if len(parts) >= 2:
                 entry = item(parts[0], parts[1], clean_name(comment))
-                product_names.setdefault(entry['id'], entry['name'])
+                if entry['name'] != entry['id']:
+                    product_names[entry['id']] = entry['name']
+                else:
+                    product_names.setdefault(entry['id'], entry['name'])
                 inputs.append({'kind': 'consumed', 'options': [entry]})
 
         for value, comment in raw.get('consumed_dynamic_alt', []):
@@ -125,7 +136,10 @@ def build_catalog(items_path: Path, modules_path: Path) -> dict:
                 options = []
                 for index, item_id in enumerate(parts[1:]):
                     entry = item(item_id, quantity, names[index] if index < len(names) else item_id)
-                    product_names.setdefault(item_id, entry['name'])
+                    if entry['name'] != item_id:
+                        product_names[item_id] = entry['name']
+                    else:
+                        product_names.setdefault(item_id, entry['name'])
                     options.append(entry)
                 inputs.append({'kind': 'alternative', 'options': options})
 
@@ -135,7 +149,10 @@ def build_catalog(items_path: Path, modules_path: Path) -> dict:
             options = []
             for index in range(0, len(parts) - 1, 2):
                 entry = item(parts[index], parts[index + 1], names[index // 2] if index // 2 < len(names) else parts[index])
-                product_names.setdefault(entry['id'], entry['name'])
+                if entry['name'] != entry['id']:
+                    product_names[entry['id']] = entry['name']
+                else:
+                    product_names.setdefault(entry['id'], entry['name'])
                 options.append(entry)
             if options:
                 inputs.append({'kind': 'dynamic', 'options': options})
@@ -145,7 +162,10 @@ def build_catalog(items_path: Path, modules_path: Path) -> dict:
             parts = tokens(value)
             if len(parts) >= 2:
                 entry = item(parts[0], parts[1], clean_name(comment))
-                product_names.setdefault(entry['id'], entry['name'])
+                if entry['name'] != entry['id']:
+                    product_names[entry['id']] = entry['name']
+                else:
+                    product_names.setdefault(entry['id'], entry['name'])
                 catalysts.append(entry)
 
         bonuses: list[dict] = []
@@ -162,7 +182,7 @@ def build_catalog(items_path: Path, modules_path: Path) -> dict:
 
         normalized.append({
             'id': recipe_id,
-            'name': info_name or outputs[0]['name'] or recipe_id,
+            'name': info_name or (outputs[0]['name'] if outputs else recipe_id),
             'sourceType': raw['sourceType'],
             'craftType': raw.get('craft_type') or raw.get('build_type') or raw.get('craft_list') or '',
             'cookingRate': raw.get('cooking_rate', 0),
@@ -178,10 +198,21 @@ def build_catalog(items_path: Path, modules_path: Path) -> dict:
             'affiliationOutputs': affiliation_outputs,
         })
 
+    for recipe in normalized:
+        for group in recipe.get('affiliationOutputs', []):
+            for key in ('base', 'alternate'):
+                output = group[key]
+                output['name'] = product_names.get(output['id'], output['name'])
+
     recipes_by_product: dict[str, list[str]] = defaultdict(list)
     for recipe in normalized:
-        for output in recipe['outputs']:
-            recipes_by_product[output['id']].append(recipe['id'])
+        affiliation_targets = []
+        for group in recipe.get('affiliationOutputs', []):
+            affiliation_targets.extend([group['base'], group['alternate']])
+        targets = affiliation_targets or recipe['outputs']
+        for output in targets:
+            if recipe['id'] not in recipes_by_product[output['id']]:
+                recipes_by_product[output['id']].append(recipe['id'])
 
     products = [
         {'id': product_id, 'name': product_names.get(product_id, product_id), 'recipeIds': recipe_ids}
