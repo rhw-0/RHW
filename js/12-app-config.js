@@ -1,8 +1,8 @@
 // ============================================================
-// RHW WEB APP CONFIGURATION · V4.0 PREVIEW
+// RHW WEB APP CONFIGURATION · V4.0
 // App identity, COMMS templates, sender registry defaults and UI presets.
 // ============================================================
-const RHW_APP_VERSION = 'V4.0 PREVIEW';
+const RHW_APP_VERSION = 'V4.0';
 
 const RHW_APP_CONFIG = Object.freeze({
   storageKeys: Object.freeze({
