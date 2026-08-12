@@ -1,8 +1,8 @@
 // ============================================================
-// RHW WEB APP CONFIGURATION · V4.0.1
+// RHW WEB APP CONFIGURATION · V4.0.2
 // App identity, COMMS templates, sender registry defaults and UI presets.
 // ============================================================
-const RHW_APP_VERSION = 'V4.0.1';
+const RHW_APP_VERSION = 'V4.0.2';
 
 const RHW_APP_CONFIG = Object.freeze({
   storageKeys: Object.freeze({
@@ -11,6 +11,8 @@ const RHW_APP_CONFIG = Object.freeze({
     inventoryView: 'rhw-webapp-v4:inventory-view',
     operationsNode: 'rhw-webapp-v4:operations-node',
     calculatorState: 'rhw-webapp-v4:calculator-state',
+    calculatorPriceProfiles: 'rhw-webapp-v4:calculator-price-profiles',
+    shipyardPlanner: 'rhw-webapp-v4:shipyard-planner',
     commsNode: 'rhw-webapp-v4:comms-node',
     commsCurrent: 'rhw-webapp-v4:comms-current',
     commsDrafts: 'rhw-webapp-v4:comms-drafts',
@@ -21,7 +23,6 @@ const RHW_APP_CONFIG = Object.freeze({
     defaultProduct: 'dsy_br_battleship_package',
     defaultAffiliation: 'br_m_grp',
     maxTreeDepth: 18,
-    catalogAsset: './assets/recipes/catalog-v1.js',
     shipyardTargets: Object.freeze({
       dunkirk: 'dsy_br_battleship_package',
       invincible: 'dsy_br_carrier_package'

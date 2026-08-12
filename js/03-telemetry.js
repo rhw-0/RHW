@@ -312,11 +312,14 @@ function updateNetworkFeed(mode = 'live', errorMessage = '') {
     return;
   }
   if (mode === 'error') {
-    const staleTime = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'NONE';
     updateTickerSlot(0, { tag: 'PRIORITY / UPLINK', text: `DARKSTAT CONNECTION LOST // ${String(errorMessage || 'UNKNOWN TELEMETRY ERROR').toUpperCase()}`, tone: 'danger' });
-    updateTickerSlot(1, { tag: 'RHW CACHE', text: `DISPLAYING LAST VERIFIED DATA // SYNC ${staleTime}`, tone: lastLoaded ? 'warn' : 'danger' });
+    if (lastLoaded) {
+      const staleTime = lastLoaded.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      updateTickerSlot(1, { tag: 'RHW CACHE', text: `DISPLAYING LAST VERIFIED DATA // SYNC ${staleTime}`, tone: 'warn' });
+    } else {
+      updateTickerSlot(1, { tag: 'RHW CACHE', text: 'NO VERIFIED CACHE AVAILABLE // WAITING FOR FIRST SUCCESSFUL SYNC', tone: 'danger' });
+    }
     return;
   }
   updateTickerSlots(buildIndustrialNewswireMessages());
 }
-
