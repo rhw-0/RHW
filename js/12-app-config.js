@@ -1,8 +1,8 @@
 // ============================================================
-// RHW WEB APP CONFIGURATION · V4.0.1
+// RHW WEB APP CONFIGURATION · V4.0.2
 // App identity, COMMS templates, sender registry defaults and UI presets.
 // ============================================================
-const RHW_APP_VERSION = 'V4.0.1';
+const RHW_APP_VERSION = 'V4.0.2';
 
 const RHW_APP_CONFIG = Object.freeze({
   storageKeys: Object.freeze({
@@ -21,7 +21,6 @@ const RHW_APP_CONFIG = Object.freeze({
     defaultProduct: 'dsy_br_battleship_package',
     defaultAffiliation: 'br_m_grp',
     maxTreeDepth: 18,
-    catalogAsset: './assets/recipes/catalog-v1.js',
     shipyardTargets: Object.freeze({
       dunkirk: 'dsy_br_battleship_package',
       invincible: 'dsy_br_carrier_package'

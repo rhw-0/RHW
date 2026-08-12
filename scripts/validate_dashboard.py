@@ -23,12 +23,16 @@ EXPECTED_JS = [
 ]
 V4_RUNTIME_ASSETS = [
     './css/12-app-v40.css', './css/13-app-v40-navigation.css', './css/14-app-v40-composer.css',
-    './css/15-app-v40-audit.css', './css/16-app-v40-operations.css',
+    './css/15-app-v40-audit.css', './css/16-app-v40-operations.css', './css/17-app-v40-calculator-polish.css',
+    './css/18-app-v40-nav-hierarchy.css', './css/19-app-v402-fixes.css',
     './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
-    './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js',
+    './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js', './js/16b-app-v40-newswire-manager.js',
+    './js/16c-app-v40-newswire-ordering.js',
     './assets/recipes/catalog-v1-part-01.js', './assets/recipes/catalog-v1-part-02.js', './assets/recipes/catalog-v1-part-03.js',
     './assets/recipes/catalog-v1-part-04.js', './assets/recipes/catalog-v1-part-05.js', './assets/recipes/catalog-v1-part-06.js',
-    './js/17-app-v40-operations-core.js', './js/18-app-v40-operations-ui.js', './js/19-app-v40-runtime.js',
+    './js/17-app-v40-operations-core.js', './js/18-app-v40-operations-ui.js', './js/18a-app-v40-nav-hierarchy.js',
+    './js/18b-app-v40-production-pricing.js', './js/18c-app-v40-recipe-corrections.js',
+    './js/18d-app-v40-final-ui-polish.js', './js/20-app-v402-fixes.js', './js/19-app-v40-runtime.js',
 ]
 V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py']
 
@@ -155,7 +159,34 @@ def main() -> int:
         if 'BaseApply' in text or 'BaseActivate' in text or 'const v40Base' in text:
             errors.append(f'V4 module still contains legacy override-chain hooks: {path}')
 
+    if 'catalogAsset:' in app_config:
+        errors.append('V4 configuration must not reference the removed single-file recipe catalog asset.')
+
+    require_tokens(errors, 'js/20-app-v402-fixes.js', (
+        'v40OverviewTelemetryState', "'CACHE TELEMETRY'", "'AWAITING TELEMETRY'",
+        'price per unit', 'Generated Newswire source block', 'Updated RHW Newswire Markdown source'
+    ), 'V4.0.2 runtime fixes')
+    require_tokens(errors, 'js/03-telemetry.js', (
+        'NO VERIFIED CACHE AVAILABLE // WAITING FOR FIRST SUCCESSFUL SYNC',
+    ), 'Telemetry cache fallback')
+    require_tokens(errors, 'css/19-app-v402-fixes.css', (
+        '@media (max-width: 700px)', '.crest-frame.crest-fallback::after', 'width: 72px', 'height: 72px',
+        '.command-overview-live[data-state="stale"]', '.command-overview-live[data-state="offline"]'
+    ), 'V4.0.2 presentation fixes')
+
+    index_text = INDEX.read_text(encoding='utf-8')
+    title_match = re.search(r'<title>(.*?)</title>', index_text, flags=re.I | re.S)
+    if not title_match or version not in title_match.group(1):
+        errors.append(f'index.html title does not advertise the current app version {version}.')
+
+    revision_match = re.search(r"RHW_V4_ASSET_REV\s*=\s*'([^']+)'", bootstrap)
+    release_number = version.removeprefix('V')
+    if not revision_match or not revision_match.group(1).startswith(f'{release_number}-'):
+        errors.append(f'V4 cache-busting revision is not aligned with app version {version}.')
+
     readme = (ROOT / 'README.md').read_text(encoding='utf-8')
+    if f'# Resolution Heavy Works Web App - {version}' not in readme or f'{version} is the current RHW web app release.' not in readme:
+        errors.append(f'README release metadata does not match current app version {version}.')
     if '.github/workflows/rhw-pages-deploy.yml' not in readme:
         errors.append('README deployment documentation does not name the active workflow.')
 

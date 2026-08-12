@@ -1,6 +1,6 @@
-# Resolution Heavy Works Web App - V4.0
+# Resolution Heavy Works Web App - V4.0.2
 
-V4.0 is the current RHW web app release.
+V4.0.2 is the current RHW web app release.
 
 The app is split into three workspaces:
 
