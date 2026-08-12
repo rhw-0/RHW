@@ -8,7 +8,9 @@ The app is split into three workspaces:
 - **OPERATIONS** — recipe-first manufacturing calculator backed by Discovery's public game configuration.
 - **COMMS** — forum transmission composer, Newswire file manager, drafts and sender identities.
 
-`OPERATIONS / ITEM CALCULATOR` contains the corrected runtime catalog of **287 recipes / 248 build targets**. It supports recipe search, distinct recipe-variant labels, output quantity, BMM-default IFF handling, affiliation-dependent outputs, manual material prices for the current calculation, fixed recipe fees where defined, batch build cost, cost per unit, target profit margin, recommended sale price, revenue and profit.
+`OPERATIONS / ITEM CALCULATOR` contains the corrected runtime catalog of **287 recipes / 248 build targets**. It supports recipe search, distinct recipe-variant labels, output quantity, BMM-default IFF handling, affiliation-dependent outputs, manual material prices for the current calculation, fixed recipe fees where defined, batch build cost, cost per unit, target profit margin, recommended sale price, revenue and profit. Optional **PRICE PROFILES** can be saved explicitly in the browser and loaded on demand; they are never applied automatically.
+
+`COMMAND / SHIPYARD` includes a compact multi-hull build planner. Choose a registered hull and target quantity to compare required capital components with verified RHW stock, see deficits, and send the same quantity directly to the Item Calculator.
 
 `COMMS / NEWSWIRE MANAGER` loads `assets/RHW_Newswire.md` into a local working copy. Entries can be added, edited, deleted, filtered and reordered within their category, then copied or exported as an updated Markdown file. The public static site does not publish Newswire edits back to GitHub automatically.
 
