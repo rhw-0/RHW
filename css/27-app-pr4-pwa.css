@@ -1,7 +1,40 @@
 /* ==========================================================================
    RHW PR4 · INSTALLABLE APP
-   Android/Samsung installation, offline truth-state and safe update prompts.
+   Android/iOS installation, offline truth-state and safe update prompts.
    ========================================================================== */
+
+.app-nav-brand .rhw-pwa-install {
+  flex: 0 0 auto;
+  min-width: 132px;
+  min-height: 44px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  margin-left: 10px;
+  padding: 7px 11px;
+  border: 1px solid rgba(212, 175, 55, .32);
+  clip-path: none;
+  background: rgba(212, 175, 55, .065);
+  box-shadow: inset 0 -2px 0 rgba(212, 175, 55, .34);
+  color: #e7d28f;
+  text-align: left;
+}
+
+.app-nav-brand .rhw-pwa-install span,
+.app-nav-brand .rhw-pwa-install small {
+  display: block;
+  margin: 0;
+  font-family: var(--font-tech);
+  line-height: 1.1;
+}
+
+.app-nav-brand .rhw-pwa-install span { font-size: 9px; font-weight: 700; letter-spacing: .09em; }
+.app-nav-brand .rhw-pwa-install small { color: rgba(185, 203, 229, .58); font-size: 6px; letter-spacing: .08em; }
+.app-nav-brand .rhw-pwa-install:hover,
+.app-nav-brand .rhw-pwa-install:focus-visible {
+  border-color: rgba(212, 175, 55, .62);
+  background: rgba(212, 175, 55, .12);
+}
 
 .rhw-pwa-install[data-install-ready="true"] {
   border-color: rgba(120, 173, 138, .44) !important;
@@ -80,6 +113,8 @@ html[data-rhw-network="offline"] body { padding-top: 42px; }
 .rhw-pwa-panel-actions .primary { border-color: rgba(212, 175, 55, .5); background: rgba(212, 175, 55, .12); color: #f0d994; }
 
 @media (max-width: 760px) {
+  .app-nav-brand { width: 100%; }
+  .app-nav-brand .rhw-pwa-install { min-width: 126px; min-height: 44px !important; margin-left: auto; }
   .rhw-pwa-offline { align-items: flex-start; flex-direction: column; gap: 2px; padding-inline: 12px; text-align: left; }
   html[data-rhw-network="offline"] body { padding-top: 48px; }
   .rhw-pwa-panel { align-items: stretch; flex-direction: column; gap: 12px; padding: 14px; }
@@ -89,6 +124,8 @@ html[data-rhw-network="offline"] body { padding-top: 42px; }
 }
 
 @media (max-width: 390px) {
+  .app-nav-brand .rhw-pwa-install { min-width: 112px; padding-inline: 9px; }
+  .app-nav-brand .rhw-pwa-install small { display: none; }
   .rhw-pwa-panel-actions { grid-template-columns: 1fr; }
 }
 

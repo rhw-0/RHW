@@ -516,6 +516,9 @@ def test_pr4_pwa(cdp, workspace, node):
           const offline=document.getElementById('rhwPwaOffline');
           const snapshot={
             api:!!window.RHWPWA, install:!!install, installHeight:install?.getBoundingClientRect().height||0,
+            inAppHeader:!!document.querySelector('.app-nav-brand #rhwPwaInstallBtn'),
+            inTelemetry:!!document.querySelector('.uplink-actions #rhwPwaInstallBtn'),
+            ios:RHWPWA.manualInstructions('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)','iPhone',5),
             panelVisible:!panel?.hidden, primaryHeight:primary?.getBoundingClientRect().height||0,
             message:document.getElementById('rhwPwaMessage')?.textContent||'',
             network:document.documentElement.dataset.rhwNetwork,
@@ -532,12 +535,15 @@ def test_pr4_pwa(cdp, workspace, node):
     finally:
         cdp.call("Emulation.clearDeviceMetricsOverride")
     if (not result.get("api") or not result.get("install") or result.get("installHeight", 0) < 43.5
+            or not result.get("inAppHeader") or result.get("inTelemetry")
+            or "SAFARI" not in result.get("ios", {}).get("message", "")
+            or "IPHONE / IPAD" not in result.get("ios", {}).get("title", "")
             or not result.get("panelVisible") or result.get("primaryHeight", 0) < 47.5
             or "HOME SCREEN" not in result.get("message", "") or result.get("network") != "offline"
             or not result.get("offlineVisible") or not result.get("headerDisabled")
             or not result.get("tableDisabled") or result.get("overflow", 0) > 2):
         raise RuntimeError(f"PR4 PWA mobile/install/offline state failed: {result}")
-    print("PR4 smoke passed: mobile install controls + honest offline state + touch targets")
+    print("PR4 smoke passed: app-header install controls + iOS guidance + honest offline state")
 
 
 def main():

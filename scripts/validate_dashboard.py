@@ -186,10 +186,11 @@ def main() -> int:
     ), 'PR3 Newswire mobile workflow')
     require_tokens(errors, 'js/23-app-v40-pwa.js', (
         'beforeinstallprompt', 'serviceWorker.register', 'SKIP_WAITING', 'controllerchange',
-        'SamsungBrowser', 'CACHED APP DATA ONLY', 'dataset.rhwNetwork', "getElementById('refreshBtn')"
+        'SamsungBrowser', 'iPad|iPhone|iPod', 'OPEN RHW IN SAFARI', "querySelector('.app-nav-brand')",
+        'CACHED APP DATA ONLY', 'dataset.rhwNetwork', "getElementById('refreshBtn')"
     ), 'PR4 installable app runtime')
     require_tokens(errors, 'css/27-app-pr4-pwa.css', (
-        '.rhw-pwa-offline', '.rhw-pwa-panel', 'env(safe-area-inset-bottom)',
+        '.app-nav-brand .rhw-pwa-install', '.rhw-pwa-offline', '.rhw-pwa-panel', 'env(safe-area-inset-bottom)',
         'min-height: 44px', 'min-height: 48px', '@media (display-mode: standalone)'
     ), 'PR4 installable app presentation')
     require_tokens(errors, 'sw.js', (
