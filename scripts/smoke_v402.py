@@ -13,6 +13,7 @@ base.V4_CSS = [
     "css/21-app-v402-mobile-ui.css", "css/22-app-pr3-command-mobile.css",
     "css/23-app-pr3-yard-production.css", "css/24-app-pr3-operations-calculator.css",
     "css/25-app-pr3-comms-workflow.css", "css/26-app-pr3-newswire-manager.css",
+    "css/27-app-pr4-pwa.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -22,7 +23,7 @@ base.V4_JS = [
     "js/17-app-v40-operations-core.js", "js/18-app-v40-operations-ui.js", "js/18a-app-v40-nav-hierarchy.js",
     "js/18b-app-v40-production-pricing.js", "js/18c-app-v40-recipe-corrections.js",
     "js/18d-app-v40-final-ui-polish.js", "js/20-app-v402-fixes.js", "js/21-app-v402-qol.js",
-    "js/22-app-v402-mobile-ui.js", "js/19-app-v40-runtime.js",
+    "js/22-app-v402-mobile-ui.js", "js/23-app-v40-pwa.js", "js/19-app-v40-runtime.js",
 ]
 MOBILE_WIDTHS = (360, 390, 412, 430)
 
@@ -498,6 +499,47 @@ def run_interactions(cdp, workspace, node):
         test_backup_and_storage(cdp)
 
 
+def test_pr4_pwa(cdp, workspace, node):
+    if (workspace, node) != ("command", "overview"):
+        return
+    cdp.call("Emulation.setDeviceMetricsOverride", {
+        "width": 390, "height": 820, "deviceScaleFactor": 1, "mobile": True,
+    })
+    try:
+        result = base.ev(cdp, """(()=>{
+          RHWPWA.showManualInstructions();
+          Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>false});
+          RHWPWA.syncConnectionState();
+          const install=document.getElementById('rhwPwaInstallBtn');
+          const panel=document.getElementById('rhwPwaPanel');
+          const primary=document.getElementById('rhwPwaPrimary');
+          const offline=document.getElementById('rhwPwaOffline');
+          const snapshot={
+            api:!!window.RHWPWA, install:!!install, installHeight:install?.getBoundingClientRect().height||0,
+            panelVisible:!panel?.hidden, primaryHeight:primary?.getBoundingClientRect().height||0,
+            message:document.getElementById('rhwPwaMessage')?.textContent||'',
+            network:document.documentElement.dataset.rhwNetwork,
+            offlineVisible:!offline?.hidden,
+            headerDisabled:!!document.getElementById('headerRefreshBtn')?.disabled,
+            tableDisabled:!!document.getElementById('refreshBtn')?.disabled,
+            overflow:document.documentElement.scrollWidth-window.innerWidth
+          };
+          delete navigator.onLine;
+          RHWPWA.syncConnectionState();
+          document.getElementById('rhwPwaClose')?.click();
+          return snapshot;
+        })()""")
+    finally:
+        cdp.call("Emulation.clearDeviceMetricsOverride")
+    if (not result.get("api") or not result.get("install") or result.get("installHeight", 0) < 43.5
+            or not result.get("panelVisible") or result.get("primaryHeight", 0) < 47.5
+            or "HOME SCREEN" not in result.get("message", "") or result.get("network") != "offline"
+            or not result.get("offlineVisible") or not result.get("headerDisabled")
+            or not result.get("tableDisabled") or result.get("overflow", 0) > 2):
+        raise RuntimeError(f"PR4 PWA mobile/install/offline state failed: {result}")
+    print("PR4 smoke passed: mobile install controls + honest offline state + touch targets")
+
+
 def main():
     try:
         chrome, browser, port, folder, _log_path = base.launch()
@@ -536,6 +578,7 @@ def main():
                 test_pr3_decision_ui(cdp, workspace, node)
                 test_pr3_calculator_ui(cdp, workspace, node)
                 test_pr3_comms_workflow(cdp, workspace, node)
+                test_pr4_pwa(cdp, workspace, node)
                 if (workspace, node) == ("comms", "forum"):
                     test_mobile_forum_controls(cdp)
                 run_interactions(cdp, workspace, node)
