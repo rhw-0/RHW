@@ -16,7 +16,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
      Load every V4 stylesheet immediately to avoid an unstyled app-shell flash,
      but wait until the stable dashboard has initialized before booting V4 JS. */
   (function bootstrapRhwV4Preview() {
-    const RHW_V4_ASSET_REV = '4.0.2-release-2';
+    const RHW_V4_ASSET_REV = '4.0.2-pr1-safety';
     const versioned = src => `${src}?v=${encodeURIComponent(RHW_V4_ASSET_REV)}`;
 
     [
@@ -66,14 +66,54 @@ if (!window.__RHW_SMOKE_INLINE__) {
         ['./js/19-app-v40-runtime.js', 'rhwV4Runtime']
       ];
 
+      const showBootFailure = (src, reason = 'LOAD ERROR') => {
+        document.documentElement.dataset.rhwBootError = 'true';
+        document.documentElement.dataset.rhwBootAsset = src;
+        let panel = document.getElementById('rhwBootFailure');
+        if (!panel) {
+          panel = document.createElement('aside');
+          panel.id = 'rhwBootFailure';
+          panel.setAttribute('role', 'alert');
+          panel.style.cssText = 'position:fixed;z-index:2147483647;inset:auto 12px 12px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border:1px solid #c75e5e;background:#120b0d;color:#f0d7d7;font:700 12px/1.45 monospace;box-shadow:0 12px 40px #000';
+          const copy = document.createElement('span');
+          copy.dataset.bootFailureCopy = 'true';
+          const retry = document.createElement('button');
+          retry.type = 'button';
+          retry.textContent = 'RETRY';
+          retry.style.cssText = 'min-height:38px;padding:8px 14px;border:1px solid #c75e5e;background:#2a1117;color:#fff;font:700 11px monospace;cursor:pointer';
+          retry.addEventListener('click', () => window.location.reload());
+          panel.append(copy, retry);
+          document.body.appendChild(panel);
+        }
+        const copy = panel.querySelector('[data-boot-failure-copy]');
+        if (copy) copy.textContent = `RHW WEB APP COULD NOT START // ${src} // ${reason}`;
+      };
+
       const loadNext = index => {
-        if (index >= files.length) return;
+        if (index >= files.length) {
+          document.documentElement.dataset.rhwBootChain = 'complete';
+          return;
+        }
         const [src, dataKey] = files[index];
+        if (window.__RHW_BOOTSTRAP_TEST__?.failAsset === src) {
+          showBootFailure(src, 'SIMULATED FAILURE');
+          return;
+        }
         const script = document.createElement('script');
         script.src = versioned(src);
         script.dataset[dataKey] = 'true';
-        script.addEventListener('load', () => loadNext(index + 1), { once: true });
-        script.addEventListener('error', () => console.error(`RHW V4 asset failed to load: ${src}`), { once: true });
+        const timeout = window.setTimeout(() => {
+          script.remove();
+          showBootFailure(src, 'LOAD TIMEOUT');
+        }, 15000);
+        script.addEventListener('load', () => {
+          window.clearTimeout(timeout);
+          loadNext(index + 1);
+        }, { once: true });
+        script.addEventListener('error', () => {
+          window.clearTimeout(timeout);
+          showBootFailure(src, 'LOAD ERROR');
+        }, { once: true });
         document.body.appendChild(script);
       };
       loadNext(0);

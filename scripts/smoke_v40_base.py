@@ -41,7 +41,8 @@ def get(url, timeout=8):
     raise RuntimeError(f"Timed out waiting for {url}: {last}")
 
 class CDP:
-    def __init__(self,url): self.ws=websocket.create_connection(url,timeout=7); self.n=1
+    def __init__(self,url):
+        self.ws=websocket.create_connection(url,timeout=7); self.n=1; self.events=[]
     def call(self,method,params=None):
         ident=self.n; self.n+=1
         self.ws.send(json.dumps({"id":ident,"method":method,"params":params or {}}))
@@ -51,7 +52,24 @@ class CDP:
             if msg.get("id")==ident:
                 if "error" in msg: raise RuntimeError(f"CDP {method}: {msg['error']}")
                 return msg.get("result",{})
+            self.events.append(msg)
         raise RuntimeError(f"CDP {method} timed out")
+    def take_runtime_failures(self):
+        events,self.events=self.events,[]
+        failures=[]
+        for event in events:
+            method=event.get("method",""); params=event.get("params",{})
+            if method=="Runtime.exceptionThrown":
+                detail=params.get("exceptionDetails",{})
+                failures.append(detail.get("text") or detail.get("exception",{}).get("description") or "Uncaught exception")
+            elif method=="Runtime.consoleAPICalled" and params.get("type")=="error":
+                values=[]
+                for arg in params.get("args",[]):
+                    values.append(str(arg.get("value") or arg.get("description") or "console.error"))
+                failures.append(" ".join(values))
+            elif method=="Log.entryAdded" and params.get("entry",{}).get("level")=="error" and params["entry"].get("source")=="javascript":
+                failures.append(params["entry"].get("text") or "Browser JavaScript log error")
+        return failures
     def close(self): self.ws.close()
 
 def safe(text): return text.replace("</script","<\\/script")

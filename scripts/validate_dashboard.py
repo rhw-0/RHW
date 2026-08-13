@@ -24,7 +24,7 @@ EXPECTED_JS = [
 V4_RUNTIME_ASSETS = [
     './css/12-app-v40.css', './css/13-app-v40-navigation.css', './css/14-app-v40-composer.css',
     './css/15-app-v40-audit.css', './css/16-app-v40-operations.css', './css/17-app-v40-calculator-polish.css',
-    './css/18-app-v40-nav-hierarchy.css', './css/19-app-v402-fixes.css',
+    './css/18-app-v40-nav-hierarchy.css', './css/19-app-v402-fixes.css', './css/20-app-v402-qol.css',
     './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
     './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js', './js/16b-app-v40-newswire-manager.js',
     './js/16c-app-v40-newswire-ordering.js',
@@ -32,7 +32,8 @@ V4_RUNTIME_ASSETS = [
     './assets/recipes/catalog-v1-part-04.js', './assets/recipes/catalog-v1-part-05.js', './assets/recipes/catalog-v1-part-06.js',
     './js/17-app-v40-operations-core.js', './js/18-app-v40-operations-ui.js', './js/18a-app-v40-nav-hierarchy.js',
     './js/18b-app-v40-production-pricing.js', './js/18c-app-v40-recipe-corrections.js',
-    './js/18d-app-v40-final-ui-polish.js', './js/20-app-v402-fixes.js', './js/19-app-v40-runtime.js',
+    './js/18d-app-v40-final-ui-polish.js', './js/20-app-v402-fixes.js', './js/21-app-v402-qol.js',
+    './js/19-app-v40-runtime.js',
 ]
 V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py']
 
@@ -101,12 +102,16 @@ def main() -> int:
 
     require_tokens(errors, 'js/12-app-config.js', (
         'alistair-thorne', 'salutations:', 'closings:',
-        'operationsNode:', 'calculatorState:', 'defaultAffiliation:', 'shipyardTargets:'
+        'operationsNode:', 'calculatorState:', 'defaultAffiliation:', 'shipyardTargets:',
+        'newswireManagerDraft:'
     ), 'V4 configuration')
     require_tokens(errors, 'js/13-app-v40.js', (
         'window.RHWV4', "'operations'", 'workspaceOperations', 'app.installShell', 'app.navigate', 'app.applyRoute'
     ), 'V4 core')
-    require_tokens(errors, 'js/14-app-v40-cache.js', ('app.storage', 'saveDraft', 'upsertSender', 'importPayload', 'senderSnapshotName'), 'V4 storage')
+    require_tokens(errors, 'js/14-app-v40-cache.js', (
+        'app.storage', 'saveDraft', 'upsertSender', 'importPayload', 'senderSnapshotName',
+        "version: 2", 'priceProfiles:', 'shipyardPlanner:', 'newswireDraft:', 'preferences:'
+    ), 'V4 storage')
     require_tokens(errors, 'js/15-app-v40-navigation.js', (
         'PRIORITY ACTIONS', 'inventory-view-nav', 'priorityActions', 'activateInventoryView',
         "typeof CAPITAL_SHIPYARD === 'undefined'", "typeof RECIPES === 'undefined'"
@@ -115,6 +120,16 @@ def main() -> int:
     require_tokens(errors, 'js/16a-app-v40-comms-safety.js', (
         'MAX_TAG = 40', 'MAX_MESSAGE = 240', 'normalizeTag', 'normalizeMessage', 'app.commsSafety'
     ), 'V4 COMMS safety module')
+    require_tokens(errors, 'js/16b-app-v40-newswire-manager.js', (
+        'newswireManagerDraft', 'readLocalDraft', 'draftSourceChanged', 'beforeunload', 'restoreDraft'
+    ), 'V4 Newswire recovery')
+    require_tokens(errors, 'js/00-bootstrap.js', (
+        'rhwBootFailure', 'rhwBootError', 'LOAD TIMEOUT', '__RHW_BOOTSTRAP_TEST__'
+    ), 'V4 bootstrap failure UI')
+    require_tokens(errors, 'scripts/smoke_v402.py', (
+        'MOBILE_WIDTHS = (360, 390, 412, 430)', 'test_boot_failure',
+        'test_backup_and_storage', 'take_runtime_failures'
+    ), 'V4.0.2 + PR1 browser smoke')
     require_tokens(errors, 'js/17-app-v40-operations-core.js', (
         'app.operationsCore', 'loadCatalog', 'buildPlan', 'factorFor', 'authorizedFor',
         'RESTRICTED RECIPE REQUIRES AN AUTHORIZED IFF', 'outputPerCycle: rootOutputPerCycle'

@@ -17,7 +17,8 @@ const RHW_APP_CONFIG = Object.freeze({
     commsCurrent: 'rhw-webapp-v4:comms-current',
     commsDrafts: 'rhw-webapp-v4:comms-drafts',
     localSenders: 'rhw-webapp-v4:local-senders',
-    tickerComposer: 'rhw-webapp-v4:ticker-composer'
+    tickerComposer: 'rhw-webapp-v4:ticker-composer',
+    newswireManagerDraft: 'rhw-webapp-v4:newswire-manager-draft'
   }),
   operations: Object.freeze({
     defaultProduct: 'dsy_br_battleship_package',
