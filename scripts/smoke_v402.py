@@ -10,6 +10,7 @@ base.V4_CSS = [
     "css/12-app-v40.css", "css/13-app-v40-navigation.css", "css/14-app-v40-composer.css",
     "css/15-app-v40-audit.css", "css/16-app-v40-operations.css", "css/17-app-v40-calculator-polish.css",
     "css/18-app-v40-nav-hierarchy.css", "css/19-app-v402-fixes.css", "css/20-app-v402-qol.css",
+    "css/21-app-v402-mobile-ui.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -19,7 +20,7 @@ base.V4_JS = [
     "js/17-app-v40-operations-core.js", "js/18-app-v40-operations-ui.js", "js/18a-app-v40-nav-hierarchy.js",
     "js/18b-app-v40-production-pricing.js", "js/18c-app-v40-recipe-corrections.js",
     "js/18d-app-v40-final-ui-polish.js", "js/20-app-v402-fixes.js", "js/21-app-v402-qol.js",
-    "js/19-app-v40-runtime.js",
+    "js/22-app-v402-mobile-ui.js", "js/19-app-v40-runtime.js",
 ]
 MOBILE_WIDTHS = (360, 390, 412, 430)
 
@@ -40,7 +41,7 @@ def test_boot_failure(cdp, frame_id):
         time.sleep(.05)
     if result.get("error") != "true" or result.get("asset") != "./js/12-app-config.js" or "COULD NOT START" not in result.get("text", "") or not result.get("retry"):
         raise RuntimeError(f"Visible bootstrap failure UI missing: {result}")
-    print("V4.0.2 + PR1 smoke passed: visible bootstrap failure + retry")
+    print("V4.0.2 + PR2 smoke passed: visible bootstrap failure + retry")
 
 
 def test_mobile_layout(cdp, workspace, node):
@@ -59,6 +60,65 @@ def test_mobile_layout(cdp, workspace, node):
         cdp.call("Emulation.clearDeviceMetricsOverride")
     if failures:
         raise RuntimeError(f"Mobile horizontal overflow {workspace}/{node}: {failures}")
+
+
+def test_mobile_forum_controls(cdp):
+    cdp.call("Emulation.setDeviceMetricsOverride", {
+        "width": 390, "height": 820, "deviceScaleFactor": 1, "mobile": True,
+    })
+    try:
+        time.sleep(.08)
+        result = base.ev(cdp, """(()=>{
+          const visible=element=>{const style=getComputedStyle(element),rect=element.getBoundingClientRect();return style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0};
+          const controls=document.getElementById('commsMobileViewSwitch');
+          const dock=document.querySelector('.app-tabs');
+          const context=document.getElementById('appContextNavSlot');
+          if(!controls||!RHWV4.mobileUi)return{error:'mobile controls missing'};
+          commsSubject.value='RHW MOBILE UI TEST';
+          commsMessage.value='Mobile composer and forum BBCode remain synchronized.';
+          [commsSubject,commsMessage].forEach(input=>input.dispatchEvent(new Event('input',{bubbles:true})));
+          RHWV4.mobileUi.setForumView('preview');
+          const preview={
+            composer:visible(commsComposerPanel),
+            panel:visible(document.querySelector('.preview-panel')),
+            text:forumLivePreview.textContent
+          };
+          RHWV4.mobileUi.setForumView('bbcode');
+          const bbcode={
+            panel:visible(document.querySelector('.bbcode-panel')),
+            output:visible(forumBbcodeOutput),
+            value:forumBbcodeOutput.value
+          };
+          const touch=[...document.querySelectorAll('.rhw-app-nav button,.comms-mobile-view-switch button')]
+            .filter(visible).map(element=>({name:element.textContent.trim(),height:element.getBoundingClientRect().height}))
+            .filter(item=>item.height<43.5);
+          document.querySelector('.app-tabs [data-workspace="operations"]')?.click();
+          const operations=document.body.dataset.workspace;
+          document.querySelector('.app-tabs [data-workspace="comms"]')?.click();
+          const comms=document.body.dataset.workspace;
+          RHWV4.mobileUi.setForumView('write');
+          return{
+            mode:document.documentElement.dataset.rhwMobileUi,
+            dock:{position:getComputedStyle(dock).position,height:dock.getBoundingClientRect().height},
+            context:{position:getComputedStyle(context).position,height:context.getBoundingClientRect().height},
+            preview,bbcode,touch,operations,comms,
+            activeView:document.body.dataset.commsMobileView
+          };
+        })()""")
+    finally:
+        cdp.call("Emulation.clearDeviceMetricsOverride")
+    if result.get("error") or result.get("mode") != "true" or result.get("dock", {}).get("position") != "fixed" or result.get("dock", {}).get("height", 0) < 54:
+        raise RuntimeError(f"Mobile workspace dock failed: {result}")
+    if result.get("context", {}).get("height", 0) < 44 or result.get("touch") or result.get("operations") != "operations" or result.get("comms") != "comms":
+        raise RuntimeError(f"Mobile navigation / touch targets failed: {result}")
+    preview, bbcode = result.get("preview", {}), result.get("bbcode", {})
+    if preview.get("composer") or not preview.get("panel") or "RHW MOBILE UI TEST" not in preview.get("text", ""):
+        raise RuntimeError(f"Mobile forum preview lens failed: {result}")
+    if not bbcode.get("panel") or not bbcode.get("output") or "RHW MOBILE UI TEST" not in bbcode.get("value", "") or "Mobile composer and forum BBCode remain synchronized." not in bbcode.get("value", ""):
+        raise RuntimeError(f"Mobile BBCode lens synchronization failed: {result}")
+    if result.get("activeView") != "write":
+        raise RuntimeError(f"Mobile forum view state failed: {result}")
+    print("V4.0.2 + PR2 smoke passed: thumb dock + WRITE / PREVIEW / BB CODE synchronization")
 
 
 def test_backup_and_storage(cdp):
@@ -80,6 +140,7 @@ def test_backup_and_storage(cdp):
         app.store.set(k.calculatorPriceProfiles,[{id:'pr1-profile',name:'PR1 Market',prices:{steel:1234},updatedAt:42}]);
         app.store.set(k.shipyardPlanner,{target:'dunkirk',quantity:3});
         app.store.set(k.activeWorkspace,'comms');
+        app.store.set(k.commsMobileView,'preview');
         const payload=app.storage.exportPayload();
         memory.clear();
         const imported=app.storage.importPayload(payload);
@@ -95,6 +156,7 @@ def test_backup_and_storage(cdp):
           planner:app.store.get(k.shipyardPlanner,null),
           draft:restoredDraft?.entries?.some(entry=>entry.tag==='RECOVERY TEST')||false,
           changed:app.newswireManager.state.draftSourceChanged,
+          mobileView:app.store.get(k.commsMobileView,''),
           imported,legacy:legacyResult,warning
         };
       }catch(error){
@@ -106,9 +168,9 @@ def test_backup_and_storage(cdp):
         app.store.remove=original.remove;
       }
     })()""")
-    if result.get("error") or result.get("version") != 2 or result.get("profile") != "PR1 Market" or result.get("planner", {}).get("quantity") != 3 or not result.get("draft") or not all(result.get("warning", {}).values()) or "legacy" not in result:
+    if result.get("error") or result.get("version") != 2 or result.get("profile") != "PR1 Market" or result.get("planner", {}).get("quantity") != 3 or not result.get("draft") or result.get("mobileView") != "preview" or not all(result.get("warning", {}).values()) or "legacy" not in result:
         raise RuntimeError(f"V2 local backup / storage warning failed: {result}")
-    print("V4.0.2 + PR1 smoke passed: V2 backup, V1 import, durable Newswire draft, storage warning")
+    print("V4.0.2 + PR2 smoke passed: V2 backup, V1 import, durable Newswire draft, storage warning")
 
 def test_v402(cdp, workspace, node):
     if (workspace, node) == ("command", "overview"):
@@ -197,6 +259,8 @@ def main():
                 if snap.get("recipes") != 287 or snap.get("products") != 248:
                     raise RuntimeError(f"V4.0.2 corrected catalog mismatch {workspace}/{node}: {snap}")
                 test_v402(cdp, workspace, node)
+                if (workspace, node) == ("comms", "forum"):
+                    test_mobile_forum_controls(cdp)
                 run_interactions(cdp, workspace, node)
                 test_mobile_layout(cdp, workspace, node)
                 cdp.call("Runtime.evaluate", {"expression": "void 0"})
@@ -206,7 +270,7 @@ def main():
                 ]
                 if runtime_failures:
                     raise RuntimeError(f"Browser console/runtime errors {workspace}/{node}: {runtime_failures}")
-                print(f"V4.0.2 + PR1 smoke passed: {workspace}/{node} (287 recipes / 248 products; mobile 360/390/412/430)")
+                print(f"V4.0.2 + PR2 smoke passed: {workspace}/{node} (287 recipes / 248 products; mobile 360/390/412/430)")
         finally:
             cdp.close()
     finally:

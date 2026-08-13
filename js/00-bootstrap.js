@@ -16,7 +16,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
      Load every V4 stylesheet immediately to avoid an unstyled app-shell flash,
      but wait until the stable dashboard has initialized before booting V4 JS. */
   (function bootstrapRhwV4Preview() {
-    const RHW_V4_ASSET_REV = '4.0.2-pr1-safety';
+    const RHW_V4_ASSET_REV = '4.0.2-pr2-mobile-ui';
     const versioned = src => `${src}?v=${encodeURIComponent(RHW_V4_ASSET_REV)}`;
 
     [
@@ -28,7 +28,8 @@ if (!window.__RHW_SMOKE_INLINE__) {
       ['./css/17-app-v40-calculator-polish.css', 'rhwV40CalculatorPolish'],
       ['./css/18-app-v40-nav-hierarchy.css', 'rhwV40NavHierarchy'],
       ['./css/19-app-v402-fixes.css', 'rhwV402Fixes'],
-      ['./css/20-app-v402-qol.css', 'rhwV402Qol']
+      ['./css/20-app-v402-qol.css', 'rhwV402Qol'],
+      ['./css/21-app-v402-mobile-ui.css', 'rhwV402MobileUi']
     ].forEach(([href, dataKey]) => {
       if (document.querySelector(`link[data-${dataKey.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}="true"]`)) return;
       const link = document.createElement('link');
@@ -63,6 +64,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
         ['./js/18d-app-v40-final-ui-polish.js', 'rhwV4FinalUiPolish'],
         ['./js/20-app-v402-fixes.js', 'rhwV402Fixes'],
         ['./js/21-app-v402-qol.js', 'rhwV402Qol'],
+        ['./js/22-app-v402-mobile-ui.js', 'rhwV402MobileUi'],
         ['./js/19-app-v40-runtime.js', 'rhwV4Runtime']
       ];
 

@@ -25,7 +25,7 @@ V4_RUNTIME_ASSETS = [
     './css/12-app-v40.css', './css/13-app-v40-navigation.css', './css/14-app-v40-composer.css',
     './css/15-app-v40-audit.css', './css/16-app-v40-operations.css', './css/17-app-v40-calculator-polish.css',
     './css/18-app-v40-nav-hierarchy.css', './css/19-app-v402-fixes.css', './css/20-app-v402-qol.css',
-    './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
+    './css/21-app-v402-mobile-ui.css', './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
     './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js', './js/16b-app-v40-newswire-manager.js',
     './js/16c-app-v40-newswire-ordering.js',
     './assets/recipes/catalog-v1-part-01.js', './assets/recipes/catalog-v1-part-02.js', './assets/recipes/catalog-v1-part-03.js',
@@ -33,7 +33,7 @@ V4_RUNTIME_ASSETS = [
     './js/17-app-v40-operations-core.js', './js/18-app-v40-operations-ui.js', './js/18a-app-v40-nav-hierarchy.js',
     './js/18b-app-v40-production-pricing.js', './js/18c-app-v40-recipe-corrections.js',
     './js/18d-app-v40-final-ui-polish.js', './js/20-app-v402-fixes.js', './js/21-app-v402-qol.js',
-    './js/19-app-v40-runtime.js',
+    './js/22-app-v402-mobile-ui.js', './js/19-app-v40-runtime.js',
 ]
 V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py']
 
@@ -103,7 +103,7 @@ def main() -> int:
     require_tokens(errors, 'js/12-app-config.js', (
         'alistair-thorne', 'salutations:', 'closings:',
         'operationsNode:', 'calculatorState:', 'defaultAffiliation:', 'shipyardTargets:',
-        'newswireManagerDraft:'
+        'newswireManagerDraft:', 'commsMobileView:'
     ), 'V4 configuration')
     require_tokens(errors, 'js/13-app-v40.js', (
         'window.RHWV4', "'operations'", 'workspaceOperations', 'app.installShell', 'app.navigate', 'app.applyRoute'
@@ -124,11 +124,19 @@ def main() -> int:
         'newswireManagerDraft', 'readLocalDraft', 'draftSourceChanged', 'beforeunload', 'restoreDraft'
     ), 'V4 Newswire recovery')
     require_tokens(errors, 'js/00-bootstrap.js', (
-        'rhwBootFailure', 'rhwBootError', 'LOAD TIMEOUT', '__RHW_BOOTSTRAP_TEST__'
+        'rhwBootFailure', 'rhwBootError', 'LOAD TIMEOUT', '__RHW_BOOTSTRAP_TEST__',
+        './css/21-app-v402-mobile-ui.css', './js/22-app-v402-mobile-ui.js'
     ), 'V4 bootstrap failure UI')
+    require_tokens(errors, 'js/22-app-v402-mobile-ui.js', (
+        'commsMobileView', 'setForumView', 'commsMobileViewSwitch', "['write', 'preview', 'bbcode']"
+    ), 'V4 mobile UI')
+    require_tokens(errors, 'css/21-app-v402-mobile-ui.css', (
+        'env(safe-area-inset-bottom', 'position: fixed', 'min-height: 44px',
+        'data-comms-mobile-view="write"', 'data-comms-mobile-view="preview"', 'data-comms-mobile-view="bbcode"'
+    ), 'V4 mobile presentation')
     require_tokens(errors, 'scripts/smoke_v402.py', (
         'MOBILE_WIDTHS = (360, 390, 412, 430)', 'test_boot_failure',
-        'test_backup_and_storage', 'take_runtime_failures'
+        'test_backup_and_storage', 'test_mobile_forum_controls', 'take_runtime_failures'
     ), 'V4.0.2 + PR1 browser smoke')
     require_tokens(errors, 'js/17-app-v40-operations-core.js', (
         'app.operationsCore', 'loadCatalog', 'buildPlan', 'factorFor', 'authorizedFor',
