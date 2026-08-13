@@ -10,7 +10,8 @@ base.V4_CSS = [
     "css/12-app-v40.css", "css/13-app-v40-navigation.css", "css/14-app-v40-composer.css",
     "css/15-app-v40-audit.css", "css/16-app-v40-operations.css", "css/17-app-v40-calculator-polish.css",
     "css/18-app-v40-nav-hierarchy.css", "css/19-app-v402-fixes.css", "css/20-app-v402-qol.css",
-    "css/21-app-v402-mobile-ui.css",
+    "css/21-app-v402-mobile-ui.css", "css/22-app-pr3-command-mobile.css",
+    "css/23-app-pr3-yard-production.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -207,6 +208,69 @@ def test_qol_shipyard(cdp):
     print("V4 interaction smoke passed: Shipyard multi-hull planner → Calculator")
 
 
+
+def test_pr3_decision_ui(cdp, workspace, node):
+    if (workspace, node) == ("command", "shipyard"):
+        result = base.ev(cdp, """(()=>{
+          const strip=document.querySelector('.shipyard-decision-strip');
+          const grid=document.querySelector('#shipyardControl .shipyard-control-grid');
+          const planner=document.getElementById('shipyardBuildPlanner');
+          return{
+            metrics:strip?.querySelectorAll('.shipyard-decision-metric').length||0,
+            labels:[...(strip?.querySelectorAll('small')||[])].map(x=>x.textContent.trim()),
+            mobileLabels:[...document.querySelectorAll('.shipyard-component-required,.shipyard-component-stock,.shipyard-component-coverage')].every(x=>Boolean(x.dataset.label)),
+            plannerOrder:Boolean(grid&&planner&&grid.nextElementSibling===planner)
+          };
+        })()""")
+        if result.get("metrics") != 3 or result.get("labels") != ["BUILDABLE NOW", "BOTTLENECK", "MISSING FOR NEXT HULL"] or not result.get("mobileLabels") or not result.get("plannerOrder"):
+            raise RuntimeError(f"PR3 Shipyard decision UI failed: {result}")
+        print("PR3 smoke passed: Shipyard readiness strip + planner below stock")
+    elif (workspace, node) == ("command", "production"):
+        cdp.call("Emulation.setDeviceMetricsOverride", {
+            "width": 390, "height": 820, "deviceScaleFactor": 1, "mobile": True,
+        })
+        try:
+            result = base.ev(cdp, """(()=>{
+              renderProductionModules();
+              const tools=document.getElementById('productionModuleTools');
+              const grid=document.getElementById('productionGrid');
+              const visible=element=>{const style=getComputedStyle(element),rect=element.getBoundingClientRect();return !element.hidden&&style.display!=='none'&&rect.width>0&&rect.height>0};
+              const all=tools?.querySelector('[data-production-filter="all"]');
+              const blocked=tools?.querySelector('[data-production-filter="critical"]');
+              const search=tools?.querySelector('#productionModuleSearch');
+              if(!tools||!grid||!all||!blocked||!search)return{error:'production decision controls missing'};
+              search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));
+              const total=grid.querySelectorAll('.production-card').length;
+              blocked.click();
+              const blockedStates=[...grid.querySelectorAll('.production-card')].filter(card=>!card.hidden).map(card=>card.dataset.productionState);
+              all.click();
+              search.value='Gold';search.dispatchEvent(new Event('input',{bubbles:true}));
+              const searchProducts=[...grid.querySelectorAll('.production-card')].filter(card=>!card.hidden).map(card=>card.dataset.productionProduct);
+              search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));
+              const card=grid.querySelector('.production-card'),toggle=card?.querySelector('.production-card-toggle'),list=card?.querySelector('.recipe-list');
+              const before={collapsed:card?.classList.contains('production-card-collapsed'),display:list?getComputedStyle(list).display:''};
+              toggle?.click();
+              const after={expanded:card?.classList.contains('production-card-expanded'),display:list?getComputedStyle(list).display:'',aria:toggle?.getAttribute('aria-expanded')};
+              const touch=[...tools.querySelectorAll('button,input'),...grid.querySelectorAll('.production-card-toggle')].filter(visible).map(x=>x.getBoundingClientRect().height);
+              return{
+                total,filters:tools.querySelectorAll('[data-production-filter]').length,
+                blockedStates,searchProducts,before,after,touch,
+                overflow:document.documentElement.scrollWidth-window.innerWidth
+              };
+            })()""")
+        finally:
+            cdp.call("Emulation.clearDeviceMetricsOverride")
+        if result.get("error") or result.get("total", 0) <= 0 or result.get("filters") != 4 or any(state != "critical" for state in result.get("blockedStates", [])):
+            raise RuntimeError(f"PR3 Production filters failed: {result}")
+        if not result.get("searchProducts") or any("gold" not in product for product in result.get("searchProducts", [])):
+            raise RuntimeError(f"PR3 Production search failed: {result}")
+        if not result.get("before", {}).get("collapsed") or result.get("before", {}).get("display") != "none" or not result.get("after", {}).get("expanded") or result.get("after", {}).get("display") == "none" or result.get("after", {}).get("aria") != "true":
+            raise RuntimeError(f"PR3 Production card details failed: {result}")
+        if result.get("overflow", 0) > 2 or any(height < 43.5 for height in result.get("touch", [])):
+            raise RuntimeError(f"PR3 Production mobile layout failed: {result}")
+        print("PR3 smoke passed: Production filters + search + independent mobile details")
+
+
 def run_interactions(cdp, workspace, node):
     if (workspace, node) == ("command", "overview"):
         base.test_overview(cdp)
@@ -259,6 +323,7 @@ def main():
                 if snap.get("recipes") != 287 or snap.get("products") != 248:
                     raise RuntimeError(f"V4.0.2 corrected catalog mismatch {workspace}/{node}: {snap}")
                 test_v402(cdp, workspace, node)
+                test_pr3_decision_ui(cdp, workspace, node)
                 if (workspace, node) == ("comms", "forum"):
                     test_mobile_forum_controls(cdp)
                 run_interactions(cdp, workspace, node)
