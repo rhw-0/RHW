@@ -211,7 +211,7 @@ def test_pr3_comms_workflow(cdp, workspace, node):
               v40TickerTag.value='RHW QA';v40TickerTag.dispatchEvent(new Event('input',{bubbles:true}));
               v40TickerMessage.value='MOBILE COMMS WORKFLOW READY';v40TickerMessage.dispatchEvent(new Event('input',{bubbles:true}));
               const reset=[...document.querySelectorAll('button')].find(button=>button.textContent.trim()==='RESET TO CURRENT FILE');
-              return{preview:v40TickerPreviewText.textContent,output:v40TickerOutput.value,resetHeight:reset?.getBoundingClientRect().height||0,overflow:document.documentElement.scrollWidth-window.innerWidth};
+              return{preview:v40TickerPreviewText.textContent,output:v40TickerOutput.value,resetHeight:reset?.getBoundingClientRect().height||0,resetMinHeight:reset?getComputedStyle(reset).minHeight:'',resetHeightStyle:reset?getComputedStyle(reset).height:'',innerWidth:window.innerWidth,mobileMedia:matchMedia('(max-width: 760px)').matches,fileParent:reset?.closest('.v40-newswire-file')?.className||'',ruleMatches:reset?.matches('.v40-newswire-file .v40-newswire-file-actions button')||false,overflow:document.documentElement.scrollWidth-window.innerWidth};
             })()""")
             if result.get("preview") != "MOBILE COMMS WORKFLOW READY" or "RHW QA" not in result.get("output", "") or "MOBILE COMMS WORKFLOW READY" not in result.get("output", "") or result.get("resetHeight", 0) < 43.5 or result.get("overflow", 0) > 2:
                 raise RuntimeError(f"PR3 COMMS ticker mobile workflow failed: {result}")
