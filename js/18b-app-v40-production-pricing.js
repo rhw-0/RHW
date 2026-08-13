@@ -217,7 +217,10 @@
     const failures = [];
     const persisted = app.store.get(CALC_KEY, {}) || {};
     if (Object.prototype.hasOwnProperty.call(persisted, 'materialPrices')) failures.push('price-persistence');
-    if (persisted.affiliationId && persisted.affiliationId !== DEFAULT_IFF) failures.push('stored-default-iff');
+    const persistedRecipe = core.recipe(persisted.recipeId) || core.recipesFor(persisted.productId)[0] || null;
+    const defaultIffAvailable = !persistedRecipe?.restricted
+      || (persistedRecipe?.bonuses || []).some(entry => entry.id === DEFAULT_IFF);
+    if (defaultIffAvailable && persisted.affiliationId && persisted.affiliationId !== DEFAULT_IFF) failures.push('stored-default-iff');
     if (document.querySelector('.ops-price-source')) failures.push('legacy-price-source-ui');
     document.querySelectorAll('#workspaceOperations [data-material-price]').forEach(input => {
       if (input.placeholder) failures.push('price-placeholder');
