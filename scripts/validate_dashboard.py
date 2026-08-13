@@ -26,7 +26,7 @@ V4_RUNTIME_ASSETS = [
     './css/15-app-v40-audit.css', './css/16-app-v40-operations.css', './css/17-app-v40-calculator-polish.css',
     './css/18-app-v40-nav-hierarchy.css', './css/19-app-v402-fixes.css', './css/20-app-v402-qol.css',
     './css/21-app-v402-mobile-ui.css', './css/22-app-pr3-command-mobile.css', './css/23-app-pr3-yard-production.css',
-    './css/24-app-pr3-operations-calculator.css',
+    './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
     './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
     './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js', './js/16b-app-v40-newswire-manager.js',
     './js/16c-app-v40-newswire-ordering.js',
@@ -128,7 +128,8 @@ def main() -> int:
     require_tokens(errors, 'js/00-bootstrap.js', (
         'rhwBootFailure', 'rhwBootError', 'LOAD TIMEOUT', '__RHW_BOOTSTRAP_TEST__',
         './css/21-app-v402-mobile-ui.css', './css/23-app-pr3-yard-production.css',
-        './css/24-app-pr3-operations-calculator.css', './js/22-app-v402-mobile-ui.js'
+        './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
+        './js/22-app-v402-mobile-ui.js'
     ), 'V4 bootstrap failure UI')
     require_tokens(errors, 'js/22-app-v402-mobile-ui.js', (
         'commsMobileView', 'setForumView', 'commsMobileViewSwitch', "['write', 'preview', 'bbcode']"
@@ -151,10 +152,19 @@ def main() -> int:
         '.ops-mobile-decision', '.ops-material-row', '.ops-profile-actions button',
         'min-height: 44px', 'overflow: visible', '@media (max-width: 390px)'
     ), 'PR3 Calculator mobile presentation')
+    require_tokens(errors, 'js/16-app-v40-composer.js', (
+        'commsWorkflowStatus', 'commsMessageCount', 'data-comms-surface="preview"',
+        'data-copy-forum-bbcode', 'comms-archive-summary', 'ACTIVE PROFILE'
+    ), 'PR3 COMMS workflow')
+    require_tokens(errors, 'css/25-app-pr3-comms-workflow.css', (
+        '.comms-workflow-status', '.comms-surface-actions', '.comms-archive-summary',
+        '.sender-registry-card.active', '.v40-newswire-file-actions button',
+        'min-height: 44px', '@media (max-width: 390px)'
+    ), 'PR3 COMMS mobile presentation')
     require_tokens(errors, 'scripts/smoke_v402.py', (
         'MOBILE_WIDTHS = (360, 390, 412, 430)', 'test_boot_failure',
         'test_backup_and_storage', 'test_mobile_forum_controls', 'test_pr3_decision_ui',
-        'test_pr3_calculator_ui', 'take_runtime_failures'
+        'test_pr3_calculator_ui', 'test_pr3_comms_workflow', 'take_runtime_failures'
     ), 'V4.0.2 + PR1 browser smoke')
     require_tokens(errors, 'js/17-app-v40-operations-core.js', (
         'app.operationsCore', 'loadCatalog', 'buildPlan', 'factorFor', 'authorizedFor',

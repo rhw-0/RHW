@@ -12,6 +12,7 @@ base.V4_CSS = [
     "css/18-app-v40-nav-hierarchy.css", "css/19-app-v402-fixes.css", "css/20-app-v402-qol.css",
     "css/21-app-v402-mobile-ui.css", "css/22-app-pr3-command-mobile.css",
     "css/23-app-pr3-yard-production.css", "css/24-app-pr3-operations-calculator.css",
+    "css/25-app-pr3-comms-workflow.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -120,6 +121,103 @@ def test_mobile_forum_controls(cdp):
     if result.get("activeView") != "write":
         raise RuntimeError(f"Mobile forum view state failed: {result}")
     print("V4.0.2 + PR2 smoke passed: thumb dock + WRITE / PREVIEW / BB CODE synchronization")
+
+
+def test_pr3_comms_workflow(cdp, workspace, node):
+    if workspace != "comms":
+        return
+    cdp.call("Emulation.setDeviceMetricsOverride", {
+        "width": 390, "height": 820, "deviceScaleFactor": 1, "mobile": True,
+    })
+    try:
+        time.sleep(.08)
+        if node == "forum":
+            result = base.ev(cdp, """(()=>{
+              const fire=input=>input.dispatchEvent(new Event('input',{bubbles:true}));
+              const visible=element=>{const style=getComputedStyle(element),rect=element.getBoundingClientRect();return style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0};
+              commsRecipient.value='Bretonia Admiralty';fire(commsRecipient);
+              commsSubject.value='Dockyard readiness confirmation';fire(commsSubject);
+              commsMessage.value='## Production readiness\\n**Heavy Works** reports full output.\\n!WARNING Restricted gantry access.\\n!STATUS All lines operational.\\n- Hull plating ready';fire(commsMessage);
+              commsDraftName.value='PR3 COMMS workflow smoke';fire(commsDraftName);
+              const readiness=commsWorkflowStatus.textContent.replace(/\\s+/g,' ').trim();
+              document.querySelector('[data-comms-surface="preview"]').click();
+              const preview={
+                active:document.body.dataset.commsMobileView,
+                heading:document.querySelector('.forum-preview-body h3')?.textContent||'',
+                warning:document.querySelector('.forum-preview-callout.warning')?.textContent||'',
+                status:document.querySelector('.forum-preview-callout.status')?.textContent||'',
+                bullets:document.querySelectorAll('.forum-preview-bullet').length
+              };
+              document.querySelector('.preview-panel [data-comms-surface="bbcode"]').click();
+              const code=forumBbcodeOutput.value;
+              const bbcode={
+                active:document.body.dataset.commsMobileView,
+                heading:code.includes('Production readiness'),
+                bold:code.includes('[b]Heavy Works[/b]'),
+                warning:code.includes('[color=#c98b2c][b]WARNING //[/b] Restricted gantry access.[/color]'),
+                status:code.includes('[color=#78ad8a][b]STATUS //[/b] All lines operational.[/color]'),
+                bullet:code.includes('[b]•[/b] Hull plating ready'),
+                recipient:code.includes('Bretonia Admiralty'),
+                subject:code.includes('Dockyard readiness confirmation')
+              };
+              const copy=document.querySelector('[data-copy-forum-bbcode]');
+              RHWV4.mobileUi.setForumView('write');
+              saveDraftBtn.click();
+              document.querySelector('[data-comms-node="drafts"]').click();
+              const card=[...document.querySelectorAll('.comms-draft-card')].find(item=>item.textContent.includes('PR3 COMMS workflow smoke'));
+              const load=card?.querySelector('[data-load-draft]');
+              const draft={
+                count:Number(commsDraftCount.textContent),
+                found:Boolean(card),
+                loadHeight:load?.getBoundingClientRect().height||0,
+                latest:commsDraftLatest.textContent
+              };
+              load?.click();
+              draft.restored=commsSubject.value==='Dockyard readiness confirmation'&&commsRecipient.value==='Bretonia Admiralty';
+              const touch=[...document.querySelectorAll('.comms-mobile-view-switch button,.comms-surface-actions button,.comms-actions button')]
+                .filter(visible).map(element=>element.getBoundingClientRect().height);
+              return{readiness,preview,bbcode,draft,touch,hash:location.hash,overflow:document.documentElement.scrollWidth-window.innerWidth};
+            })()""")
+            if "4 / 4 READY" not in result.get("readiness", "") or result.get("preview", {}).get("active") != "preview" or result.get("preview", {}).get("heading") != "Production readiness" or result.get("preview", {}).get("bullets") != 1:
+                raise RuntimeError(f"PR3 COMMS write/preview workflow failed: {result}")
+            if not all(result.get("bbcode", {}).values()) or result.get("bbcode", {}).get("active") != "bbcode":
+                raise RuntimeError(f"PR3 COMMS preview/BBCode parity failed: {result}")
+            draft = result.get("draft", {})
+            if draft.get("count", 0) < 1 or not draft.get("found") or draft.get("loadHeight", 0) < 43.5 or draft.get("latest") == "—" or not draft.get("restored") or result.get("hash") != "#comms/forum":
+                raise RuntimeError(f"PR3 COMMS named draft resume failed: {result}")
+            if result.get("overflow", 0) > 2 or any(height < 43.5 for height in result.get("touch", [])):
+                raise RuntimeError(f"PR3 COMMS mobile touch/overflow failed: {result}")
+            print("PR3 smoke passed: COMMS readiness → preview → BBCode + named draft resume")
+        elif node == "drafts":
+            result = base.ev(cdp, "({summary:!!document.querySelector('.comms-archive-summary'),count:!!document.getElementById('commsDraftCount'),latest:!!document.getElementById('commsDraftLatest')})")
+            if not all(result.values()):
+                raise RuntimeError(f"PR3 COMMS draft archive summary failed: {result}")
+        elif node == "senders":
+            result = base.ev(cdp, """(()=>{
+              const active=document.querySelector('.sender-registry-card.active');
+              const create=document.getElementById('v40CreateSenderBtn');
+              create?.click();
+              const editor=document.getElementById('v40SenderEditor');
+              const controls=[...editor.querySelectorAll('button,input')].filter(element=>{const r=element.getBoundingClientRect();return r.width>0&&r.height>0}).map(element=>element.getBoundingClientRect().height);
+              const editorVisible=!editor.hidden;
+              v40SenderEditorCancel.click();
+              return{active:!!active,badge:active?.querySelector('.sender-registry-head span')?.textContent||'',disabled:active?.querySelector('[data-use-sender]')?.disabled||false,createHeight:create?.getBoundingClientRect().height||0,editor:editorVisible,controls};
+            })()""")
+            if not result.get("active") or result.get("badge") != "ACTIVE PROFILE" or not result.get("disabled") or result.get("createHeight", 0) < 43.5 or not result.get("editor") or any(height < 43.5 for height in result.get("controls", [])):
+                raise RuntimeError(f"PR3 COMMS sender registry/editor failed: {result}")
+            print("PR3 smoke passed: active sender registry + touch-ready local editor")
+        elif node == "ticker":
+            result = base.ev(cdp, """(()=>{
+              v40TickerTag.value='RHW QA';v40TickerTag.dispatchEvent(new Event('input',{bubbles:true}));
+              v40TickerMessage.value='MOBILE COMMS WORKFLOW READY';v40TickerMessage.dispatchEvent(new Event('input',{bubbles:true}));
+              const reset=[...document.querySelectorAll('button')].find(button=>button.textContent.trim()==='RESET TO CURRENT FILE');
+              return{preview:v40TickerPreviewText.textContent,output:v40TickerOutput.value,resetHeight:reset?.getBoundingClientRect().height||0,resetMinHeight:reset?getComputedStyle(reset).minHeight:'',resetHeightStyle:reset?getComputedStyle(reset).height:'',innerWidth:window.innerWidth,mobileMedia:matchMedia('(max-width: 760px)').matches,fileParent:reset?.closest('.v40-newswire-file')?.className||'',ruleMatches:reset?.matches('.v40-newswire-file .v40-newswire-file-actions button')||false,overflow:document.documentElement.scrollWidth-window.innerWidth};
+            })()""")
+            if result.get("preview") != "MOBILE COMMS WORKFLOW READY" or "RHW QA" not in result.get("output", "") or "MOBILE COMMS WORKFLOW READY" not in result.get("output", "") or result.get("resetHeight", 0) < 43.5 or result.get("overflow", 0) > 2:
+                raise RuntimeError(f"PR3 COMMS ticker mobile workflow failed: {result}")
+            print("PR3 smoke passed: Ticker input → preview → source parity + touch actions")
+    finally:
+        cdp.call("Emulation.clearDeviceMetricsOverride")
 
 
 def test_backup_and_storage(cdp):
@@ -406,6 +504,7 @@ def main():
                 test_v402(cdp, workspace, node)
                 test_pr3_decision_ui(cdp, workspace, node)
                 test_pr3_calculator_ui(cdp, workspace, node)
+                test_pr3_comms_workflow(cdp, workspace, node)
                 if (workspace, node) == ("comms", "forum"):
                     test_mobile_forum_controls(cdp)
                 run_interactions(cdp, workspace, node)
