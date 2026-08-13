@@ -83,7 +83,7 @@
     }
   };
 
-  app.recoverCorruptStorageEntry = function recoverCorruptStorageEntry(key, raw, parseError) {
+  app.recoverCorruptStorageEntry = function recoverCorruptStorageEntry(key, raw, parseError, storage = localStorage) {
     const recovery = {
       key: String(key || ''),
       detail: String(parseError?.message || parseError || 'INVALID LOCAL JSON'),
@@ -93,13 +93,13 @@
     };
     try {
       const backupKey = `rhw-webapp-v4:recovery:${recovery.at}-${Math.random().toString(36).slice(2, 7)}`;
-      localStorage.setItem(backupKey, JSON.stringify({
+      storage.setItem(backupKey, JSON.stringify({
         schemaVersion: 1,
         originalKey: recovery.key,
         recoveredAt: new Date(recovery.at).toISOString(),
         raw: String(raw ?? '')
       }));
-      localStorage.removeItem(key);
+      storage.removeItem(key);
       recovery.backupKey = backupKey;
       recovery.recovered = true;
     } catch (storageError) {

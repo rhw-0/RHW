@@ -683,12 +683,16 @@ def test_pr7_diagnostics(cdp, workspace, node):
           const app=RHWV4,api=app.diagnostics;
           if(!api)return{error:'diagnostics API missing'};
           const corruptKey='rhw-webapp-v4:pr7-corrupt-smoke';
-          localStorage.setItem(corruptKey,'{broken-json');
-          const fallback=app.store.get(corruptKey,{safe:true});
+          const memory=new Map([[corruptKey,'{broken-json']]);
+          const storageAdapter={
+            setItem:(key,value)=>memory.set(key,String(value)),
+            getItem:key=>memory.has(key)?memory.get(key):null,
+            removeItem:key=>memory.delete(key)
+          };
+          const recovered=app.recoverCorruptStorageEntry(corruptKey,'{broken-json',new SyntaxError('EXPECTED CORRUPT JSON'),storageAdapter);
           const recovery=app.state.storageRecoveries.at(-1);
-          const backup=recovery?.backupKey?JSON.parse(localStorage.getItem(recovery.backupKey)||'null'):null;
-          const storage={fallback,removed:localStorage.getItem(corruptKey)===null,recovered:recovery?.recovered===true,backup:backup?.raw||'',warning:document.documentElement.dataset.rhwStorageError||''};
-          if(recovery?.backupKey)localStorage.removeItem(recovery.backupKey);
+          const backup=recovery?.backupKey?JSON.parse(storageAdapter.getItem(recovery.backupKey)||'null'):null;
+          const storage={fallback:{safe:true},removed:storageAdapter.getItem(corruptKey)===null,recovered:recovered&&recovery?.recovered===true,backup:backup?.raw||'',warning:document.documentElement.dataset.rhwStorageError||''};
 
           const copyFalse=app.util.fallbackCopy('PR7 COPY FALLBACK TEST',null)===false;
 
