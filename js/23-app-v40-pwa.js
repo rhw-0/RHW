@@ -78,12 +78,19 @@
   async function requestInstall() {
     const prompt = state.installPrompt;
     if (!prompt) return showManualInstructions();
-    prompt.prompt();
-    const choice = await prompt.userChoice;
-    state.installPrompt = null;
-    hidePanel();
-    syncInstallState();
-    if (choice?.outcome === 'accepted') document.documentElement.dataset.rhwPwaInstall = 'accepted';
+    try {
+      await prompt.prompt();
+      const choice = await prompt.userChoice;
+      hidePanel();
+      if (choice?.outcome === 'accepted') document.documentElement.dataset.rhwPwaInstall = 'accepted';
+    } catch (error) {
+      document.documentElement.dataset.rhwPwaInstall = 'prompt-failed';
+      console.warn('RHW APP INSTALL PROMPT FAILED:', String(error?.message || error));
+      showManualInstructions();
+    } finally {
+      state.installPrompt = null;
+      syncInstallState();
+    }
   }
 
   function manualInstructions(userAgent = navigator.userAgent, platform = navigator.platform, maxTouchPoints = navigator.maxTouchPoints) {

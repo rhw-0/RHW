@@ -22,4 +22,6 @@ RHW is an installable Progressive Web App. Open the GitHub Pages site in Samsung
 
 The app shell, local Newswire source and catalog assets are cached for offline access. RHW always labels offline mode clearly and never presents failed live telemetry as current data. Service-worker updates wait for an explicit **Update now** action so local drafts and settings remain under user control.
 
-Validation runs through `.github/workflows/rhw-pages-deploy.yml` and includes structural checks, JavaScript syntax validation, Discovery sync unit coverage, full headless-Chrome route/interactions, PWA install/offline behavior, Newswire 2.0 search/quality/channel-parity behavior and recipe-correctness coverage.
+The app header also contains **SYS CHECK**, a mobile-friendly reliability center for runtime, local-save, connection, telemetry, offline-app, recipe-catalog, Discovery and Newswire health. Its copyable support report is deliberately content-free: it never includes drafts, messages, sender profiles, material prices or inventory values. Damaged RHW JSON cache entries are backed up under a recovery key before the affected entry is reset.
+
+Validation runs through `.github/workflows/rhw-pages-deploy.yml` and includes structural checks, JavaScript syntax validation, Discovery sync unit coverage, full headless-Chrome route/interactions, PWA install/offline behavior, reliability diagnostics, corrupted-cache recovery, Clipboard truth-state, Newswire 2.0 search/quality/channel-parity behavior and recipe-correctness coverage.
