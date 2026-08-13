@@ -8,7 +8,10 @@
   const core = app?.operationsCore;
   if (!app || !core) return;
 
-  const NODES = Object.freeze([['calculator', 'ITEM CALCULATOR', 'RECIPE + COSTING']]);
+  const NODES = Object.freeze([
+    ['calculator', 'ITEM CALCULATOR', 'RECIPE + COSTING'],
+    ['orders', 'PRODUCTION ORDERS', 'QUEUE + MATERIALS']
+  ]);
   const RECIPE_ALIASES = Object.freeze({
     ship_assembly_dsy_barge: Object.freeze({
       outputId: 'dsy_barge_package',
@@ -48,8 +51,8 @@
   function workspaceMarkup() {
     return `<div class="operations-frame">
       <header class="workspace-heading operations-heading"><div><div class="workspace-kicker"><span>OPERATIONS</span> RHW INDUSTRIAL COSTING NETWORK</div><h2>ITEM CALCULATOR</h2><p>RECIPE LOOKUP // IFF MATERIAL REQUIREMENTS // BUILD COST // SALE PRICE</p></div><div class="workspace-status" id="operationsStatus" data-tone="muted">LOADING RECIPE DATABASE</div></header>
-      <nav id="operationsNodeNav" class="workspace-subnav operations-subnav" aria-label="Operations tools"><div class="workspace-subnav-label">OPERATIONS NODES</div><div class="workspace-subnav-tabs"><button type="button" data-operations-node="calculator" class="active"><span>ITEM CALCULATOR</span><small>RECIPE + COSTING</small></button></div></nav>
-      <div id="operationsNodeHost" class="operations-node-host"><section data-operations-panel="calculator" class="operations-node-panel"><div id="operationsCalculatorMount" class="ops-loading">LOADING DISCOVERY RECIPE DATABASE…</div></section></div>
+      <nav id="operationsNodeNav" class="workspace-subnav operations-subnav" aria-label="Operations tools"><div class="workspace-subnav-label">OPERATIONS NODES</div><div class="workspace-subnav-tabs">${NODES.map(([key, label, sub]) => `<button type="button" data-operations-node="${key}"><span>${label}</span><small>${sub}</small></button>`).join('')}</div></nav>
+      <div id="operationsNodeHost" class="operations-node-host"><section data-operations-panel="calculator" class="operations-node-panel"><div id="operationsCalculatorMount" class="ops-loading">LOADING DISCOVERY RECIPE DATABASE…</div></section><section data-operations-panel="orders" class="operations-node-panel" hidden><div id="productionOrdersMount" class="ops-loading">LOADING PRODUCTION ORDER BOARD…</div></section></div>
     </div>`;
   }
 
@@ -147,6 +150,21 @@
 
   function buildQuote(calc) {
     return core.buildPlan({ productId: calc.productId, recipeId: calc.recipeId, quantity: calc.quantity, affiliationId: calc.affiliationId, useInventory: false, recursive: false, routingPolicy: 'first', altSelections: {} });
+  }
+
+  function currentOrderTarget() {
+    const resolved = resolveSelection(currentState());
+    const recipe = resolved.recipe;
+    if (!recipe) return null;
+    const output = primaryOutput(recipe);
+    return {
+      productId: output?.id || resolved.calc.productId,
+      recipeId: recipe.id,
+      quantity: resolved.calc.quantity,
+      affiliationId: resolved.calc.affiliationId,
+      productName: recipeDisplayName(recipe),
+      recipeName: recipeLabel(recipe)
+    };
   }
 
   function materialRows(plan) {
@@ -278,6 +296,7 @@
           <label class="comms-field"><span>AFFILIATION / IFF</span><select id="opsAffiliation">${iff.map(entry => `<option value="${esc(entry.id)}"${entry.id === calc.affiliationId ? ' selected' : ''}>${esc(entry.name)}</option>`).join('')}</select><small>${esc(iffHint)}</small></label>
         </div>
         <div class="ops-recipe-meta"><div><small>OUTPUT / CYCLE</small><strong>${fmt(outputPerCycle)}</strong></div><div><small>CYCLES</small><strong>${fmt(plan.cycles)}</strong></div><div><small>ACTUAL OUTPUT</small><strong>${fmt(plan.actualOutput)}</strong></div></div>
+        <div class="ops-order-bridge"><div><strong>PRODUCTION ORDER</strong><span>Keep this target, quantity and IFF together in the local build queue.</span></div><button id="opsAddProductionOrder" type="button">ADD TO ORDER BOARD</button></div>
         <div class="ops-mobile-decision" aria-label="Current quote summary"><div><small>RECOMMENDED SALE</small><strong id="opsMobileSellUnit">${money(pricing.sellPerUnit)}</strong></div><div><small>COST / ITEM</small><strong id="opsMobileUnitCost">${money(pricing.unitCost)}</strong></div><div><small>TOTAL PROFIT</small><strong id="opsMobileProfit">${money(pricing.profit)}</strong></div></div>
         <nav class="ops-mobile-jumps" aria-label="Calculator sections"><button type="button" data-ops-jump="opsMaterialPanel">ENTER MATERIAL PRICES</button><button type="button" data-ops-jump="opsQuotePanel">VIEW FULL QUOTE</button></nav>
       </section>
@@ -363,6 +382,15 @@
       saveState({ marginPercent: value });
       updatePricing(plan, rows);
     });
+    document.getElementById('opsAddProductionOrder')?.addEventListener('click', () => {
+      const target = currentOrderTarget();
+      if (!target || typeof app.productionOrders?.add !== 'function') {
+        app.notify('PRODUCTION ORDER BOARD IS NOT READY', 'danger');
+        return;
+      }
+      app.productionOrders.add(target);
+      app.notify(`${target.productName.toUpperCase()} ADDED TO ORDER BOARD`, 'good');
+    });
   }
 
   function installShipyardBridge() {
@@ -387,24 +415,54 @@
   function openTarget(productId, quantity = 1) {
     const recipe = core.recipesFor(productId)[0]; const product = core.product(productId);
     if (!recipe) return;
-    saveState({ productId, recipeId: recipe.id, quantity, search: recipeDisplayName(recipe) || product?.name || '' });
+    openSelection({ productId, recipeId: recipe.id, quantity, affiliationId: app.config.operations.defaultAffiliation, productName: recipeDisplayName(recipe) || product?.name || '' });
+  }
+
+  function openSelection(selection = {}) {
+    const recipe = core.recipe(selection.recipeId) || core.recipesFor(selection.productId)[0];
+    const product = core.product(selection.productId);
+    if (!recipe) return;
+    saveState({
+      productId: selection.productId,
+      recipeId: recipe.id,
+      quantity: Math.max(1, Math.floor(num(selection.quantity, 1))),
+      affiliationId: selection.affiliationId || app.config.operations.defaultAffiliation,
+      search: selection.productName || recipeDisplayName(recipe) || product?.name || ''
+    });
     app.navigate('operations', 'calculator'); renderCalculator();
   }
 
-  function activate(_node, { updateRoute = true } = {}) {
-    app.state.operationsNode = 'calculator';
-    app.store.set(app.config.storageKeys.operationsNode, 'calculator');
-    document.body.dataset.operationsNode = 'calculator';
-    app.setActiveNode('OPERATIONS / ITEM CALCULATOR');
-    document.title = `RHW ITEM CALCULATOR · ${app.version}`;
-    if (updateRoute && app.state.activeWorkspace === 'operations') app.route.write('operations', 'calculator');
-    if (core.state.catalog) renderCalculator();
+  function activate(node, { updateRoute = true } = {}) {
+    const valid = NODES.some(([key]) => key === node) ? node : 'calculator';
+    app.state.operationsNode = valid;
+    app.store.set(app.config.storageKeys.operationsNode, valid);
+    document.body.dataset.operationsNode = valid;
+    document.querySelectorAll('[data-operations-node]').forEach(button => {
+      const active = button.dataset.operationsNode === valid;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-current', active ? 'page' : 'false');
+    });
+    document.querySelectorAll('[data-operations-panel]').forEach(panel => { panel.hidden = panel.dataset.operationsPanel !== valid; });
+    const orders = valid === 'orders';
+    const heading = document.querySelector('.operations-heading h2');
+    const subheading = document.querySelector('.operations-heading p');
+    if (heading) heading.textContent = orders ? 'PRODUCTION ORDERS' : 'ITEM CALCULATOR';
+    if (subheading) subheading.textContent = orders ? 'PRIORITY QUEUE // AGGREGATED MATERIALS // FORUM REPORT' : 'RECIPE LOOKUP // IFF MATERIAL REQUIREMENTS // BUILD COST // SALE PRICE';
+    app.setActiveNode(`OPERATIONS / ${orders ? 'PRODUCTION ORDERS' : 'ITEM CALCULATOR'}`);
+    document.title = `RHW ${orders ? 'PRODUCTION ORDERS' : 'ITEM CALCULATOR'} · ${app.version}`;
+    if (updateRoute && app.state.activeWorkspace === 'operations') app.route.write('operations', valid);
+    if (orders) app.productionOrders?.activate?.();
+    else if (core.state.catalog) renderCalculator();
   }
 
   async function init() {
     const workspace = document.getElementById('workspaceOperations');
     if (!workspace || document.getElementById('operationsNodeNav')) return;
     workspace.innerHTML = workspaceMarkup();
+    document.getElementById('operationsNodeNav')?.addEventListener('click', event => {
+      const button = event.target.closest('[data-operations-node]');
+      if (button) app.navigate('operations', button.dataset.operationsNode);
+    });
     app.state.calculator = { ...currentState(), ...(app.store.get(app.config.storageKeys.calculatorState, {}) || {}) };
     try {
       const catalog = await core.loadCatalog();
@@ -421,5 +479,5 @@
     installShipyardBridge();
   }
 
-  app.operations = { init, activate, openTarget, renderCalculator, nodes: NODES, recipeAliases: RECIPE_ALIASES };
+  app.operations = { init, activate, openTarget, openSelection, renderCalculator, currentOrderTarget, nodes: NODES, recipeAliases: RECIPE_ALIASES };
 })();
