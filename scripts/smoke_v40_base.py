@@ -18,13 +18,17 @@ ROUTES = [
 V4_CSS = [
     "css/12-app-v40.css","css/13-app-v40-navigation.css","css/14-app-v40-composer.css","css/15-app-v40-audit.css",
     "css/16-app-v40-operations.css","css/17-app-v40-calculator-polish.css","css/18-app-v40-nav-hierarchy.css",
+    "css/19-app-v402-fixes.css","css/20-app-v402-qol.css","css/21-app-v402-mobile-ui.css",
 ]
 V4_JS = [
     "js/12-app-config.js","js/13-app-v40.js","js/14-app-v40-cache.js","js/15-app-v40-navigation.js",
     "js/16-app-v40-composer.js","js/16a-app-v40-comms-safety.js","js/16b-app-v40-newswire-manager.js",
+    "js/16c-app-v40-newswire-ordering.js",
     *[f"assets/recipes/catalog-v1-part-{i:02d}.js" for i in range(1,7)],
     "js/17-app-v40-operations-core.js","js/18-app-v40-operations-ui.js","js/18a-app-v40-nav-hierarchy.js",
-    "js/18b-app-v40-production-pricing.js","js/19-app-v40-runtime.js",
+    "js/18b-app-v40-production-pricing.js","js/18c-app-v40-recipe-corrections.js",
+    "js/18d-app-v40-final-ui-polish.js","js/20-app-v402-fixes.js","js/21-app-v402-qol.js",
+    "js/22-app-v402-mobile-ui.js","js/19-app-v40-runtime.js",
 ]
 
 def free_port():
