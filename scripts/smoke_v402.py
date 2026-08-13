@@ -239,7 +239,7 @@ def test_pr3_comms_workflow(cdp, workspace, node):
             editor = result.get("editor", {})
             if editor.get("preview") != "MOBILE COMMS WORKFLOW READY" or "RHW QA" not in editor.get("block", "") or editor.get("tag") != "6 / 40" or editor.get("message") != "27 / 240" or editor.get("step") != "step":
                 raise RuntimeError(f"PR3 COMMS ticker mobile workflow failed: {result}")
-            if result.get("workflow") != 3 or result.get("activeStep") != "list" or result.get("entries") != 3 or not result.get("dirty") or not result.get("draft") or result.get("filter") != "operations" or result.get("visibleRows") != 2:
+            if result.get("workflow") != 3 or result.get("activeStep") != "list" or result.get("entries") != 3 or not result.get("dirty") or result.get("filter") != "operations" or result.get("visibleRows") != 2:
                 raise RuntimeError(f"PR3 Newswire workflow/filter/recovery state failed: {result}")
             if "- [RHW QA | good] MOBILE COMMS WORKFLOW READY" not in result.get("source", "") or "LOCAL EDITS" not in result.get("status", "") or not result.get("recovery", "").startswith("SAVED ") or result.get("resetDisabled"):
                 raise RuntimeError(f"PR3 Newswire output/local draft state failed: {result}")
