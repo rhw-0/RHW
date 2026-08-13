@@ -29,7 +29,7 @@ V4_RUNTIME_ASSETS = [
     './css/18-app-v40-nav-hierarchy.css', './css/19-app-v402-fixes.css', './css/20-app-v402-qol.css',
     './css/21-app-v402-mobile-ui.css', './css/22-app-pr3-command-mobile.css', './css/23-app-pr3-yard-production.css',
     './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
-    './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css',
+    './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css', './css/28-app-pr5-newswire-2.css',
     './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
     './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js', './js/16b-app-v40-newswire-manager.js',
     './js/16c-app-v40-newswire-ordering.js',
@@ -38,7 +38,8 @@ V4_RUNTIME_ASSETS = [
     './js/17-app-v40-operations-core.js', './js/18-app-v40-operations-ui.js', './js/18a-app-v40-nav-hierarchy.js',
     './js/18b-app-v40-production-pricing.js', './js/18c-app-v40-recipe-corrections.js',
     './js/18d-app-v40-final-ui-polish.js', './js/20-app-v402-fixes.js', './js/21-app-v402-qol.js',
-    './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js', './js/19-app-v40-runtime.js',
+    './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js', './js/24-app-v40-newswire-2.js',
+    './js/19-app-v40-runtime.js',
 ]
 V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py']
 PWA_ASSETS = [
@@ -146,7 +147,8 @@ def main() -> int:
         './css/21-app-v402-mobile-ui.css', './css/23-app-pr3-yard-production.css',
         './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
         './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css',
-        './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js'
+        './css/28-app-pr5-newswire-2.css', './js/22-app-v402-mobile-ui.js',
+        './js/23-app-v40-pwa.js', './js/24-app-v40-newswire-2.js'
     ), 'V4 bootstrap failure UI')
     require_tokens(errors, 'js/22-app-v402-mobile-ui.js', (
         'commsMobileView', 'setForumView', 'commsMobileViewSwitch', "['write', 'preview', 'bbcode']"
@@ -197,6 +199,15 @@ def main() -> int:
         'CACHE_PREFIX', 'APP_SHELL', "request.method !== 'GET'", 'networkFirst', 'cacheFirst',
         "event.data?.type === 'SKIP_WAITING'", 'self.skipWaiting()', 'keys.filter'
     ), 'PR4 service worker')
+    require_tokens(errors, 'js/24-app-v40-newswire-2.js', (
+        'v40NewswireControlCenter', 'v40NewswireSearch', 'data-newswire-status',
+        'auditEntries', 'DUPLICATE BULLETIN', 'pinToTop', 'buildForumBbcode',
+        'v40NewswireChannelPreview', 'v40News2OutputGate', 'app.newswire2'
+    ), 'PR5 Newswire 2.0 runtime')
+    require_tokens(errors, 'css/28-app-pr5-newswire-2.css', (
+        '.v40-news2-control', '.v40-news2-metrics', '.v40-news2-channel-grid',
+        '[data-news2-visible="false"]', 'min-height: 44px', '@media (max-width: 390px)'
+    ), 'PR5 Newswire 2.0 presentation')
 
     manifest = json.loads((ROOT / 'manifest.webmanifest').read_text(encoding='utf-8'))
     expected_manifest = {'id': './', 'start_url': './#command/overview', 'scope': './', 'display': 'standalone'}
@@ -218,7 +229,8 @@ def main() -> int:
     require_tokens(errors, 'scripts/smoke_v402.py', (
         'MOBILE_WIDTHS = (360, 390, 412, 430)', 'test_boot_failure',
         'test_backup_and_storage', 'test_mobile_forum_controls', 'test_pr3_decision_ui',
-        'test_pr3_calculator_ui', 'test_pr3_comms_workflow', 'test_pr4_pwa', 'v40NewswireRecoveryState',
+        'test_pr3_calculator_ui', 'test_pr3_comms_workflow', 'test_pr4_pwa', 'test_pr5_newswire2',
+        'v40NewswireRecoveryState',
         'RHWV4.newswireOrdering.setFilter', 'take_runtime_failures'
     ), 'V4.0.2 + PR1 browser smoke')
     require_tokens(errors, 'js/17-app-v40-operations-core.js', (

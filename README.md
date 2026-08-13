@@ -12,7 +12,7 @@ The app is split into three workspaces:
 
 `COMMAND / SHIPYARD` includes a compact multi-hull build planner. Choose a registered hull and target quantity to compare required capital components with verified RHW stock, see deficits, and send the same quantity directly to the Item Calculator.
 
-`COMMS / NEWSWIRE MANAGER` loads `assets/RHW_Newswire.md` into a local working copy. Entries can be added, edited, deleted, filtered and reordered within their category, then copied or exported as an updated Markdown file. The public static site does not publish Newswire edits back to GitHub automatically.
+`COMMS / NEWSWIRE MANAGER` loads `assets/RHW_Newswire.md` into a local working copy. **Newswire 2.0** adds full-text search, category and readiness filters, duplicate/content warnings, priority pinning and a guarded output step. Every bulletin drives synchronized Dashboard Ticker and Forum BBCode previews from the same editor content. Entries can be added, edited, deleted and reordered within their category, then copied or exported as an updated Markdown file. Local recovery protects unfinished work; the public static site does not publish Newswire edits back to GitHub automatically.
 
 ## Install on Samsung, Android or iPhone / iPad
 
@@ -20,4 +20,4 @@ RHW is an installable Progressive Web App. Open the GitHub Pages site in Samsung
 
 The app shell, local Newswire source and catalog assets are cached for offline access. RHW always labels offline mode clearly and never presents failed live telemetry as current data. Service-worker updates wait for an explicit **Update now** action so local drafts and settings remain under user control.
 
-Validation runs through `.github/workflows/rhw-pages-deploy.yml` and includes structural checks, JavaScript syntax validation, full headless-Chrome route/interactions, PWA install/offline behavior, Newswire manager behavior and recipe-correctness coverage.
+Validation runs through `.github/workflows/rhw-pages-deploy.yml` and includes structural checks, JavaScript syntax validation, full headless-Chrome route/interactions, PWA install/offline behavior, Newswire 2.0 search/quality/channel-parity behavior and recipe-correctness coverage.
