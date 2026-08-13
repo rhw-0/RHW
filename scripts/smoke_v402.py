@@ -11,7 +11,7 @@ base.V4_CSS = [
     "css/15-app-v40-audit.css", "css/16-app-v40-operations.css", "css/17-app-v40-calculator-polish.css",
     "css/18-app-v40-nav-hierarchy.css", "css/19-app-v402-fixes.css", "css/20-app-v402-qol.css",
     "css/21-app-v402-mobile-ui.css", "css/22-app-pr3-command-mobile.css",
-    "css/23-app-pr3-yard-production.css",
+    "css/23-app-pr3-yard-production.css", "css/24-app-pr3-operations-calculator.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -276,6 +276,82 @@ def test_pr3_decision_ui(cdp, workspace, node):
         print("PR3 smoke passed: Production filters + search + independent mobile details")
 
 
+
+def test_pr3_calculator_ui(cdp, workspace, node):
+    if (workspace, node) != ("operations", "calculator"):
+        return
+    for width in MOBILE_WIDTHS:
+        cdp.call("Emulation.setDeviceMetricsOverride", {
+            "width": width, "height": 820, "deviceScaleFactor": 1, "mobile": True,
+        })
+        try:
+            result = base.ev(cdp, """(()=>{
+              RHWV4.operations.renderCalculator();
+              RHWV4.qol.ensureProfilePanel();
+              const root=document.documentElement;
+              const rows=[...document.querySelectorAll('.ops-material-row')];
+              const prices=[...document.querySelectorAll('[data-material-price]')];
+              prices.forEach((input,index)=>{
+                input.value=String((index+1)*111);
+                input.dispatchEvent(new Event('input',{bubbles:true}));
+              });
+              const visible=element=>{
+                const style=getComputedStyle(element),rect=element.getBoundingClientRect();
+                return style.display!=='none'&&rect.width>0&&rect.height>0;
+              };
+              const touch=[
+                ...document.querySelectorAll('[data-ops-quantity],.ops-mobile-jumps button,.ops-mobile-quote-jump,.ops-profile-actions button,.ops-price-input')
+              ].filter(visible).map(element=>element.getBoundingClientRect().height);
+              const first=rows[0];
+              const materialWrap=document.querySelector('.ops-material-table-wrap');
+              const decision=document.querySelector('.ops-mobile-decision');
+              const profile=document.getElementById('opsPriceProfiles');
+              const costPanel=document.querySelector('.ops-cost-panel');
+              const coverage=document.getElementById('opsPriceCoverage')?.textContent.trim()||'';
+              const sell=document.getElementById('opsSellUnit')?.textContent.trim()||'';
+              const mirror=document.getElementById('opsMobileSellUnit')?.textContent.trim()||'';
+              return{
+                recipes:document.querySelectorAll('#opsRecipe option').length,
+                rows:rows.length,
+                rowDisplay:first?getComputedStyle(first).display:'',
+                wrapOverflow:materialWrap?getComputedStyle(materialWrap).overflowX:'',
+                decisionDisplay:decision?getComputedStyle(decision).display:'',
+                profileOrder:profile?getComputedStyle(profile).order:'',
+                profileInCost:Boolean(profile&&costPanel&&costPanel.contains(profile)),
+                touch,coverage,sell,mirror,
+                jumpTargets:[...document.querySelectorAll('[data-ops-jump]')].every(button=>Boolean(document.getElementById(button.dataset.opsJump))),
+                overflow:root.scrollWidth-window.innerWidth
+              };
+            })()""")
+        finally:
+            cdp.call("Emulation.clearDeviceMetricsOverride")
+        if result.get("recipes") != 287 or result.get("rows", 0) <= 0:
+            raise RuntimeError(f"PR3 Calculator catalog/material rows failed at {width}px: {result}")
+        if result.get("rowDisplay") != "grid" or result.get("wrapOverflow") != "visible" or result.get("decisionDisplay") != "grid":
+            raise RuntimeError(f"PR3 Calculator mobile hierarchy failed at {width}px: {result}")
+        if result.get("profileOrder") != "2" or not result.get("profileInCost") or not result.get("jumpTargets"):
+            raise RuntimeError(f"PR3 Calculator mobile workflow failed at {width}px: {result}")
+        if result.get("overflow", 0) > 2 or any(height < 43.5 for height in result.get("touch", [])):
+            raise RuntimeError(f"PR3 Calculator overflow/touch target failed at {width}px: {result}")
+        if not result.get("coverage", "").startswith(f'{result["rows"]} / {result["rows"]}') or result.get("sell") in ("", "—") or result.get("sell") != result.get("mirror"):
+            raise RuntimeError(f"PR3 Calculator live quote mirror failed at {width}px: {result}")
+
+    cdp.call("Emulation.setDeviceMetricsOverride", {
+        "width": 768, "height": 900, "deviceScaleFactor": 1, "mobile": False,
+    })
+    try:
+        tablet = base.ev(cdp, """(()=>{
+          RHWV4.operations.renderCalculator();
+          const root=document.documentElement,row=document.querySelector('.ops-material-row');
+          return{overflow:root.scrollWidth-window.innerWidth,rowDisplay:row?getComputedStyle(row).display:''};
+        })()""")
+    finally:
+        cdp.call("Emulation.clearDeviceMetricsOverride")
+    if tablet.get("overflow", 0) > 2 or tablet.get("rowDisplay") != "table-row":
+        raise RuntimeError(f"PR3 Calculator tablet layout failed: {tablet}")
+    print("PR3 smoke passed: Calculator mobile cards + touch controls + live quote + tablet table")
+
+
 def run_interactions(cdp, workspace, node):
     if (workspace, node) == ("command", "overview"):
         base.test_overview(cdp)
@@ -329,6 +405,7 @@ def main():
                     raise RuntimeError(f"V4.0.2 corrected catalog mismatch {workspace}/{node}: {snap}")
                 test_v402(cdp, workspace, node)
                 test_pr3_decision_ui(cdp, workspace, node)
+                test_pr3_calculator_ui(cdp, workspace, node)
                 if (workspace, node) == ("comms", "forum"):
                     test_mobile_forum_controls(cdp)
                 run_interactions(cdp, workspace, node)
