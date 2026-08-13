@@ -191,7 +191,8 @@
   }
 
   const preferenceKeys = Object.freeze([
-    'activeWorkspace', 'commandNode', 'inventoryView', 'operationsNode', 'commsNode', 'tickerComposer'
+    'activeWorkspace', 'commandNode', 'inventoryView', 'operationsNode', 'commsNode', 'tickerComposer',
+    'commsMobileView'
   ]);
 
   function requireStored(key, value) {

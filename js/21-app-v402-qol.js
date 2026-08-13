@@ -293,11 +293,14 @@
   function ensureShipyardPlanner() {
     const mount = document.getElementById('shipyardControl');
     const config = plannerConfig();
-    if (!mount || !config?.hulls?.length || !mount.querySelector('.shipyard-control-head')) return;
+    const stockAndRegistry = mount?.querySelector('.shipyard-control-grid');
+    if (!mount || !config?.hulls?.length || !mount.querySelector('.shipyard-control-head') || !stockAndRegistry) return;
     let panel = document.getElementById('shipyardBuildPlanner');
     if (!panel) {
-      mount.querySelector('.shipyard-control-head')?.insertAdjacentHTML('afterend', plannerMarkup());
+      stockAndRegistry.insertAdjacentHTML('afterend', plannerMarkup());
       panel = document.getElementById('shipyardBuildPlanner');
+    } else if (panel.previousElementSibling !== stockAndRegistry) {
+      stockAndRegistry.insertAdjacentElement('afterend', panel);
     }
     bindShipyardPlanner(panel);
     renderShipyardPlan();
@@ -320,6 +323,9 @@
     if (calculator && !document.getElementById('opsPriceProfiles')) failures.push('price-profile-panel');
     const shipyard = document.getElementById('shipyardControl');
     if (shipyard?.querySelector('.shipyard-control-head') && !document.getElementById('shipyardBuildPlanner')) failures.push('shipyard-planner');
+    const shipyardGrid = shipyard?.querySelector('.shipyard-control-grid');
+    const shipyardPlanner = document.getElementById('shipyardBuildPlanner');
+    if (shipyardGrid && shipyardPlanner && shipyardGrid.nextElementSibling !== shipyardPlanner) failures.push('shipyard-planner-order');
     return failures;
   }
 

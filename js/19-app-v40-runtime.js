@@ -79,6 +79,8 @@
     if (document.getElementById('rhwV40ReleasePolishStyle')?.dataset.fullReadability !== 'true') failures.push('polish:desktop-readability');
     if (typeof app.storage?.saveDraft !== 'function') failures.push('module:storage');
     if (typeof app.comms?.buildBbcode !== 'function') failures.push('feature:bbcode');
+    if (typeof app.mobileUi?.setForumView !== 'function') failures.push('module:mobile-ui');
+    (app.mobileUi?.selfTest?.() || []).forEach(failure => failures.push(`mobile:${failure}`));
     if (!document.querySelector('[data-command-panel="overview"]')) failures.push('route:command-overview');
     if (!document.querySelector('[data-operations-panel="calculator"]')) failures.push('route:operations-calculator');
     if (!document.querySelector('[data-comms-panel="ticker"]')) failures.push('route:comms-ticker');
