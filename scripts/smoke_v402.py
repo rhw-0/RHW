@@ -12,7 +12,7 @@ base.V4_CSS = [
     "css/18-app-v40-nav-hierarchy.css", "css/19-app-v402-fixes.css", "css/20-app-v402-qol.css",
     "css/21-app-v402-mobile-ui.css", "css/22-app-pr3-command-mobile.css",
     "css/23-app-pr3-yard-production.css", "css/24-app-pr3-operations-calculator.css",
-    "css/25-app-pr3-comms-workflow.css",
+    "css/25-app-pr3-comms-workflow.css", "css/26-app-pr3-newswire-manager.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -208,14 +208,44 @@ def test_pr3_comms_workflow(cdp, workspace, node):
             print("PR3 smoke passed: active sender registry + touch-ready local editor")
         elif node == "ticker":
             result = base.ev(cdp, """(()=>{
+              const app=RHWV4;
+              const visible=element=>{const style=getComputedStyle(element),rect=element.getBoundingClientRect();return style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0};
+              app.newswireManager.applyLoadedSource('# RHW Industrial Newswire\\n\\n## operations\\n- [BASE | good] BASE MESSAGE\\n\\n## security\\n- [WATCH | warn] WATCH MESSAGE\\n','repository');
+              v40NewswireNewBtn.click();
+              v40TickerCategory.value='operations';v40TickerCategory.dispatchEvent(new Event('change',{bubbles:true}));
+              v40TickerTone.value='good';v40TickerTone.dispatchEvent(new Event('change',{bubbles:true}));
               v40TickerTag.value='RHW QA';v40TickerTag.dispatchEvent(new Event('input',{bubbles:true}));
               v40TickerMessage.value='MOBILE COMMS WORKFLOW READY';v40TickerMessage.dispatchEvent(new Event('input',{bubbles:true}));
+              const editor={tag:v40TickerTagCount.textContent,message:v40TickerMessageCount.textContent,preview:v40TickerPreviewText.textContent,block:v40TickerOutput.value,step:document.querySelector('[data-newswire-jump="editor"]')?.getAttribute('aria-current')};
+              v40NewswireSaveBtn.click();
+              RHWV4.newswireOrdering.setFilter('operations',{scroll:false});
               const reset=[...document.querySelectorAll('button')].find(button=>button.textContent.trim()==='RESET TO CURRENT FILE');
-              return{preview:v40TickerPreviewText.textContent,output:v40TickerOutput.value,resetHeight:reset?.getBoundingClientRect().height||0,resetMinHeight:reset?getComputedStyle(reset).minHeight:'',resetHeightStyle:reset?getComputedStyle(reset).height:'',innerWidth:window.innerWidth,mobileMedia:matchMedia('(max-width: 760px)').matches,fileParent:reset?.closest('.v40-newswire-file')?.className||'',ruleMatches:reset?.matches('.v40-newswire-file .v40-newswire-file-actions button')||false,overflow:document.documentElement.scrollWidth-window.innerWidth};
+              const controls=[...document.querySelectorAll('#v40NewswireWorkflow button,#v40NewswireManager button,#v40NewswireFilePanel button,#v40NewswireFilePanel summary')]
+                .filter(visible).map(element=>({name:element.textContent.trim().replace(/\\s+/g,' '),height:element.getBoundingClientRect().height}));
+              const result={
+                editor,workflow:document.querySelectorAll('[data-newswire-jump]').length,
+                activeStep:document.querySelector('[data-newswire-jump][aria-current="step"]')?.dataset.newswireJump||'',
+                entries:app.newswireManager.state.entries.length,dirty:app.newswireManager.state.dirty,
+                draft:Boolean(app.newswireManager.draftPayload()),status:v40NewswireManagerStatus.textContent,
+                recovery:v40NewswireRecoveryState.textContent,source:v40NewswireFileOutput.value,
+                filter:document.querySelector('[data-newswire-filter].active')?.dataset.newswireFilter||'',
+                visibleRows:[...document.querySelectorAll('.v40-newswire-entry')].filter(row=>!row.hidden).length,
+                resetDisabled:reset?.disabled,controls,
+                overflow:document.documentElement.scrollWidth-window.innerWidth
+              };
+              app.newswireManager.resetWorkingCopy({announce:false});
+              return result;
             })()""")
-            if result.get("preview") != "MOBILE COMMS WORKFLOW READY" or "RHW QA" not in result.get("output", "") or "MOBILE COMMS WORKFLOW READY" not in result.get("output", "") or result.get("resetHeight", 0) < 43.5 or result.get("overflow", 0) > 2:
+            editor = result.get("editor", {})
+            if editor.get("preview") != "MOBILE COMMS WORKFLOW READY" or "RHW QA" not in editor.get("block", "") or editor.get("tag") != "6 / 40" or editor.get("message") != "27 / 240" or editor.get("step") != "step":
                 raise RuntimeError(f"PR3 COMMS ticker mobile workflow failed: {result}")
-            print("PR3 smoke passed: Ticker input → preview → source parity + touch actions")
+            if result.get("workflow") != 3 or result.get("activeStep") != "list" or result.get("entries") != 3 or not result.get("dirty") or result.get("filter") != "operations" or result.get("visibleRows") != 2:
+                raise RuntimeError(f"PR3 Newswire workflow/filter/recovery state failed: {result}")
+            if "- [RHW QA | good] MOBILE COMMS WORKFLOW READY" not in result.get("source", "") or "LOCAL EDITS" not in result.get("status", "") or not result.get("recovery", "").startswith("SAVED ") or result.get("resetDisabled"):
+                raise RuntimeError(f"PR3 Newswire output/local draft state failed: {result}")
+            if result.get("overflow", 0) > 2 or any(item.get("height", 0) < 43.5 for item in result.get("controls", [])):
+                raise RuntimeError(f"PR3 Newswire mobile touch/overflow failed: {result}")
+            print("PR3 smoke passed: Newswire bulletins → editor → working copy + durable local recovery")
     finally:
         cdp.call("Emulation.clearDeviceMetricsOverride")
 
@@ -246,6 +276,7 @@ def test_backup_and_storage(cdp):
         const restoredDraft=app.store.get(k.newswireManagerDraft,null);
         const legacy={format:'rhw-webapp-local-cache',version:1,current:payload.current,drafts:[],localSenders:[]};
         const legacyResult=app.storage.importPayload(legacy);
+        app.newswireManager.applyLoadedSource('# RHW Industrial Newswire\\n\\n## operations\\n- [BASE | good] REPOSITORY SOURCE CHANGED\\n','repository');
         app.reportStorageFailure('Smoke test','pr1-smoke',new Error('EXPECTED'));
         const warning={shown:document.documentElement.dataset.rhwStorageError==='true',button:!!document.querySelector('#rhwStorageWarning button')};
         app.clearStorageWarning();
@@ -267,7 +298,7 @@ def test_backup_and_storage(cdp):
         app.store.remove=original.remove;
       }
     })()""")
-    if result.get("error") or result.get("version") != 2 or result.get("profile") != "PR1 Market" or result.get("planner", {}).get("quantity") != 3 or not result.get("draft") or result.get("mobileView") != "preview" or not all(result.get("warning", {}).values()) or "legacy" not in result:
+    if result.get("error") or result.get("version") != 2 or result.get("profile") != "PR1 Market" or result.get("planner", {}).get("quantity") != 3 or not result.get("draft") or not result.get("changed") or result.get("mobileView") != "preview" or not all(result.get("warning", {}).values()) or "legacy" not in result:
         raise RuntimeError(f"V2 local backup / storage warning failed: {result}")
     print("V4.0.2 + PR2 smoke passed: V2 backup, V1 import, durable Newswire draft, storage warning")
 

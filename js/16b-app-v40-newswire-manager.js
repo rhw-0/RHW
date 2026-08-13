@@ -222,16 +222,29 @@
 
   function managerMarkup() {
     return `<section class="v40-newswire-manager" id="v40NewswireManager">
-      <div class="v40-newswire-manager-head"><div><small>CURRENT / WORKING BULLETINS</small><strong id="v40NewswireManagerStatus" class="v40-newswire-manager-status" data-tone="muted">LOADING RHW_NEWSWIRE.MD</strong></div><button type="button" id="v40NewswireReloadBtn">RELOAD CURRENT FILE</button></div>
+      <div class="v40-newswire-manager-head"><div><small>CURRENT / WORKING BULLETINS</small><strong id="v40NewswireManagerStatus" class="v40-newswire-manager-status" data-tone="muted">LOADING RHW_NEWSWIRE.MD</strong></div><div class="v40-newswire-manager-head-actions"><button type="button" class="primary" id="v40NewswireNewBtn">+ NEW BULLETIN</button><button type="button" id="v40NewswireReloadBtn">RELOAD CURRENT FILE</button></div></div>
       <div class="v40-newswire-publish-banner" id="v40NewswirePublishBanner" data-tone="clean"><strong id="v40NewswirePublishState">CURRENT FILE // READ ONLY</strong><span id="v40NewswirePublishHint">NOTHING ON THIS PAGE IS PUBLISHED AUTOMATICALLY. ADD / EDIT / DELETE CREATES A LOCAL WORKING COPY ONLY.</span></div>
+      <div class="v40-newswire-recovery-status" id="v40NewswireRecoveryStatus">
+        <div><small>SOURCE</small><strong id="v40NewswireSourceState">LOADING</strong></div>
+        <div><small>LOCAL RECOVERY</small><strong id="v40NewswireRecoveryState">CHECKING</strong></div>
+        <div><small>OUTPUT</small><strong id="v40NewswireOutputState">NOT PUBLISHED</strong></div>
+      </div>
       <div class="v40-newswire-category-summary" id="v40NewswireCategorySummary"></div>
       <div class="v40-newswire-list" id="v40NewswireList"><div class="v40-newswire-empty">LOADING CURRENT BULLETINS…</div></div>
     </section>`;
   }
 
+  function workflowMarkup() {
+    return `<nav class="v40-newswire-workflow" id="v40NewswireWorkflow" aria-label="Newswire workflow">
+      <button type="button" data-newswire-jump="list" aria-current="step"><span>01</span><small>REVIEW</small><strong>BULLETINS</strong></button>
+      <button type="button" data-newswire-jump="editor"><span>02</span><small>CREATE / EDIT</small><strong>EDITOR</strong></button>
+      <button type="button" data-newswire-jump="output"><span>03</span><small>COPY / EXPORT</small><strong>WORKING COPY</strong></button>
+    </nav>`;
+  }
+
   function fileMarkup() {
     return `<section class="v40-newswire-file" id="v40NewswireFilePanel">
-      <div class="v40-newswire-file-head"><div><small>WORKING COPY OUTPUT</small><strong>UPDATED RHW_NEWSWIRE.MD</strong></div><small>NOT PUBLISHED AUTOMATICALLY</small></div>
+      <div class="v40-newswire-file-head"><div><small>WORKING COPY OUTPUT</small><strong>UPDATED RHW_NEWSWIRE.MD</strong></div><div class="v40-newswire-file-state"><small>NOT PUBLISHED AUTOMATICALLY</small><strong id="v40NewswireFileState">CURRENT SOURCE // NO LOCAL EDITS</strong></div></div>
       <div class="v40-newswire-file-actions"><button type="button" class="primary" id="v40NewswireCopyFileBtn">COPY UPDATED NEWSWIRE</button><button type="button" id="v40NewswireExportBtn">EXPORT RHW_NEWSWIRE.MD</button><button type="button" id="v40NewswireResetBtn">RESET TO CURRENT FILE</button></div>
       <details><summary>SHOW COMPLETE MARKDOWN SOURCE</summary><textarea id="v40NewswireFileOutput" readonly spellcheck="false"></textarea></details>
     </section>`;
@@ -261,9 +274,9 @@
     updateLabels();
 
     const explainer = panel.querySelector('.v40-newswire-explainer');
-    explainer?.insertAdjacentHTML('afterend', managerMarkup());
+    explainer?.insertAdjacentHTML('afterend', `${workflowMarkup()}${managerMarkup()}`);
     const grid = panel.querySelector('.v40-tool-grid');
-    grid?.insertAdjacentHTML('beforebegin', '<div class="v40-newswire-editor-head"><div><small>ENTRY EDITOR</small><strong id="v40NewswireEditorMode" class="v40-newswire-editor-state">ADD NEW BULLETIN</strong></div><small>LIVE PREVIEW BELOW</small></div>');
+    grid?.insertAdjacentHTML('beforebegin', '<div class="v40-newswire-editor-head" id="v40NewswireEditorPanel"><div><small>ENTRY EDITOR</small><strong id="v40NewswireEditorMode" class="v40-newswire-editor-state">ADD NEW BULLETIN</strong></div><small>LIVE PREVIEW + SOURCE BLOCK BELOW</small></div>');
 
     const actions = panel.querySelector('.comms-actions');
     if (actions) {
@@ -303,6 +316,36 @@
     hint.textContent = hintText;
   }
 
+  function savedTimeLabel() {
+    if (!state.draftSavedAt) return 'READY';
+    try {
+      return `SAVED ${new Intl.DateTimeFormat([], { hour: '2-digit', minute: '2-digit' }).format(state.draftSavedAt)}`;
+    } catch {
+      return 'SAVED LOCALLY';
+    }
+  }
+
+  function renderRecoveryStatus() {
+    const source = document.getElementById('v40NewswireSourceState');
+    const recovery = document.getElementById('v40NewswireRecoveryState');
+    const output = document.getElementById('v40NewswireOutputState');
+    const file = document.getElementById('v40NewswireFileState');
+    if (source) source.textContent = !state.loaded ? 'LOADING' : state.sourceMode === 'fallback' ? 'FALLBACK' : 'REPOSITORY FILE';
+    if (recovery) recovery.textContent = state.dirty ? savedTimeLabel() : 'READY';
+    if (output) output.textContent = state.dirty ? 'LOCAL ONLY' : 'NOT PUBLISHED';
+    if (file) file.textContent = state.dirty ? `${state.entries.length} BULLETINS // ${savedTimeLabel()}` : `${state.entries.length} BULLETINS // CURRENT SOURCE`;
+    const reset = document.getElementById('v40NewswireResetBtn');
+    if (reset) reset.disabled = !state.dirty;
+  }
+
+  function renderCounters() {
+    const { tag, message } = editorElements();
+    const tagCount = document.getElementById('v40TickerTagCount');
+    const messageCount = document.getElementById('v40TickerMessageCount');
+    if (tagCount) tagCount.textContent = `${String(tag?.value || '').length} / 40`;
+    if (messageCount) messageCount.textContent = `${String(message?.value || '').length} / 240`;
+  }
+
   function renderSummary() {
     const target = document.getElementById('v40NewswireCategorySummary');
     if (!target) return;
@@ -330,6 +373,7 @@
     if (label) label.textContent = state.editingId ? 'EDIT EXISTING BULLETIN' : 'ADD NEW BULLETIN';
     if (save?.querySelector('span')) save.querySelector('span').textContent = state.editingId ? 'SAVE CHANGES' : 'ADD TO NEWSWIRE';
     if (cancel) cancel.hidden = !state.editingId;
+    renderCounters();
   }
 
   function renderFileOutput() {
@@ -342,6 +386,7 @@
     const [text, tone] = statusText();
     if (status) { status.textContent = text; status.dataset.tone = tone; }
     renderPublishBanner();
+    renderRecoveryStatus();
     renderSummary();
     renderList();
     renderEditorMode();
@@ -359,6 +404,7 @@
     const { category, tone, tag, message } = editorElements();
     [category, tone].forEach(element => element?.dispatchEvent(new Event('change', { bubbles: true })));
     [tag, message].forEach(element => element?.dispatchEvent(new Event('input', { bubbles: true })));
+    renderCounters();
   }
 
   function readEditor() {
@@ -426,7 +472,7 @@
     setEditor(entry);
     renderEditorMode();
     renderList();
-    document.querySelector('.v40-newswire-editor-head')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    jumpToWorkflow('editor');
   }
 
   function saveEditor() {
@@ -440,6 +486,21 @@
     if (!ok) { app.notify('NEWSWIRE ENTRY COULD NOT BE SAVED', 'warn'); return; }
     app.notify(editing ? 'NEWSWIRE ENTRY UPDATED // LOCAL WORKING COPY' : 'NEWSWIRE ENTRY ADDED // LOCAL WORKING COPY');
     clearEditor({ keepRouting: true });
+    jumpToWorkflow('list');
+  }
+
+  function jumpToWorkflow(step, { smooth = true } = {}) {
+    const targets = {
+      list: document.getElementById('v40NewswireManager'),
+      editor: document.getElementById('v40NewswireEditorPanel'),
+      output: document.getElementById('v40NewswireFilePanel')
+    };
+    const target = targets[step] || targets.list;
+    document.querySelectorAll('[data-newswire-jump]').forEach(button => {
+      if (button.dataset.newswireJump === step) button.setAttribute('aria-current', 'step');
+      else button.removeAttribute('aria-current');
+    });
+    target?.scrollIntoView?.({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
   }
 
   function resetWorkingCopy({ announce = true } = {}) {
@@ -514,6 +575,12 @@
     const panel = document.getElementById('v40NewswireManager')?.closest('.v40-tool-panel');
     if (!panel || panel.dataset.v40NewswireManagerBound === 'true') return;
     panel.dataset.v40NewswireManagerBound = 'true';
+    panel.querySelectorAll('[data-newswire-jump]').forEach(button => button.addEventListener('click', () => jumpToWorkflow(button.dataset.newswireJump)));
+    document.getElementById('v40NewswireNewBtn')?.addEventListener('click', () => {
+      clearEditor({ keepRouting: true });
+      jumpToWorkflow('editor');
+      document.getElementById('v40TickerMessage')?.focus?.({ preventScroll: true });
+    });
     document.getElementById('v40NewswireSaveBtn')?.addEventListener('click', saveEditor);
     document.getElementById('v40NewswireCancelEditBtn')?.addEventListener('click', () => clearEditor({ keepRouting: true }));
     document.getElementById('v40NewswireReloadBtn')?.addEventListener('click', () => loadCurrentSource({ force: true }));
@@ -523,6 +590,7 @@
     });
     document.getElementById('v40NewswireCopyFileBtn')?.addEventListener('click', copySource);
     document.getElementById('v40NewswireExportBtn')?.addEventListener('click', exportSource);
+    ['v40TickerTag', 'v40TickerMessage'].forEach(id => document.getElementById(id)?.addEventListener('input', renderCounters));
     document.getElementById('v40NewswireList')?.addEventListener('click', event => {
       const edit = event.target.closest('[data-newswire-edit]');
       const remove = event.target.closest('[data-newswire-delete]');
@@ -559,7 +627,7 @@
       return copyValue;
     })();
     if (!dirtyBanner[0].includes('LOCAL EDITS') || !dirtyBanner[1].includes('NOT PUBLISHED')) failures.push('publish-banner-copy');
-    ['v40NewswireManager', 'v40NewswirePublishBanner', 'v40NewswirePublishState', 'v40NewswireList', 'v40NewswireSaveBtn', 'v40NewswireCopyFileBtn', 'v40NewswireExportBtn', 'v40NewswireFileOutput'].forEach(id => {
+    ['v40NewswireWorkflow', 'v40NewswireManager', 'v40NewswirePublishBanner', 'v40NewswirePublishState', 'v40NewswireRecoveryStatus', 'v40NewswireList', 'v40NewswireEditorPanel', 'v40NewswireSaveBtn', 'v40NewswireCopyFileBtn', 'v40NewswireExportBtn', 'v40NewswireFileOutput'].forEach(id => {
       if (!document.getElementById(id)) failures.push(`missing:${id}`);
     });
     return failures;
@@ -595,7 +663,7 @@
   });
 
   app.newswireManager = {
-    state, enhance, parseSource, serializeSource, loadCurrentSource, applyLoadedSource,
+    state, enhance, parseSource, serializeSource, loadCurrentSource, applyLoadedSource, jumpToWorkflow,
     applyAdd, applyEdit, applyDelete, beginEdit, resetWorkingCopy, draftPayload, restoreDraft, selfTest
   };
 })();

@@ -16,7 +16,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
      Load every V4 stylesheet immediately to avoid an unstyled app-shell flash,
      but wait until the stable dashboard has initialized before booting V4 JS. */
   (function bootstrapRhwV4Preview() {
-    const RHW_V4_ASSET_REV = '4.0.2-pr3-comms-workflow';
+    const RHW_V4_ASSET_REV = '4.0.2-pr3-newswire-manager-3';
     const versioned = src => `${src}?v=${encodeURIComponent(RHW_V4_ASSET_REV)}`;
 
     [
@@ -33,7 +33,8 @@ if (!window.__RHW_SMOKE_INLINE__) {
       ['./css/22-app-pr3-command-mobile.css', 'rhwPr3CommandMobile'],
       ['./css/23-app-pr3-yard-production.css', 'rhwPr3YardProduction'],
       ['./css/24-app-pr3-operations-calculator.css', 'rhwPr3OperationsCalculator'],
-      ['./css/25-app-pr3-comms-workflow.css', 'rhwPr3CommsWorkflow']
+      ['./css/25-app-pr3-comms-workflow.css', 'rhwPr3CommsWorkflow'],
+      ['./css/26-app-pr3-newswire-manager.css', 'rhwPr3NewswireManager']
     ].forEach(([href, dataKey]) => {
       if (document.querySelector(`link[data-${dataKey.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}="true"]`)) return;
       const link = document.createElement('link');
