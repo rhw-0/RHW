@@ -682,6 +682,7 @@ def test_pr7_diagnostics(cdp, workspace, node):
         result = base.ev(cdp, """(async()=>{
           const app=RHWV4,api=app.diagnostics;
           if(!api)return{error:'diagnostics API missing'};
+          app.clearStorageWarning();
           const corruptKey='rhw-webapp-v4:pr7-corrupt-smoke';
           const memory=new Map([[corruptKey,'{broken-json']]);
           const storageAdapter={
