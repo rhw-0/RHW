@@ -287,7 +287,7 @@
   .comms-draft-actions button,
   .sender-registry-actions button,
   .sender-editor-head button,
-  .v40-newswire-manager .v40-newswire-file-actions button {
+  .v40-newswire-file .v40-newswire-file-actions button {
     min-height: 44px !important;
   }
 
