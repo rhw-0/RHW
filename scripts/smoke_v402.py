@@ -212,6 +212,10 @@ def test_qol_shipyard(cdp):
 def test_pr3_decision_ui(cdp, workspace, node):
     if (workspace, node) == ("command", "shipyard"):
         result = base.ev(cdp, """(()=>{
+          window.hasVerifiedTelemetry=()=>true;
+          window.stockFor=()=>50000;
+          if(typeof renderShipyardControl==='function')renderShipyardControl();
+          RHWV4.qol.ensureShipyardPlanner();
           const strip=document.querySelector('.shipyard-decision-strip');
           const grid=document.querySelector('#shipyardControl .shipyard-control-grid');
           const planner=document.getElementById('shipyardBuildPlanner');
@@ -231,6 +235,7 @@ def test_pr3_decision_ui(cdp, workspace, node):
         })
         try:
             result = base.ev(cdp, """(()=>{
+              window.hasVerifiedTelemetry=()=>true;
               renderProductionModules();
               const tools=document.getElementById('productionModuleTools');
               const grid=document.getElementById('productionGrid');
