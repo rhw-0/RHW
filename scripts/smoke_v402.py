@@ -745,8 +745,13 @@ def test_pr8_production_orders(cdp, workspace, node):
         result = base.ev(cdp, """(()=>{
           const app=RHWV4,api=app.productionOrders,core=app.operationsCore;
           const originals={verified:window.hasVerifiedTelemetry,find:window.findCommodity,quantity:window.quantity,confirm:window.confirm};
+          const originalStore={get:app.store.get,set:app.store.set};
+          const storageMemory=new Map();
           let snapshot={};
           try{
+            const clone=value=>value===undefined?undefined:JSON.parse(JSON.stringify(value));
+            app.store.get=(key,fallback=null)=>storageMemory.has(key)?clone(storageMemory.get(key)):fallback;
+            app.store.set=(key,value)=>{storageMemory.set(key,clone(value));return true};
             window.hasVerifiedTelemetry=()=>true;
             window.findCommodity=value=>({id:String(value||''),name:String(value||'')});
             window.quantity=()=>0;
@@ -760,10 +765,13 @@ def test_pr8_production_orders(cdp, workspace, node):
             api.clear();
             app.navigate('operations','orders');
 
-            const candidates=core.state.catalog.recipes.filter(recipe=>{
+            const candidates=[];
+            for(const recipe of core.state.catalog.recipes){
               const output=recipe.outputs?.[0];
-              return output?.id&&(recipe.inputs||[]).length>0&&(!recipe.restricted||(recipe.bonuses||[]).some(bonus=>bonus.id==='br_m_grp'));
-            }).slice(0,2);
+              const allowed=output?.id&&(recipe.inputs||[]).length>0&&(!recipe.restricted||(recipe.bonuses||[]).some(bonus=>bonus.id==='br_m_grp'));
+              if(allowed&&!candidates.some(entry=>entry.outputs?.[0]?.id===output.id))candidates.push(recipe);
+              if(candidates.length===2)break;
+            }
             const inputs=candidates.map((recipe,index)=>({
               productId:recipe.outputs[0].id,recipeId:recipe.id,quantity:index+2,affiliationId:'br_m_grp',
               priority:index===0?'normal':'urgent',productName:core.product(recipe.outputs[0].id).name,recipeName:recipe.name
@@ -808,6 +816,8 @@ def test_pr8_production_orders(cdp, workspace, node):
             window.findCommodity=originals.find;
             window.quantity=originals.quantity;
             window.confirm=originals.confirm;
+            app.store.get=originalStore.get;
+            app.store.set=originalStore.set;
           }
           return snapshot;
         })()""")
