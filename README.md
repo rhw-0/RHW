@@ -14,4 +14,10 @@ The app is split into three workspaces:
 
 `COMMS / NEWSWIRE MANAGER` loads `assets/RHW_Newswire.md` into a local working copy. Entries can be added, edited, deleted, filtered and reordered within their category, then copied or exported as an updated Markdown file. The public static site does not publish Newswire edits back to GitHub automatically.
 
-Validation runs through `.github/workflows/rhw-pages-deploy.yml` and includes structural checks, JavaScript syntax validation, full headless-Chrome route/interactions, Newswire manager behavior and recipe-correctness coverage.
+## Install on Samsung, Android or iPhone / iPad
+
+RHW is an installable Progressive Web App. Open the GitHub Pages site in Samsung Internet, tap the menu (☰), then choose **Add page to → Home screen**. In Chrome for Android, open the menu (⋮) and choose **Install app** or **Add to Home screen**. On iPhone or iPad, open RHW in Safari, tap **Share**, then choose **Add to Home Screen**. A successful installation launches RHW in a dedicated app window without normal browser tabs or the address bar; the operating-system status bar can remain visible.
+
+The app shell, local Newswire source and catalog assets are cached for offline access. RHW always labels offline mode clearly and never presents failed live telemetry as current data. Service-worker updates wait for an explicit **Update now** action so local drafts and settings remain under user control.
+
+Validation runs through `.github/workflows/rhw-pages-deploy.yml` and includes structural checks, JavaScript syntax validation, full headless-Chrome route/interactions, PWA install/offline behavior, Newswire manager behavior and recipe-correctness coverage.

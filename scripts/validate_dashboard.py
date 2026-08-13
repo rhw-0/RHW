@@ -5,7 +5,9 @@ from __future__ import annotations
 from collections import Counter
 from html.parser import HTMLParser
 from pathlib import Path
+import json
 import re
+import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,7 +29,7 @@ V4_RUNTIME_ASSETS = [
     './css/18-app-v40-nav-hierarchy.css', './css/19-app-v402-fixes.css', './css/20-app-v402-qol.css',
     './css/21-app-v402-mobile-ui.css', './css/22-app-pr3-command-mobile.css', './css/23-app-pr3-yard-production.css',
     './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
-    './css/26-app-pr3-newswire-manager.css',
+    './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css',
     './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
     './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js', './js/16b-app-v40-newswire-manager.js',
     './js/16c-app-v40-newswire-ordering.js',
@@ -36,9 +38,14 @@ V4_RUNTIME_ASSETS = [
     './js/17-app-v40-operations-core.js', './js/18-app-v40-operations-ui.js', './js/18a-app-v40-nav-hierarchy.js',
     './js/18b-app-v40-production-pricing.js', './js/18c-app-v40-recipe-corrections.js',
     './js/18d-app-v40-final-ui-polish.js', './js/20-app-v402-fixes.js', './js/21-app-v402-qol.js',
-    './js/22-app-v402-mobile-ui.js', './js/19-app-v40-runtime.js',
+    './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js', './js/19-app-v40-runtime.js',
 ]
 V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py']
+PWA_ASSETS = [
+    './manifest.webmanifest', './sw.js', './assets/rhw-crest.png', './assets/favicon.png',
+    './assets/apple-touch-icon.png', './assets/pwa-icon-192.png', './assets/pwa-icon-512.png',
+    './assets/pwa-icon-maskable-512.png',
+]
 
 
 class DashboardParser(HTMLParser):
@@ -65,6 +72,13 @@ def require_tokens(errors: list[str], path: str, tokens: tuple[str, ...], label:
             errors.append(f'{label} is incomplete: {token}')
 
 
+def png_size(path: Path) -> tuple[int, int] | None:
+    data = path.read_bytes()[:24]
+    if len(data) != 24 or data[:8] != b'\x89PNG\r\n\x1a\n':
+        return None
+    return struct.unpack('>II', data[16:24])
+
+
 def main() -> int:
     errors: list[str] = []
     if not INDEX.exists():
@@ -78,7 +92,7 @@ def main() -> int:
     if parser.js != EXPECTED_JS:
         errors.append('JavaScript load order differs from the documented RHW order.')
 
-    for ref in [*parser.css, *parser.js, *V4_RUNTIME_ASSETS, *V4_SUPPORT_ASSETS, './assets/RHW_Newswire.md']:
+    for ref in [*parser.css, *parser.js, *V4_RUNTIME_ASSETS, *V4_SUPPORT_ASSETS, *PWA_ASSETS, './assets/RHW_Newswire.md']:
         if not (ROOT / ref.removeprefix('./')).is_file():
             errors.append(f'Referenced local file is missing: {ref}')
 
@@ -131,8 +145,8 @@ def main() -> int:
         'rhwBootFailure', 'rhwBootError', 'LOAD TIMEOUT', '__RHW_BOOTSTRAP_TEST__',
         './css/21-app-v402-mobile-ui.css', './css/23-app-pr3-yard-production.css',
         './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
-        './css/26-app-pr3-newswire-manager.css',
-        './js/22-app-v402-mobile-ui.js'
+        './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css',
+        './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js'
     ), 'V4 bootstrap failure UI')
     require_tokens(errors, 'js/22-app-v402-mobile-ui.js', (
         'commsMobileView', 'setForumView', 'commsMobileViewSwitch', "['write', 'preview', 'bbcode']"
@@ -170,10 +184,41 @@ def main() -> int:
         '#v40NewswireManager .v40-newswire-order-actions button',
         'min-height: 44px', '@media (max-width: 760px)'
     ), 'PR3 Newswire mobile workflow')
+    require_tokens(errors, 'js/23-app-v40-pwa.js', (
+        'beforeinstallprompt', 'serviceWorker.register', 'SKIP_WAITING', 'controllerchange',
+        'SamsungBrowser', 'iPad|iPhone|iPod', 'OPEN RHW IN SAFARI', "querySelector('.app-nav-brand')",
+        'CACHED APP DATA ONLY', 'dataset.rhwNetwork', "getElementById('refreshBtn')"
+    ), 'PR4 installable app runtime')
+    require_tokens(errors, 'css/27-app-pr4-pwa.css', (
+        '.app-nav-brand .rhw-pwa-install', '.rhw-pwa-offline', '.rhw-pwa-panel', 'env(safe-area-inset-bottom)',
+        'min-height: 44px', 'min-height: 48px', '@media (display-mode: standalone)'
+    ), 'PR4 installable app presentation')
+    require_tokens(errors, 'sw.js', (
+        'CACHE_PREFIX', 'APP_SHELL', "request.method !== 'GET'", 'networkFirst', 'cacheFirst',
+        "event.data?.type === 'SKIP_WAITING'", 'self.skipWaiting()', 'keys.filter'
+    ), 'PR4 service worker')
+
+    manifest = json.loads((ROOT / 'manifest.webmanifest').read_text(encoding='utf-8'))
+    expected_manifest = {'id': './', 'start_url': './#command/overview', 'scope': './', 'display': 'standalone'}
+    for key, value in expected_manifest.items():
+        if manifest.get(key) != value:
+            errors.append(f'PWA manifest {key} must be {value!r}, got {manifest.get(key)!r}.')
+    purposes = {icon.get('purpose') for icon in manifest.get('icons', [])}
+    sizes = {icon.get('sizes') for icon in manifest.get('icons', [])}
+    if 'maskable' not in purposes or not {'192x192', '512x512'} <= sizes:
+        errors.append('PWA manifest must include 192px, 512px and maskable icons.')
+    expected_png_sizes = {
+        'assets/favicon.png': (64, 64), 'assets/apple-touch-icon.png': (180, 180),
+        'assets/pwa-icon-192.png': (192, 192), 'assets/pwa-icon-512.png': (512, 512),
+        'assets/pwa-icon-maskable-512.png': (512, 512),
+    }
+    for asset, expected_size in expected_png_sizes.items():
+        if png_size(ROOT / asset) != expected_size:
+            errors.append(f'PWA image has the wrong dimensions: {asset} must be {expected_size[0]}x{expected_size[1]}.')
     require_tokens(errors, 'scripts/smoke_v402.py', (
         'MOBILE_WIDTHS = (360, 390, 412, 430)', 'test_boot_failure',
         'test_backup_and_storage', 'test_mobile_forum_controls', 'test_pr3_decision_ui',
-        'test_pr3_calculator_ui', 'test_pr3_comms_workflow', 'v40NewswireRecoveryState',
+        'test_pr3_calculator_ui', 'test_pr3_comms_workflow', 'test_pr4_pwa', 'v40NewswireRecoveryState',
         'RHWV4.newswireOrdering.setFilter', 'take_runtime_failures'
     ), 'V4.0.2 + PR1 browser smoke')
     require_tokens(errors, 'js/17-app-v40-operations-core.js', (
@@ -237,6 +282,10 @@ def main() -> int:
     ), 'V4.0.2 presentation fixes')
 
     index_text = INDEX.read_text(encoding='utf-8')
+    for token in ('rel="manifest" href="./manifest.webmanifest"', 'name="theme-color"',
+                  'name="mobile-web-app-capable"', 'rel="apple-touch-icon"', 'src="./assets/rhw-crest.png"'):
+        if token not in index_text:
+            errors.append(f'index.html PWA metadata is incomplete: {token}')
     title_match = re.search(r'<title>(.*?)</title>', index_text, flags=re.I | re.S)
     if not title_match or version not in title_match.group(1):
         errors.append(f'index.html title does not advertise the current app version {version}.')

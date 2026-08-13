@@ -101,8 +101,8 @@ async function loadData() {
   } finally {
     isLoading = false;
     document.body.classList.remove('syncing');
-    if (els.refreshBtn) els.refreshBtn.disabled = false;
-    if (els.headerRefreshBtn) els.headerRefreshBtn.disabled = false;
+    if (els.refreshBtn) els.refreshBtn.disabled = !navigator.onLine;
+    if (els.headerRefreshBtn) els.headerRefreshBtn.disabled = !navigator.onLine;
 
     if (lastLoaded && els.syncTimeVal) {
       const timeString = lastLoaded.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
