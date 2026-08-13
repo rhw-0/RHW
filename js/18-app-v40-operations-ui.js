@@ -220,7 +220,7 @@
         <div><small>TOTAL PROFIT</small><strong id="opsProfit">${money(pricing.profit)}</strong></div>
         <div class="ops-revenue-line"><small>TOTAL REVENUE // ${fmt(actualOutput)} PRODUCED</small><strong id="opsRevenue">${money(pricing.revenue)}</strong></div>
       </div>
-      <div id="opsPricingWarning" class="ops-cost-note ${pricing.complete ? 'good' : 'warn'}">${pricing.complete ? 'ALL MATERIALS PRICED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD PRICES ABOVE TO COMPLETE THE QUOTE`}</div>
+      <div id="opsPricingWarning" class="ops-cost-note ${pricing.complete ? 'good' : 'warn'}">${pricing.complete ? 'ALL MATERIALS PRICED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD MATERIAL PRICES TO COMPLETE THE QUOTE`}</div>
     </div>`;
   }
 
@@ -274,13 +274,15 @@
         <div class="ops-form-grid">
           <label class="comms-field ops-wide"><span>SEARCH RECIPE</span><input id="opsRecipeSearch" type="search" value="${esc(calc.search)}" placeholder="Bustard, Superstructure, Reactor, Gold…" autocomplete="off"><small>TYPE A NAME OR RECIPE ID // FIRST MATCH IS SELECTED AUTOMATICALLY</small></label>
           <label class="comms-field ops-wide"><span>SELECTED RECIPE</span><select id="opsRecipe">${recipeOptions(matches, calc.recipeId)}</select><small>${matches.length} MATCH${matches.length === 1 ? '' : 'ES'} // ${esc(recipe.craftType || recipe.sourceType || 'GENERAL')}${recipe.restricted ? ' // RESTRICTED IFF' : ''}</small></label>
-          <label class="comms-field"><span>OUTPUT QUANTITY</span><input id="opsQuantity" type="number" inputmode="numeric" min="1" step="1" value="${calc.quantity}"><small>EXAMPLE: 200 REACTORS</small></label>
+          <label class="comms-field"><span>OUTPUT QUANTITY</span><div class="ops-quantity-control"><button type="button" data-ops-quantity="-1" aria-label="Decrease output quantity">−</button><input id="opsQuantity" type="number" inputmode="numeric" min="1" step="1" value="${calc.quantity}"><button type="button" data-ops-quantity="1" aria-label="Increase output quantity">+</button></div><small>EXAMPLE: 200 REACTORS</small></label>
           <label class="comms-field"><span>AFFILIATION / IFF</span><select id="opsAffiliation">${iff.map(entry => `<option value="${esc(entry.id)}"${entry.id === calc.affiliationId ? ' selected' : ''}>${esc(entry.name)}</option>`).join('')}</select><small>${esc(iffHint)}</small></label>
         </div>
         <div class="ops-recipe-meta"><div><small>OUTPUT / CYCLE</small><strong>${fmt(outputPerCycle)}</strong></div><div><small>CYCLES</small><strong>${fmt(plan.cycles)}</strong></div><div><small>ACTUAL OUTPUT</small><strong>${fmt(plan.actualOutput)}</strong></div></div>
+        <div class="ops-mobile-decision" aria-label="Current quote summary"><div><small>RECOMMENDED SALE</small><strong id="opsMobileSellUnit">${money(pricing.sellPerUnit)}</strong></div><div><small>COST / ITEM</small><strong id="opsMobileUnitCost">${money(pricing.unitCost)}</strong></div><div><small>TOTAL PROFIT</small><strong id="opsMobileProfit">${money(pricing.profit)}</strong></div></div>
+        <nav class="ops-mobile-jumps" aria-label="Calculator sections"><button type="button" data-ops-jump="opsMaterialPanel">ENTER MATERIAL PRICES</button><button type="button" data-ops-jump="opsQuotePanel">VIEW FULL QUOTE</button></nav>
       </section>
-      <section class="ops-panel ops-cost-panel"><div class="ops-panel-head"><div><span>02</span><strong>MATERIAL COST</strong></div><small>ENTER YOUR UNIT PRICES</small></div>${materialsMarkup(rows, calc)}<div class="ops-price-memory">MATERIAL PRICES ARE SAVED LOCALLY IN THIS BROWSER AND REUSED IN OTHER RECIPES.</div>${notesMarkup(plan)}</section>
-      <section class="ops-panel ops-quote-panel"><div class="ops-panel-head"><div><span>03</span><strong>PRICE CALCULATION</strong></div><small>COST → MARGIN → SELL PRICE</small></div>${quoteMarkup(pricing, calc, rows, plan.actualOutput)}</section>
+      <section class="ops-panel ops-cost-panel" id="opsMaterialPanel"><div class="ops-panel-head"><div><span>02</span><strong>MATERIAL COST</strong></div><small>ENTER YOUR UNIT PRICES</small></div>${materialsMarkup(rows, calc)}<div class="ops-price-memory">MATERIAL PRICES ARE SAVED LOCALLY IN THIS BROWSER AND REUSED IN OTHER RECIPES.</div>${notesMarkup(plan)}<button class="ops-mobile-quote-jump" type="button" data-ops-jump="opsQuotePanel">VIEW UPDATED QUOTE</button></section>
+      <section class="ops-panel ops-quote-panel" id="opsQuotePanel"><div class="ops-panel-head"><div><span>03</span><strong>PRICE CALCULATION</strong></div><small>COST → MARGIN → SELL PRICE</small></div>${quoteMarkup(pricing, calc, rows, plan.actualOutput)}</section>
     </div>`;
     bindCalculator(plan, rows);
     if (focusSearch) {
@@ -312,13 +314,16 @@
     write('opsUnitCost', money(pricing.unitCost));
     write('opsMarginLabel', `${calc.marginPercent}% MARGIN`);
     write('opsSellUnit', money(pricing.sellPerUnit));
+    write('opsMobileSellUnit', money(pricing.sellPerUnit));
+    write('opsMobileUnitCost', money(pricing.unitCost));
+    write('opsMobileProfit', money(pricing.profit));
     write('opsProfitUnit', money(pricing.profitUnit));
     write('opsProfit', money(pricing.profit));
     write('opsRevenue', money(pricing.revenue));
     const warning = document.getElementById('opsPricingWarning');
     if (warning) {
       warning.className = `ops-cost-note ${pricing.complete ? 'good' : 'warn'}`;
-      warning.textContent = pricing.complete ? 'ALL MATERIALS PRICED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD PRICES ABOVE TO COMPLETE THE QUOTE`;
+      warning.textContent = pricing.complete ? 'ALL MATERIALS PRICED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD MATERIAL PRICES TO COMPLETE THE QUOTE`;
     }
   }
 
@@ -337,6 +342,14 @@
       scheduleRender({ recipeId: recipe.id, productId: primaryOutput(recipe)?.id || currentState().productId });
     });
     document.getElementById('opsQuantity')?.addEventListener('change', event => scheduleRender({ quantity: Math.max(1, Math.floor(num(event.target.value, 1))) }));
+    document.querySelectorAll('[data-ops-quantity]').forEach(button => button.addEventListener('click', () => {
+      const input = document.getElementById('opsQuantity');
+      const next = Math.max(1, Math.floor(num(input?.value, 1)) + num(button.dataset.opsQuantity));
+      scheduleRender({ quantity: next });
+    }));
+    document.querySelectorAll('[data-ops-jump]').forEach(button => button.addEventListener('click', () => {
+      document.getElementById(button.dataset.opsJump)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
     document.getElementById('opsAffiliation')?.addEventListener('change', event => scheduleRender({ affiliationId: event.target.value }));
     document.querySelectorAll('[data-material-price]').forEach(input => input.addEventListener('input', event => {
       const calc = currentState(); const prices = { ...calc.materialPrices }; const key = event.target.dataset.materialPrice;
