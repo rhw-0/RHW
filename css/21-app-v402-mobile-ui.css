@@ -24,8 +24,11 @@
     top: 0 !important;
     z-index: 110;
     background: rgba(4,5,7,.96);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    /* A filtered ancestor becomes the containing block for the fixed thumb
+       dock in mobile WebKit/Chromium, pinning it below the header instead of
+       the viewport. Keep the nav opaque and leave the blur on the dock. */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
   .app-nav-inner { gap: 0; padding: 0; }
   .app-nav-brand { display: none; }
