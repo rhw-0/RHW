@@ -54,6 +54,8 @@
     if (typeof app.command?.activate !== 'function') failures.push('module:command');
     if (typeof app.operations?.activate !== 'function') failures.push('module:operations');
     if (typeof app.operationsCore?.buildPlan !== 'function') failures.push('feature:operations-planner');
+    if (typeof app.discoveryStatus?.init !== 'function') failures.push('module:discovery-status');
+    (app.discoveryStatus?.selfTest?.() || []).forEach(failure => failures.push(`discovery:${failure}`));
     if (!app.operationsCore?.state?.catalog?.meta?.recipeCount) failures.push('feature:recipe-catalog');
     const bustardAlias = app.operations?.recipeAliases?.ship_assembly_dsy_barge;
     if (!bustardAlias || bustardAlias.outputId !== 'dsy_barge_package' || !app.operationsCore?.recipe?.('ship_assembly_dsy_barge')) failures.push('feature:bustard-recipe-alias');
@@ -115,6 +117,7 @@
       app.commsSafety?.init();
       installDesktopReadabilityCoverage();
       await app.operations?.init();
+      await app.discoveryStatus?.init();
       app.applyRoute({ replace: true });
       if (!app.navHierarchy?.init?.()) throw new Error('V4 NAVIGATION HIERARCHY COULD NOT MOUNT');
       app.commsSafety?.polishOperations?.();

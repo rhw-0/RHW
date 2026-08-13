@@ -19,6 +19,7 @@ V4_CSS = [
     "css/12-app-v40.css","css/13-app-v40-navigation.css","css/14-app-v40-composer.css","css/15-app-v40-audit.css",
     "css/16-app-v40-operations.css","css/17-app-v40-calculator-polish.css","css/18-app-v40-nav-hierarchy.css",
     "css/19-app-v402-fixes.css","css/20-app-v402-qol.css","css/21-app-v402-mobile-ui.css",
+    "css/29-app-pr6-discovery-sync.css",
 ]
 V4_JS = [
     "js/12-app-config.js","js/13-app-v40.js","js/14-app-v40-cache.js","js/15-app-v40-navigation.js",
@@ -28,7 +29,7 @@ V4_JS = [
     "js/17-app-v40-operations-core.js","js/18-app-v40-operations-ui.js","js/18a-app-v40-nav-hierarchy.js",
     "js/18b-app-v40-production-pricing.js","js/18c-app-v40-recipe-corrections.js",
     "js/18d-app-v40-final-ui-polish.js","js/20-app-v402-fixes.js","js/21-app-v402-qol.js",
-    "js/22-app-v402-mobile-ui.js","js/19-app-v40-runtime.js",
+    "js/22-app-v402-mobile-ui.js","js/25-app-v40-discovery-status.js","js/19-app-v40-runtime.js",
 ]
 
 def free_port():
@@ -202,7 +203,7 @@ def main():
                 key={"command":"commandNode","operations":"operationsNode","comms":"commsNode"}[workspace]
                 expected_nav={"command":"commandNodeNav","operations":"operationsNodeNav","comms":"commsNodeNav"}[workspace]
                 if snap.get("ready")!="true" or snap.get("error")=="true" or snap.get("workspace")!=workspace or snap.get(key)!=node or snap.get("mountedNav")!=expected_nav or snap.get("errors"): raise RuntimeError(f"V4 route failed {workspace}/{node}: {snap}")
-                if workspace=="operations" and snap.get("recipes")!=289: raise RuntimeError(f"Recipe catalog missing: {snap}")
+                if workspace=="operations" and snap.get("recipes")!=285: raise RuntimeError(f"Recipe catalog missing: {snap}")
                 print(f"V4 runtime smoke passed: {workspace}/{node} (recipes={snap.get('recipes',0)} products={snap.get('products',0)} nav={snap.get('mountedNav','')})")
                 if (workspace,node)==("command","overview"): test_overview(cdp)
                 elif (workspace,node)==("command","production"): test_production_bridge(cdp)

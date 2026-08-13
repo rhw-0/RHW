@@ -49,7 +49,7 @@ def main() -> int:
                 time.sleep(.1)
             if snap.get("ready") != "true" or snap.get("error") == "true" or snap.get("errors"):
                 raise RuntimeError(f"V4.0.2 polish route boot failed: {snap}")
-            if snap.get("recipes") != 287 or snap.get("products") != 248:
+            if snap.get("recipes") != 285 or snap.get("products") != 246:
                 raise RuntimeError(f"Corrected catalog missing in V4.0.2 route: {snap}")
 
             labels = base.ev(cdp, """(()=>{

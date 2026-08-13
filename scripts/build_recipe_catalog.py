@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import base64
 from collections import defaultdict
 import gzip
@@ -245,6 +246,53 @@ def build_catalog(items_path: Path, modules_path: Path) -> dict:
     }
 
 
+def encode_catalog(catalog: dict) -> str:
+    """Return the deterministic browser payload used by the catalog chunks."""
+    raw = json.dumps(catalog, separators=(',', ':'), ensure_ascii=False).encode('utf-8')
+    compressed = gzip.compress(raw, compresslevel=9, mtime=0)
+    return base64.b64encode(compressed).decode('ascii')
+
+
+def write_catalog(catalog: dict, output_dir: Path, chunk_count: int = 6) -> list[Path]:
+    """Write exactly ``chunk_count`` deterministic browser catalog files."""
+    encoded = encode_catalog(catalog)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    chunk_count = max(1, int(chunk_count))
+    chunk_size = max(1, math.ceil(len(encoded) / chunk_count))
+    chunks = [encoded[index * chunk_size:(index + 1) * chunk_size] for index in range(chunk_count)]
+    if ''.join(chunks) != encoded:
+        raise RuntimeError('CATALOG CHUNK SPLIT FAILED TO RECONSTRUCT SOURCE PAYLOAD')
+
+    for stale in output_dir.glob('catalog-v1-part-*.js'):
+        stale.unlink()
+    paths = []
+    for index, chunk in enumerate(chunks, 1):
+        path = output_dir / f'catalog-v1-part-{index:02d}.js'
+        path.write_text(
+            '/* RHW V4 recipe catalog chunk. Generated; do not hand-edit. */\n'
+            "window.__RHW_RECIPE_CATALOG_GZIP_BASE64__ = (window.__RHW_RECIPE_CATALOG_GZIP_BASE64__ || '') + "
+            + repr(chunk) + ';\n',
+            encoding='utf-8',
+        )
+        paths.append(path)
+    return paths
+
+
+def read_catalog(input_dir: Path) -> dict:
+    """Decode an existing generated catalog without executing JavaScript."""
+    encoded_parts: list[str] = []
+    for path in sorted(input_dir.glob('catalog-v1-part-*.js')):
+        match = re.search(r"\+\s*('(?:[^'\\]|\\.)*')\s*;\s*$", path.read_text(encoding='utf-8'), re.S)
+        if not match:
+            raise ValueError(f'Could not decode generated catalog chunk: {path}')
+        encoded_parts.append(ast.literal_eval(match.group(1)))
+    if not encoded_parts:
+        raise ValueError(f'No generated catalog chunks found in {input_dir}')
+    payload = gzip.decompress(base64.b64decode(''.join(encoded_parts)))
+    return json.loads(payload.decode('utf-8'))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('items_cfg', type=Path)
@@ -254,32 +302,12 @@ def main() -> int:
     args = parser.parse_args()
 
     catalog = build_catalog(args.items_cfg, args.modules_cfg)
-    raw = json.dumps(catalog, separators=(',', ':'), ensure_ascii=False).encode('utf-8')
-    compressed = gzip.compress(raw, compresslevel=9, mtime=0)
-    encoded = base64.b64encode(compressed).decode('ascii')
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-
-    chunk_count = max(1, int(args.chunks))
-    chunk_size = max(1, math.ceil(len(encoded) / chunk_count))
-    chunks = [encoded[index * chunk_size:(index + 1) * chunk_size] for index in range(chunk_count)]
-    if ''.join(chunks) != encoded:
-        raise RuntimeError('CATALOG CHUNK SPLIT FAILED TO RECONSTRUCT SOURCE PAYLOAD')
-
-    for stale in args.output_dir.glob('catalog-v1-part-*.js'):
-        stale.unlink()
-    for index, chunk in enumerate(chunks, 1):
-        path = args.output_dir / f'catalog-v1-part-{index:02d}.js'
-        path.write_text(
-            '/* RHW V4 recipe catalog chunk. Generated; do not hand-edit. */\n'
-            "window.__RHW_RECIPE_CATALOG_GZIP_BASE64__ = (window.__RHW_RECIPE_CATALOG_GZIP_BASE64__ || '') + "
-            + repr(chunk) + ';\n',
-            encoding='utf-8',
-        )
+    paths = write_catalog(catalog, args.output_dir, args.chunks)
 
     print(
         f"Built {catalog['meta']['recipeCount']} recipes, "
         f"{catalog['meta']['productCount']} products and {catalog['meta']['factionCount']} IFF profiles "
-        f"into exactly {len(chunks)} deterministic catalog chunks -> {args.output_dir}"
+        f"into exactly {len(paths)} deterministic catalog chunks -> {args.output_dir}"
     )
     return 0
 

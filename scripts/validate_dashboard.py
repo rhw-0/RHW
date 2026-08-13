@@ -10,6 +10,8 @@ import re
 import struct
 import sys
 
+from build_recipe_catalog import read_catalog
+
 ROOT = Path(__file__).resolve().parents[1]
 INDEX = ROOT / 'index.html'
 
@@ -30,6 +32,7 @@ V4_RUNTIME_ASSETS = [
     './css/21-app-v402-mobile-ui.css', './css/22-app-pr3-command-mobile.css', './css/23-app-pr3-yard-production.css',
     './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
     './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css', './css/28-app-pr5-newswire-2.css',
+    './css/29-app-pr6-discovery-sync.css',
     './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
     './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js', './js/16b-app-v40-newswire-manager.js',
     './js/16c-app-v40-newswire-ordering.js',
@@ -39,9 +42,15 @@ V4_RUNTIME_ASSETS = [
     './js/18b-app-v40-production-pricing.js', './js/18c-app-v40-recipe-corrections.js',
     './js/18d-app-v40-final-ui-polish.js', './js/20-app-v402-fixes.js', './js/21-app-v402-qol.js',
     './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js', './js/24-app-v40-newswire-2.js',
+    './js/25-app-v40-discovery-status.js',
     './js/19-app-v40-runtime.js',
 ]
 V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py']
+DISCOVERY_SYNC_ASSETS = [
+    './assets/discovery-status.json', './docs/discovery-sync-report.md',
+    './scripts/sync_discovery_catalog.py', './scripts/test_discovery_sync.py',
+    './.github/workflows/discovery-catalog-sync.yml',
+]
 PWA_ASSETS = [
     './manifest.webmanifest', './sw.js', './assets/rhw-crest.png', './assets/favicon.png',
     './assets/apple-touch-icon.png', './assets/pwa-icon-192.png', './assets/pwa-icon-512.png',
@@ -93,7 +102,7 @@ def main() -> int:
     if parser.js != EXPECTED_JS:
         errors.append('JavaScript load order differs from the documented RHW order.')
 
-    for ref in [*parser.css, *parser.js, *V4_RUNTIME_ASSETS, *V4_SUPPORT_ASSETS, *PWA_ASSETS, './assets/RHW_Newswire.md']:
+    for ref in [*parser.css, *parser.js, *V4_RUNTIME_ASSETS, *V4_SUPPORT_ASSETS, *PWA_ASSETS, *DISCOVERY_SYNC_ASSETS, './assets/RHW_Newswire.md']:
         if not (ROOT / ref.removeprefix('./')).is_file():
             errors.append(f'Referenced local file is missing: {ref}')
 
@@ -147,8 +156,9 @@ def main() -> int:
         './css/21-app-v402-mobile-ui.css', './css/23-app-pr3-yard-production.css',
         './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
         './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css',
-        './css/28-app-pr5-newswire-2.css', './js/22-app-v402-mobile-ui.js',
-        './js/23-app-v40-pwa.js', './js/24-app-v40-newswire-2.js'
+        './css/28-app-pr5-newswire-2.css', './css/29-app-pr6-discovery-sync.css',
+        './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js',
+        './js/24-app-v40-newswire-2.js', './js/25-app-v40-discovery-status.js'
     ), 'V4 bootstrap failure UI')
     require_tokens(errors, 'js/22-app-v402-mobile-ui.js', (
         'commsMobileView', 'setForumView', 'commsMobileViewSwitch', "['write', 'preview', 'bbcode']"
@@ -208,6 +218,42 @@ def main() -> int:
         '.v40-news2-control', '.v40-news2-metrics', '.v40-news2-channel-grid',
         '[data-news2-visible="false"]', 'min-height: 44px', '@media (max-width: 390px)'
     ), 'PR5 Newswire 2.0 presentation')
+    require_tokens(errors, 'js/25-app-v40-discovery-status.js', (
+        'discoveryDataStatus', 'CHECK LATEST RUN', 'OPEN SYNC CONTROL', 'VIEW CHANGE REPORT',
+        'DRAFT PR ONLY · AUTO-MERGE DISABLED', 'app.discoveryStatus', 'checkLatestRun', 'selfTest'
+    ), 'PR6 Discovery status runtime')
+    require_tokens(errors, 'css/29-app-pr6-discovery-sync.css', (
+        '.discovery-data-panel', '.discovery-data-grid', '.discovery-data-actions',
+        '.discovery-source-details', 'min-height:44px', 'min-height:48px', '@media(max-width:560px)'
+    ), 'PR6 Discovery status presentation')
+    require_tokens(errors, '.github/workflows/discovery-catalog-sync.yml', (
+        'schedule:', 'workflow_dispatch:', 'pull-requests: write', 'sync_discovery_catalog.py',
+        '--force-with-lease', 'gh pr create', '--draft', 'steps.delta.outputs.changed'
+    ), 'PR6 Discovery sync workflow')
+    require_tokens(errors, 'scripts/sync_discovery_catalog.py', (
+        'DEFAULT_SOURCE_BASES', 'validate_catalog', 'large_change_errors', 'catalog_diff',
+        'TemporaryDirectory', 'autoMerge', 'Human review is required'
+    ), 'PR6 Discovery sync engine')
+
+    discovery_status = json.loads((ROOT / 'assets/discovery-status.json').read_text(encoding='utf-8'))
+    if discovery_status.get('schemaVersion') != 1:
+        errors.append('Discovery status schemaVersion must be 1.')
+    if discovery_status.get('workflow', {}).get('reviewRequired') is not True or discovery_status.get('workflow', {}).get('autoMerge') is not False:
+        errors.append('Discovery status must require review and explicitly disable auto-merge.')
+    effective = discovery_status.get('catalog', {}).get('effective', {})
+    if not all(isinstance(effective.get(key), int) and effective[key] > 0 for key in ('recipes', 'products', 'factions')):
+        errors.append('Discovery status must publish positive effective recipe, product and IFF counts.')
+    catalog_meta = read_catalog(ROOT / 'assets' / 'recipes').get('meta', {})
+    status_raw = discovery_status.get('catalog', {}).get('raw', {})
+    expected_raw = {
+        'recipes': catalog_meta.get('recipeCount'),
+        'products': catalog_meta.get('productCount'),
+        'factions': catalog_meta.get('factionCount'),
+    }
+    if status_raw != expected_raw:
+        errors.append(f'Discovery status raw counts differ from the generated catalog: {status_raw!r} != {expected_raw!r}.')
+    if discovery_status.get('source', {}).get('sha256') != catalog_meta.get('sourceSha256'):
+        errors.append('Discovery status source hashes differ from the generated catalog metadata.')
 
     manifest = json.loads((ROOT / 'manifest.webmanifest').read_text(encoding='utf-8'))
     expected_manifest = {'id': './', 'start_url': './#command/overview', 'scope': './', 'display': 'standalone'}
@@ -230,6 +276,7 @@ def main() -> int:
         'MOBILE_WIDTHS = (360, 390, 412, 430)', 'test_boot_failure',
         'test_backup_and_storage', 'test_mobile_forum_controls', 'test_pr3_decision_ui',
         'test_pr3_calculator_ui', 'test_pr3_comms_workflow', 'test_pr4_pwa', 'test_pr5_newswire2',
+        'test_pr6_discovery_status',
         'v40NewswireRecoveryState',
         'RHWV4.newswireOrdering.setFilter', 'take_runtime_failures'
     ), 'V4.0.2 + PR1 browser smoke')
@@ -244,10 +291,12 @@ def main() -> int:
         'data-ops-quantity', 'data-ops-jump', 'opsMobileSellUnit'
     ), 'V4 OPERATIONS UI')
     require_tokens(errors, 'js/19-app-v40-runtime.js', (
-        'workspaceOperations', 'operations-calculator', '__RHW_V4_SMOKE__', 'app.commsSafety?.init()', 'app.runtime'
+        'workspaceOperations', 'operations-calculator', '__RHW_V4_SMOKE__', 'app.commsSafety?.init()',
+        'app.discoveryStatus?.init()', 'app.runtime'
     ), 'V4 runtime')
     require_tokens(errors, 'scripts/build_recipe_catalog.py', (
-        "parser.add_argument('--chunks'", 'chunk_count = max(1, int(args.chunks))', "if ''.join(chunks) != encoded"
+        "parser.add_argument('--chunks'", 'def write_catalog(', 'chunk_count = max(1, int(chunk_count))',
+        "if ''.join(chunks) != encoded", 'def read_catalog('
     ), 'Recipe catalog builder')
     for idx in range(1, 7):
         require_tokens(errors, f'assets/recipes/catalog-v1-part-{idx:02d}.js', ('__RHW_RECIPE_CATALOG_GZIP_BASE64__',), f'V4 recipe catalog chunk {idx}')

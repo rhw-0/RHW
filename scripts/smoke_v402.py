@@ -13,7 +13,7 @@ base.V4_CSS = [
     "css/21-app-v402-mobile-ui.css", "css/22-app-pr3-command-mobile.css",
     "css/23-app-pr3-yard-production.css", "css/24-app-pr3-operations-calculator.css",
     "css/25-app-pr3-comms-workflow.css", "css/26-app-pr3-newswire-manager.css",
-    "css/27-app-pr4-pwa.css", "css/28-app-pr5-newswire-2.css",
+    "css/27-app-pr4-pwa.css", "css/28-app-pr5-newswire-2.css", "css/29-app-pr6-discovery-sync.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -24,6 +24,7 @@ base.V4_JS = [
     "js/18b-app-v40-production-pricing.js", "js/18c-app-v40-recipe-corrections.js",
     "js/18d-app-v40-final-ui-polish.js", "js/20-app-v402-fixes.js", "js/21-app-v402-qol.js",
     "js/22-app-v402-mobile-ui.js", "js/23-app-v40-pwa.js", "js/24-app-v40-newswire-2.js",
+    "js/25-app-v40-discovery-status.js",
     "js/19-app-v40-runtime.js",
 ]
 MOBILE_WIDTHS = (360, 390, 412, 430)
@@ -456,7 +457,7 @@ def test_pr3_calculator_ui(cdp, workspace, node):
             })()""")
         finally:
             cdp.call("Emulation.clearDeviceMetricsOverride")
-        if result.get("recipes") != 287 or result.get("rows", 0) <= 0:
+        if result.get("recipes") != 285 or result.get("rows", 0) <= 0:
             raise RuntimeError(f"PR3 Calculator catalog/material rows failed at {width}px: {result}")
         if result.get("rowDisplay") != "grid" or result.get("wrapOverflow") != "visible" or result.get("decisionDisplay") != "grid":
             raise RuntimeError(f"PR3 Calculator mobile hierarchy failed at {width}px: {result}")
@@ -629,6 +630,41 @@ def test_pr5_newswire2(cdp, workspace, node):
     print("PR5 smoke passed: Newswire control center + QA gate + priority + synchronized ticker/forum output")
 
 
+def test_pr6_discovery_status(cdp, workspace, node):
+    if (workspace, node) != ("operations", "calculator"):
+        return
+    cdp.call("Emulation.setDeviceMetricsOverride", {
+        "width": 390, "height": 820, "deviceScaleFactor": 1, "mobile": True,
+    })
+    try:
+        result = base.ev(cdp, """(()=>{
+          const panel=document.getElementById('discoveryDataStatus');
+          const api=RHWV4.discoveryStatus;
+          const visible=element=>{const style=getComputedStyle(element),rect=element.getBoundingClientRect();return style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0};
+          const controls=[...panel.querySelectorAll('button,a')].filter(visible).map(element=>({text:element.textContent.trim(),height:element.getBoundingClientRect().height}));
+          const links=[...panel.querySelectorAll('a')].map(element=>element.href);
+          return{
+            api:!!api,panel:!!panel,failures:api?.selfTest?.()||[],text:panel?.textContent.replace(/\\s+/g,' ').trim()||'',
+            controls,links,details:!!panel?.querySelector('.discovery-source-details'),
+            counts:api?.state?.status?.catalog?.effective||{},autoMerge:api?.state?.status?.workflow?.autoMerge,
+            overflow:document.documentElement.scrollWidth-window.innerWidth
+          };
+        })()""")
+    finally:
+        cdp.call("Emulation.clearDeviceMetricsOverride")
+    if not result.get("api") or not result.get("panel") or result.get("failures"):
+        raise RuntimeError(f"PR6 Discovery status failed to mount: {result}")
+    if "285 RECIPES" not in result.get("text", "") or "246 BUILD TARGETS" not in result.get("text", "") or "AUTO-MERGE DISABLED" not in result.get("text", ""):
+        raise RuntimeError(f"PR6 Discovery provenance/status content failed: {result}")
+    if result.get("autoMerge") is not False or not result.get("details") or len(result.get("controls", [])) != 3:
+        raise RuntimeError(f"PR6 Discovery review controls failed: {result}")
+    if any(control.get("height", 0) < 47.5 for control in result.get("controls", [])) or result.get("overflow", 0) > 2:
+        raise RuntimeError(f"PR6 Discovery mobile controls/overflow failed: {result}")
+    if not any("discovery-catalog-sync.yml" in link for link in result.get("links", [])) or not any("discovery-sync-report.md" in link for link in result.get("links", [])):
+        raise RuntimeError(f"PR6 Discovery workflow/report links failed: {result}")
+    print("PR6 smoke passed: mobile Discovery provenance + sync controls + no-auto-merge policy")
+
+
 def main():
     try:
         chrome, browser, port, folder, _log_path = base.launch()
@@ -661,7 +697,7 @@ def main():
                 nav = {"command": "commandNodeNav", "operations": "operationsNodeNav", "comms": "commsNodeNav"}[workspace]
                 if snap.get("ready") != "true" or snap.get("error") == "true" or snap.get("workspace") != workspace or snap.get(key) != node or snap.get("mountedNav") != nav or snap.get("errors"):
                     raise RuntimeError(f"V4.0.2 production route failed {workspace}/{node}: {snap}")
-                if snap.get("recipes") != 287 or snap.get("products") != 248:
+                if snap.get("recipes") != 285 or snap.get("products") != 246:
                     raise RuntimeError(f"V4.0.2 corrected catalog mismatch {workspace}/{node}: {snap}")
                 test_v402(cdp, workspace, node)
                 test_pr3_decision_ui(cdp, workspace, node)
@@ -669,6 +705,7 @@ def main():
                 test_pr3_comms_workflow(cdp, workspace, node)
                 test_pr4_pwa(cdp, workspace, node)
                 test_pr5_newswire2(cdp, workspace, node)
+                test_pr6_discovery_status(cdp, workspace, node)
                 if (workspace, node) == ("comms", "forum"):
                     test_mobile_forum_controls(cdp)
                 run_interactions(cdp, workspace, node)
@@ -680,7 +717,7 @@ def main():
                 ]
                 if runtime_failures:
                     raise RuntimeError(f"Browser console/runtime errors {workspace}/{node}: {runtime_failures}")
-                print(f"V4.0.2 + PR2 smoke passed: {workspace}/{node} (287 recipes / 248 products; mobile 360/390/412/430)")
+                print(f"V4.0.2 + PR6 smoke passed: {workspace}/{node} (285 recipes / 246 products; mobile 360/390/412/430)")
         finally:
             cdp.close()
     finally:

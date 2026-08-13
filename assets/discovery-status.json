@@ -1,0 +1,50 @@
+{
+  "catalog": {
+    "effective": {
+      "factions": 64,
+      "products": 246,
+      "recipes": 285
+    },
+    "raw": {
+      "factions": 64,
+      "products": 246,
+      "recipes": 285
+    }
+  },
+  "catalogState": "verified",
+  "catalogUpdatedAt": "2026-08-13T20:29:17Z",
+  "changes": {
+    "factionsAdded": 0,
+    "factionsChanged": 0,
+    "factionsRemoved": 1,
+    "productsAdded": 3,
+    "productsChanged": 37,
+    "productsRemoved": 4,
+    "recipesAdded": 0,
+    "recipesChanged": 35,
+    "recipesRemoved": 4
+  },
+  "lastSuccessfulSync": "2026-08-13T20:29:17Z",
+  "schemaVersion": 1,
+  "source": {
+    "canonicalUrl": "https://discoverygc.com/gameconfigpublic/",
+    "downloadedFrom": {
+      "base_recipe_items.cfg": "https://raw.githubusercontent.com/SlimyTheMoon/DiscoveryRecipieCalculator/main/Sources/base_recipe_items.cfg",
+      "base_recipe_modules.cfg": "https://raw.githubusercontent.com/SlimyTheMoon/DiscoveryRecipieCalculator/main/Sources/base_recipe_modules.cfg"
+    },
+    "files": [
+      "base_recipe_items.cfg",
+      "base_recipe_modules.cfg"
+    ],
+    "sha256": {
+      "base_recipe_items.cfg": "80b7cb755599516aa33e9fd43bb0fc17f87943d68091049aa599b83d8bbaeb1b",
+      "base_recipe_modules.cfg": "170f6fdf65814df189f16b13784cea61cfdc8128820f394a91982de7f6ab5d59"
+    }
+  },
+  "workflow": {
+    "autoMerge": false,
+    "file": "discovery-catalog-sync.yml",
+    "repository": "rhw-0/RHW",
+    "reviewRequired": true
+  }
+}
