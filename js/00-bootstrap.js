@@ -16,7 +16,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
      Load every V4 stylesheet immediately to avoid an unstyled app-shell flash,
      but wait until the stable dashboard has initialized before booting V4 JS. */
   (function bootstrapRhwV4Preview() {
-    const RHW_V4_ASSET_REV = '4.0.2-pr4-samsung-pwa';
+    const RHW_V4_ASSET_REV = '4.0.2-pr5-newswire-2';
     const versioned = src => `${src}?v=${encodeURIComponent(RHW_V4_ASSET_REV)}`;
 
     [
@@ -35,7 +35,8 @@ if (!window.__RHW_SMOKE_INLINE__) {
       ['./css/24-app-pr3-operations-calculator.css', 'rhwPr3OperationsCalculator'],
       ['./css/25-app-pr3-comms-workflow.css', 'rhwPr3CommsWorkflow'],
       ['./css/26-app-pr3-newswire-manager.css', 'rhwPr3NewswireManager'],
-      ['./css/27-app-pr4-pwa.css', 'rhwPr4Pwa']
+      ['./css/27-app-pr4-pwa.css', 'rhwPr4Pwa'],
+      ['./css/28-app-pr5-newswire-2.css', 'rhwPr5Newswire2']
     ].forEach(([href, dataKey]) => {
       if (document.querySelector(`link[data-${dataKey.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}="true"]`)) return;
       const link = document.createElement('link');
@@ -72,6 +73,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
         ['./js/21-app-v402-qol.js', 'rhwV402Qol'],
         ['./js/22-app-v402-mobile-ui.js', 'rhwV402MobileUi'],
         ['./js/23-app-v40-pwa.js', 'rhwV40Pwa'],
+        ['./js/24-app-v40-newswire-2.js', 'rhwPr5Newswire2'],
         ['./js/19-app-v40-runtime.js', 'rhwV4Runtime']
       ];
 

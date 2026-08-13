@@ -13,7 +13,7 @@ base.V4_CSS = [
     "css/21-app-v402-mobile-ui.css", "css/22-app-pr3-command-mobile.css",
     "css/23-app-pr3-yard-production.css", "css/24-app-pr3-operations-calculator.css",
     "css/25-app-pr3-comms-workflow.css", "css/26-app-pr3-newswire-manager.css",
-    "css/27-app-pr4-pwa.css",
+    "css/27-app-pr4-pwa.css", "css/28-app-pr5-newswire-2.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -23,7 +23,8 @@ base.V4_JS = [
     "js/17-app-v40-operations-core.js", "js/18-app-v40-operations-ui.js", "js/18a-app-v40-nav-hierarchy.js",
     "js/18b-app-v40-production-pricing.js", "js/18c-app-v40-recipe-corrections.js",
     "js/18d-app-v40-final-ui-polish.js", "js/20-app-v402-fixes.js", "js/21-app-v402-qol.js",
-    "js/22-app-v402-mobile-ui.js", "js/23-app-v40-pwa.js", "js/19-app-v40-runtime.js",
+    "js/22-app-v402-mobile-ui.js", "js/23-app-v40-pwa.js", "js/24-app-v40-newswire-2.js",
+    "js/19-app-v40-runtime.js",
 ]
 MOBILE_WIDTHS = (360, 390, 412, 430)
 
@@ -546,6 +547,88 @@ def test_pr4_pwa(cdp, workspace, node):
     print("PR4 smoke passed: app-header install controls + iOS guidance + honest offline state")
 
 
+def test_pr5_newswire2(cdp, workspace, node):
+    if (workspace, node) != ("comms", "ticker"):
+        return
+    cdp.call("Emulation.setDeviceMetricsOverride", {
+        "width": 390, "height": 820, "deviceScaleFactor": 1, "mobile": True,
+    })
+    try:
+        result = base.ev(cdp, """(()=>{
+          const app=RHWV4, news2=app.newswire2;
+          const visible=element=>{const style=getComputedStyle(element),rect=element.getBoundingClientRect();return style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0};
+          if(!news2)return{error:'Newswire 2.0 API missing'};
+          app.newswireManager.applyLoadedSource('# RHW Industrial Newswire\\n\\n## market\\n- [MARKET DESK | good] MARKET READY\\n\\n## operations\\n- [WATCH | good] ALPHA MESSAGE\\n- [WATCH | warn] ALPHA MESSAGE\\n- [SECOND | remote] SECOND MESSAGE\\n','repository');
+          news2.install();news2.refresh();
+          const initial={
+            total:v40News2Total.textContent,ready:v40News2Ready.textContent,review:v40News2Review.textContent,
+            duplicates:news2.auditEntries().duplicates,copyDisabled:v40NewswireCopyFileBtn.disabled,
+            exportDisabled:v40NewswireExportBtn.disabled,gate:v40News2OutputGateState.textContent
+          };
+          news2.setQuery('watch');news2.setStatus('duplicate');
+          const filtered=[...document.querySelectorAll('.v40-newswire-entry[data-news2-visible="true"]')].map(row=>row.dataset.newswireId);
+          news2.setQuery('');news2.setStatus('all');
+          const market=app.newswireManager.state.entries.find(entry=>entry.tag==='MARKET DESK');
+          news2.selectEntry(market.id);
+          const selected={
+            tickerTag:v40News2TickerTag.textContent,tickerMessage:v40News2TickerMessage.textContent,
+            forumTag:v40News2ForumTag.textContent,forumMessage:v40News2ForumMessage.textContent,
+            code:v40News2ForumCode.value,source:v40News2PreviewSource.textContent
+          };
+          v40TickerCategory.value='operations';v40TickerCategory.dispatchEvent(new Event('change',{bubbles:true}));
+          v40TickerTone.value='good';v40TickerTone.dispatchEvent(new Event('change',{bubbles:true}));
+          v40TickerTag.value='WATCH';v40TickerTag.dispatchEvent(new Event('input',{bubbles:true}));
+          v40TickerMessage.value='ALPHA MESSAGE';v40TickerMessage.dispatchEvent(new Event('input',{bubbles:true}));
+          const duplicateEditor={disabled:v40NewswireSaveBtn.disabled,gate:v40News2EditorGate.textContent.replace(/\\s+/g,' ').trim()};
+          v40TickerTag.value='UNIQUE QA';v40TickerTag.dispatchEvent(new Event('input',{bubbles:true}));
+          v40TickerMessage.value='CHANNELS STAY SYNCHRONIZED';v40TickerMessage.dispatchEvent(new Event('input',{bubbles:true}));
+          const uniqueEditor={
+            disabled:v40NewswireSaveBtn.disabled,
+            tickerTag:v40News2TickerTag.textContent,tickerMessage:v40News2TickerMessage.textContent,
+            forumTag:v40News2ForumTag.textContent,forumMessage:v40News2ForumMessage.textContent,
+            code:v40News2ForumCode.value
+          };
+          const second=app.newswireManager.state.entries.find(entry=>entry.tag==='SECOND');
+          const pinned=news2.pinToTop(second.id);
+          const firstOperations=app.newswireManager.state.entries.find(entry=>entry.category==='operations')?.tag||'';
+          news2.refresh();
+          const controls=[...document.querySelectorAll('.v40-news2-control button,.v40-news2-control input,.v40-news2-channels button')]
+            .filter(visible).map(element=>({name:element.textContent.trim()||element.id,height:element.getBoundingClientRect().height}));
+          const result={
+            initial,filtered,selected,duplicateEditor,uniqueEditor,pinned,firstOperations,controls,
+            statusButtons:document.querySelectorAll('[data-newswire-status]').length,
+            rowBadges:document.querySelectorAll('[data-news2-row-status]').length,
+            priorities:document.querySelectorAll('[data-news2-priority]').length,
+            overflow:document.documentElement.scrollWidth-window.innerWidth
+          };
+          app.newswireManager.resetWorkingCopy({announce:false});
+          return result;
+        })()""")
+    finally:
+        cdp.call("Emulation.clearDeviceMetricsOverride")
+    if result.get("error"):
+        raise RuntimeError(f"PR5 Newswire 2.0 failed to mount: {result}")
+    initial = result.get("initial", {})
+    if initial != {"total": "4", "ready": "2", "review": "2", "duplicates": 2, "copyDisabled": True, "exportDisabled": True, "gate": "REVIEW 2 BULLETINS FIRST"}:
+        raise RuntimeError(f"PR5 Newswire audit/output gate failed: {result}")
+    if len(result.get("filtered", [])) != 2 or result.get("statusButtons") != 4 or result.get("rowBadges") != 4 or result.get("priorities") != 4:
+        raise RuntimeError(f"PR5 Newswire search/status/control center failed: {result}")
+    selected = result.get("selected", {})
+    if selected.get("tickerTag") != "MARKET DESK" or selected.get("tickerMessage") != "MARKET READY" or selected.get("forumTag") != selected.get("tickerTag") or selected.get("forumMessage") != selected.get("tickerMessage") or "MARKET DESK" not in selected.get("code", "") or "MARKET READY" not in selected.get("code", "") or selected.get("source") != "SELECTED BULLETIN":
+        raise RuntimeError(f"PR5 selected bulletin channel parity failed: {result}")
+    duplicate = result.get("duplicateEditor", {})
+    unique = result.get("uniqueEditor", {})
+    if not duplicate.get("disabled") or "DUPLICATE BLOCKED" not in duplicate.get("gate", ""):
+        raise RuntimeError(f"PR5 duplicate editor gate failed: {result}")
+    if unique.get("disabled") or unique.get("tickerTag") != unique.get("forumTag") or unique.get("tickerMessage") != unique.get("forumMessage") or "UNIQUE QA" not in unique.get("code", "") or "CHANNELS STAY SYNCHRONIZED" not in unique.get("code", ""):
+        raise RuntimeError(f"PR5 editor channel synchronization failed: {result}")
+    if not result.get("pinned") or result.get("firstOperations") != "SECOND":
+        raise RuntimeError(f"PR5 priority pin failed: {result}")
+    if result.get("overflow", 0) > 2 or any(item.get("height", 0) < 43.5 for item in result.get("controls", [])):
+        raise RuntimeError(f"PR5 Newswire mobile touch/overflow failed: {result}")
+    print("PR5 smoke passed: Newswire control center + QA gate + priority + synchronized ticker/forum output")
+
+
 def main():
     try:
         chrome, browser, port, folder, _log_path = base.launch()
@@ -585,6 +668,7 @@ def main():
                 test_pr3_calculator_ui(cdp, workspace, node)
                 test_pr3_comms_workflow(cdp, workspace, node)
                 test_pr4_pwa(cdp, workspace, node)
+                test_pr5_newswire2(cdp, workspace, node)
                 if (workspace, node) == ("comms", "forum"):
                     test_mobile_forum_controls(cdp)
                 run_interactions(cdp, workspace, node)
