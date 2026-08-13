@@ -10,14 +10,15 @@
 
   const CATEGORIES = Object.freeze(['market', 'regional', 'security', 'operations', 'corporate']);
   const TONES = Object.freeze(['good', 'warn', 'danger', 'remote', 'lore', 'muted']);
-  const DRAFT_KEY = 'rhw-webapp-v4:newswire-manager-session';
+  const DRAFT_KEY = app.config.storageKeys.newswireManagerDraft || 'rhw-webapp-v4:newswire-manager-draft';
   const SOURCE_URL = typeof DASHBOARD_CONFIG !== 'undefined' && DASHBOARD_CONFIG?.newswireUrl
     ? DASHBOARD_CONFIG.newswireUrl
     : './assets/RHW_Newswire.md';
   const STYLE_ID = 'rhwV40NewswireManagerStyle';
   const state = {
     entries: [], baseEntries: [], sourceText: '', baseHash: '', editingId: '',
-    dirty: false, sourceMode: 'loading', loaded: false, loadError: ''
+    dirty: false, sourceMode: 'loading', loaded: false, loadError: '',
+    draftSourceChanged: false, draftSavedAt: 0
   };
 
   const esc = value => app.util.escape(String(value ?? ''));
@@ -112,35 +113,67 @@
     }
   }
 
-  function readSessionDraft(baseHash) {
-    try {
-      const raw = sessionStorage.getItem(DRAFT_KEY);
-      if (!raw) return null;
-      const draft = JSON.parse(raw);
-      if (draft?.baseHash !== baseHash || !Array.isArray(draft.entries)) return null;
-      return draft.entries.map((entry, index) => normalizeEntry(entry, index + 1));
-    } catch {
-      return null;
+  function readLocalDraft(baseHash = state.baseHash) {
+    const draft = app.store.get(DRAFT_KEY, null);
+    if (!draft || !Array.isArray(draft.entries)) return null;
+    return {
+      entries: draft.entries.map((entry, index) => normalizeEntry(entry, index + 1)),
+      sourceChanged: Boolean(draft.baseHash && draft.baseHash !== baseHash),
+      savedAt: Number(draft.savedAt) || 0
+    };
+  }
+
+  function draftPayload() {
+    const draft = app.store.get(DRAFT_KEY, null);
+    return draft && Array.isArray(draft.entries) ? draft : null;
+  }
+
+  function saveLocalDraft() {
+    document.documentElement.dataset.rhwNewswireDirty = state.dirty ? 'true' : 'false';
+    if (!state.dirty) {
+      state.draftSourceChanged = false;
+      state.draftSavedAt = 0;
+      return app.store.remove(DRAFT_KEY);
     }
+    state.draftSavedAt = Date.now();
+    return app.store.set(DRAFT_KEY, {
+      version: 1,
+      baseHash: state.baseHash,
+      entries: cloneEntries(state.entries),
+      savedAt: state.draftSavedAt
+    });
   }
 
-  function saveSessionDraft() {
-    try {
-      if (!state.dirty) {
-        sessionStorage.removeItem(DRAFT_KEY);
-        return;
-      }
-      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ baseHash: state.baseHash, entries: state.entries }));
-    } catch {}
+  function clearLocalDraft() {
+    state.draftSourceChanged = false;
+    state.draftSavedAt = 0;
+    document.documentElement.dataset.rhwNewswireDirty = 'false';
+    return app.store.remove(DRAFT_KEY);
   }
 
-  function clearSessionDraft() {
-    try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+  function restoreDraft(raw) {
+    if (!raw || !Array.isArray(raw.entries)) throw new Error('INVALID NEWSWIRE DRAFT');
+    const normalized = {
+      version: 1,
+      baseHash: String(raw.baseHash || ''),
+      entries: raw.entries.map((entry, index) => normalizeEntry(entry, index + 1)),
+      savedAt: Number(raw.savedAt) || Date.now()
+    };
+    if (!app.store.set(DRAFT_KEY, normalized)) throw new Error('NEWSWIRE DRAFT COULD NOT BE RESTORED');
+    if (state.loaded) {
+      state.entries = cloneEntries(normalized.entries);
+      state.draftSourceChanged = Boolean(normalized.baseHash && normalized.baseHash !== state.baseHash);
+      state.draftSavedAt = normalized.savedAt;
+      state.dirty = entriesSignature(state.entries) !== entriesSignature(state.baseEntries);
+      document.documentElement.dataset.rhwNewswireDirty = state.dirty ? 'true' : 'false';
+      renderManager();
+    }
+    return normalized;
   }
 
   function recalcDirty() {
     state.dirty = entriesSignature(state.entries) !== entriesSignature(state.baseEntries);
-    saveSessionDraft();
+    saveLocalDraft();
   }
 
   function installStyles() {
@@ -244,6 +277,7 @@
   }
 
   function statusText() {
+    if (state.dirty && state.draftSourceChanged) return [`${state.entries.length} BULLETINS // RECOVERED LOCAL EDITS // SOURCE CHANGED`, 'warn'];
     if (state.dirty) return [`${state.entries.length} BULLETINS // LOCAL EDITS // NOT PUBLISHED`, 'dirty'];
     if (!state.loaded) return ['LOADING RHW_NEWSWIRE.MD', 'muted'];
     if (state.sourceMode === 'fallback') return [`${state.entries.length} BULLETINS // FALLBACK SOURCE // REPOSITORY FILE UNAVAILABLE`, 'warn'];
@@ -251,7 +285,8 @@
   }
 
   function publishBannerCopy() {
-    if (state.dirty) return ['LOCAL EDITS // NOT PUBLISHED', 'YOUR CHANGES EXIST ONLY IN THIS BROWSER WORKING COPY. USE COPY UPDATED NEWSWIRE OR EXPORT RHW_NEWSWIRE.MD TO PUBLISH THEM MANUALLY.', 'dirty'];
+    if (state.dirty && state.draftSourceChanged) return ['RECOVERED DRAFT // SOURCE CHANGED', 'THE REPOSITORY FILE CHANGED SINCE THIS LOCAL DRAFT WAS SAVED. REVIEW THE RECOVERED BULLETINS BEFORE COPYING OR EXPORTING.', 'warn'];
+    if (state.dirty) return ['LOCAL EDITS // SAVED IN THIS BROWSER', 'YOUR WORKING COPY SURVIVES TAB AND APP RESTARTS, BUT IS NOT PUBLISHED. USE COPY UPDATED NEWSWIRE OR EXPORT RHW_NEWSWIRE.MD TO PUBLISH.', 'dirty'];
     if (!state.loaded) return ['LOADING CURRENT SOURCE', 'THE MANAGER HAS NOT LOADED A SOURCE FILE YET.', 'clean'];
     if (state.sourceMode === 'fallback') return ['FALLBACK SOURCE // NOT PUBLISHED', 'THE REPOSITORY FILE COULD NOT BE LOADED. ANY CHANGES HERE ARE LOCAL ONLY; RELOAD THE CURRENT FILE BEFORE EXPORTING.', 'warn'];
     return ['CURRENT FILE // READ ONLY', 'NOTHING IS PUBLISHED AUTOMATICALLY. ADD / EDIT / DELETE WILL CREATE A LOCAL WORKING COPY AND THIS BANNER WILL TURN GOLD.', 'clean'];
@@ -411,7 +446,7 @@
     state.entries = cloneEntries(state.baseEntries);
     state.editingId = '';
     state.dirty = false;
-    clearSessionDraft();
+    clearLocalDraft();
     clearEditor({ keepRouting: true });
     renderManager();
     if (announce) app.notify('NEWSWIRE WORKING COPY RESET TO CURRENT FILE', 'warn');
@@ -442,13 +477,16 @@
     state.sourceText = sourceText || serializeSource(loadedEntries);
     state.baseHash = hashText(state.sourceText);
     state.baseEntries = cloneEntries(loadedEntries);
-    const draft = mode === 'repository' ? readSessionDraft(state.baseHash) : null;
-    state.entries = (draft && Array.isArray(draft)) ? cloneEntries(draft) : cloneEntries(loadedEntries);
+    const draft = readLocalDraft(state.baseHash);
+    state.entries = draft ? cloneEntries(draft.entries) : cloneEntries(loadedEntries);
     state.sourceMode = mode;
     state.loaded = true;
     state.loadError = '';
     state.editingId = '';
+    state.draftSourceChanged = Boolean(draft?.sourceChanged);
+    state.draftSavedAt = Number(draft?.savedAt) || 0;
     state.dirty = entriesSignature(state.entries) !== entriesSignature(state.baseEntries);
+    document.documentElement.dataset.rhwNewswireDirty = state.dirty ? 'true' : 'false';
     renderManager();
   }
 
@@ -463,7 +501,7 @@
       const sourceText = await response.text();
       const parsed = parseSource(sourceText);
       if (!parsed.length) throw new Error('NO BULLETINS PARSED');
-      if (force) clearSessionDraft();
+      if (force) clearLocalDraft();
       applyLoadedSource(sourceText, 'repository');
     } catch (error) {
       state.loadError = String(error?.message || error || 'UNKNOWN SOURCE ERROR');
@@ -520,7 +558,7 @@
       state.dirty = original;
       return copyValue;
     })();
-    if (!dirtyBanner[0].includes('LOCAL EDITS') || !dirtyBanner[0].includes('NOT PUBLISHED')) failures.push('publish-banner-copy');
+    if (!dirtyBanner[0].includes('LOCAL EDITS') || !dirtyBanner[1].includes('NOT PUBLISHED')) failures.push('publish-banner-copy');
     ['v40NewswireManager', 'v40NewswirePublishBanner', 'v40NewswirePublishState', 'v40NewswireList', 'v40NewswireSaveBtn', 'v40NewswireCopyFileBtn', 'v40NewswireExportBtn', 'v40NewswireFileOutput'].forEach(id => {
       if (!document.getElementById(id)) failures.push(`missing:${id}`);
     });
@@ -550,8 +588,14 @@
     return result;
   };
 
+  window.addEventListener('beforeunload', event => {
+    if (!state.dirty) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
+
   app.newswireManager = {
     state, enhance, parseSource, serializeSource, loadCurrentSource, applyLoadedSource,
-    applyAdd, applyEdit, applyDelete, beginEdit, resetWorkingCopy, selfTest
+    applyAdd, applyEdit, applyDelete, beginEdit, resetWorkingCopy, draftPayload, restoreDraft, selfTest
   };
 })();

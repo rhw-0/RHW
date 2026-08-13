@@ -190,25 +190,59 @@
     return [...map.values()];
   }
 
+  const preferenceKeys = Object.freeze([
+    'activeWorkspace', 'commandNode', 'inventoryView', 'operationsNode', 'commsNode', 'tickerComposer'
+  ]);
+
+  function requireStored(key, value) {
+    if (!app.store.set(key, value)) throw new Error(`LOCAL STORAGE WRITE FAILED: ${key}`);
+  }
+
+  function portablePreferences() {
+    return Object.fromEntries(preferenceKeys.map(name => [name, app.store.get(keys[name], null)]));
+  }
+
   function importPayload(raw) {
-    if (!raw || raw.format !== 'rhw-webapp-local-cache' || Number(raw.version) !== 1) {
+    const version = Number(raw?.version);
+    if (!raw || raw.format !== 'rhw-webapp-local-cache' || ![1, 2].includes(version)) {
       throw new Error('UNSUPPORTED CACHE FILE');
     }
     const incomingSenders = (Array.isArray(raw.localSenders) ? raw.localSenders : []).map(normalizeSender).filter(Boolean);
     const incomingDrafts = (Array.isArray(raw.drafts) ? raw.drafts : []).map(normalizeDraft).filter(Boolean);
     app.state.localSenders = mergeByKey(app.state.localSenders, incomingSenders, sender => sender.key);
     app.state.drafts = mergeByKey(app.state.drafts, incomingDrafts, draft => draft.id);
-    saveLocalSenders();
-    saveDrafts();
+    requireStored(keys.localSenders, app.state.localSenders);
+    requireStored(keys.commsDrafts, app.state.drafts);
 
     if (raw.current && typeof raw.current === 'object') {
       const incomingCurrent = snapshotSender(normalizeState(raw.current));
       const valid = incomingCurrent.senderKey === '__custom__' || Boolean(senderByKey(incomingCurrent.senderKey));
       if (!valid && !incomingCurrent.senderSnapshotName) incomingCurrent.senderKey = app.config.senders[0].key;
       app.state.comms = incomingCurrent;
-      saveCurrent();
+      requireStored(keys.commsCurrent, app.state.comms);
     }
-    return { drafts: app.state.drafts.length, senders: app.state.localSenders.length };
+
+    if (version >= 2) {
+      if (Array.isArray(raw.priceProfiles)) requireStored(keys.calculatorPriceProfiles, raw.priceProfiles);
+      if (raw.shipyardPlanner && typeof raw.shipyardPlanner === 'object') requireStored(keys.shipyardPlanner, raw.shipyardPlanner);
+      if (raw.preferences && typeof raw.preferences === 'object') {
+        preferenceKeys.forEach(name => {
+          if (Object.prototype.hasOwnProperty.call(raw.preferences, name) && raw.preferences[name] !== null) {
+            requireStored(keys[name], raw.preferences[name]);
+          }
+        });
+      }
+      if (raw.newswireDraft && typeof raw.newswireDraft === 'object') {
+        if (app.newswireManager?.restoreDraft) app.newswireManager.restoreDraft(raw.newswireDraft);
+        else requireStored(keys.newswireManagerDraft, raw.newswireDraft);
+      }
+    }
+    return {
+      drafts: app.state.drafts.length,
+      senders: app.state.localSenders.length,
+      priceProfiles: (app.store.get(keys.calculatorPriceProfiles, []) || []).length,
+      newswireDraft: Boolean(app.store.get(keys.newswireManagerDraft, null))
+    };
   }
 
   function exportPayload() {
@@ -216,12 +250,16 @@
     saveCurrent();
     return {
       format: 'rhw-webapp-local-cache',
-      version: 1,
+      version: 2,
       appVersion: app.version,
       exportedAt: new Date().toISOString(),
       current: app.state.comms,
       drafts: app.state.drafts,
-      localSenders: app.state.localSenders
+      localSenders: app.state.localSenders,
+      priceProfiles: app.store.get(keys.calculatorPriceProfiles, []) || [],
+      shipyardPlanner: app.store.get(keys.shipyardPlanner, null),
+      newswireDraft: app.newswireManager?.draftPayload?.() || app.store.get(keys.newswireManagerDraft, null),
+      preferences: portablePreferences()
     };
   }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused browser smoke for V4.0.1 recipe labels, costing semantics and header clock layout."""
+"""Focused browser smoke for V4.0.2 recipe labels, costing semantics and header clock layout."""
 from __future__ import annotations
 
 import json
@@ -28,7 +28,7 @@ def number_from_money(value: str) -> int:
 
 def main() -> int:
     chrome, browser, port, folder, _log = base.launch()
-    print(f"V4.0.1 final-polish smoke browser: {browser}")
+    print(f"V4.0.2 final-polish smoke browser: {browser}")
     try:
         targets = json.loads(base.get(f"http://127.0.0.1:{port}/json/list", 3))
         page = next(item for item in targets if item.get("type") == "page")
@@ -48,9 +48,9 @@ def main() -> int:
                     break
                 time.sleep(.1)
             if snap.get("ready") != "true" or snap.get("error") == "true" or snap.get("errors"):
-                raise RuntimeError(f"V4.0.1 polish route boot failed: {snap}")
+                raise RuntimeError(f"V4.0.2 polish route boot failed: {snap}")
             if snap.get("recipes") != 287 or snap.get("products") != 248:
-                raise RuntimeError(f"Corrected catalog missing in V4.0.1 route: {snap}")
+                raise RuntimeError(f"Corrected catalog missing in V4.0.2 route: {snap}")
 
             labels = base.ev(cdp, """(()=>{
               const recipes=RHWV4.operationsCore.state.catalog?.recipes||[];
@@ -142,7 +142,7 @@ def main() -> int:
             if abs(unit - expected_unit) > 1.1:
                 raise RuntimeError(f"Unit cost does not reconcile with batch cost: {costing}, expected≈{expected_unit:.2f}")
 
-            print("V4.0.1 interaction smoke passed: meaningful recipe variants + unit costing + clock top-left")
+            print("V4.0.2 interaction smoke passed: meaningful recipe variants + unit costing + clock top-left")
         finally:
             cdp.close()
     finally:

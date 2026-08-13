@@ -21,7 +21,94 @@ base.V4_JS = [
     "js/18d-app-v40-final-ui-polish.js", "js/20-app-v402-fixes.js", "js/21-app-v402-qol.js",
     "js/19-app-v40-runtime.js",
 ]
+MOBILE_WIDTHS = (360, 390, 412, 430)
 
+
+def test_boot_failure(cdp, frame_id):
+    bootstrap = base.safe((base.ROOT / "js/00-bootstrap.js").read_text(encoding="utf-8"))
+    markup = f"""<!doctype html><html><head><meta charset="utf-8"></head><body>
+    <script>window.__RHW_BOOTSTRAP_TEST__={{failAsset:'./js/12-app-config.js'}};</script>
+    <script>{bootstrap}</script></body></html>"""
+    cdp.call("Page.navigate", {"url": "about:blank"})
+    cdp.call("Page.setDocumentContent", {"frameId": frame_id, "html": markup})
+    end = time.time() + 3
+    result = {}
+    while time.time() < end:
+        result = base.ev(cdp, "({error:document.documentElement.dataset.rhwBootError||'',asset:document.documentElement.dataset.rhwBootAsset||'',text:document.getElementById('rhwBootFailure')?.textContent||'',retry:!!document.querySelector('#rhwBootFailure button')})")
+        if result.get("error") == "true":
+            break
+        time.sleep(.05)
+    if result.get("error") != "true" or result.get("asset") != "./js/12-app-config.js" or "COULD NOT START" not in result.get("text", "") or not result.get("retry"):
+        raise RuntimeError(f"Visible bootstrap failure UI missing: {result}")
+    print("V4.0.2 + PR1 smoke passed: visible bootstrap failure + retry")
+
+
+def test_mobile_layout(cdp, workspace, node):
+    failures = []
+    try:
+        for width in MOBILE_WIDTHS:
+            cdp.call("Emulation.setDeviceMetricsOverride", {
+                "width": width, "height": 820, "deviceScaleFactor": 1, "mobile": True,
+            })
+            time.sleep(.04)
+            result = base.ev(cdp, "(()=>{const html=document.documentElement,body=document.body;return{inner:window.innerWidth,html:html.scrollWidth,body:body?.scrollWidth||0,focus:[...document.querySelectorAll('button,input,select,textarea,a[href]')].filter(x=>{const r=x.getBoundingClientRect();return r.width>0&&r.height>0&&r.right>window.innerWidth+2}).slice(0,5).map(x=>x.id||x.className||x.tagName)}})()")
+            overflow = max(result.get("html", 0), result.get("body", 0)) - result.get("inner", width)
+            if overflow > 2:
+                failures.append({"width": width, "overflow": overflow, "elements": result.get("focus", [])})
+    finally:
+        cdp.call("Emulation.clearDeviceMetricsOverride")
+    if failures:
+        raise RuntimeError(f"Mobile horizontal overflow {workspace}/{node}: {failures}")
+
+
+def test_backup_and_storage(cdp):
+    result = base.ev(cdp, """(()=>{
+      const app=RHWV4,k=app.config.storageKeys;
+      const original={
+        get:app.store.get.bind(app.store),
+        set:app.store.set.bind(app.store),
+        remove:app.store.remove.bind(app.store)
+      };
+      const memory=new Map();
+      const clone=value=>value===undefined?undefined:JSON.parse(JSON.stringify(value));
+      app.store.get=(key,fallback=null)=>memory.has(key)?clone(memory.get(key)):fallback;
+      app.store.set=(key,value)=>{memory.set(key,clone(value));return true};
+      app.store.remove=key=>{memory.delete(key);return true};
+      try{
+        app.newswireManager.applyLoadedSource('# RHW Industrial Newswire\\n\\n## operations\\n- [BASE | good] BASE MESSAGE\\n','repository');
+        app.newswireManager.applyAdd({category:'security',tone:'warn',tag:'RECOVERY TEST',message:'DURABLE LOCAL DRAFT'});
+        app.store.set(k.calculatorPriceProfiles,[{id:'pr1-profile',name:'PR1 Market',prices:{steel:1234},updatedAt:42}]);
+        app.store.set(k.shipyardPlanner,{target:'dunkirk',quantity:3});
+        app.store.set(k.activeWorkspace,'comms');
+        const payload=app.storage.exportPayload();
+        memory.clear();
+        const imported=app.storage.importPayload(payload);
+        const restoredDraft=app.store.get(k.newswireManagerDraft,null);
+        const legacy={format:'rhw-webapp-local-cache',version:1,current:payload.current,drafts:[],localSenders:[]};
+        const legacyResult=app.storage.importPayload(legacy);
+        app.reportStorageFailure('Smoke test','pr1-smoke',new Error('EXPECTED'));
+        const warning={shown:document.documentElement.dataset.rhwStorageError==='true',button:!!document.querySelector('#rhwStorageWarning button')};
+        app.clearStorageWarning();
+        return{
+          version:payload.version,
+          profile:app.store.get(k.calculatorPriceProfiles,[])[0]?.name||'',
+          planner:app.store.get(k.shipyardPlanner,null),
+          draft:restoredDraft?.entries?.some(entry=>entry.tag==='RECOVERY TEST')||false,
+          changed:app.newswireManager.state.draftSourceChanged,
+          imported,legacy:legacyResult,warning
+        };
+      }catch(error){
+        return{error:String(error?.stack||error)};
+      }finally{
+        try{app.newswireManager.resetWorkingCopy({announce:false});app.clearStorageWarning()}catch{}
+        app.store.get=original.get;
+        app.store.set=original.set;
+        app.store.remove=original.remove;
+      }
+    })()""")
+    if result.get("error") or result.get("version") != 2 or result.get("profile") != "PR1 Market" or result.get("planner", {}).get("quantity") != 3 or not result.get("draft") or not all(result.get("warning", {}).values()) or "legacy" not in result:
+        raise RuntimeError(f"V2 local backup / storage warning failed: {result}")
+    print("V4.0.2 + PR1 smoke passed: V2 backup, V1 import, durable Newswire draft, storage warning")
 
 def test_v402(cdp, workspace, node):
     if (workspace, node) == ("command", "overview"):
@@ -72,6 +159,7 @@ def run_interactions(cdp, workspace, node):
         base.test_comms(cdp)
     elif (workspace, node) == ("comms", "ticker"):
         base.test_ticker(cdp)
+        test_backup_and_storage(cdp)
 
 
 def main():
@@ -86,11 +174,14 @@ def main():
         page = next(item for item in targets if item.get("type") == "page")
         cdp = base.CDP(page["webSocketDebuggerUrl"])
         try:
-            for method in ("Page.enable", "Runtime.enable", "Network.enable"):
+            for method in ("Page.enable", "Runtime.enable", "Network.enable", "Log.enable"):
                 cdp.call(method)
             cdp.call("Network.setBlockedURLs", {"urls": ["https://*", "http://*"]})
+            test_boot_failure(cdp, page["id"])
+            cdp.take_runtime_failures()
             for workspace, node in base.ROUTES:
                 cdp.call("Page.navigate", {"url": "about:blank"})
+                cdp.take_runtime_failures()
                 cdp.call("Page.setDocumentContent", {"frameId": page["id"], "html": base.document(f"{workspace}/{node}")})
                 end = time.time() + 8
                 snap = {}
@@ -107,7 +198,15 @@ def main():
                     raise RuntimeError(f"V4.0.2 corrected catalog mismatch {workspace}/{node}: {snap}")
                 test_v402(cdp, workspace, node)
                 run_interactions(cdp, workspace, node)
-                print(f"V4.0.2 production smoke passed: {workspace}/{node} (287 recipes / 248 products)")
+                test_mobile_layout(cdp, workspace, node)
+                cdp.call("Runtime.evaluate", {"expression": "void 0"})
+                runtime_failures = [
+                    failure for failure in cdp.take_runtime_failures()
+                    if not ("TypeError: Failed to fetch" in failure and "fetchWithTimeout" in failure)
+                ]
+                if runtime_failures:
+                    raise RuntimeError(f"Browser console/runtime errors {workspace}/{node}: {runtime_failures}")
+                print(f"V4.0.2 + PR1 smoke passed: {workspace}/{node} (287 recipes / 248 products; mobile 360/390/412/430)")
         finally:
             cdp.close()
     finally:

@@ -74,12 +74,57 @@
     }
   };
 
+  app.clearStorageWarning = function clearStorageWarning() {
+    document.documentElement.removeAttribute('data-rhw-storage-error');
+    document.getElementById('rhwStorageWarning')?.remove();
+  };
+
+  app.reportStorageFailure = function reportStorageFailure(operation, key, error) {
+    const detail = String(error?.message || error || 'BROWSER STORAGE UNAVAILABLE');
+    app.state.storageError = { operation: String(operation || 'access'), key: String(key || ''), detail, at: Date.now() };
+    document.documentElement.dataset.rhwStorageError = 'true';
+
+    const mount = () => {
+      if (!document.body) return;
+      let banner = document.getElementById('rhwStorageWarning');
+      if (!banner) {
+        banner = document.createElement('aside');
+        banner.id = 'rhwStorageWarning';
+        banner.className = 'rhw-storage-warning';
+        banner.setAttribute('role', 'alert');
+        banner.setAttribute('aria-live', 'assertive');
+
+        const copy = document.createElement('div');
+        const title = document.createElement('strong');
+        title.textContent = 'LOCAL SAVE UNAVAILABLE';
+        const message = document.createElement('span');
+        message.dataset.storageWarningCopy = 'true';
+        copy.append(title, message);
+
+        const dismiss = document.createElement('button');
+        dismiss.type = 'button';
+        dismiss.textContent = 'DISMISS';
+        dismiss.addEventListener('click', app.clearStorageWarning);
+        banner.append(copy, dismiss);
+        document.body.appendChild(banner);
+      }
+      const message = banner.querySelector('[data-storage-warning-copy]');
+      if (message) message.textContent = `Your latest change may not survive a reload. ${String(operation || 'Storage access')} failed for ${String(key || 'local data')}.`;
+    };
+
+    if (document.body) mount();
+    else window.addEventListener('DOMContentLoaded', mount, { once: true });
+    window.dispatchEvent(new CustomEvent('rhw:storage-error', { detail: app.state.storageError }));
+    return false;
+  };
+
   app.store = {
     get(key, fallback = null) {
       try {
         const raw = localStorage.getItem(key);
         return raw === null ? fallback : JSON.parse(raw);
-      } catch {
+      } catch (error) {
+        app.reportStorageFailure('Read', key, error);
         return fallback;
       }
     },
@@ -87,8 +132,16 @@
       try {
         localStorage.setItem(key, JSON.stringify(value));
         return true;
-      } catch {
-        return false;
+      } catch (error) {
+        return app.reportStorageFailure('Save', key, error);
+      }
+    },
+    remove(key) {
+      try {
+        localStorage.removeItem(key);
+        return true;
+      } catch (error) {
+        return app.reportStorageFailure('Delete', key, error);
       }
     }
   };
