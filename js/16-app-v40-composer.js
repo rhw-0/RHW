@@ -55,6 +55,7 @@
       <div class="comms-grid">
         <section class="comms-panel composer-panel" id="commsComposerPanel">
           <div class="comms-panel-head"><div><span>01</span><strong>TRANSMISSION PARAMETERS</strong></div><small>AUTOSAVE ACTIVE</small></div>
+          <div class="comms-workflow-status" id="commsWorkflowStatus" aria-live="polite"></div>
           <form id="commsForm" autocomplete="off">
             <section class="comms-document-control">
               <div class="comms-document-control-head"><div><small>DOCUMENT CONTROL</small><strong>TRANSMISSION PROFILE</strong></div><span id="v40DocumentControlSummary"></span></div>
@@ -80,7 +81,7 @@
                 <div class="comms-editor-toolbar" role="toolbar" aria-label="Message formatting">
                   <button type="button" data-format="heading">HEADING</button><button type="button" data-format="bold">BOLD</button><button type="button" data-format="status">STATUS</button><button type="button" data-format="warning">WARNING</button><button type="button" data-format="list">LIST</button>
                 </div>
-                <textarea id="commsMessage" rows="14" placeholder="Write the actual forum post here — no BB code required."></textarea><small>SMART MARKUP ALSO WORKS: ## HEADING · **BOLD** · !WARNING · !STATUS · - LIST ITEM</small>
+                <textarea id="commsMessage" rows="14" placeholder="Write the actual forum post here — no BB code required."></textarea><small class="comms-message-help"><span>SMART MARKUP: ## HEADING · **BOLD** · !WARNING · !STATUS · - LIST</span><b id="commsMessageCount">0 CHARACTERS</b></small>
               </label>
               <label class="comms-field"><span>SIGN-OFF / CLOSING</span><select id="commsClosing">${selectOptions(app.config.closings)}</select><input id="commsClosingCustom" type="text" maxlength="100" placeholder="Custom sign-off" hidden /><small>PRESETS BY RECIPIENT CONTEXT</small></label>
               <label class="comms-field"><span>RP SYSTEM DATE</span><input id="commsSystemDate" type="text" maxlength="40" placeholder="05/08/836" /></label>
@@ -92,6 +93,7 @@
               <button type="button" id="saveDraftBtn"><span>SAVE NAMED DRAFT</span></button>
               <button type="button" id="saveSenderBtn" hidden><span>SAVE SENDER PROFILE</span></button>
               <button type="button" id="newTransmissionBtn"><span>NEW TRANSMISSION</span></button>
+              <button type="button" class="comms-next-action" data-comms-surface="preview"><span>REVIEW TRANSMISSION →</span></button>
             </div>
           </form>
         </section>
@@ -99,6 +101,7 @@
         <section class="comms-panel preview-panel">
           <div class="comms-panel-head"><div><span>02</span><strong>LIVE FORUM PREVIEW</strong></div><small>APPROXIMATE RENDER</small></div>
           <div class="forum-preview" id="forumLivePreview"></div>
+          <div class="comms-surface-actions"><button type="button" data-comms-surface="write">← EDIT TRANSMISSION</button><button type="button" class="comms-primary" data-comms-surface="bbcode">REVIEW BB CODE →</button></div>
         </section>
       </div>
 
@@ -106,6 +109,7 @@
         <div class="comms-panel-head"><div><span>03</span><strong>GENERATED BB CODE</strong></div><small>FORUM READY</small></div>
         <textarea id="forumBbcodeOutput" readonly spellcheck="false" aria-label="Generated forum BB code"></textarea>
         <div class="bbcode-hint">THE PREVIEW REPRODUCES RHW STYLING, BUT THE FORUM REMAINS THE FINAL RENDERER FOR ITS CUSTOM BB CODE.</div>
+        <div class="comms-surface-actions"><button type="button" data-comms-surface="preview">← BACK TO PREVIEW</button><button type="button" class="comms-primary" data-copy-forum-bbcode>COPY FORUM BB CODE</button></div>
       </section>
     </section>`;
   }
@@ -132,6 +136,7 @@
     return `<section class="comms-node-panel" data-comms-panel="drafts" hidden>
       <section class="comms-panel drafts-panel">
         <div class="comms-panel-head"><div><span>DR</span><strong>LOCAL DRAFT ARCHIVE</strong></div><small>THIS BROWSER ONLY</small></div>
+        <div class="comms-archive-summary"><div><small>NAMED DRAFTS</small><strong id="commsDraftCount">0</strong></div><div><small>CURRENT WORK</small><strong>AUTOSAVED LOCALLY</strong></div><div><small>LATEST NAMED SAVE</small><strong id="commsDraftLatest">—</strong></div></div>
         <div class="comms-actions comms-cache-tools"><button type="button" id="exportCommsCacheBtn"><span>EXPORT LOCAL CACHE</span></button><button type="button" id="importCommsCacheBtn"><span>IMPORT LOCAL CACHE</span></button><input type="file" id="importCommsCacheInput" accept="application/json,.json" hidden /></div>
         <div class="bbcode-hint">IMPORT MERGES WITH EXISTING DRAFTS + LOCAL SENDERS; IT DOES NOT SILENTLY WIPE THE CURRENT CACHE.</div>
         <div id="commsDraftList" class="comms-draft-list"></div>
@@ -346,6 +351,25 @@
     target.innerHTML = `<small>AUTO SIGNATURE</small><strong>${app.util.escape(custom ? 'CUSTOM SENDER' : sender.name)}</strong><span>${app.util.escape(custom ? 'NAME + ROLE COME FROM THE CUSTOM FIELDS' : (sender.title || 'NO ROLE REGISTERED'))}</span>`;
   }
 
+  function renderWorkflowStatus() {
+    const target = document.getElementById('commsWorkflowStatus');
+    const count = document.getElementById('commsMessageCount');
+    const state = app.state.comms;
+    if (!state) return;
+    const sender = app.storage.resolveSender(state);
+    const checks = [
+      ['SENDER', Boolean(String(sender.name || '').trim())],
+      ['RECIPIENT', Boolean(String(state.recipient || '').trim())],
+      ['SUBJECT', Boolean(String(state.subject || '').trim())],
+      ['MESSAGE', Boolean(String(state.message || '').trim())]
+    ];
+    if (target) {
+      const ready = checks.filter(([, ok]) => ok).length;
+      target.innerHTML = `<div class="comms-workflow-score"><small>TRANSMISSION READINESS</small><strong>${ready} / ${checks.length} READY</strong></div>${checks.map(([label, ok]) => `<span data-ready="${ok ? 'true' : 'false'}"><i aria-hidden="true"></i>${label}</span>`).join('')}`;
+    }
+    if (count) count.textContent = `${String(state.message || '').length.toLocaleString('en-US')} CHARACTERS`;
+  }
+
   function renderDocumentSummary() {
     const target = document.getElementById('v40DocumentControlSummary');
     if (!target) return;
@@ -375,6 +399,7 @@
     if (description) description.textContent = template.description;
     renderSignature();
     renderDocumentSummary();
+    renderWorkflowStatus();
     renderPreview();
     renderBbcode();
   }
@@ -406,6 +431,7 @@
     app.state.comms = readForm();
     renderSignature();
     renderDocumentSummary();
+    renderWorkflowStatus();
     renderPreview();
     renderBbcode();
     clearTimeout(autosaveTimer);
@@ -492,14 +518,19 @@
   function renderDrafts() {
     const target = document.getElementById('commsDraftList');
     if (!target) return;
+    const sorted = app.state.drafts.slice().sort((a, b) => b.updatedAt - a.updatedAt);
+    const count = document.getElementById('commsDraftCount');
+    const latest = document.getElementById('commsDraftLatest');
+    if (count) count.textContent = String(sorted.length);
+    if (latest) latest.textContent = sorted.length ? new Date(sorted[0].updatedAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : '—';
     if (!app.state.drafts.length) {
       target.innerHTML = '<div class="comms-empty-state">NO NAMED DRAFTS IN LOCAL CACHE<small>THE CURRENT TRANSMISSION IS STILL AUTOSAVED</small></div>';
       return;
     }
-    target.innerHTML = app.state.drafts.slice().sort((a, b) => b.updatedAt - a.updatedAt).map(draft => {
+    target.innerHTML = sorted.map(draft => {
       const sender = app.storage.resolveSender(draft.state);
       const date = new Date(draft.updatedAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
-      return `<article class="comms-draft-card"><div><strong>${app.util.escape(draft.name)}</strong><small>${app.util.escape(sender.name)} // ${app.util.escape(draft.state.subject || 'NO SUBJECT')} // ${app.util.escape(date)}</small></div><div class="comms-draft-actions"><button type="button" data-load-draft="${app.util.escape(draft.id)}">LOAD</button><button type="button" data-delete-draft="${app.util.escape(draft.id)}">DELETE</button></div></article>`;
+      return `<article class="comms-draft-card"><div><strong>${app.util.escape(draft.name)}</strong><small>${app.util.escape(sender.name)} // ${app.util.escape(draft.state.subject || 'NO SUBJECT')} // ${app.util.escape(date)}</small></div><div class="comms-draft-actions"><button type="button" data-load-draft="${app.util.escape(draft.id)}">LOAD IN COMPOSER</button><button type="button" class="danger" data-delete-draft="${app.util.escape(draft.id)}">DELETE</button></div></article>`;
     }).join('');
   }
 
@@ -526,7 +557,28 @@
       ...app.config.senders.map(sender => ({ ...sender, source: 'BUILT-IN' })),
       ...app.state.localSenders.map(sender => ({ ...sender, source: 'LOCAL' }))
     ];
-    target.innerHTML = profiles.map(sender => `<article class="sender-registry-card"><div class="sender-registry-head"><div><small>${sender.source}</small><strong>${app.util.escape(sender.name)}</strong></div><span>${sender.source === 'LOCAL' ? 'LOCAL CACHE' : 'RHW REGISTRY'}</span></div><dl><div><dt>ROLE</dt><dd>${app.util.escape(sender.title || '—')}</dd></div><div><dt>ORGANISATION</dt><dd>${app.util.escape(sender.organisation || '—')}</dd></div><div><dt>LOCATION</dt><dd>${app.util.escape(sender.location || '—')}</dd></div><div><dt>DEFAULT CIPHER</dt><dd>${app.util.escape(sender.encryption || '—')}</dd></div></dl><div class="sender-registry-actions"><button type="button" data-use-sender="${app.util.escape(sender.key)}">USE IN COMPOSER</button>${sender.source === 'LOCAL' ? `<button type="button" data-edit-sender="${app.util.escape(sender.key)}">EDIT</button><button type="button" data-remove-sender="${app.util.escape(sender.key)}">REMOVE</button>` : ''}</div></article>`).join('');
+    const activeKey = app.state.comms?.senderKey;
+    target.innerHTML = profiles.map(sender => {
+      const active = sender.key === activeKey;
+      return `<article class="sender-registry-card${active ? ' active' : ''}"><div class="sender-registry-head"><div><small>${sender.source}</small><strong>${app.util.escape(sender.name)}</strong></div><span>${active ? 'ACTIVE PROFILE' : sender.source === 'LOCAL' ? 'LOCAL CACHE' : 'RHW REGISTRY'}</span></div><dl><div><dt>ROLE</dt><dd>${app.util.escape(sender.title || '—')}</dd></div><div><dt>ORGANISATION</dt><dd>${app.util.escape(sender.organisation || '—')}</dd></div><div><dt>LOCATION</dt><dd>${app.util.escape(sender.location || '—')}</dd></div><div><dt>DEFAULT CIPHER</dt><dd>${app.util.escape(sender.encryption || '—')}</dd></div></dl><div class="sender-registry-actions"><button type="button" data-use-sender="${app.util.escape(sender.key)}"${active ? ' disabled' : ''}>${active ? 'ACTIVE IN COMPOSER' : 'USE IN COMPOSER'}</button>${sender.source === 'LOCAL' ? `<button type="button" data-edit-sender="${app.util.escape(sender.key)}">EDIT</button><button type="button" class="danger" data-remove-sender="${app.util.escape(sender.key)}">REMOVE</button>` : ''}</div></article>`;
+    }).join('');
+  }
+
+  function showForumSurface(surface) {
+    const view = ['write', 'preview', 'bbcode'].includes(surface) ? surface : 'write';
+    if (window.matchMedia('(max-width: 760px)').matches && app.mobileUi?.setForumView) {
+      app.mobileUi.setForumView(view);
+      document.getElementById('commsMobileViewSwitch')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    const target = view === 'write' ? document.getElementById('commsComposerPanel') : view === 'preview' ? document.querySelector('.preview-panel') : document.querySelector('.bbcode-panel');
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function copyForumBbcode() {
+    syncFromForm();
+    const copied = await app.util.copy(buildBbcode());
+    app.notify(copied ? 'BB CODE COPIED TO CLIPBOARD' : 'COPY FAILED', copied ? 'good' : 'warn');
   }
 
   function openSenderEditor(key = null) {
@@ -628,7 +680,9 @@
       const button = event.target.closest('[data-format]');
       if (button) insertFormat(button.dataset.format);
     });
-    document.getElementById('copyBbcodeBtn')?.addEventListener('click', async () => { const copied = await app.util.copy(buildBbcode()); app.notify(copied ? 'BB CODE COPIED TO CLIPBOARD' : 'COPY FAILED', copied ? 'good' : 'warn'); });
+    document.getElementById('copyBbcodeBtn')?.addEventListener('click', copyForumBbcode);
+    document.querySelector('[data-copy-forum-bbcode]')?.addEventListener('click', copyForumBbcode);
+    document.querySelectorAll('[data-comms-surface]').forEach(button => button.addEventListener('click', () => showForumSurface(button.dataset.commsSurface)));
     document.getElementById('saveDraftBtn')?.addEventListener('click', saveDraft);
     document.getElementById('saveSenderBtn')?.addEventListener('click', saveCustomSender);
     document.getElementById('newTransmissionBtn')?.addEventListener('click', () => {
@@ -767,3 +821,4 @@
 
   app.comms = { init, activate, syncFromForm, renderForm, renderPreview, renderDrafts, renderSenderRegistry, buildBbcode, resolvedSalutation, nodes: NODES };
 })();
+
