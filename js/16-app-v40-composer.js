@@ -122,8 +122,8 @@
         <div class="v40-tool-grid">
           <label class="comms-field"><span>CATEGORY</span><select id="v40TickerCategory"><option value="market">MARKET</option><option value="regional">REGIONAL</option><option value="security">SECURITY</option><option value="operations">OPERATIONS</option><option value="corporate">CORPORATE</option></select></label>
           <label class="comms-field"><span>TONE</span><select id="v40TickerTone"><option value="good">GOOD</option><option value="warn">WARN</option><option value="danger">DANGER</option><option value="remote">REMOTE</option><option value="lore">LORE</option><option value="muted">MUTED</option></select></label>
-          <label class="comms-field"><span>TAG</span><input id="v40TickerTag" type="text" maxlength="50" value="RHW OPERATIONS" /></label>
-          <label class="comms-field comms-wide"><span>MESSAGE</span><textarea id="v40TickerMessage" rows="5" maxlength="500" placeholder="Transmission headline..."></textarea></label>
+          <label class="comms-field"><span>TAG <b id="v40TickerTagCount">14 / 40</b></span><input id="v40TickerTag" type="text" maxlength="40" value="RHW OPERATIONS" /></label>
+          <label class="comms-field comms-wide"><span>MESSAGE <b id="v40TickerMessageCount">0 / 240</b></span><textarea id="v40TickerMessage" rows="5" maxlength="240" placeholder="Transmission headline..."></textarea></label>
         </div>
         <div class="ticker-builder-preview"><small>LIVE TICKER PREVIEW</small><div class="ticker-builder-bar"><span class="ticker-builder-label">BMM INDUSTRIAL NEWSWIRE</span><span class="ticker-builder-copy"><b id="v40TickerPreviewTag">RHW OPERATIONS</b><span id="v40TickerPreviewText">AWAITING BULLETIN</span></span></div></div>
         <div class="v40-generated-block"><small>TICKER SOURCE BLOCK // RHW_NEWSWIRE.MD</small><textarea id="v40TickerOutput" readonly spellcheck="false"></textarea></div>

@@ -27,6 +27,7 @@ V4_RUNTIME_ASSETS = [
     './css/18-app-v40-nav-hierarchy.css', './css/19-app-v402-fixes.css', './css/20-app-v402-qol.css',
     './css/21-app-v402-mobile-ui.css', './css/22-app-pr3-command-mobile.css', './css/23-app-pr3-yard-production.css',
     './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
+    './css/26-app-pr3-newswire-manager.css',
     './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
     './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js', './js/16b-app-v40-newswire-manager.js',
     './js/16c-app-v40-newswire-ordering.js',
@@ -123,12 +124,14 @@ def main() -> int:
         'MAX_TAG = 40', 'MAX_MESSAGE = 240', 'normalizeTag', 'normalizeMessage', 'app.commsSafety'
     ), 'V4 COMMS safety module')
     require_tokens(errors, 'js/16b-app-v40-newswire-manager.js', (
-        'newswireManagerDraft', 'readLocalDraft', 'draftSourceChanged', 'beforeunload', 'restoreDraft'
+        'newswireManagerDraft', 'readLocalDraft', 'draftSourceChanged', 'beforeunload', 'restoreDraft',
+        'v40NewswireWorkflow', 'v40NewswireRecoveryStatus', 'jumpToWorkflow', 'renderCounters'
     ), 'V4 Newswire recovery')
     require_tokens(errors, 'js/00-bootstrap.js', (
         'rhwBootFailure', 'rhwBootError', 'LOAD TIMEOUT', '__RHW_BOOTSTRAP_TEST__',
         './css/21-app-v402-mobile-ui.css', './css/23-app-pr3-yard-production.css',
         './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
+        './css/26-app-pr3-newswire-manager.css',
         './js/22-app-v402-mobile-ui.js'
     ), 'V4 bootstrap failure UI')
     require_tokens(errors, 'js/22-app-v402-mobile-ui.js', (
@@ -161,10 +164,17 @@ def main() -> int:
         '.sender-registry-card.active', '.v40-newswire-file-actions button',
         'min-height: 44px', '@media (max-width: 390px)'
     ), 'PR3 COMMS mobile presentation')
+    require_tokens(errors, 'css/26-app-pr3-newswire-manager.css', (
+        '.v40-newswire-workflow', '.v40-newswire-recovery-status',
+        '#v40NewswireManager .v40-newswire-category-summary button',
+        '#v40NewswireManager .v40-newswire-order-actions button',
+        'min-height: 44px', '@media (max-width: 760px)'
+    ), 'PR3 Newswire mobile workflow')
     require_tokens(errors, 'scripts/smoke_v402.py', (
         'MOBILE_WIDTHS = (360, 390, 412, 430)', 'test_boot_failure',
         'test_backup_and_storage', 'test_mobile_forum_controls', 'test_pr3_decision_ui',
-        'test_pr3_calculator_ui', 'test_pr3_comms_workflow', 'take_runtime_failures'
+        'test_pr3_calculator_ui', 'test_pr3_comms_workflow', 'v40NewswireRecoveryState',
+        'RHWV4.newswireOrdering.setFilter', 'take_runtime_failures'
     ), 'V4.0.2 + PR1 browser smoke')
     require_tokens(errors, 'js/17-app-v40-operations-core.js', (
         'app.operationsCore', 'loadCatalog', 'buildPlan', 'factorFor', 'authorizedFor',
