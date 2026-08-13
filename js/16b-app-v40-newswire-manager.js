@@ -558,7 +558,7 @@
       state.dirty = original;
       return copyValue;
     })();
-    if (!dirtyBanner[0].includes('LOCAL EDITS') || !dirtyBanner[0].includes('NOT PUBLISHED')) failures.push('publish-banner-copy');
+    if (!dirtyBanner[0].includes('LOCAL EDITS') || !dirtyBanner[1].includes('NOT PUBLISHED')) failures.push('publish-banner-copy');
     ['v40NewswireManager', 'v40NewswirePublishBanner', 'v40NewswirePublishState', 'v40NewswireList', 'v40NewswireSaveBtn', 'v40NewswireCopyFileBtn', 'v40NewswireExportBtn', 'v40NewswireFileOutput'].forEach(id => {
       if (!document.getElementById(id)) failures.push(`missing:${id}`);
     });
