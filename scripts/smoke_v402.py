@@ -690,17 +690,7 @@ def test_pr7_diagnostics(cdp, workspace, node):
           const storage={fallback,removed:localStorage.getItem(corruptKey)===null,recovered:recovery?.recovered===true,backup:backup?.raw||'',warning:document.documentElement.dataset.rhwStorageError||''};
           if(recovery?.backupKey)localStorage.removeItem(recovery.backupKey);
 
-          const clipOwn=Object.getOwnPropertyDescriptor(navigator,'clipboard');
-          const execOwn=Object.getOwnPropertyDescriptor(document,'execCommand');
-          let copyFalse=false;
-          try{
-            Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>Promise.reject(new Error('EXPECTED'))}});
-            Object.defineProperty(document,'execCommand',{configurable:true,value:undefined});
-            copyFalse=(await app.util.copy('PR7 COPY FALLBACK TEST'))===false;
-          }finally{
-            if(clipOwn)Object.defineProperty(navigator,'clipboard',clipOwn);else delete navigator.clipboard;
-            if(execOwn)Object.defineProperty(document,'execCommand',execOwn);else delete document.execCommand;
-          }
+          const copyFalse=app.util.fallbackCopy('PR7 COPY FALLBACK TEST',null)===false;
 
           const privateMarker='PRIVATE-RHW-DRAFT-MUST-NOT-LEAK';
           const previousMessage=app.state.comms?.message||'';

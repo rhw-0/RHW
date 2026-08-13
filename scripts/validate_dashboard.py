@@ -150,7 +150,7 @@ def main() -> int:
     ), 'V4 configuration')
     require_tokens(errors, 'js/13-app-v40.js', (
         'window.RHWV4', "'operations'", 'workspaceOperations', 'app.installShell', 'app.navigate', 'app.applyRoute',
-        "typeof document.execCommand === 'function'", 'recoverCorruptStorageEntry', 'rhw-webapp-v4:recovery:'
+        "typeof document.execCommand === 'function'", 'fallbackCopy', 'recoverCorruptStorageEntry', 'rhw-webapp-v4:recovery:'
     ), 'V4 core')
     require_tokens(errors, 'js/02-utils.js', (
         'recoverSafeStorageEntry', '__RHW_STORAGE_RECOVERIES__', 'rhw-webapp-v4:recovery:'

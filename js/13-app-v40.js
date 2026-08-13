@@ -57,25 +57,28 @@
       try { return typeof window.number === 'function' ? window.number(value) : Number(value || 0).toLocaleString('en-US'); }
       catch { return String(value ?? '0'); }
     },
+    fallbackCopy(text, copyCommand = typeof document.execCommand === 'function' ? document.execCommand.bind(document) : null) {
+      const area = document.createElement('textarea');
+      area.value = String(text ?? '');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      try {
+        area.select();
+        return typeof copyCommand === 'function' && copyCommand('copy') === true;
+      } catch {
+        return false;
+      } finally {
+        area.remove();
+      }
+    },
     async copy(text) {
       const value = String(text ?? '');
       try {
         await navigator.clipboard.writeText(value);
         return true;
       } catch {
-        const area = document.createElement('textarea');
-        area.value = value;
-        area.style.position = 'fixed';
-        area.style.opacity = '0';
-        document.body.appendChild(area);
-        try {
-          area.select();
-          return typeof document.execCommand === 'function' && document.execCommand('copy') === true;
-        } catch {
-          return false;
-        } finally {
-          area.remove();
-        }
+        return app.util.fallbackCopy(value);
       }
     }
   };

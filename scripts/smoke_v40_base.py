@@ -98,6 +98,10 @@ def document(route):
 
 def ev(cdp,expression):
     result=cdp.call("Runtime.evaluate",{"expression":f"Promise.resolve({expression}).then(value=>JSON.stringify(value))","returnByValue":True,"awaitPromise":True})
+    if result.get("exceptionDetails"):
+        detail=result["exceptionDetails"]
+        description=detail.get("exception",{}).get("description") or detail.get("text") or "Browser evaluation failed"
+        raise RuntimeError(description)
     raw=result.get("result",{}).get("value"); return json.loads(raw) if raw else {}
 
 def snapshot(cdp):
