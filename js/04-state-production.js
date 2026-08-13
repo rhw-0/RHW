@@ -239,8 +239,90 @@ function analyzeRecipe(recipe) {
   return { recipe, productItem, productStock, ingredientData, possibleCycles, possibleOutput, bottleneck, nextCycleGap, cardState };
 }
 
+let productionModuleFilter = 'all';
+let productionModuleQuery = '';
+const productionExpandedModules = new Set();
+
+function applyProductionModuleFilters() {
+  const toolbar = document.getElementById('productionModuleTools');
+  const cards = [...(els.productionGrid?.querySelectorAll('.production-card') || [])];
+  let visible = 0;
+  cards.forEach(card => {
+    const stateMatch = productionModuleFilter === 'all' || card.dataset.productionState === productionModuleFilter;
+    const queryMatch = !productionModuleQuery || (card.dataset.productionProduct || '').includes(productionModuleQuery);
+    card.hidden = !(stateMatch && queryMatch);
+    if (!card.hidden) visible += 1;
+  });
+  toolbar?.querySelectorAll('[data-production-filter]').forEach(button => {
+    const active = button.dataset.productionFilter === productionModuleFilter;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  const count = document.getElementById('productionModuleCount');
+  if (count) count.textContent = `${visible} / ${cards.length} MODULE${cards.length === 1 ? '' : 'S'}`;
+  const empty = document.getElementById('productionFilterEmpty');
+  if (empty) empty.hidden = visible > 0 || cards.length === 0;
+}
+
+function ensureProductionModuleTools() {
+  if (!els.productionGrid) return;
+  let toolbar = document.getElementById('productionModuleTools');
+  if (!toolbar) {
+    toolbar = document.createElement('div');
+    toolbar.id = 'productionModuleTools';
+    toolbar.className = 'production-module-tools';
+    toolbar.setAttribute('aria-label', 'Production module filters');
+    toolbar.innerHTML = `
+      <div class="production-filter-row">
+        <div class="production-filter-segments" role="group" aria-label="Filter production modules by readiness">
+          <button type="button" class="active" data-production-filter="all" aria-pressed="true">ALL</button>
+          <button type="button" data-production-filter="critical" aria-pressed="false">BLOCKED</button>
+          <button type="button" data-production-filter="low" aria-pressed="false">LOW</button>
+          <button type="button" data-production-filter="ok" aria-pressed="false">READY</button>
+        </div>
+        <label class="production-module-search">
+          <span class="sr-only">Search production modules</span>
+          <input id="productionModuleSearch" type="search" autocomplete="off" placeholder="SEARCH PRODUCT…" aria-label="Search production modules">
+        </label>
+        <span class="production-module-count" id="productionModuleCount" aria-live="polite">0 MODULES</span>
+      </div>
+      <div class="production-filter-empty" id="productionFilterEmpty" hidden>NO MODULES MATCH THIS FILTER</div>`;
+    els.productionGrid.insertAdjacentElement('beforebegin', toolbar);
+  }
+  if (toolbar.dataset.bound !== 'true') {
+    toolbar.dataset.bound = 'true';
+    toolbar.addEventListener('click', event => {
+      const button = event.target.closest('[data-production-filter]');
+      if (!button) return;
+      productionModuleFilter = button.dataset.productionFilter || 'all';
+      applyProductionModuleFilters();
+    });
+    toolbar.querySelector('#productionModuleSearch')?.addEventListener('input', event => {
+      productionModuleQuery = normalize(event.target.value);
+      applyProductionModuleFilters();
+    });
+  }
+  if (els.productionGrid.dataset.cardDetailsBound !== 'true') {
+    els.productionGrid.dataset.cardDetailsBound = 'true';
+    els.productionGrid.addEventListener('click', event => {
+      const button = event.target.closest('.production-card-toggle');
+      if (!button) return;
+      const card = button.closest('.production-card');
+      const key = card?.dataset.productionProduct || '';
+      if (!card || !key) return;
+      const expanded = card.classList.toggle('production-card-expanded');
+      card.classList.toggle('production-card-collapsed', !expanded);
+      button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      button.querySelector('span').textContent = expanded ? 'HIDE MATERIALS' : 'SHOW MATERIALS';
+      if (expanded) productionExpandedModules.add(key);
+      else productionExpandedModules.delete(key);
+    });
+  }
+}
+
 function renderProductionModules() {
   if (!els.productionGrid) return;
+  ensureProductionModuleTools();
   if (!hasVerifiedTelemetry()) {
     const failed = Boolean(lastSyncError);
     els.productionGrid.innerHTML = `<div class="feature-empty production-empty">${failed ? 'TELEMETRY UNAVAILABLE' : 'AWAITING FIRST TELEMETRY BURST'}<small>${failed ? 'NO VERIFIED RHW INVENTORY IS AVAILABLE' : 'PRODUCTION ANALYSIS WILL APPEAR AFTER THE FIRST SUCCESSFUL SYNC'}</small></div>`;
@@ -275,7 +357,10 @@ function renderProductionModules() {
       ? `<div class="byproduct-strip"><span>BYPRODUCT / CYCLE</span>${recipe.byproducts.map(bp => `<span class="byproduct-tag">${number(bp[1])} ${escapeHTML(displayRecipeName(bp[0]))}</span>`).join('')}</div>`
       : '';
 
-    return `<div class="production-card ${analysis.cardState}">
+    const productKey = normalize(displayRecipeName(recipe.product));
+    const mobileCollapsed = window.matchMedia?.('(max-width: 760px)').matches && !productionExpandedModules.has(productKey);
+
+    return `<div class="production-card ${analysis.cardState}${mobileCollapsed ? ' production-card-collapsed' : ' production-card-expanded'}" data-production-state="${analysis.cardState}" data-production-product="${escapeHTML(productKey)}">
               <div class="production-card-head">
                 <div>
                   <div class="production-kicker">MODULE-${String(index + 1).padStart(2, '0')}</div>
@@ -290,6 +375,7 @@ function renderProductionModules() {
                 <div class="production-stat"><small>EST. YIELD</small><strong>${number(analysis.possibleOutput)}</strong></div>
               </div>
               ${nextGapText}
+              <button type="button" class="production-card-toggle" aria-expanded="${mobileCollapsed ? 'false' : 'true'}"><span>${mobileCollapsed ? 'SHOW MATERIALS' : 'HIDE MATERIALS'}</span></button>
               <div class="recipe-column-head" aria-hidden="true">
                 <span>Material</span><span>Required / Cycle</span><span>Current Stock</span>
               </div>
@@ -297,5 +383,6 @@ function renderProductionModules() {
               ${byproductsText}
             </div>`;
   }).join('');
+  applyProductionModuleFilters();
 }
 

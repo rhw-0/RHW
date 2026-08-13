@@ -97,9 +97,9 @@ function renderShipyardControl() {
     return `
       <div class="shipyard-component-row component-${component.state}${isBottleneck ? ' bottleneck' : ''}">
         <div class="shipyard-component-name">${escapeHTML(component.name)}</div>
-        <div class="shipyard-component-required">${number(component.required)}</div>
-        <div class="shipyard-component-stock scramble-shipyard" data-val="${number(component.stock)}"></div>
-        <div class="shipyard-component-coverage scramble-shipyard" data-val="${number(component.coverage)}x"></div>
+        <div class="shipyard-component-required" data-label="REQ / HULL">${number(component.required)}</div>
+        <div class="shipyard-component-stock scramble-shipyard" data-label="STOCK" data-val="${number(component.stock)}"></div>
+        <div class="shipyard-component-coverage scramble-shipyard" data-label="HULLS" data-val="${number(component.coverage)}x"></div>
       </div>`;
   }).join('');
 
@@ -155,6 +155,20 @@ function renderShipyardControl() {
       <div class="shipyard-control-states">
         <div class="shipyard-summary-badge state-${assemblyState}">ASSEMBLY ${escapeHTML(assemblyStateText)}</div>
         <div class="shipyard-summary-badge state-${registryState}">HULL ${escapeHTML(registryStateText)}</div>
+      </div>
+    </div>
+    <div class="shipyard-decision-strip" aria-label="Shipyard readiness summary">
+      <div class="shipyard-decision-metric state-${assemblyState}">
+        <small>BUILDABLE NOW</small>
+        <strong>${number(buildableHulls)} HULL${buildableHulls === 1 ? '' : 'S'}</strong>
+      </div>
+      <div class="shipyard-decision-metric state-${assemblyState}">
+        <small>BOTTLENECK</small>
+        <strong>${escapeHTML(bottleneckName.toUpperCase())}</strong>
+      </div>
+      <div class="shipyard-decision-metric state-${nextHullGap > 0 ? 'critical' : 'ok'}">
+        <small>MISSING FOR NEXT HULL</small>
+        <strong>${nextHullGap > 0 ? `+${number(nextHullGap)} ${escapeHTML(bottleneckName.toUpperCase())}` : 'READY'}</strong>
       </div>
     </div>
     <div class="shipyard-control-grid">
