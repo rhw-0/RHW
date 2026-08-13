@@ -81,12 +81,49 @@ function formatCurrency(value) {
   return parsed === null ? '–' : `$${numFormatter.format(parsed)}`;
 }
 
-function safeStorageGet(key, fallback = null) {
+function recoverSafeStorageEntry(key, raw, parseError) {
+  const recoveries = window.__RHW_STORAGE_RECOVERIES__ = Array.isArray(window.__RHW_STORAGE_RECOVERIES__)
+    ? window.__RHW_STORAGE_RECOVERIES__
+    : [];
+  const recovery = {
+    key: String(key || ''),
+    detail: String(parseError?.message || parseError || 'INVALID LOCAL JSON'),
+    at: Date.now(),
+    backupKey: '',
+    recovered: false
+  };
   try {
-    const raw = window.localStorage.getItem(key);
-    return raw === null ? fallback : JSON.parse(raw);
+    const backupKey = `rhw-webapp-v4:recovery:${recovery.at}-${Math.random().toString(36).slice(2, 7)}`;
+    window.localStorage.setItem(backupKey, JSON.stringify({
+      schemaVersion: 1,
+      originalKey: recovery.key,
+      recoveredAt: new Date(recovery.at).toISOString(),
+      raw: String(raw ?? '')
+    }));
+    window.localStorage.removeItem(key);
+    recovery.backupKey = backupKey;
+    recovery.recovered = true;
+  } catch (storageError) {
+    console.warn('LOCAL STORAGE RECOVERY FAILED', storageError);
+  }
+  recoveries.push(recovery);
+  window.dispatchEvent(new CustomEvent('rhw:storage-recovered', { detail: recovery }));
+  return recovery.recovered;
+}
+
+function safeStorageGet(key, fallback = null) {
+  let raw;
+  try {
+    raw = window.localStorage.getItem(key);
   } catch (error) {
     console.warn('LOCAL STORAGE READ FAILED', error);
+    return fallback;
+  }
+  if (raw === null) return fallback;
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    recoverSafeStorageEntry(key, raw, error);
     return fallback;
   }
 }
@@ -362,4 +399,3 @@ function formatPosition(value) {
   }
   return String(value);
 }
-

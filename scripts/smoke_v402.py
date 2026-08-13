@@ -14,6 +14,7 @@ base.V4_CSS = [
     "css/23-app-pr3-yard-production.css", "css/24-app-pr3-operations-calculator.css",
     "css/25-app-pr3-comms-workflow.css", "css/26-app-pr3-newswire-manager.css",
     "css/27-app-pr4-pwa.css", "css/28-app-pr5-newswire-2.css", "css/29-app-pr6-discovery-sync.css",
+    "css/30-app-pr7-diagnostics.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -24,7 +25,7 @@ base.V4_JS = [
     "js/18b-app-v40-production-pricing.js", "js/18c-app-v40-recipe-corrections.js",
     "js/18d-app-v40-final-ui-polish.js", "js/20-app-v402-fixes.js", "js/21-app-v402-qol.js",
     "js/22-app-v402-mobile-ui.js", "js/23-app-v40-pwa.js", "js/24-app-v40-newswire-2.js",
-    "js/25-app-v40-discovery-status.js",
+    "js/25-app-v40-discovery-status.js", "js/26-app-v40-diagnostics.js",
     "js/19-app-v40-runtime.js",
 ]
 MOBILE_WIDTHS = (360, 390, 412, 430)
@@ -508,7 +509,7 @@ def test_pr4_pwa(cdp, workspace, node):
         "width": 390, "height": 820, "deviceScaleFactor": 1, "mobile": True,
     })
     try:
-        result = base.ev(cdp, """(()=>{
+        result = base.ev(cdp, """(async()=>{
           RHWPWA.showManualInstructions();
           Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>false});
           RHWPWA.syncConnectionState();
@@ -531,6 +532,11 @@ def test_pr4_pwa(cdp, workspace, node):
           };
           delete navigator.onLine;
           RHWPWA.syncConnectionState();
+          RHWPWA.state.installPrompt={prompt:()=>Promise.reject(new Error('EXPECTED PROMPT FAILURE')),userChoice:Promise.resolve({outcome:'dismissed'})};
+          RHWPWA.showInstallHelp();
+          await document.getElementById('rhwPwaPrimary')?.onclick?.();
+          snapshot.promptFailure=document.documentElement.dataset.rhwPwaInstall||'';
+          snapshot.promptFallback=document.getElementById('rhwPwaTitle')?.textContent||'';
           document.getElementById('rhwPwaClose')?.click();
           return snapshot;
         })()""")
@@ -543,9 +549,10 @@ def test_pr4_pwa(cdp, workspace, node):
             or not result.get("panelVisible") or result.get("primaryHeight", 0) < 47.5
             or "HOME SCREEN" not in result.get("message", "") or result.get("network") != "offline"
             or not result.get("offlineVisible") or not result.get("headerDisabled")
-            or not result.get("tableDisabled") or result.get("overflow", 0) > 2):
+            or not result.get("tableDisabled") or result.get("overflow", 0) > 2
+            or result.get("promptFailure") != "prompt-failed" or "HOME SCREEN" not in result.get("promptFallback", "")):
         raise RuntimeError(f"PR4 PWA mobile/install/offline state failed: {result}")
-    print("PR4 smoke passed: app-header install controls + iOS guidance + honest offline state")
+    print("PR4 + PR7 smoke passed: install controls + prompt-failure fallback + honest offline state")
 
 
 def test_pr5_newswire2(cdp, workspace, node):
@@ -665,6 +672,72 @@ def test_pr6_discovery_status(cdp, workspace, node):
     print("PR6 smoke passed: mobile Discovery provenance + sync controls + no-auto-merge policy")
 
 
+def test_pr7_diagnostics(cdp, workspace, node):
+    if (workspace, node) != ("command", "overview"):
+        return
+    cdp.call("Emulation.setDeviceMetricsOverride", {
+        "width": 390, "height": 820, "deviceScaleFactor": 1, "mobile": True,
+    })
+    try:
+        result = base.ev(cdp, """(async()=>{
+          const app=RHWV4,api=app.diagnostics;
+          if(!api)return{error:'diagnostics API missing'};
+          const corruptKey='rhw-webapp-v4:pr7-corrupt-smoke';
+          localStorage.setItem(corruptKey,'{broken-json');
+          const fallback=app.store.get(corruptKey,{safe:true});
+          const recovery=app.state.storageRecoveries.at(-1);
+          const backup=recovery?.backupKey?JSON.parse(localStorage.getItem(recovery.backupKey)||'null'):null;
+          const storage={fallback,removed:localStorage.getItem(corruptKey)===null,recovered:recovery?.recovered===true,backup:backup?.raw||'',warning:document.documentElement.dataset.rhwStorageError||''};
+          if(recovery?.backupKey)localStorage.removeItem(recovery.backupKey);
+
+          const clipOwn=Object.getOwnPropertyDescriptor(navigator,'clipboard');
+          const execOwn=Object.getOwnPropertyDescriptor(document,'execCommand');
+          let copyFalse=false;
+          try{
+            Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>Promise.reject(new Error('EXPECTED'))}});
+            Object.defineProperty(document,'execCommand',{configurable:true,value:undefined});
+            copyFalse=(await app.util.copy('PR7 COPY FALLBACK TEST'))===false;
+          }finally{
+            if(clipOwn)Object.defineProperty(navigator,'clipboard',clipOwn);else delete navigator.clipboard;
+            if(execOwn)Object.defineProperty(document,'execCommand',execOwn);else delete document.execCommand;
+          }
+
+          const privateMarker='PRIVATE-RHW-DRAFT-MUST-NOT-LEAK';
+          const previousMessage=app.state.comms?.message||'';
+          if(app.state.comms)app.state.comms.message=privateMarker;
+          api.open();
+          const failures=api.runNow();
+          const report=api.buildReport();
+          if(app.state.comms)app.state.comms.message=previousMessage;
+          const panel=document.getElementById('rhwDiagnosticsPanel');
+          const visible=element=>{const style=getComputedStyle(element),rect=element.getBoundingClientRect();return style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0};
+          const controls=[...panel.querySelectorAll('button')].filter(visible).map(element=>({id:element.id,height:element.getBoundingClientRect().height}));
+          const snapshot={
+            api:!!api,button:!!rhwDiagnosticsBtn,buttonHeight:rhwDiagnosticsBtn.getBoundingClientRect().height,
+            open:!panel.hidden,cards:panel.querySelectorAll('.rhw-diagnostics-card').length,
+            checks:api.collect().map(check=>check.key),failures,controls,storage,copyFalse,
+            privacy:report.includes('PRIVACY: This report contains no drafts'),leaked:report.includes(privateMarker),
+            overflow:document.documentElement.scrollWidth-window.innerWidth
+          };
+          api.close();
+          return snapshot;
+        })()""")
+    finally:
+        cdp.call("Emulation.clearDeviceMetricsOverride")
+    if result.get("error") or not result.get("api") or not result.get("button") or result.get("buttonHeight", 0) < 43.5 or not result.get("open"):
+        raise RuntimeError(f"PR7 diagnostics failed to mount: {result}")
+    if result.get("cards") != 8 or len(result.get("checks", [])) != 8 or result.get("failures"):
+        raise RuntimeError(f"PR7 diagnostics self-check failed: {result}")
+    storage = result.get("storage", {})
+    if storage.get("fallback") != {"safe": True} or not storage.get("removed") or not storage.get("recovered") or storage.get("backup") != "{broken-json" or storage.get("warning"):
+        raise RuntimeError(f"PR7 corrupt local-cache recovery failed: {result}")
+    if not result.get("copyFalse") or not result.get("privacy") or result.get("leaked"):
+        raise RuntimeError(f"PR7 Clipboard/privacy truth-state failed: {result}")
+    if result.get("overflow", 0) > 2 or any(control.get("height", 0) < 43.5 for control in result.get("controls", [])):
+        raise RuntimeError(f"PR7 diagnostics mobile touch/overflow failed: {result}")
+    print("PR7 smoke passed: mobile system check + private report + cache recovery + Clipboard truth-state")
+
+
 def main():
     try:
         chrome, browser, port, folder, _log_path = base.launch()
@@ -706,6 +779,7 @@ def main():
                 test_pr4_pwa(cdp, workspace, node)
                 test_pr5_newswire2(cdp, workspace, node)
                 test_pr6_discovery_status(cdp, workspace, node)
+                test_pr7_diagnostics(cdp, workspace, node)
                 if (workspace, node) == ("comms", "forum"):
                     test_mobile_forum_controls(cdp)
                 run_interactions(cdp, workspace, node)

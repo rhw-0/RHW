@@ -32,7 +32,7 @@ V4_RUNTIME_ASSETS = [
     './css/21-app-v402-mobile-ui.css', './css/22-app-pr3-command-mobile.css', './css/23-app-pr3-yard-production.css',
     './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
     './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css', './css/28-app-pr5-newswire-2.css',
-    './css/29-app-pr6-discovery-sync.css',
+    './css/29-app-pr6-discovery-sync.css', './css/30-app-pr7-diagnostics.css',
     './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
     './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js', './js/16b-app-v40-newswire-manager.js',
     './js/16c-app-v40-newswire-ordering.js',
@@ -42,7 +42,7 @@ V4_RUNTIME_ASSETS = [
     './js/18b-app-v40-production-pricing.js', './js/18c-app-v40-recipe-corrections.js',
     './js/18d-app-v40-final-ui-polish.js', './js/20-app-v402-fixes.js', './js/21-app-v402-qol.js',
     './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js', './js/24-app-v40-newswire-2.js',
-    './js/25-app-v40-discovery-status.js',
+    './js/25-app-v40-discovery-status.js', './js/26-app-v40-diagnostics.js',
     './js/19-app-v40-runtime.js',
 ]
 V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py']
@@ -89,6 +89,17 @@ def png_size(path: Path) -> tuple[int, int] | None:
     return struct.unpack('>II', data[16:24])
 
 
+def target_blank_without_noopener(text: str) -> list[str]:
+    failures: list[str] = []
+    for tag in re.findall(r'<a\b[^>]*>', text, flags=re.I):
+        if not re.search(r'\btarget\s*=\s*["\']_blank["\']', tag, flags=re.I):
+            continue
+        rel = re.search(r'\brel\s*=\s*["\']([^"\']*)["\']', tag, flags=re.I)
+        if not rel or 'noopener' not in rel.group(1).lower().split():
+            failures.append(tag[:160])
+    return failures
+
+
 def main() -> int:
     errors: list[str] = []
     if not INDEX.exists():
@@ -105,6 +116,11 @@ def main() -> int:
     for ref in [*parser.css, *parser.js, *V4_RUNTIME_ASSETS, *V4_SUPPORT_ASSETS, *PWA_ASSETS, *DISCOVERY_SYNC_ASSETS, './assets/RHW_Newswire.md']:
         if not (ROOT / ref.removeprefix('./')).is_file():
             errors.append(f'Referenced local file is missing: {ref}')
+
+    for path in [INDEX, *sorted((ROOT / 'js').glob('*.js'))]:
+        insecure_links = target_blank_without_noopener(path.read_text(encoding='utf-8'))
+        if insecure_links:
+            errors.append(f'{path.relative_to(ROOT)} contains target="_blank" link(s) without rel="noopener": {insecure_links!r}')
 
     duplicate_ids = sorted(key for key, count in Counter(parser.ids).items() if count > 1)
     if duplicate_ids:
@@ -133,8 +149,12 @@ def main() -> int:
         'newswireManagerDraft:', 'commsMobileView:'
     ), 'V4 configuration')
     require_tokens(errors, 'js/13-app-v40.js', (
-        'window.RHWV4', "'operations'", 'workspaceOperations', 'app.installShell', 'app.navigate', 'app.applyRoute'
+        'window.RHWV4', "'operations'", 'workspaceOperations', 'app.installShell', 'app.navigate', 'app.applyRoute',
+        "typeof document.execCommand === 'function'", 'recoverCorruptStorageEntry', 'rhw-webapp-v4:recovery:'
     ), 'V4 core')
+    require_tokens(errors, 'js/02-utils.js', (
+        'recoverSafeStorageEntry', '__RHW_STORAGE_RECOVERIES__', 'rhw-webapp-v4:recovery:'
+    ), 'Stable dashboard storage recovery')
     require_tokens(errors, 'js/14-app-v40-cache.js', (
         'app.storage', 'saveDraft', 'upsertSender', 'importPayload', 'senderSnapshotName',
         "version: 2", 'priceProfiles:', 'shipyardPlanner:', 'newswireDraft:', 'preferences:'
@@ -157,8 +177,10 @@ def main() -> int:
         './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
         './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css',
         './css/28-app-pr5-newswire-2.css', './css/29-app-pr6-discovery-sync.css',
+        './css/30-app-pr7-diagnostics.css',
         './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js',
-        './js/24-app-v40-newswire-2.js', './js/25-app-v40-discovery-status.js'
+        './js/24-app-v40-newswire-2.js', './js/25-app-v40-discovery-status.js',
+        './js/26-app-v40-diagnostics.js'
     ), 'V4 bootstrap failure UI')
     require_tokens(errors, 'js/22-app-v402-mobile-ui.js', (
         'commsMobileView', 'setForumView', 'commsMobileViewSwitch', "['write', 'preview', 'bbcode']"
@@ -199,7 +221,7 @@ def main() -> int:
     require_tokens(errors, 'js/23-app-v40-pwa.js', (
         'beforeinstallprompt', 'serviceWorker.register', 'SKIP_WAITING', 'controllerchange',
         'SamsungBrowser', 'iPad|iPhone|iPod', 'OPEN RHW IN SAFARI', "querySelector('.app-nav-brand')",
-        'CACHED APP DATA ONLY', 'dataset.rhwNetwork', "getElementById('refreshBtn')"
+        'CACHED APP DATA ONLY', 'dataset.rhwNetwork', "getElementById('refreshBtn')", 'prompt-failed'
     ), 'PR4 installable app runtime')
     require_tokens(errors, 'css/27-app-pr4-pwa.css', (
         '.app-nav-brand .rhw-pwa-install', '.rhw-pwa-offline', '.rhw-pwa-panel', 'env(safe-area-inset-bottom)',
@@ -207,8 +229,18 @@ def main() -> int:
     ), 'PR4 installable app presentation')
     require_tokens(errors, 'sw.js', (
         'CACHE_PREFIX', 'APP_SHELL', "request.method !== 'GET'", 'networkFirst', 'cacheFirst',
-        "event.data?.type === 'SKIP_WAITING'", 'self.skipWaiting()', 'keys.filter'
+        "event.data?.type === 'SKIP_WAITING'", 'self.skipWaiting()', 'keys.filter',
+        'if (!response.ok) throw new Error(`NETWORK RESPONSE ${response.status}`)'
     ), 'PR4 service worker')
+    service_worker = (ROOT / 'sw.js').read_text(encoding='utf-8')
+    css_names_match = re.search(r'const CSS_NAMES\s*=\s*\[(.*?)\];', service_worker, flags=re.S)
+    cached_css_names = re.findall(r"'([^']+)'", css_names_match.group(1)) if css_names_match else []
+    expected_cached_css_names = [Path(ref).stem.split('-', 1)[1] for ref in [*parser.css, *(item for item in V4_RUNTIME_ASSETS if item.endswith('.css'))]]
+    if cached_css_names != expected_cached_css_names:
+        errors.append('Service-worker CSS cache order differs from the deployed stylesheet order.')
+    for ref in [*parser.js, *(item for item in V4_RUNTIME_ASSETS if item.endswith('.js') and '/recipes/' not in item)]:
+        if ref not in service_worker:
+            errors.append(f'Service worker does not cache deployed JavaScript asset: {ref}')
     require_tokens(errors, 'js/24-app-v40-newswire-2.js', (
         'v40NewswireControlCenter', 'v40NewswireSearch', 'data-newswire-status',
         'auditEntries', 'DUPLICATE BULLETIN', 'pinToTop', 'buildForumBbcode',
@@ -226,6 +258,14 @@ def main() -> int:
         '.discovery-data-panel', '.discovery-data-grid', '.discovery-data-actions',
         '.discovery-source-details', 'min-height:44px', 'min-height:48px', '@media(max-width:560px)'
     ), 'PR6 Discovery status presentation')
+    require_tokens(errors, 'js/26-app-v40-diagnostics.js', (
+        'RHW SYSTEM CHECK', 'RUN SELF-CHECK', 'COPY REPORT', 'PRIVACY:',
+        'storageHealth', 'telemetryHealth', 'catalogHealth', 'app.diagnostics', 'selfTest'
+    ), 'PR7 reliability diagnostics runtime')
+    require_tokens(errors, 'css/30-app-pr7-diagnostics.css', (
+        '.rhw-diagnostics-button', '.rhw-diagnostics-overlay', '.rhw-diagnostics-grid',
+        '.rhw-diagnostics-actions', 'min-height:44px', 'min-height:48px', '@media(max-width:460px)'
+    ), 'PR7 reliability diagnostics presentation')
     require_tokens(errors, '.github/workflows/discovery-catalog-sync.yml', (
         'schedule:', 'workflow_dispatch:', 'pull-requests: write', 'sync_discovery_catalog.py',
         '--force-with-lease', 'gh pr create', '--draft', 'steps.delta.outputs.changed'
@@ -276,7 +316,7 @@ def main() -> int:
         'MOBILE_WIDTHS = (360, 390, 412, 430)', 'test_boot_failure',
         'test_backup_and_storage', 'test_mobile_forum_controls', 'test_pr3_decision_ui',
         'test_pr3_calculator_ui', 'test_pr3_comms_workflow', 'test_pr4_pwa', 'test_pr5_newswire2',
-        'test_pr6_discovery_status',
+        'test_pr6_discovery_status', 'test_pr7_diagnostics',
         'v40NewswireRecoveryState',
         'RHWV4.newswireOrdering.setFilter', 'take_runtime_failures'
     ), 'V4.0.2 + PR1 browser smoke')
@@ -292,7 +332,7 @@ def main() -> int:
     ), 'V4 OPERATIONS UI')
     require_tokens(errors, 'js/19-app-v40-runtime.js', (
         'workspaceOperations', 'operations-calculator', '__RHW_V4_SMOKE__', 'app.commsSafety?.init()',
-        'app.discoveryStatus?.init()', 'app.runtime'
+        'app.discoveryStatus?.init()', 'app.diagnostics?.init?.()', 'app.runtime'
     ), 'V4 runtime')
     require_tokens(errors, 'scripts/build_recipe_catalog.py', (
         "parser.add_argument('--chunks'", 'def write_catalog(', 'chunk_count = max(1, int(chunk_count))',
@@ -329,6 +369,10 @@ def main() -> int:
 
     if 'catalogAsset:' in app_config:
         errors.append('V4 configuration must not reference the removed single-file recipe catalog asset.')
+
+    core_text = (ROOT / 'js/13-app-v40.js').read_text(encoding='utf-8')
+    if "document.execCommand?.('copy') !== false" in core_text:
+        errors.append('Clipboard fallback must not report success when document.execCommand is unavailable.')
 
     require_tokens(errors, 'js/20-app-v402-fixes.js', (
         'v40OverviewTelemetryState', "'CACHE TELEMETRY'", "'AWAITING TELEMETRY'",

@@ -11,6 +11,7 @@
   function recordError(error) {
     const message = String(error?.message || error || 'UNKNOWN RUNTIME ERROR');
     runtimeErrors.push(message);
+    app.diagnostics?.recordError?.(error);
     document.documentElement.dataset.v40Error = 'true';
     window.__RHW_V4_SMOKE__ = { ready: false, errors: [...runtimeErrors], route: location.hash };
     console.error('RHW V4 RUNTIME', error);
@@ -56,6 +57,8 @@
     if (typeof app.operationsCore?.buildPlan !== 'function') failures.push('feature:operations-planner');
     if (typeof app.discoveryStatus?.init !== 'function') failures.push('module:discovery-status');
     (app.discoveryStatus?.selfTest?.() || []).forEach(failure => failures.push(`discovery:${failure}`));
+    if (typeof app.diagnostics?.init !== 'function') failures.push('module:diagnostics');
+    (app.diagnostics?.selfTest?.() || []).forEach(failure => failures.push(`diagnostics:${failure}`));
     if (!app.operationsCore?.state?.catalog?.meta?.recipeCount) failures.push('feature:recipe-catalog');
     const bustardAlias = app.operations?.recipeAliases?.ship_assembly_dsy_barge;
     if (!bustardAlias || bustardAlias.outputId !== 'dsy_barge_package' || !app.operationsCore?.recipe?.('ship_assembly_dsy_barge')) failures.push('feature:bustard-recipe-alias');
@@ -118,6 +121,7 @@
       installDesktopReadabilityCoverage();
       await app.operations?.init();
       await app.discoveryStatus?.init();
+      if (!app.diagnostics?.init?.()) throw new Error('RHW SYSTEM CHECK COULD NOT MOUNT');
       app.applyRoute({ replace: true });
       if (!app.navHierarchy?.init?.()) throw new Error('V4 NAVIGATION HIERARCHY COULD NOT MOUNT');
       app.commsSafety?.polishOperations?.();

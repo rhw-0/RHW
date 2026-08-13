@@ -95,7 +95,7 @@ async function loadData() {
 
     if (els.errorBox) {
       const staleText = lastLoaded ? ` // LAST VALID SYNC ${lastLoaded.toLocaleTimeString('de-DE')}` : '';
-      els.errorBox.textContent = `TELEMETRY ERROR: ${error.message}${staleText}`;
+      els.errorBox.textContent = `TELEMETRY ERROR: ${lastSyncError}${staleText}`;
       els.errorBox.style.display = 'block';
     }
   } finally {
