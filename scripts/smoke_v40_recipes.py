@@ -43,7 +43,7 @@ def main() -> int:
                 time.sleep(.1)
             if snap.get("ready") != "true" or snap.get("error") == "true" or snap.get("errors"):
                 raise RuntimeError(f"Recipe correction route boot failed: {snap}")
-            if snap.get("recipes") != 287 or snap.get("products") != 248:
+            if snap.get("recipes") != 285 or snap.get("products") != 246:
                 raise RuntimeError(f"Corrected catalog counts unexpected: {snap}")
 
             catalog = base.ev(cdp, """(()=>({

@@ -21,6 +21,9 @@ jobs:
       - name: Validate dashboard structure
         run: python3 scripts/validate_dashboard.py
 
+      - name: Validate Discovery sync engine
+        run: python3 scripts/test_discovery_sync.py
+
       - name: Validate JavaScript syntax
         shell: bash
         run: |

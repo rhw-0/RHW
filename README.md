@@ -8,7 +8,9 @@ The app is split into three workspaces:
 - **OPERATIONS** — recipe-first manufacturing calculator backed by Discovery's public game configuration.
 - **COMMS** — forum transmission composer, Newswire file manager, drafts and sender identities.
 
-`OPERATIONS / ITEM CALCULATOR` contains the corrected runtime catalog of **287 recipes / 248 build targets**. It supports recipe search, distinct recipe-variant labels, output quantity, BMM-default IFF handling, affiliation-dependent outputs, manual material prices for the current calculation, fixed recipe fees where defined, batch build cost, cost per unit, target profit margin, recommended sale price, revenue and profit. Optional **PRICE PROFILES** can be saved explicitly in the browser and loaded on demand; they are never applied automatically.
+`OPERATIONS / ITEM CALCULATOR` contains the validated current catalog of **285 recipes / 246 build targets**. It supports recipe search, distinct recipe-variant labels, output quantity, BMM-default IFF handling, affiliation-dependent outputs, manual material prices for the current calculation, fixed recipe fees where defined, batch build cost, cost per unit, target profit margin, recommended sale price, revenue and profit. Optional **PRICE PROFILES** can be saved explicitly in the browser and loaded on demand; they are never applied automatically.
+
+The **DISCOVERY DATA** panel shows the active counts, source hashes, last catalog update and latest automation run. `.github/workflows/discovery-catalog-sync.yml` checks Discovery's public recipe CFG files every Monday and can also be started manually from GitHub Actions. Downloads are staged temporarily and must pass structural, ID/output/quantity/IFF and large-change gates. Real changes rebuild the deterministic browser catalog and prepare or refresh a **Draft pull request** with `docs/discovery-sync-report.md`; the workflow never merges its own proposal.
 
 `COMMAND / SHIPYARD` includes a compact multi-hull build planner. Choose a registered hull and target quantity to compare required capital components with verified RHW stock, see deficits, and send the same quantity directly to the Item Calculator.
 
@@ -20,4 +22,4 @@ RHW is an installable Progressive Web App. Open the GitHub Pages site in Samsung
 
 The app shell, local Newswire source and catalog assets are cached for offline access. RHW always labels offline mode clearly and never presents failed live telemetry as current data. Service-worker updates wait for an explicit **Update now** action so local drafts and settings remain under user control.
 
-Validation runs through `.github/workflows/rhw-pages-deploy.yml` and includes structural checks, JavaScript syntax validation, full headless-Chrome route/interactions, PWA install/offline behavior, Newswire 2.0 search/quality/channel-parity behavior and recipe-correctness coverage.
+Validation runs through `.github/workflows/rhw-pages-deploy.yml` and includes structural checks, JavaScript syntax validation, Discovery sync unit coverage, full headless-Chrome route/interactions, PWA install/offline behavior, Newswire 2.0 search/quality/channel-parity behavior and recipe-correctness coverage.

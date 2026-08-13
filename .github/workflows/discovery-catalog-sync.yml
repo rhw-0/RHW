@@ -1,0 +1,111 @@
+name: Discovery Catalog Sync
+
+on:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+    inputs:
+      allow_large_change:
+        description: Allow a deliberately reviewed change beyond the 35% safety gate
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: discovery-catalog-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'rhw-0/RHW'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SYNC_BRANCH: automation/discovery-catalog-sync
+    steps:
+      - name: Checkout main with automation branch history
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Prepare review branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "refs/heads/${SYNC_BRANCH}:refs/remotes/origin/${SYNC_BRANCH}" || true
+          git switch -C "${SYNC_BRANCH}" origin/main
+
+      - name: Download, validate and compare Discovery data
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ "${{ inputs.allow_large_change || false }}" == "true" ]]; then
+            args+=(--allow-large-change)
+          fi
+          python3 scripts/sync_discovery_catalog.py "${args[@]}"
+
+      - name: Validate generated dashboard
+        run: |
+          python3 scripts/test_discovery_sync.py
+          python3 scripts/validate_dashboard.py
+
+      - name: Detect reviewed data delta
+        id: delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- assets/recipes assets/discovery-status.json docs/discovery-sync-report.md; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            echo "### Discovery catalog is unchanged" >> "${GITHUB_STEP_SUMMARY}"
+            echo "The source was fetched and validated; no catalog files were modified." >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+            cat docs/discovery-sync-report.md >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Commit proposed catalog update
+        if: steps.delta.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/recipes assets/discovery-status.json docs/discovery-sync-report.md
+          git commit -m "data: sync Discovery recipe catalog"
+          git push --force-with-lease origin "${SYNC_BRANCH}"
+
+      - name: Prepare Draft pull request description
+        if: steps.delta.outputs.changed == 'true'
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          report = Path('docs/discovery-sync-report.md').read_text(encoding='utf-8')
+          heading = (
+              '## Automated Discovery data proposal\n\n'
+              'This Draft PR was prepared by the review-gated Discovery sync. It will **never merge itself**.\n\n'
+              'Before approving, review the generated delta below and confirm the app checks are green.\n\n'
+          )
+          Path('/tmp/discovery-pr-body.md').write_text(heading + report, encoding='utf-8')
+          PY
+
+      - name: Open or refresh Draft pull request
+        if: steps.delta.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          number="$(gh pr list --repo "${GITHUB_REPOSITORY}" --base main --head "${SYNC_BRANCH}" --state open --json number --jq '.[0].number // empty')"
+          if [[ -z "${number}" ]]; then
+            gh pr create --repo "${GITHUB_REPOSITORY}" --base main --head "${SYNC_BRANCH}" --draft \
+              --title "data: review Discovery catalog update" --body-file /tmp/discovery-pr-body.md
+          else
+            gh pr edit "${number}" --repo "${GITHUB_REPOSITORY}" \
+              --title "data: review Discovery catalog update" --body-file /tmp/discovery-pr-body.md
+          fi
