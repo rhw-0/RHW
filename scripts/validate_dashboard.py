@@ -320,6 +320,9 @@ def main() -> int:
         'v40NewswireRecoveryState',
         'RHWV4.newswireOrdering.setFilter', 'take_runtime_failures'
     ), 'V4.0.2 + PR1 browser smoke')
+    require_tokens(errors, 'scripts/smoke_v40_base.py', (
+        'Promise.resolve(', 'awaitPromise', 'JSON.stringify(value)'
+    ), 'Browser smoke async evaluation')
     require_tokens(errors, 'js/17-app-v40-operations-core.js', (
         'app.operationsCore', 'loadCatalog', 'buildPlan', 'factorFor', 'authorizedFor',
         'RESTRICTED RECIPE REQUIRES AN AUTHORIZED IFF', 'outputPerCycle: rootOutputPerCycle'

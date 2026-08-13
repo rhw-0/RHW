@@ -97,7 +97,7 @@ def document(route):
     return source.replace("</body>",f"{scripts}</body>")
 
 def ev(cdp,expression):
-    result=cdp.call("Runtime.evaluate",{"expression":f"JSON.stringify({expression})","returnByValue":True,"awaitPromise":True})
+    result=cdp.call("Runtime.evaluate",{"expression":f"Promise.resolve({expression}).then(value=>JSON.stringify(value))","returnByValue":True,"awaitPromise":True})
     raw=result.get("result",{}).get("value"); return json.loads(raw) if raw else {}
 
 def snapshot(cdp):
