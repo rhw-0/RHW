@@ -16,7 +16,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
      Load every V4 stylesheet immediately to avoid an unstyled app-shell flash,
      but wait until the stable dashboard has initialized before booting V4 JS. */
   (function bootstrapRhwV4Preview() {
-    const RHW_V4_ASSET_REV = '4.0.2-pr2-mobile-ui';
+    const RHW_V4_ASSET_REV = '4.0.2-pr3-command-mobile';
     const versioned = src => `${src}?v=${encodeURIComponent(RHW_V4_ASSET_REV)}`;
 
     [
@@ -29,7 +29,8 @@ if (!window.__RHW_SMOKE_INLINE__) {
       ['./css/18-app-v40-nav-hierarchy.css', 'rhwV40NavHierarchy'],
       ['./css/19-app-v402-fixes.css', 'rhwV402Fixes'],
       ['./css/20-app-v402-qol.css', 'rhwV402Qol'],
-      ['./css/21-app-v402-mobile-ui.css', 'rhwV402MobileUi']
+      ['./css/21-app-v402-mobile-ui.css', 'rhwV402MobileUi'],
+      ['./css/22-app-pr3-command-mobile.css', 'rhwPr3CommandMobile']
     ].forEach(([href, dataKey]) => {
       if (document.querySelector(`link[data-${dataKey.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}="true"]`)) return;
       const link = document.createElement('link');
