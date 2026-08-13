@@ -26,10 +26,10 @@
         <div class="command-overview-live"><i></i> LIVE TELEMETRY</div>
       </div>
       <div class="command-overview-grid">
-        <button type="button" class="command-overview-card" data-command-jump="inventory"><small>INVENTORY HEALTH</small><strong id="v40OverviewInventory">SCANNING</strong><span id="v40OverviewInventoryMeta">AWAITING STATUS</span></button>
-        <button type="button" class="command-overview-card" data-command-jump="shipyard"><small>CAPITAL SHIPYARD</small><strong id="v40OverviewShipyard">SCANNING</strong><span id="v40OverviewShipyardMeta">AWAITING YARD CONTROL</span></button>
-        <button type="button" class="command-overview-card" data-command-jump="production"><small>PRODUCTION FLOOR</small><strong id="v40OverviewProduction">SCANNING</strong><span id="v40OverviewProductionMeta">AWAITING MODULE DATA</span></button>
-        <button type="button" class="command-overview-card" data-command-jump="logistics"><small>REMOTE LOGISTICS</small><strong id="v40OverviewLogistics">SCANNING</strong><span id="v40OverviewLogisticsMeta">AWAITING SAT-LINK</span></button>
+        <button type="button" class="command-overview-card" data-command-jump="inventory" data-state="waiting"><small>INVENTORY HEALTH</small><strong id="v40OverviewInventory">SCANNING</strong><span id="v40OverviewInventoryMeta">AWAITING STATUS</span></button>
+        <button type="button" class="command-overview-card" data-command-jump="shipyard" data-state="waiting"><small>CAPITAL SHIPYARD</small><strong id="v40OverviewShipyard">SCANNING</strong><span id="v40OverviewShipyardMeta">AWAITING YARD CONTROL</span></button>
+        <button type="button" class="command-overview-card" data-command-jump="production" data-state="waiting"><small>PRODUCTION FLOOR</small><strong id="v40OverviewProduction">SCANNING</strong><span id="v40OverviewProductionMeta">AWAITING MODULE DATA</span></button>
+        <button type="button" class="command-overview-card" data-command-jump="logistics" data-state="waiting"><small>REMOTE LOGISTICS</small><strong id="v40OverviewLogistics">SCANNING</strong><span id="v40OverviewLogisticsMeta">AWAITING SAT-LINK</span></button>
       </div>
       <section class="command-priority-panel">
         <div class="command-priority-head"><div><small>COMMAND QUEUE</small><strong>PRIORITY ACTIONS</strong></div><span id="v40PriorityCount">0 ACTIVE</span></div>
@@ -39,12 +39,16 @@
   }
 
   function inventoryMarkup() {
-    return `<div class="inventory-view-nav" role="tablist" aria-label="Inventory views">
-      <button type="button" data-inventory-view="status"><span>STATUS BOARD</span><small>FACILITY + EXPORT + FEEDSTOCK</small></button>
-      <button type="button" data-inventory-view="manifest"><span>FULL MANIFEST</span><small>SEARCH + FILTER + PRICES</small></button>
+    return `<header class="inventory-view-heading">
+      <div><small>COMMAND / INVENTORY</small><strong>ASSET CONTROL</strong></div>
+      <span>STATUS + STOCK + MARKET VALUES</span>
+    </header>
+    <div class="inventory-view-nav" role="tablist" aria-label="Inventory views">
+      <button type="button" role="tab" aria-controls="inventoryStatusPanel" data-inventory-view="status"><span>STATUS BOARD</span><small>FACILITY + EXPORT + FEEDSTOCK</small></button>
+      <button type="button" role="tab" aria-controls="inventoryManifestPanel" data-inventory-view="manifest"><span>FULL MANIFEST</span><small>SEARCH + FILTER + PRICES</small></button>
     </div>
-    <section class="inventory-view-panel" data-inventory-panel="status"></section>
-    <section class="inventory-view-panel" data-inventory-panel="manifest" hidden></section>`;
+    <section id="inventoryStatusPanel" class="inventory-view-panel" role="tabpanel" data-inventory-panel="status"><div class="inventory-mobile-hint" aria-hidden="true"><span>SWIPE STATUS CARDS</span><i></i></div></section>
+    <section id="inventoryManifestPanel" class="inventory-view-panel" role="tabpanel" data-inventory-panel="manifest" hidden></section>`;
   }
 
   function safeOperationalItems() {
@@ -146,6 +150,11 @@
     if (el) el.textContent = value;
   }
 
+  function setOverviewState(id, state) {
+    const card = document.getElementById(id)?.closest('.command-overview-card');
+    if (card) card.dataset.state = ['critical', 'low', 'ok', 'waiting'].includes(state) ? state : 'waiting';
+  }
+
   function updateOverview() {
     if (!document.getElementById('v40OverviewInventory')) return;
     const verified = typeof window.hasVerifiedTelemetry === 'function' ? window.hasVerifiedTelemetry() : false;
@@ -158,6 +167,7 @@
       write('v40OverviewProductionMeta', 'AWAITING VERIFIED PRODUCTION INPUTS');
       write('v40OverviewLogistics', 'SAT-LINK SCANNING');
       write('v40OverviewLogisticsMeta', 'AWAITING VERIFIED REMOTE STATUS');
+      ['v40OverviewInventory', 'v40OverviewShipyard', 'v40OverviewProduction', 'v40OverviewLogistics'].forEach(id => setOverviewState(id, 'waiting'));
       renderPriorities();
       return;
     }
@@ -169,18 +179,23 @@
     const exports = items.filter(item => { try { return window.hasAssetRole?.(item, 'export'); } catch { return false; } }).length;
     write('v40OverviewInventory', critical ? `${critical} CRITICAL` : (low ? `${low} LOW` : 'INVENTORY NOMINAL'));
     write('v40OverviewInventoryMeta', `${critical} CRITICAL // ${low} LOW // ${exports} EXPORT LINES`);
+    setOverviewState('v40OverviewInventory', critical ? 'critical' : (low ? 'low' : 'ok'));
 
     const yard = shipyardAnalysis();
     write('v40OverviewShipyard', yard ? `${app.util.number(yard.buildable)} HULL${yard.buildable === 1 ? '' : 'S'} READY` : 'YARD ONLINE');
     write('v40OverviewShipyardMeta', yard?.bottleneck ? `NEXT HULL // ${String(yard.bottleneck.name).toUpperCase()} +${app.util.number(yard.bottleneck.gap)}` : 'CAPITAL CONTROL AVAILABLE');
+    setOverviewState('v40OverviewShipyard', yard ? (yard.buildable <= 0 ? 'critical' : (yard.buildable === 1 ? 'low' : 'ok')) : 'ok');
 
     const production = productionAnalysis();
     const weakest = production[0];
     write('v40OverviewProduction', weakest ? `MIN ${app.util.number(weakest.possibleCycles)} CYCLES` : 'MODULES ONLINE');
     write('v40OverviewProductionMeta', weakest?.bottleneck ? `${String(weakest.recipe.product).toUpperCase()} // ${String(weakest.bottleneck.displayName || weakest.bottleneck.name).toUpperCase()}` : 'LIVE CAPACITY + BOTTLENECK CONTROL');
+    setOverviewState('v40OverviewProduction', weakest?.cardState === 'critical' ? 'critical' : (weakest?.cardState === 'low' ? 'low' : 'ok'));
 
     write('v40OverviewLogistics', document.getElementById('supplierLinkText')?.textContent?.trim() || 'SAT-LINK ONLINE');
     write('v40OverviewLogisticsMeta', document.getElementById('marketScanMeta')?.textContent?.trim() || 'MARKET RADAR READY');
+    const linkBadge = document.getElementById('supplierLinkBadge');
+    setOverviewState('v40OverviewLogistics', linkBadge?.classList.contains('stale') ? 'low' : (linkBadge?.classList.contains('polling') ? 'waiting' : 'ok'));
     renderPriorities();
   }
 
