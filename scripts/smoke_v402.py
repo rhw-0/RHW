@@ -64,17 +64,24 @@ def test_mobile_layout(cdp, workspace, node):
 def test_backup_and_storage(cdp):
     result = base.ev(cdp, """(()=>{
       const app=RHWV4,k=app.config.storageKeys;
-      const managed=[k.calculatorPriceProfiles,k.shipyardPlanner,k.newswireManagerDraft,k.activeWorkspace];
-      const previous=Object.fromEntries(managed.map(key=>[key,localStorage.getItem(key)]));
-      const restore=()=>managed.forEach(key=>previous[key]===null?localStorage.removeItem(key):localStorage.setItem(key,previous[key]));
+      const original={
+        get:app.store.get.bind(app.store),
+        set:app.store.set.bind(app.store),
+        remove:app.store.remove.bind(app.store)
+      };
+      const memory=new Map();
+      const clone=value=>value===undefined?undefined:JSON.parse(JSON.stringify(value));
+      app.store.get=(key,fallback=null)=>memory.has(key)?clone(memory.get(key)):fallback;
+      app.store.set=(key,value)=>{memory.set(key,clone(value));return true};
+      app.store.remove=key=>{memory.delete(key);return true};
       try{
-        app.newswireManager.applyLoadedSource('# RHW Industrial Newswire\n\n## operations\n- [BASE | good] BASE MESSAGE\n','repository');
+        app.newswireManager.applyLoadedSource('# RHW Industrial Newswire\\n\\n## operations\\n- [BASE | good] BASE MESSAGE\\n','repository');
         app.newswireManager.applyAdd({category:'security',tone:'warn',tag:'RECOVERY TEST',message:'DURABLE LOCAL DRAFT'});
         app.store.set(k.calculatorPriceProfiles,[{id:'pr1-profile',name:'PR1 Market',prices:{steel:1234},updatedAt:42}]);
         app.store.set(k.shipyardPlanner,{target:'dunkirk',quantity:3});
         app.store.set(k.activeWorkspace,'comms');
         const payload=app.storage.exportPayload();
-        managed.forEach(key=>localStorage.removeItem(key));
+        memory.clear();
         const imported=app.storage.importPayload(payload);
         const restoredDraft=app.store.get(k.newswireManagerDraft,null);
         const legacy={format:'rhw-webapp-local-cache',version:1,current:payload.current,drafts:[],localSenders:[]};
@@ -82,7 +89,7 @@ def test_backup_and_storage(cdp):
         app.reportStorageFailure('Smoke test','pr1-smoke',new Error('EXPECTED'));
         const warning={shown:document.documentElement.dataset.rhwStorageError==='true',button:!!document.querySelector('#rhwStorageWarning button')};
         app.clearStorageWarning();
-        const value={
+        return{
           version:payload.version,
           profile:app.store.get(k.calculatorPriceProfiles,[])[0]?.name||'',
           planner:app.store.get(k.shipyardPlanner,null),
@@ -90,18 +97,18 @@ def test_backup_and_storage(cdp):
           changed:app.newswireManager.state.draftSourceChanged,
           imported,legacy:legacyResult,warning
         };
-        app.newswireManager.resetWorkingCopy({announce:false});
-        restore();
-        return value;
       }catch(error){
-        try{app.newswireManager.resetWorkingCopy({announce:false});app.clearStorageWarning();restore()}catch{}
         return{error:String(error?.stack||error)};
+      }finally{
+        try{app.newswireManager.resetWorkingCopy({announce:false});app.clearStorageWarning()}catch{}
+        app.store.get=original.get;
+        app.store.set=original.set;
+        app.store.remove=original.remove;
       }
     })()""")
     if result.get("error") or result.get("version") != 2 or result.get("profile") != "PR1 Market" or result.get("planner", {}).get("quantity") != 3 or not result.get("draft") or not all(result.get("warning", {}).values()) or "legacy" not in result:
         raise RuntimeError(f"V2 local backup / storage warning failed: {result}")
     print("V4.0.2 + PR1 smoke passed: V2 backup, V1 import, durable Newswire draft, storage warning")
-
 
 def test_v402(cdp, workspace, node):
     if (workspace, node) == ("command", "overview"):
