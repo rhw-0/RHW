@@ -842,7 +842,10 @@ def test_pr9_transfer_center(cdp, workspace, node):
         return
     result = base.ev(cdp, """(()=>{
       const app=RHWV4,clone=value=>JSON.parse(JSON.stringify(value));
-      const original={current:clone(app.state.comms),drafts:clone(app.state.drafts)};
+      const original={current:clone(app.state.comms),drafts:clone(app.state.drafts),store:{get:app.store.get,set:app.store.set}};
+      const memory=new Map();
+      app.store.get=(key,fallback=null)=>memory.has(key)?clone(memory.get(key)):fallback;
+      app.store.set=(key,value)=>{memory.set(key,clone(value));return true};
       window.__RHW_PR9_SMOKE_RESTORE__=original;
       try{
         const subject=document.getElementById('commsSubject');
@@ -896,6 +899,8 @@ def test_pr9_transfer_center(cdp, workspace, node):
             RHWV4.store.set(RHWV4.config.storageKeys.commsCurrent,original.current);
             RHWV4.store.set(RHWV4.config.storageKeys.commsDrafts,original.drafts);
             RHWV4.comms.renderDrafts();RHWV4.comms.renderForm();
+            RHWV4.store.get=original.store.get;
+            RHWV4.store.set=original.store.set;
           }
           delete window.__RHW_PR9_SMOKE_RESTORE__;
           return true;
