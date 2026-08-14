@@ -845,7 +845,9 @@ def test_pr9_transfer_center(cdp, workspace, node):
       const original={current:clone(app.state.comms),drafts:clone(app.state.drafts)};
       window.__RHW_PR9_SMOKE_RESTORE__=original;
       try{
-        app.state.comms.subject='PR9 LOCAL CURRENT';
+        const subject=document.getElementById('commsSubject');
+        if(subject)subject.value='PR9 LOCAL CURRENT';
+        app.comms.syncFromForm();
         const payload=app.storage.exportPayload();
         payload.current.subject='PR9 REMOTE CURRENT';
         payload.drafts.push({id:'pr9-transfer-smoke',name:'PR9 REMOTE DRAFT',updatedAt:Date.now()+1000,state:app.storage.defaultState()});
@@ -854,11 +856,12 @@ def test_pr9_transfer_center(cdp, workspace, node):
           key:input.value,checked:input.checked,mode:input.closest('.rhw-transfer-section')?.dataset.mode||''
         }));
         const imported=app.transferCenter.confirmImport();
+        const importWarning=document.getElementById('rhwTransferImportWarning')?.textContent||'';
         const merged=app.state.drafts.some(draft=>draft.id==='pr9-transfer-smoke');
         const currentKept=app.state.comms.subject==='PR9 LOCAL CURRENT';
         app.transferCenter.previewPayload(payload,'rhw-pr9-layout.json');
         return{
-          api:!!app.transferCenter,inspection,controls,imported:!!imported,merged,currentKept,
+          api:!!app.transferCenter,inspection,controls,imported:!!imported,importWarning,merged,currentKept,
           dialogOpen:!document.getElementById('rhwTransferDialog')?.hidden,
           privacy:(document.querySelector('.rhw-transfer-privacy')?.textContent||'').includes('PRIVATE FILE'),
           failures:app.transferCenter.selfTest()
