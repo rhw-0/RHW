@@ -15,6 +15,7 @@ base.V4_CSS = [
     "css/25-app-pr3-comms-workflow.css", "css/26-app-pr3-newswire-manager.css",
     "css/27-app-pr4-pwa.css", "css/28-app-pr5-newswire-2.css", "css/29-app-pr6-discovery-sync.css",
     "css/30-app-pr7-diagnostics.css", "css/31-app-pr8-production-orders.css", "css/32-app-pr9-transfer-center.css",
+    "css/33-app-pr10-newswire-review.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -26,7 +27,7 @@ base.V4_JS = [
     "js/18d-app-v40-final-ui-polish.js", "js/20-app-v402-fixes.js", "js/21-app-v402-qol.js",
     "js/22-app-v402-mobile-ui.js", "js/23-app-v40-pwa.js", "js/24-app-v40-newswire-2.js",
     "js/25-app-v40-discovery-status.js", "js/26-app-v40-diagnostics.js", "js/27-app-v40-production-orders.js",
-    "js/28-app-v40-transfer-center.js",
+    "js/28-app-v40-transfer-center.js", "js/29-app-v40-newswire-review.js",
     "js/19-app-v40-runtime.js",
 ]
 MOBILE_WIDTHS = (360, 390, 412, 430)
@@ -244,7 +245,7 @@ def test_pr3_comms_workflow(cdp, workspace, node):
             editor = result.get("editor", {})
             if editor.get("preview") != "MOBILE COMMS WORKFLOW READY" or "RHW QA" not in editor.get("block", "") or editor.get("tag") != "6 / 40" or editor.get("message") != "27 / 240" or editor.get("step") != "step":
                 raise RuntimeError(f"PR3 COMMS ticker mobile workflow failed: {result}")
-            if result.get("workflow") != 3 or result.get("activeStep") != "list" or result.get("entries") != 3 or not result.get("dirty") or result.get("filter") != "operations" or result.get("visibleRows") != 2:
+            if result.get("workflow") != 4 or result.get("activeStep") != "list" or result.get("entries") != 3 or not result.get("dirty") or result.get("filter") != "operations" or result.get("visibleRows") != 2:
                 raise RuntimeError(f"PR3 Newswire workflow/filter/recovery state failed: {result}")
             if "- [RHW QA | good] MOBILE COMMS WORKFLOW READY" not in result.get("source", "") or "LOCAL EDITS" not in result.get("status", "") or not result.get("recovery", "").startswith("SAVED ") or result.get("resetDisabled"):
                 raise RuntimeError(f"PR3 Newswire output/local draft state failed: {result}")
@@ -918,6 +919,80 @@ def test_pr9_transfer_center(cdp, workspace, node):
     print("PR9 smoke passed: private sharing UI + review defaults + selective merge + 360/390/412/430 bottom sheet")
 
 
+def test_pr10_newswire_review(cdp, workspace, node):
+    if (workspace, node) != ("comms", "ticker"):
+        return
+    cdp.call("Emulation.setDeviceMetricsOverride", {
+        "width": 390, "height": 820, "deviceScaleFactor": 1, "mobile": True,
+    })
+    try:
+        result = base.ev(cdp, """(()=>{
+          const app=RHWV4,api=app.newswireReview,manager=app.newswireManager,clone=value=>JSON.parse(JSON.stringify(value));
+          if(!api)return{error:'Newswire Review API missing'};
+          const originalStore={get:app.store.get,set:app.store.set,remove:app.store.remove};
+          const memory=new Map();
+          app.store.get=(key,fallback=null)=>memory.has(key)?clone(memory.get(key)):fallback;
+          app.store.set=(key,value)=>{memory.set(key,clone(value));return true};
+          app.store.remove=key=>{memory.delete(key);return true};
+          try{
+            manager.applyLoadedSource('# RHW Industrial Newswire\\n\\n## market\\n- [DELTA | lore] MARKET BASE\\n\\n## security\\n- [CHARLIE | warn] SECURITY BASE\\n\\n## operations\\n- [ALPHA | good] OPERATIONS ONE\\n- [BRAVO | good] OPERATIONS TWO\\n','repository');
+            const alpha=manager.state.entries.find(entry=>entry.tag==='ALPHA');
+            const bravo=manager.state.entries.find(entry=>entry.tag==='BRAVO');
+            const charlie=manager.state.entries.find(entry=>entry.tag==='CHARLIE');
+            manager.applyEdit(bravo.id,{...bravo,message:'OPERATIONS TWO EDITED'});
+            manager.applyDelete(charlie.id);
+            manager.applyAdd({category:'market',tone:'good',tag:'ECHO',message:'MARKET ADDED'});
+            app.newswireOrdering.moveWithinCategory(alpha.id,1,{announce:false});
+            api.captureSnapshot({force:true});api.render();
+            const review=api.reviewState(),payload=api.buildReviewPackage();
+            const firstSnapshot=api.readHistory()[0];
+            const echo=manager.state.entries.find(entry=>entry.tag==='ECHO');
+            manager.applyEdit(echo.id,{...echo,message:'MARKET ADDED SECOND VERSION'});
+            api.captureSnapshot({force:true});
+            const restored=api.restoreSnapshot(firstSnapshot.id,{confirm:false});
+            api.render();
+            document.querySelector('[data-newswire-jump="review"]')?.click();
+            const visible=element=>{const style=getComputedStyle(element),rect=element.getBoundingClientRect();return style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0};
+            const controls=[...document.querySelectorAll('#v40NewswireReviewCenter button')].filter(visible).map(element=>({id:element.id||element.dataset.reviewRestore||'',height:element.getBoundingClientRect().height}));
+            return{
+              api:!!api,ready:review.ready,reasons:review.reasons,
+              diff:{added:review.diff.added.length,edited:review.diff.edited.length,deleted:review.diff.deleted.length,moved:review.diff.moved.length},
+              qa:review.audit.review,format:payload.format,repository:payload.repository.name,
+              directPublish:payload.handoff.directPublish,markdown:payload.markdown,baseMarkdown:payload.baseMarkdown,
+              forumParity:payload.channels.filter(channel=>channel.ticker).every(channel=>channel.forumBbcode.includes(channel.ticker.tag)&&channel.forumBbcode.includes(channel.ticker.message)),
+              report:payload.report,history:api.readHistory().length,restored,
+              restoredMessage:manager.state.entries.find(entry=>entry.tag==='ECHO')?.message||'',
+              gate:v40NewswireReviewGateState.textContent,changeRows:document.querySelectorAll('.v40-newswire-change').length,
+              historyRows:document.querySelectorAll('.v40-newswire-history').length,
+              activeStep:document.querySelector('[data-newswire-jump="review"]')?.getAttribute('aria-current')||'',
+              shareDisabled:v40NewswireShareReview.disabled,downloadDisabled:v40NewswireDownloadReview.disabled,
+              controls,overflow:document.documentElement.scrollWidth-window.innerWidth,failures:api.selfTest()
+            };
+          }catch(error){return{error:String(error?.stack||error)}}
+          finally{
+            try{manager.resetWorkingCopy({announce:false});api.clearHistory({confirm:false})}catch{}
+            app.store.get=originalStore.get;app.store.set=originalStore.set;app.store.remove=originalStore.remove;
+          }
+        })()""")
+    finally:
+        cdp.call("Emulation.clearDeviceMetricsOverride")
+    if result.get("error") or not result.get("api") or result.get("failures") or not result.get("ready") or result.get("reasons"):
+        raise RuntimeError(f"PR10 Newswire review mount/QA gate failed: {result}")
+    if result.get("diff") != {"added": 1, "edited": 1, "deleted": 1, "moved": 1} or result.get("qa") != 0 or result.get("changeRows") != 4:
+        raise RuntimeError(f"PR10 repository/local diff failed: {result}")
+    if result.get("format") != "rhw-newswire-review-package" or result.get("repository") != "rhw-0/RHW" or result.get("directPublish") is not False:
+        raise RuntimeError(f"PR10 controlled review package failed: {result}")
+    if "OPERATIONS TWO EDITED" not in result.get("markdown", "") or "OPERATIONS TWO" not in result.get("baseMarkdown", "") or not result.get("forumParity") or "does not publish automatically" not in result.get("report", ""):
+        raise RuntimeError(f"PR10 Markdown/Forum/report parity failed: {result}")
+    if result.get("history", 0) < 2 or not result.get("restored") or result.get("restoredMessage") != "MARKET ADDED" or result.get("historyRows", 0) < 2:
+        raise RuntimeError(f"PR10 local version restore failed: {result}")
+    if result.get("gate") != "QA PASSED // READY FOR HANDOFF" or result.get("activeStep") != "step" or result.get("shareDisabled") or result.get("downloadDisabled"):
+        raise RuntimeError(f"PR10 handoff/workflow state failed: {result}")
+    if result.get("overflow", 0) > 2 or any(control.get("height", 0) < 43.5 for control in result.get("controls", [])):
+        raise RuntimeError(f"PR10 mobile touch/overflow failed: {result}")
+    print("PR10 smoke passed: live diff + QA gate + local restore + Forum-safe review package + mobile handoff")
+
+
 def main():
     try:
         chrome, browser, port, folder, _log_path = base.launch()
@@ -962,6 +1037,7 @@ def main():
                 test_pr7_diagnostics(cdp, workspace, node)
                 test_pr8_production_orders(cdp, workspace, node)
                 test_pr9_transfer_center(cdp, workspace, node)
+                test_pr10_newswire_review(cdp, workspace, node)
                 if (workspace, node) == ("comms", "forum"):
                     test_mobile_forum_controls(cdp)
                 run_interactions(cdp, workspace, node)
