@@ -1034,6 +1034,8 @@ def test_pr11_full_audit(cdp, workspace, node):
           app.navigate('command','overview',{replace:true});
           return{
             totals,routeStatus:route?.status||'',routeTone:route?.tone||'',privacy,
+            blocking:results.filter(item=>item.tone==='danger').map(item=>({key:item.key,status:item.status,detail:item.detail})),
+            notices:results.filter(item=>item.tone==='warn').map(item=>({key:item.key,status:item.status,detail:item.detail})),
             expandedOpen,expandedClosed,tabs,
             metrics:{total:Number(rhwAuditTotal.textContent),pass:Number(rhwAuditPass.textContent),warn:Number(rhwAuditWarn.textContent),fail:Number(rhwAuditFail.textContent)},
             failures:api.selfTest(),overflow:document.documentElement.scrollWidth-window.innerWidth
