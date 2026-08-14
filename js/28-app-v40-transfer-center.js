@@ -92,6 +92,7 @@
     dialog.setAttribute('role', 'dialog');
     dialog.setAttribute('aria-modal', 'true');
     dialog.setAttribute('aria-labelledby', 'rhwTransferDialogTitle');
+    dialog.dataset.focusTrap = 'true';
     dialog.innerHTML = `<div class="rhw-transfer-backdrop" data-transfer-close></div>
       <section class="rhw-transfer-sheet">
         <header><div><span>IMPORT REVIEW</span><strong id="rhwTransferDialogTitle">CHOOSE WHAT MOVES TO THIS DEVICE</strong></div><button type="button" data-transfer-close aria-label="Close import review">CLOSE</button></header>
@@ -107,7 +108,24 @@
     });
     document.getElementById('rhwTransferConfirmBtn')?.addEventListener('click', confirmImport);
     document.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && !dialog.hidden) closePreview();
+      if (dialog.hidden) return;
+      if (event.key === 'Escape') {
+        closePreview();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = [...dialog.querySelectorAll('button, input:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+        .filter(element => !element.hasAttribute('disabled') && element.getClientRects().length);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     });
   }
 
@@ -209,6 +227,7 @@
     if (!document.getElementById('rhwTransferCenter')) failures.push('missing:transfer-center');
     if (!document.getElementById('shareCommsCacheBtn')) failures.push('missing:share-control');
     if (!document.getElementById('rhwTransferDialog')) failures.push('missing:import-review');
+    if (document.getElementById('rhwTransferDialog')?.dataset.focusTrap !== 'true') failures.push('missing:focus-trap');
     return failures;
   }
 

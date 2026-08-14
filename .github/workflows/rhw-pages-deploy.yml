@@ -42,6 +42,9 @@ jobs:
       - name: Validate Newswire Review model
         run: node scripts/test_newswire_review.js
 
+      - name: Validate Full App Audit model
+        run: node scripts/test_full_audit.js
+
       - name: Install smoke-test client
         run: python3 -m pip install --disable-pip-version-check --quiet websocket-client
 

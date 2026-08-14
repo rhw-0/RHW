@@ -143,7 +143,9 @@ let ecoMeasureToken = 0;
 let ecoResizeTimer = null;
 
 function setEcoMode(on) {
-  ecoMode = Boolean(on);
+  /* The operating-system accessibility preference is authoritative. A saved
+     "FX: FULL" choice must never re-enable motion behind reduced-motion. */
+  ecoMode = Boolean(on || prefersReducedMotion.matches);
   document.documentElement.classList.toggle('eco', ecoMode);
   if (ecoMode) startEcoTicker();
   else stopEcoTicker();
@@ -154,11 +156,14 @@ function updateEcoToggleLabel() {
   const button = els.ecoToggleBtn;
   if (!button) return;
   const span = button.querySelector('span');
-  const label = ecoPreference === 'auto' ? 'FX: AUTO' : (ecoPreference === 'on' ? 'FX: LOW' : 'FX: FULL');
+  const systemReduced = prefersReducedMotion.matches;
+  const label = systemReduced ? 'FX: REDUCED' : (ecoPreference === 'auto' ? 'FX: AUTO' : (ecoPreference === 'on' ? 'FX: LOW' : 'FX: FULL'));
   if (span) span.textContent = label;
   button.classList.toggle('eco-active', ecoMode);
   button.setAttribute('aria-pressed', ecoMode ? 'true' : 'false');
-  button.setAttribute('aria-label', `Visual effects mode: ${ecoPreference === 'auto' ? 'automatic' : (ecoPreference === 'on' ? 'reduced' : 'full')}`);
+  button.setAttribute('aria-label', systemReduced
+    ? 'Visual effects mode: reduced by system accessibility preference'
+    : `Visual effects mode: ${ecoPreference === 'auto' ? 'automatic' : (ecoPreference === 'on' ? 'reduced' : 'full')}`);
 }
 
 function scheduleEcoAutoDetect(delay = 700) {
@@ -189,7 +194,7 @@ function cycleEcoPreference() {
   ecoPreference = ecoPreference === 'auto' ? 'on' : (ecoPreference === 'on' ? 'off' : 'auto');
   safeStorageSet(STORAGE_KEYS.eco, ecoPreference);
   ecoMeasureToken += 1;
-  if (ecoPreference === 'on') setEcoMode(true);
+  if (prefersReducedMotion.matches || ecoPreference === 'on') setEcoMode(true);
   else if (ecoPreference === 'off') setEcoMode(false);
   else scheduleEcoAutoDetect(150);
   updateEcoToggleLabel();
@@ -203,7 +208,7 @@ function initEcoMode() {
   const saved = safeStorageGet(STORAGE_KEYS.eco, 'auto');
   ecoPreference = ['auto', 'on', 'off'].includes(saved) ? saved : 'auto';
   els.ecoToggleBtn?.addEventListener('click', cycleEcoPreference);
-  if (ecoPreference === 'on') setEcoMode(true);
+  if (prefersReducedMotion.matches || ecoPreference === 'on') setEcoMode(true);
   else if (ecoPreference === 'off') setEcoMode(false);
   else scheduleEcoAutoDetect(1200);
   updateEcoToggleLabel();
@@ -215,6 +220,13 @@ function initEcoMode() {
     if (document.visibilityState === 'hidden') stopEcoTicker();
     else if (ecoMode) startEcoTicker();
     if (document.visibilityState === 'visible' && ecoPreference === 'auto') scheduleEcoAutoDetect(350);
+  });
+  prefersReducedMotion.addEventListener?.('change', () => {
+    if (prefersReducedMotion.matches) setEcoMode(true);
+    else if (ecoPreference === 'on') setEcoMode(true);
+    else if (ecoPreference === 'off') setEcoMode(false);
+    else scheduleEcoAutoDetect(150);
+    updateEcoToggleLabel();
   });
 }
 

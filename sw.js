@@ -1,7 +1,7 @@
-/* RHW V4.0.2 · PR10 Newswire review service worker
+/* RHW V4.0.2 · PR11 full app audit service worker
    App assets are available offline. Live telemetry remains network-only. */
 const CACHE_PREFIX = 'rhw-v4.0.2-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}2026-08-14-2`;
+const CACHE_NAME = `${CACHE_PREFIX}2026-08-14-3`;
 const CSS_NAMES = [
   'core', 'ticker', 'production', 'responsive', 'shipyard', 'shipyard-detail', 'mobile', 'headings', 'v35',
   'maintenance', 'layout-v36', 'app-v40', 'app-v40-navigation', 'app-v40-composer', 'app-v40-audit',
@@ -9,7 +9,7 @@ const CSS_NAMES = [
   'app-v402-mobile-ui', 'app-pr3-command-mobile', 'app-pr3-yard-production', 'app-pr3-operations-calculator',
   'app-pr3-comms-workflow', 'app-pr3-newswire-manager', 'app-pr4-pwa', 'app-pr5-newswire-2',
   'app-pr6-discovery-sync', 'app-pr7-diagnostics', 'app-pr8-production-orders', 'app-pr9-transfer-center',
-  'app-pr10-newswire-review'
+  'app-pr10-newswire-review', 'app-pr11-full-audit'
 ];
 const APP_SHELL = [
   './', './index.html', './manifest.webmanifest',
@@ -31,6 +31,7 @@ const APP_SHELL = [
   './js/27-app-v40-production-orders.js',
   './js/28-app-v40-transfer-center.js',
   './js/29-app-v40-newswire-review.js',
+  './js/30-app-v40-full-audit.js',
   ...Array.from({ length: 6 }, (_, index) => `./assets/recipes/catalog-v1-part-${String(index + 1).padStart(2, '0')}.js`)
 ];
 

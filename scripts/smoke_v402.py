@@ -15,7 +15,7 @@ base.V4_CSS = [
     "css/25-app-pr3-comms-workflow.css", "css/26-app-pr3-newswire-manager.css",
     "css/27-app-pr4-pwa.css", "css/28-app-pr5-newswire-2.css", "css/29-app-pr6-discovery-sync.css",
     "css/30-app-pr7-diagnostics.css", "css/31-app-pr8-production-orders.css", "css/32-app-pr9-transfer-center.css",
-    "css/33-app-pr10-newswire-review.css",
+    "css/33-app-pr10-newswire-review.css", "css/34-app-pr11-full-audit.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -27,7 +27,7 @@ base.V4_JS = [
     "js/18d-app-v40-final-ui-polish.js", "js/20-app-v402-fixes.js", "js/21-app-v402-qol.js",
     "js/22-app-v402-mobile-ui.js", "js/23-app-v40-pwa.js", "js/24-app-v40-newswire-2.js",
     "js/25-app-v40-discovery-status.js", "js/26-app-v40-diagnostics.js", "js/27-app-v40-production-orders.js",
-    "js/28-app-v40-transfer-center.js", "js/29-app-v40-newswire-review.js",
+    "js/28-app-v40-transfer-center.js", "js/29-app-v40-newswire-review.js", "js/30-app-v40-full-audit.js",
     "js/19-app-v40-runtime.js",
 ]
 MOBILE_WIDTHS = (360, 390, 412, 430)
@@ -864,9 +864,17 @@ def test_pr9_transfer_center(cdp, workspace, node):
         const merged=app.state.drafts.some(draft=>draft.id==='pr9-transfer-smoke');
         const currentKept=app.state.comms.subject==='PR9 LOCAL CURRENT';
         app.transferCenter.previewPayload(payload,'rhw-pr9-layout.json');
+        const dialog=document.getElementById('rhwTransferDialog');
+        const confirm=document.getElementById('rhwTransferConfirmBtn');
+        const close=dialog?.querySelector('header [data-transfer-close]');
+        confirm?.focus();confirm?.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true}));
+        const forwardContained=dialog?.contains(document.activeElement);
+        close?.focus();close?.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true}));
+        const backwardContained=dialog?.contains(document.activeElement);
         return{
           api:!!app.transferCenter,inspection,controls,imported:!!imported,importWarning,merged,currentKept,
           dialogOpen:!document.getElementById('rhwTransferDialog')?.hidden,
+          focusContained:Boolean(forwardContained&&backwardContained),
           privacy:(document.querySelector('.rhw-transfer-privacy')?.textContent||'').includes('PRIVATE FILE'),
           failures:app.transferCenter.selfTest()
         };
@@ -908,7 +916,7 @@ def test_pr9_transfer_center(cdp, workspace, node):
         })()""")
     merge_controls = [control for control in result.get("controls", []) if control.get("mode") == "merge"]
     replace_controls = [control for control in result.get("controls", []) if control.get("mode") == "replace"]
-    if result.get("error") or not result.get("api") or result.get("failures") or not result.get("dialogOpen") or not result.get("privacy"):
+    if result.get("error") or not result.get("api") or result.get("failures") or not result.get("dialogOpen") or not result.get("focusContained") or not result.get("privacy"):
         raise RuntimeError(f"PR9 Transfer Center mount/privacy failed: {result}")
     if not merge_controls or not all(control.get("checked") for control in merge_controls) or not replace_controls or any(control.get("checked") for control in replace_controls):
         raise RuntimeError(f"PR9 safe import defaults failed: {result}")
@@ -993,6 +1001,62 @@ def test_pr10_newswire_review(cdp, workspace, node):
     print("PR10 smoke passed: live diff + QA gate + local restore + Forum-safe review package + mobile handoff")
 
 
+def test_pr11_full_audit(cdp, workspace, node):
+    if (workspace, node) != ("command", "overview"):
+        return
+    cdp.call("Emulation.setDeviceMetricsOverride", {
+        "width": 390, "height": 820, "deviceScaleFactor": 1, "mobile": True,
+    })
+    try:
+        result = base.ev(cdp, """(async()=>{
+          const app=RHWV4,api=app.fullAudit;
+          if(!api)return{error:'Full App Audit API missing'};
+          const results=await api.run();
+          const totals=api.summary(results),report=api.buildReport(results);
+          const route=results.find(item=>item.key==='routes');
+          const privacy=report.includes('PRIVACY: This audit uses synthetic markers')&&!report.includes('PR11 PRIVATE USER MESSAGE');
+          const opener=document.getElementById('rhwDiagnosticsBtn');
+          opener.click();
+          const expandedOpen=opener.getAttribute('aria-expanded');
+          document.getElementById('rhwDiagnosticsClose')?.click();
+          const expandedClosed=opener.getAttribute('aria-expanded');
+          app.navigate('command','inventory');
+          const status=document.getElementById('inventoryStatusTab'),manifest=document.getElementById('inventoryManifestTab');
+          status.focus();
+          status.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+          const tabs={
+            statusIndex:status.tabIndex,manifestIndex:manifest.tabIndex,
+            manifestSelected:manifest.getAttribute('aria-selected'),
+            focused:document.activeElement===manifest,
+            labelled:document.querySelector('[data-inventory-panel="manifest"]')?.getAttribute('aria-labelledby')||'',
+            manifestVisible:!document.querySelector('[data-inventory-panel="manifest"]')?.hidden
+          };
+          app.navigate('command','overview',{replace:true});
+          return{
+            totals,routeStatus:route?.status||'',routeTone:route?.tone||'',privacy,
+            blocking:results.filter(item=>item.tone==='danger').map(item=>({key:item.key,status:item.status,detail:item.detail})),
+            notices:results.filter(item=>item.tone==='warn').map(item=>({key:item.key,status:item.status,detail:item.detail})),
+            expandedOpen,expandedClosed,tabs,
+            metrics:{total:Number(rhwAuditTotal.textContent),pass:Number(rhwAuditPass.textContent),warn:Number(rhwAuditWarn.textContent),fail:Number(rhwAuditFail.textContent)},
+            failures:api.selfTest(),overflow:document.documentElement.scrollWidth-window.innerWidth
+          };
+        })()""")
+    finally:
+        cdp.call("Emulation.clearDeviceMetricsOverride")
+    if result.get("error") or result.get("failures") or result.get("totals", {}).get("fail") != 0:
+        raise RuntimeError(f"PR11 Full App Audit blocking result: {result}")
+    if result.get("routeStatus") != "11 READY" or result.get("routeTone") != "good" or not result.get("privacy"):
+        raise RuntimeError(f"PR11 route/privacy audit failed: {result}")
+    if result.get("metrics") != result.get("totals") or result.get("expandedOpen") != "true" or result.get("expandedClosed") != "false":
+        raise RuntimeError(f"PR11 audit UI/state failed: {result}")
+    tabs = result.get("tabs", {})
+    if tabs.get("statusIndex") != -1 or tabs.get("manifestIndex") != 0 or tabs.get("manifestSelected") != "true" or not tabs.get("focused") or tabs.get("labelled") != "inventoryManifestTab" or not tabs.get("manifestVisible"):
+        raise RuntimeError(f"PR11 Inventory keyboard/ARIA tabs failed: {result}")
+    if result.get("overflow", 0) > 2:
+        raise RuntimeError(f"PR11 audit mobile overflow failed: {result}")
+    print("PR11 smoke passed: 15-part live audit + privacy boundary + SYS CHECK state + Inventory keyboard tabs")
+
+
 def main():
     try:
         chrome, browser, port, folder, _log_path = base.launch()
@@ -1038,6 +1102,7 @@ def main():
                 test_pr8_production_orders(cdp, workspace, node)
                 test_pr9_transfer_center(cdp, workspace, node)
                 test_pr10_newswire_review(cdp, workspace, node)
+                test_pr11_full_audit(cdp, workspace, node)
                 if (workspace, node) == ("comms", "forum"):
                     test_mobile_forum_controls(cdp)
                 run_interactions(cdp, workspace, node)
