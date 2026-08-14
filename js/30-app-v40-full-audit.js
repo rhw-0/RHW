@@ -229,7 +229,10 @@
         : makeResult('local-save', 'LOCAL SAVE PROBE', 'danger', 'READBACK FAILED', 'Temporary device storage did not return the written probe.');
     } catch {
       try { localStorage.removeItem(key); } catch {}
-      return makeResult('local-save', 'LOCAL SAVE PROBE', 'danger', 'UNAVAILABLE', 'Browser storage is blocked or unavailable.');
+      const deployedOrigin = ['http:', 'https:'].includes(location.protocol);
+      return deployedOrigin
+        ? makeResult('local-save', 'LOCAL SAVE PROBE', 'danger', 'UNAVAILABLE', 'Browser storage is blocked or unavailable.')
+        : makeResult('local-save', 'LOCAL SAVE PROBE', 'warn', 'NOT TESTABLE', 'This non-web test origin does not provide browser storage.');
     }
   }
 

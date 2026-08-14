@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 global.window = globalThis;
 global.innerWidth = 390;
 global.innerHeight = 820;
+global.location = { protocol: 'https:' };
 window.RHWV4 = {
   version: 'V4.0.2',
   util: { escape: value => String(value) },
