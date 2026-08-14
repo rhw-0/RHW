@@ -33,7 +33,7 @@ V4_RUNTIME_ASSETS = [
     './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
     './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css', './css/28-app-pr5-newswire-2.css',
     './css/29-app-pr6-discovery-sync.css', './css/30-app-pr7-diagnostics.css', './css/31-app-pr8-production-orders.css',
-    './css/32-app-pr9-transfer-center.css', './css/33-app-pr10-newswire-review.css',
+    './css/32-app-pr9-transfer-center.css', './css/33-app-pr10-newswire-review.css', './css/34-app-pr11-full-audit.css',
     './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
     './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js', './js/16b-app-v40-newswire-manager.js',
     './js/16c-app-v40-newswire-ordering.js',
@@ -44,10 +44,10 @@ V4_RUNTIME_ASSETS = [
     './js/18d-app-v40-final-ui-polish.js', './js/20-app-v402-fixes.js', './js/21-app-v402-qol.js',
     './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js', './js/24-app-v40-newswire-2.js',
     './js/25-app-v40-discovery-status.js', './js/26-app-v40-diagnostics.js', './js/27-app-v40-production-orders.js',
-    './js/28-app-v40-transfer-center.js', './js/29-app-v40-newswire-review.js',
+    './js/28-app-v40-transfer-center.js', './js/29-app-v40-newswire-review.js', './js/30-app-v40-full-audit.js',
     './js/19-app-v40-runtime.js',
 ]
-V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py', './scripts/test_production_orders.js', './scripts/test_transfer_center.js', './scripts/test_newswire_review.js']
+V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py', './scripts/test_production_orders.js', './scripts/test_transfer_center.js', './scripts/test_newswire_review.js', './scripts/test_full_audit.js', './docs/full-app-audit.md']
 DISCOVERY_SYNC_ASSETS = [
     './assets/discovery-status.json', './docs/discovery-sync-report.md',
     './scripts/sync_discovery_catalog.py', './scripts/test_discovery_sync.py',
@@ -180,11 +180,11 @@ def main() -> int:
         './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css',
         './css/28-app-pr5-newswire-2.css', './css/29-app-pr6-discovery-sync.css',
         './css/30-app-pr7-diagnostics.css', './css/31-app-pr8-production-orders.css',
-        './css/32-app-pr9-transfer-center.css', './css/33-app-pr10-newswire-review.css',
+        './css/32-app-pr9-transfer-center.css', './css/33-app-pr10-newswire-review.css', './css/34-app-pr11-full-audit.css',
         './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js',
         './js/24-app-v40-newswire-2.js', './js/25-app-v40-discovery-status.js',
         './js/26-app-v40-diagnostics.js', './js/27-app-v40-production-orders.js',
-        './js/28-app-v40-transfer-center.js', './js/29-app-v40-newswire-review.js'
+        './js/28-app-v40-transfer-center.js', './js/29-app-v40-newswire-review.js', './js/30-app-v40-full-audit.js'
     ), 'V4 bootstrap failure UI')
     require_tokens(errors, 'js/22-app-v402-mobile-ui.js', (
         'commsMobileView', 'setForumView', 'commsMobileViewSwitch', "['write', 'preview', 'bbcode']"
@@ -321,7 +321,7 @@ def main() -> int:
         'test_backup_and_storage', 'test_mobile_forum_controls', 'test_pr3_decision_ui',
         'test_pr3_calculator_ui', 'test_pr3_comms_workflow', 'test_pr4_pwa', 'test_pr5_newswire2',
         'test_pr6_discovery_status', 'test_pr7_diagnostics', 'test_pr8_production_orders',
-        'test_pr9_transfer_center', 'test_pr10_newswire_review',
+        'test_pr9_transfer_center', 'test_pr10_newswire_review', 'test_pr11_full_audit',
         'v40NewswireRecoveryState',
         'RHWV4.newswireOrdering.setFilter', 'take_runtime_failures'
     ), 'V4.0.2 + PR1 browser smoke')
@@ -340,7 +340,7 @@ def main() -> int:
     ), 'V4 OPERATIONS UI')
     require_tokens(errors, 'js/19-app-v40-runtime.js', (
         'workspaceOperations', 'operations-calculator', '__RHW_V4_SMOKE__', 'app.commsSafety?.init()',
-        'app.discoveryStatus?.init()', 'app.diagnostics?.init?.()', 'app.runtime'
+        'app.discoveryStatus?.init()', 'app.diagnostics?.init?.()', 'app.fullAudit?.init?.()', 'app.runtime'
     ), 'V4 runtime')
     require_tokens(errors, 'js/27-app-v40-production-orders.js', (
         'PRODUCTION ORDER BOARD', 'productionOrders', 'buildReport', 'buildBbcode',
@@ -377,6 +377,19 @@ def main() -> int:
         'One bulletin must be reported as added', 'Package summary must include edits',
         'Forum parity', 'Version history must be capped locally'
     ), 'PR10 Newswire review model tests')
+    require_tokens(errors, 'js/30-app-v40-full-audit.js', (
+        'FULL APP AUDIT', 'EXPECTED_ROUTES', 'ROUTE TOPOLOGY', 'DOM IDENTITY + LINKS',
+        'TOUCH TARGETS', 'FORUM BB CODE', 'NEWSWIRE CHANNELS', 'PRODUCTION FORUM REPORT',
+        'PRIVACY: This audit uses synthetic markers', 'app.fullAudit'
+    ), 'PR11 full app audit runtime')
+    require_tokens(errors, 'css/34-app-pr11-full-audit.css', (
+        '.rhw-full-audit', '.rhw-full-audit-result', 'min-height:44px', 'min-height:48px',
+        '@media(max-width:390px)', '@media(prefers-reduced-motion:reduce)'
+    ), 'PR11 full app audit presentation')
+    require_tokens(errors, 'scripts/test_full_audit.js', (
+        'Route model must cover all 11 app destinations', 'Summary must separate pass, notice and fail states',
+        'Audit report must not introduce user content'
+    ), 'PR11 full app audit model tests')
     require_tokens(errors, 'scripts/build_recipe_catalog.py', (
         "parser.add_argument('--chunks'", 'def write_catalog(', 'chunk_count = max(1, int(chunk_count))',
         "if ''.join(chunks) != encoded", 'def read_catalog('

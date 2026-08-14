@@ -65,6 +65,8 @@
     (app.discoveryStatus?.selfTest?.() || []).forEach(failure => failures.push(`discovery:${failure}`));
     if (typeof app.diagnostics?.init !== 'function') failures.push('module:diagnostics');
     (app.diagnostics?.selfTest?.() || []).forEach(failure => failures.push(`diagnostics:${failure}`));
+    if (typeof app.fullAudit?.run !== 'function') failures.push('module:full-audit');
+    (app.fullAudit?.selfTest?.() || []).forEach(failure => failures.push(`full-audit:${failure}`));
     if (!app.operationsCore?.state?.catalog?.meta?.recipeCount) failures.push('feature:recipe-catalog');
     const bustardAlias = app.operations?.recipeAliases?.ship_assembly_dsy_barge;
     if (!bustardAlias || bustardAlias.outputId !== 'dsy_barge_package' || !app.operationsCore?.recipe?.('ship_assembly_dsy_barge')) failures.push('feature:bustard-recipe-alias');
@@ -131,6 +133,7 @@
       await app.operations?.init();
       await app.discoveryStatus?.init();
       if (!app.diagnostics?.init?.()) throw new Error('RHW SYSTEM CHECK COULD NOT MOUNT');
+      if (!app.fullAudit?.init?.()) throw new Error('RHW FULL APP AUDIT COULD NOT MOUNT');
       app.applyRoute({ replace: true });
       if (!app.navHierarchy?.init?.()) throw new Error('V4 NAVIGATION HIERARCHY COULD NOT MOUNT');
       app.commsSafety?.polishOperations?.();

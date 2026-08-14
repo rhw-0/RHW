@@ -44,11 +44,11 @@
       <span>STATUS + STOCK + MARKET VALUES</span>
     </header>
     <div class="inventory-view-nav" role="tablist" aria-label="Inventory views">
-      <button type="button" role="tab" aria-controls="inventoryStatusPanel" data-inventory-view="status"><span>STATUS BOARD</span><small>FACILITY + EXPORT + FEEDSTOCK</small></button>
-      <button type="button" role="tab" aria-controls="inventoryManifestPanel" data-inventory-view="manifest"><span>FULL MANIFEST</span><small>SEARCH + FILTER + PRICES</small></button>
+      <button type="button" id="inventoryStatusTab" role="tab" aria-controls="inventoryStatusPanel" data-inventory-view="status"><span>STATUS BOARD</span><small>FACILITY + EXPORT + FEEDSTOCK</small></button>
+      <button type="button" id="inventoryManifestTab" role="tab" aria-controls="inventoryManifestPanel" data-inventory-view="manifest"><span>FULL MANIFEST</span><small>SEARCH + FILTER + PRICES</small></button>
     </div>
-    <section id="inventoryStatusPanel" class="inventory-view-panel" role="tabpanel" data-inventory-panel="status"><div class="inventory-mobile-hint" aria-hidden="true"><span>SWIPE STATUS CARDS</span><i></i></div></section>
-    <section id="inventoryManifestPanel" class="inventory-view-panel" role="tabpanel" data-inventory-panel="manifest" hidden></section>`;
+    <section id="inventoryStatusPanel" class="inventory-view-panel" role="tabpanel" aria-labelledby="inventoryStatusTab" data-inventory-panel="status"><div class="inventory-mobile-hint" aria-hidden="true"><span>SWIPE STATUS CARDS</span><i></i></div></section>
+    <section id="inventoryManifestPanel" class="inventory-view-panel" role="tabpanel" aria-labelledby="inventoryManifestTab" data-inventory-panel="manifest" hidden></section>`;
   }
 
   function safeOperationalItems() {
@@ -208,6 +208,7 @@
       const active = button.dataset.inventoryView === valid;
       button.classList.toggle('active', active);
       button.setAttribute('aria-selected', active ? 'true' : 'false');
+      button.tabIndex = active ? 0 : -1;
     });
   }
 
@@ -278,6 +279,19 @@
       if (node) app.navigate('command', node);
     });
     panels.inventory.addEventListener('click', event => { const button = event.target.closest('[data-inventory-view]'); if (button) activateInventoryView(button.dataset.inventoryView); });
+    panels.inventory.querySelector('.inventory-view-nav')?.addEventListener('keydown', event => {
+      const button = event.target.closest('[data-inventory-view]');
+      if (!button || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      const tabs = [...panels.inventory.querySelectorAll('[data-inventory-view]')];
+      if (!tabs.length) return;
+      event.preventDefault();
+      const current = Math.max(0, tabs.indexOf(button));
+      const next = event.key === 'Home' ? tabs[0]
+        : event.key === 'End' ? tabs[tabs.length - 1]
+          : tabs[(current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
+      activateInventoryView(next.dataset.inventoryView);
+      next.focus();
+    });
 
     activateInventoryView(app.store.get(app.config.storageKeys.inventoryView, 'status'));
     updateOverview();

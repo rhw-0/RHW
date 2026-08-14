@@ -20,7 +20,7 @@ V4_CSS = [
     "css/16-app-v40-operations.css","css/17-app-v40-calculator-polish.css","css/18-app-v40-nav-hierarchy.css",
     "css/19-app-v402-fixes.css","css/20-app-v402-qol.css","css/21-app-v402-mobile-ui.css",
     "css/29-app-pr6-discovery-sync.css","css/30-app-pr7-diagnostics.css","css/31-app-pr8-production-orders.css",
-    "css/32-app-pr9-transfer-center.css","css/33-app-pr10-newswire-review.css",
+    "css/32-app-pr9-transfer-center.css","css/33-app-pr10-newswire-review.css","css/34-app-pr11-full-audit.css",
 ]
 V4_JS = [
     "js/12-app-config.js","js/13-app-v40.js","js/14-app-v40-cache.js","js/15-app-v40-navigation.js",
@@ -32,7 +32,7 @@ V4_JS = [
     "js/18d-app-v40-final-ui-polish.js","js/20-app-v402-fixes.js","js/21-app-v402-qol.js",
     "js/22-app-v402-mobile-ui.js","js/23-app-v40-pwa.js","js/24-app-v40-newswire-2.js",
     "js/25-app-v40-discovery-status.js","js/26-app-v40-diagnostics.js","js/27-app-v40-production-orders.js",
-    "js/28-app-v40-transfer-center.js","js/29-app-v40-newswire-review.js","js/19-app-v40-runtime.js",
+    "js/28-app-v40-transfer-center.js","js/29-app-v40-newswire-review.js","js/30-app-v40-full-audit.js","js/19-app-v40-runtime.js",
 ]
 
 def free_port():

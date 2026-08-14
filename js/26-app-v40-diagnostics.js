@@ -1,5 +1,5 @@
 /* ==========================================================================
-   RHW WEB APP · PR7 SYSTEM CHECK
+   RHW WEB APP · PR11 SYSTEM CHECK + FULL APP AUDIT HOST
    Content-free health report for runtime, storage, data and installed-app state.
    ========================================================================== */
 (function initRhwV40Diagnostics() {
@@ -191,6 +191,7 @@
     render();
     setActionStatus('NO USER CONTENT IS INCLUDED IN THIS CHECK');
     panel.hidden = false;
+    document.getElementById('rhwDiagnosticsBtn')?.setAttribute('aria-expanded', 'true');
     document.body.classList.add('rhw-diagnostics-open');
     document.getElementById('rhwDiagnosticsClose')?.focus();
   }
@@ -199,6 +200,7 @@
     const panel = document.getElementById('rhwDiagnosticsPanel');
     if (panel) panel.hidden = true;
     document.body.classList.remove('rhw-diagnostics-open');
+    document.getElementById('rhwDiagnosticsBtn')?.setAttribute('aria-expanded', 'false');
     state.openedBy?.focus?.();
     state.openedBy = null;
   }
@@ -213,6 +215,8 @@
     button.className = 'rhw-diagnostics-button';
     button.type = 'button';
     button.setAttribute('aria-haspopup', 'dialog');
+    button.setAttribute('aria-controls', 'rhwDiagnosticsPanel');
+    button.setAttribute('aria-expanded', 'false');
     button.innerHTML = '<span>SYS CHECK</span><small>APP HEALTH</small>';
     const installButton = document.getElementById('rhwPwaInstallBtn');
     if (installButton) brand.insertBefore(button, installButton);
@@ -221,7 +225,7 @@
     document.body.insertAdjacentHTML('beforeend', `<aside class="rhw-diagnostics-overlay" id="rhwDiagnosticsPanel" role="dialog" aria-modal="true" aria-labelledby="rhwDiagnosticsTitle" hidden>
       <section class="rhw-diagnostics-sheet">
         <header class="rhw-diagnostics-head">
-          <div><small>PR7 / RELIABILITY CENTER</small><strong id="rhwDiagnosticsTitle">RHW SYSTEM CHECK</strong><span>RUNTIME // STORAGE // DATA // INSTALLED APP</span></div>
+          <div><small>PR11 / RELIABILITY + FULL APP AUDIT</small><strong id="rhwDiagnosticsTitle">RHW SYSTEM CHECK</strong><span>RUNTIME // STORAGE // DATA // UI // WORKFLOWS</span></div>
           <button type="button" id="rhwDiagnosticsClose" aria-label="Close system check">CLOSE</button>
         </header>
         <div class="rhw-diagnostics-overall" id="rhwDiagnosticsOverall" data-tone="muted" role="status" aria-live="polite"><i aria-hidden="true"></i><div><strong>CHECKING SYSTEMS</strong><span>Collecting content-free app status.</span></div></div>
