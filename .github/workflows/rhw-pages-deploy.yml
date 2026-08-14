@@ -33,6 +33,9 @@ jobs:
             node --check "${file}"
           done
 
+      - name: Validate Production Order model
+        run: node scripts/test_production_orders.js
+
       - name: Install smoke-test client
         run: python3 -m pip install --disable-pip-version-check --quiet websocket-client
 

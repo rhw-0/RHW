@@ -14,7 +14,7 @@ base.V4_CSS = [
     "css/23-app-pr3-yard-production.css", "css/24-app-pr3-operations-calculator.css",
     "css/25-app-pr3-comms-workflow.css", "css/26-app-pr3-newswire-manager.css",
     "css/27-app-pr4-pwa.css", "css/28-app-pr5-newswire-2.css", "css/29-app-pr6-discovery-sync.css",
-    "css/30-app-pr7-diagnostics.css",
+    "css/30-app-pr7-diagnostics.css", "css/31-app-pr8-production-orders.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -25,7 +25,7 @@ base.V4_JS = [
     "js/18b-app-v40-production-pricing.js", "js/18c-app-v40-recipe-corrections.js",
     "js/18d-app-v40-final-ui-polish.js", "js/20-app-v402-fixes.js", "js/21-app-v402-qol.js",
     "js/22-app-v402-mobile-ui.js", "js/23-app-v40-pwa.js", "js/24-app-v40-newswire-2.js",
-    "js/25-app-v40-discovery-status.js", "js/26-app-v40-diagnostics.js",
+    "js/25-app-v40-discovery-status.js", "js/26-app-v40-diagnostics.js", "js/27-app-v40-production-orders.js",
     "js/19-app-v40-runtime.js",
 ]
 MOBILE_WIDTHS = (360, 390, 412, 430)
@@ -272,6 +272,7 @@ def test_backup_and_storage(cdp):
         app.newswireManager.applyAdd({category:'security',tone:'warn',tag:'RECOVERY TEST',message:'DURABLE LOCAL DRAFT'});
         app.store.set(k.calculatorPriceProfiles,[{id:'pr1-profile',name:'PR1 Market',prices:{steel:1234},updatedAt:42}]);
         app.store.set(k.shipyardPlanner,{target:'dunkirk',quantity:3});
+        app.productionOrders.restore([{id:'backup-order',productId:'dsy_br_battleship_package',recipeId:'ship_assembly_dsy_br_battleship',quantity:2,affiliationId:'br_m_grp',priority:'high',productName:'Backup Hull',createdAt:42,updatedAt:42}]);
         app.store.set(k.activeWorkspace,'comms');
         app.store.set(k.commsMobileView,'preview');
         const payload=app.storage.exportPayload();
@@ -288,6 +289,7 @@ def test_backup_and_storage(cdp):
           version:payload.version,
           profile:app.store.get(k.calculatorPriceProfiles,[])[0]?.name||'',
           planner:app.store.get(k.shipyardPlanner,null),
+          orders:app.productionOrders.snapshot(),
           draft:restoredDraft?.entries?.some(entry=>entry.tag==='RECOVERY TEST')||false,
           changed:app.newswireManager.state.draftSourceChanged,
           mobileView:app.store.get(k.commsMobileView,''),
@@ -302,9 +304,9 @@ def test_backup_and_storage(cdp):
         app.store.remove=original.remove;
       }
     })()""")
-    if result.get("error") or result.get("version") != 2 or result.get("profile") != "PR1 Market" or result.get("planner", {}).get("quantity") != 3 or not result.get("draft") or not result.get("changed") or result.get("mobileView") != "preview" or not all(result.get("warning", {}).values()) or "legacy" not in result:
-        raise RuntimeError(f"V2 local backup / storage warning failed: {result}")
-    print("V4.0.2 + PR2 smoke passed: V2 backup, V1 import, durable Newswire draft, storage warning")
+    if result.get("error") or result.get("version") != 3 or result.get("profile") != "PR1 Market" or result.get("planner", {}).get("quantity") != 3 or len(result.get("orders", [])) != 1 or result.get("orders", [{}])[0].get("productName") != "Backup Hull" or not result.get("draft") or not result.get("changed") or result.get("mobileView") != "preview" or not all(result.get("warning", {}).values()) or "legacy" not in result:
+        raise RuntimeError(f"V3 local backup / storage warning failed: {result}")
+    print("V4.0.2 + PR8 smoke passed: V3 backup with production orders, V1 import, durable Newswire draft, storage warning")
 
 def test_v402(cdp, workspace, node):
     if (workspace, node) == ("command", "overview"):
@@ -733,6 +735,107 @@ def test_pr7_diagnostics(cdp, workspace, node):
     print("PR7 smoke passed: mobile system check + private report + cache recovery + Clipboard truth-state")
 
 
+def test_pr8_production_orders(cdp, workspace, node):
+    if (workspace, node) != ("operations", "orders"):
+        return
+    cdp.call("Emulation.setDeviceMetricsOverride", {
+        "width": 390, "height": 844, "deviceScaleFactor": 1, "mobile": True,
+    })
+    try:
+        result = base.ev(cdp, """(()=>{
+          const app=RHWV4,api=app.productionOrders,core=app.operationsCore;
+          const originals={verified:window.hasVerifiedTelemetry,find:window.findCommodity,quantity:window.quantity,confirm:window.confirm};
+          const originalStore={get:app.store.get,set:app.store.set};
+          const storageMemory=new Map();
+          let snapshot={};
+          try{
+            const clone=value=>value===undefined?undefined:JSON.parse(JSON.stringify(value));
+            app.store.get=(key,fallback=null)=>storageMemory.has(key)?clone(storageMemory.get(key)):fallback;
+            app.store.set=(key,value)=>{storageMemory.set(key,clone(value));return true};
+            window.hasVerifiedTelemetry=()=>true;
+            window.findCommodity=value=>({id:String(value||''),name:String(value||'')});
+            window.quantity=()=>0;
+            window.confirm=()=>true;
+            api.clear();
+
+            app.navigate('operations','calculator');
+            app.operations.renderCalculator();
+            document.getElementById('opsAddProductionOrder')?.click();
+            const bridgeCount=api.snapshot().length;
+            api.clear();
+            app.navigate('operations','orders');
+
+            const candidates=[];
+            for(const recipe of core.state.catalog.recipes){
+              const output=recipe.outputs?.[0];
+              const allowed=output?.id&&(recipe.inputs||[]).length>0&&(!recipe.restricted||(recipe.bonuses||[]).some(bonus=>bonus.id==='br_m_grp'));
+              if(allowed&&!candidates.some(entry=>entry.outputs?.[0]?.id===output.id))candidates.push(recipe);
+              if(candidates.length===2)break;
+            }
+            const inputs=candidates.map((recipe,index)=>({
+              productId:recipe.outputs[0].id,recipeId:recipe.id,quantity:index+2,affiliationId:'br_m_grp',
+              priority:index===0?'normal':'urgent',productName:core.product(recipe.outputs[0].id).name,recipeName:recipe.name
+            }));
+            const expected=new Map();
+            inputs.forEach(input=>{
+              const plan=core.buildPlan({...input,useInventory:false,recursive:false,routingPolicy:'first',altSelections:{}});
+              (plan.directRequirements||[]).forEach(row=>{
+                const id=row.item?.id||row.item?.name;
+                expected.set(id,(expected.get(id)||0)+Number(row.required||0));
+              });
+              api.add(input);
+            });
+            const report=api.buildReport();
+            api.render();
+            const actual=new Map(report.materials.map(row=>[row.id,row.required]));
+            const materialParity=expected.size===actual.size&&[...expected].every(([id,required])=>actual.get(id)===required);
+            const names=report.orders.map(entry=>entry.productName);
+            const bbcode=document.getElementById('productionOrdersBbcode')?.value||'';
+            const visible=element=>{
+              const style=getComputedStyle(element),rect=element.getBoundingClientRect();
+              return style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0;
+            };
+            const controls=[...document.querySelectorAll('.production-orders-dashboard button,.production-orders-dashboard select,.production-orders-dashboard input')]
+              .filter(visible).map(element=>element.getBoundingClientRect().height);
+            snapshot={
+              api:!!api,panel:!!document.querySelector('[data-operations-panel="orders"]:not([hidden])'),
+              route:location.hash,bridgeCount,orders:report.orders.length,priority:report.orders[0]?.order.priority,
+              materials:report.materials.length,materialParity,
+              zeroStockGaps:report.materials.every(row=>row.stock===0&&row.deficit===row.required),
+              persisted:(app.store.get(app.config.storageKeys.productionOrders,[])||[]).length,
+              cards:document.querySelectorAll('.production-order-card').length,
+              forumNames:[...document.querySelectorAll('[data-forum-order-name]')].map(node=>node.textContent.trim()),
+              names,bbcodeParity:names.every(name=>bbcode.includes(name))&&bbcode.includes('AGGREGATED DIRECT MATERIALS'),
+              touch:controls,overflow:document.documentElement.scrollWidth-window.innerWidth,
+              failures:api.selfTest()
+            };
+          }catch(error){snapshot={error:String(error?.stack||error)};}
+          finally{
+            try{api.clear()}catch{}
+            window.hasVerifiedTelemetry=originals.verified;
+            window.findCommodity=originals.find;
+            window.quantity=originals.quantity;
+            window.confirm=originals.confirm;
+            app.store.get=originalStore.get;
+            app.store.set=originalStore.set;
+          }
+          return snapshot;
+        })()""")
+    finally:
+        cdp.call("Emulation.clearDeviceMetricsOverride")
+    if result.get("error") or not result.get("api") or not result.get("panel") or result.get("route") != "#operations/orders" or result.get("bridgeCount") != 1:
+        raise RuntimeError(f"PR8 production-order route/Calculator bridge failed: {result}")
+    if result.get("orders") != 2 or result.get("priority") != "urgent" or result.get("persisted") != 2 or result.get("cards") != 2 or result.get("failures"):
+        raise RuntimeError(f"PR8 priority queue/local persistence failed: {result}")
+    if result.get("materials", 0) <= 0 or not result.get("materialParity") or not result.get("zeroStockGaps"):
+        raise RuntimeError(f"PR8 material aggregation/verified bottleneck failed: {result}")
+    if result.get("forumNames") != result.get("names") or not result.get("bbcodeParity"):
+        raise RuntimeError(f"PR8 visual Forum/BBCode parity failed: {result}")
+    if result.get("overflow", 0) > 2 or any(height < 43.5 for height in result.get("touch", [])):
+        raise RuntimeError(f"PR8 mobile touch/overflow failed: {result}")
+    print("PR8 smoke passed: Calculator bridge + priority queue + shared materials + Forum parity + mobile controls")
+
+
 def main():
     try:
         chrome, browser, port, folder, _log_path = base.launch()
@@ -775,6 +878,7 @@ def main():
                 test_pr5_newswire2(cdp, workspace, node)
                 test_pr6_discovery_status(cdp, workspace, node)
                 test_pr7_diagnostics(cdp, workspace, node)
+                test_pr8_production_orders(cdp, workspace, node)
                 if (workspace, node) == ("comms", "forum"):
                     test_mobile_forum_controls(cdp)
                 run_interactions(cdp, workspace, node)

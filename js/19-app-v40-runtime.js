@@ -55,6 +55,8 @@
     if (typeof app.command?.activate !== 'function') failures.push('module:command');
     if (typeof app.operations?.activate !== 'function') failures.push('module:operations');
     if (typeof app.operationsCore?.buildPlan !== 'function') failures.push('feature:operations-planner');
+    if (typeof app.productionOrders?.buildReport !== 'function') failures.push('module:production-orders');
+    (app.productionOrders?.selfTest?.() || []).forEach(failure => failures.push(`orders:${failure}`));
     if (typeof app.discoveryStatus?.init !== 'function') failures.push('module:discovery-status');
     (app.discoveryStatus?.selfTest?.() || []).forEach(failure => failures.push(`discovery:${failure}`));
     if (typeof app.diagnostics?.init !== 'function') failures.push('module:diagnostics');
@@ -88,6 +90,7 @@
     (app.mobileUi?.selfTest?.() || []).forEach(failure => failures.push(`mobile:${failure}`));
     if (!document.querySelector('[data-command-panel="overview"]')) failures.push('route:command-overview');
     if (!document.querySelector('[data-operations-panel="calculator"]')) failures.push('route:operations-calculator');
+    if (!document.querySelector('[data-operations-panel="orders"]')) failures.push('route:operations-orders');
     if (!document.querySelector('[data-comms-panel="ticker"]')) failures.push('route:comms-ticker');
     return failures;
   }

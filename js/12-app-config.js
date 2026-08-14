@@ -12,6 +12,7 @@ const RHW_APP_CONFIG = Object.freeze({
     operationsNode: 'rhw-webapp-v4:operations-node',
     calculatorState: 'rhw-webapp-v4:calculator-state',
     calculatorPriceProfiles: 'rhw-webapp-v4:calculator-price-profiles',
+    productionOrders: 'rhw-webapp-v4:production-orders',
     shipyardPlanner: 'rhw-webapp-v4:shipyard-planner',
     commsNode: 'rhw-webapp-v4:comms-node',
     commsCurrent: 'rhw-webapp-v4:comms-current',

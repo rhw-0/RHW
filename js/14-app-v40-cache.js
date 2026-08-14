@@ -205,7 +205,7 @@
 
   function importPayload(raw) {
     const version = Number(raw?.version);
-    if (!raw || raw.format !== 'rhw-webapp-local-cache' || ![1, 2].includes(version)) {
+    if (!raw || raw.format !== 'rhw-webapp-local-cache' || ![1, 2, 3].includes(version)) {
       throw new Error('UNSUPPORTED CACHE FILE');
     }
     const incomingSenders = (Array.isArray(raw.localSenders) ? raw.localSenders : []).map(normalizeSender).filter(Boolean);
@@ -238,11 +238,16 @@
         else requireStored(keys.newswireManagerDraft, raw.newswireDraft);
       }
     }
+    if (version >= 3 && Array.isArray(raw.productionOrders)) {
+      if (app.productionOrders?.importOrders) app.productionOrders.importOrders(raw.productionOrders);
+      else requireStored(keys.productionOrders, raw.productionOrders);
+    }
     return {
       drafts: app.state.drafts.length,
       senders: app.state.localSenders.length,
       priceProfiles: (app.store.get(keys.calculatorPriceProfiles, []) || []).length,
-      newswireDraft: Boolean(app.store.get(keys.newswireManagerDraft, null))
+      newswireDraft: Boolean(app.store.get(keys.newswireManagerDraft, null)),
+      productionOrders: (app.store.get(keys.productionOrders, []) || []).length
     };
   }
 
@@ -251,7 +256,7 @@
     saveCurrent();
     return {
       format: 'rhw-webapp-local-cache',
-      version: 2,
+      version: 3,
       appVersion: app.version,
       exportedAt: new Date().toISOString(),
       current: app.state.comms,
@@ -259,6 +264,7 @@
       localSenders: app.state.localSenders,
       priceProfiles: app.store.get(keys.calculatorPriceProfiles, []) || [],
       shipyardPlanner: app.store.get(keys.shipyardPlanner, null),
+      productionOrders: app.productionOrders?.snapshot?.() || app.store.get(keys.productionOrders, []) || [],
       newswireDraft: app.newswireManager?.draftPayload?.() || app.store.get(keys.newswireManagerDraft, null),
       preferences: portablePreferences()
     };
