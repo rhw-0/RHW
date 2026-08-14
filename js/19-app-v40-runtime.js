@@ -57,6 +57,8 @@
     if (typeof app.operationsCore?.buildPlan !== 'function') failures.push('feature:operations-planner');
     if (typeof app.productionOrders?.buildReport !== 'function') failures.push('module:production-orders');
     (app.productionOrders?.selfTest?.() || []).forEach(failure => failures.push(`orders:${failure}`));
+    if (typeof app.transferCenter?.previewFile !== 'function') failures.push('module:transfer-center');
+    (app.transferCenter?.selfTest?.() || []).forEach(failure => failures.push(`transfer:${failure}`));
     if (typeof app.discoveryStatus?.init !== 'function') failures.push('module:discovery-status');
     (app.discoveryStatus?.selfTest?.() || []).forEach(failure => failures.push(`discovery:${failure}`));
     if (typeof app.diagnostics?.init !== 'function') failures.push('module:diagnostics');
@@ -120,6 +122,7 @@
       if (!app.installShell()) throw new Error('V4 APP SHELL COULD NOT FIND THE STABLE DASHBOARD MOUNTS');
       app.command?.init();
       app.comms?.init();
+      if (!app.transferCenter?.init?.()) throw new Error('RHW TRANSFER CENTER COULD NOT MOUNT');
       app.commsSafety?.init();
       installDesktopReadabilityCoverage();
       await app.operations?.init();

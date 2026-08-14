@@ -14,7 +14,7 @@ base.V4_CSS = [
     "css/23-app-pr3-yard-production.css", "css/24-app-pr3-operations-calculator.css",
     "css/25-app-pr3-comms-workflow.css", "css/26-app-pr3-newswire-manager.css",
     "css/27-app-pr4-pwa.css", "css/28-app-pr5-newswire-2.css", "css/29-app-pr6-discovery-sync.css",
-    "css/30-app-pr7-diagnostics.css", "css/31-app-pr8-production-orders.css",
+    "css/30-app-pr7-diagnostics.css", "css/31-app-pr8-production-orders.css", "css/32-app-pr9-transfer-center.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",
@@ -26,6 +26,7 @@ base.V4_JS = [
     "js/18d-app-v40-final-ui-polish.js", "js/20-app-v402-fixes.js", "js/21-app-v402-qol.js",
     "js/22-app-v402-mobile-ui.js", "js/23-app-v40-pwa.js", "js/24-app-v40-newswire-2.js",
     "js/25-app-v40-discovery-status.js", "js/26-app-v40-diagnostics.js", "js/27-app-v40-production-orders.js",
+    "js/28-app-v40-transfer-center.js",
     "js/19-app-v40-runtime.js",
 ]
 MOBILE_WIDTHS = (360, 390, 412, 430)
@@ -304,9 +305,9 @@ def test_backup_and_storage(cdp):
         app.store.remove=original.remove;
       }
     })()""")
-    if result.get("error") or result.get("version") != 3 or result.get("profile") != "PR1 Market" or result.get("planner", {}).get("quantity") != 3 or len(result.get("orders", [])) != 1 or result.get("orders", [{}])[0].get("productName") != "Backup Hull" or not result.get("draft") or not result.get("changed") or result.get("mobileView") != "preview" or not all(result.get("warning", {}).values()) or "legacy" not in result:
-        raise RuntimeError(f"V3 local backup / storage warning failed: {result}")
-    print("V4.0.2 + PR8 smoke passed: V3 backup with production orders, V1 import, durable Newswire draft, storage warning")
+    if result.get("error") or result.get("version") != 4 or result.get("profile") != "PR1 Market" or result.get("planner", {}).get("quantity") != 3 or len(result.get("orders", [])) != 1 or result.get("orders", [{}])[0].get("productName") != "Backup Hull" or not result.get("draft") or not result.get("changed") or result.get("mobileView") != "preview" or not all(result.get("warning", {}).values()) or "legacy" not in result:
+        raise RuntimeError(f"V4 local backup / storage warning failed: {result}")
+    print("V4.0.2 + PR9 smoke passed: V4 backup with production orders, V1 import, durable Newswire draft, storage warning")
 
 def test_v402(cdp, workspace, node):
     if (workspace, node) == ("command", "overview"):
@@ -836,6 +837,79 @@ def test_pr8_production_orders(cdp, workspace, node):
     print("PR8 smoke passed: Calculator bridge + priority queue + shared materials + Forum parity + mobile controls")
 
 
+def test_pr9_transfer_center(cdp, workspace, node):
+    if (workspace, node) != ("comms", "drafts"):
+        return
+    result = base.ev(cdp, """(()=>{
+      const app=RHWV4,clone=value=>JSON.parse(JSON.stringify(value));
+      const original={current:clone(app.state.comms),drafts:clone(app.state.drafts)};
+      window.__RHW_PR9_SMOKE_RESTORE__=original;
+      try{
+        app.state.comms.subject='PR9 LOCAL CURRENT';
+        const payload=app.storage.exportPayload();
+        payload.current.subject='PR9 REMOTE CURRENT';
+        payload.drafts.push({id:'pr9-transfer-smoke',name:'PR9 REMOTE DRAFT',updatedAt:Date.now()+1000,state:app.storage.defaultState()});
+        const inspection=app.transferCenter.previewPayload(payload,'rhw-pr9-smoke.json');
+        const controls=[...document.querySelectorAll('#rhwTransferSectionList input')].map(input=>({
+          key:input.value,checked:input.checked,mode:input.closest('.rhw-transfer-section')?.dataset.mode||''
+        }));
+        const imported=app.transferCenter.confirmImport();
+        const merged=app.state.drafts.some(draft=>draft.id==='pr9-transfer-smoke');
+        const currentKept=app.state.comms.subject==='PR9 LOCAL CURRENT';
+        app.transferCenter.previewPayload(payload,'rhw-pr9-layout.json');
+        return{
+          api:!!app.transferCenter,inspection,controls,imported:!!imported,merged,currentKept,
+          dialogOpen:!document.getElementById('rhwTransferDialog')?.hidden,
+          privacy:(document.querySelector('.rhw-transfer-privacy')?.textContent||'').includes('PRIVATE FILE'),
+          failures:app.transferCenter.selfTest()
+        };
+      }catch(error){return{error:String(error?.stack||error)}}
+    })()""")
+    layouts = []
+    try:
+        for width in MOBILE_WIDTHS:
+            cdp.call("Emulation.setDeviceMetricsOverride", {
+                "width": width, "height": 820, "deviceScaleFactor": 1, "mobile": True,
+            })
+            time.sleep(.04)
+            layouts.append(base.ev(cdp, """(()=>{
+              const sheet=document.querySelector('.rhw-transfer-sheet'),rect=sheet?.getBoundingClientRect();
+              const visible=element=>{const style=getComputedStyle(element),box=element.getBoundingClientRect();return style.display!=='none'&&style.visibility!=='hidden'&&box.width>0&&box.height>0};
+              return{
+                width:innerWidth,
+                overflow:Math.max(0,document.documentElement.scrollWidth-innerWidth,rect?rect.right-innerWidth:0),
+                controls:[...document.querySelectorAll('.rhw-transfer-sheet button,.rhw-transfer-section')].filter(visible).map(element=>element.getBoundingClientRect().height),
+                bottomSheet:rect?Math.abs(rect.bottom-innerHeight)<2:false
+              };
+            })()"""))
+    finally:
+        cdp.call("Emulation.clearDeviceMetricsOverride")
+        base.ev(cdp, """(()=>{
+          document.querySelector('#rhwTransferDialog [data-transfer-close]')?.click();
+          const original=window.__RHW_PR9_SMOKE_RESTORE__;
+          if(original){
+            RHWV4.state.comms=original.current;
+            RHWV4.state.drafts=original.drafts;
+            RHWV4.store.set(RHWV4.config.storageKeys.commsCurrent,original.current);
+            RHWV4.store.set(RHWV4.config.storageKeys.commsDrafts,original.drafts);
+            RHWV4.comms.renderDrafts();RHWV4.comms.renderForm();
+          }
+          delete window.__RHW_PR9_SMOKE_RESTORE__;
+          return true;
+        })()""")
+    merge_controls = [control for control in result.get("controls", []) if control.get("mode") == "merge"]
+    replace_controls = [control for control in result.get("controls", []) if control.get("mode") == "replace"]
+    if result.get("error") or not result.get("api") or result.get("failures") or not result.get("dialogOpen") or not result.get("privacy"):
+        raise RuntimeError(f"PR9 Transfer Center mount/privacy failed: {result}")
+    if not merge_controls or not all(control.get("checked") for control in merge_controls) or not replace_controls or any(control.get("checked") for control in replace_controls):
+        raise RuntimeError(f"PR9 safe import defaults failed: {result}")
+    if not result.get("imported") or not result.get("merged") or not result.get("currentKept") or not result.get("inspection", {}).get("containsPrivateContent"):
+        raise RuntimeError(f"PR9 reviewed selective import failed: {result}")
+    if any(layout.get("overflow", 0) > 2 or not layout.get("bottomSheet") or any(height < 43.5 for height in layout.get("controls", [])) for layout in layouts):
+        raise RuntimeError(f"PR9 mobile bottom-sheet/touch failed: {layouts}")
+    print("PR9 smoke passed: private sharing UI + review defaults + selective merge + 360/390/412/430 bottom sheet")
+
+
 def main():
     try:
         chrome, browser, port, folder, _log_path = base.launch()
@@ -879,6 +953,7 @@ def main():
                 test_pr6_discovery_status(cdp, workspace, node)
                 test_pr7_diagnostics(cdp, workspace, node)
                 test_pr8_production_orders(cdp, workspace, node)
+                test_pr9_transfer_center(cdp, workspace, node)
                 if (workspace, node) == ("comms", "forum"):
                     test_mobile_forum_controls(cdp)
                 run_interactions(cdp, workspace, node)
