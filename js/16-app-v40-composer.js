@@ -135,10 +135,15 @@
   function draftsMarkup() {
     return `<section class="comms-node-panel" data-comms-panel="drafts" hidden>
       <section class="comms-panel drafts-panel">
-        <div class="comms-panel-head"><div><span>DR</span><strong>LOCAL DRAFT ARCHIVE</strong></div><small>THIS BROWSER ONLY</small></div>
+        <div class="comms-panel-head"><div><span>DR</span><strong>LOCAL DRAFT ARCHIVE</strong></div><small>LOCAL + CROSS-DEVICE</small></div>
         <div class="comms-archive-summary"><div><small>NAMED DRAFTS</small><strong id="commsDraftCount">0</strong></div><div><small>CURRENT WORK</small><strong>AUTOSAVED LOCALLY</strong></div><div><small>LATEST NAMED SAVE</small><strong id="commsDraftLatest">—</strong></div></div>
-        <div class="comms-actions comms-cache-tools"><button type="button" id="exportCommsCacheBtn"><span>EXPORT LOCAL CACHE</span></button><button type="button" id="importCommsCacheBtn"><span>IMPORT LOCAL CACHE</span></button><input type="file" id="importCommsCacheInput" accept="application/json,.json" hidden /></div>
-        <div class="bbcode-hint">IMPORT MERGES WITH EXISTING DRAFTS + LOCAL SENDERS; IT DOES NOT SILENTLY WIPE THE CURRENT CACHE.</div>
+        <section id="rhwTransferCenter" class="rhw-transfer-center" aria-labelledby="rhwTransferTitle">
+          <div class="rhw-transfer-intro"><span>DEVICE TRANSFER</span><strong id="rhwTransferTitle">MOVE YOUR RHW WORK SAFELY</strong><p>CREATE ONE PRIVATE BACKUP FILE FOR ANOTHER PHONE OR BROWSER. RHW NEVER UPLOADS THIS FILE TO A SERVER.</p></div>
+          <div class="rhw-transfer-contents" aria-label="Backup contents"><span>DRAFTS</span><span>SENDERS</span><span>NEWSWIRE</span><span>PLANS</span><span>ORDERS</span><span>SETTINGS</span></div>
+          <div class="comms-actions comms-cache-tools rhw-transfer-actions"><button class="comms-primary" type="button" id="shareCommsCacheBtn"><span>SHARE PRIVATE BACKUP</span></button><button type="button" id="exportCommsCacheBtn"><span>DOWNLOAD BACKUP</span></button><button type="button" id="importCommsCacheBtn"><span>IMPORT BACKUP</span></button><input type="file" id="importCommsCacheInput" accept="application/json,.json" hidden /></div>
+          <div class="rhw-transfer-privacy"><strong>PRIVATE FILE</strong><span>THE BACKUP CAN CONTAIN MESSAGE TEXT, SENDER IDENTITIES AND UNPUBLISHED NEWSWIRE WORK. SHARE IT ONLY WITH A DEVICE YOU TRUST.</span></div>
+          <div id="rhwTransferStatus" class="rhw-transfer-status" role="status" aria-live="polite">READY // NOTHING LEAVES THIS DEVICE UNTIL YOU CHOOSE SHARE OR DOWNLOAD</div>
+        </section>
         <div id="commsDraftList" class="comms-draft-list"></div>
       </section>
     </section>`;
@@ -725,7 +730,15 @@
         }
       }
     });
+    document.getElementById('shareCommsCacheBtn')?.addEventListener('click', async () => {
+      if (app.transferCenter?.shareBackup) await app.transferCenter.shareBackup();
+      else app.notify('SHARE MODULE NOT READY // USE DOWNLOAD BACKUP', 'warn');
+    });
     document.getElementById('exportCommsCacheBtn')?.addEventListener('click', () => {
+      if (app.transferCenter?.downloadBackup) {
+        app.transferCenter.downloadBackup();
+        return;
+      }
       const payload = app.storage.exportPayload();
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -742,6 +755,10 @@
       const file = input.files?.[0];
       if (!file) return;
       try {
+        if (app.transferCenter?.previewFile) {
+          await app.transferCenter.previewFile(file);
+          return;
+        }
         const result = app.storage.importPayload(JSON.parse(await file.text()));
         renderDrafts(); renderSenderRegistry(); renderForm();
         app.notify(`CACHE MERGED // ${result.drafts} DRAFTS // ${result.senders} LOCAL SENDERS`);
@@ -821,4 +838,3 @@
 
   app.comms = { init, activate, syncFromForm, renderForm, renderPreview, renderDrafts, renderSenderRegistry, buildBbcode, resolvedSalutation, nodes: NODES };
 })();
-

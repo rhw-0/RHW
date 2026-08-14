@@ -33,6 +33,7 @@ V4_RUNTIME_ASSETS = [
     './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
     './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css', './css/28-app-pr5-newswire-2.css',
     './css/29-app-pr6-discovery-sync.css', './css/30-app-pr7-diagnostics.css', './css/31-app-pr8-production-orders.css',
+    './css/32-app-pr9-transfer-center.css',
     './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
     './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js', './js/16b-app-v40-newswire-manager.js',
     './js/16c-app-v40-newswire-ordering.js',
@@ -43,9 +44,10 @@ V4_RUNTIME_ASSETS = [
     './js/18d-app-v40-final-ui-polish.js', './js/20-app-v402-fixes.js', './js/21-app-v402-qol.js',
     './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js', './js/24-app-v40-newswire-2.js',
     './js/25-app-v40-discovery-status.js', './js/26-app-v40-diagnostics.js', './js/27-app-v40-production-orders.js',
+    './js/28-app-v40-transfer-center.js',
     './js/19-app-v40-runtime.js',
 ]
-V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py', './scripts/test_production_orders.js']
+V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py', './scripts/test_production_orders.js', './scripts/test_transfer_center.js']
 DISCOVERY_SYNC_ASSETS = [
     './assets/discovery-status.json', './docs/discovery-sync-report.md',
     './scripts/sync_discovery_catalog.py', './scripts/test_discovery_sync.py',
@@ -157,7 +159,7 @@ def main() -> int:
     ), 'Stable dashboard storage recovery')
     require_tokens(errors, 'js/14-app-v40-cache.js', (
         'app.storage', 'saveDraft', 'upsertSender', 'importPayload', 'senderSnapshotName',
-        "version: 3", 'priceProfiles:', 'shipyardPlanner:', 'productionOrders:', 'newswireDraft:', 'preferences:'
+        "version: 4", 'inspectPayload', 'priceProfiles:', 'shipyardPlanner:', 'productionOrders:', 'newswireDraft:', 'preferences:'
     ), 'V4 storage')
     require_tokens(errors, 'js/15-app-v40-navigation.js', (
         'PRIORITY ACTIONS', 'inventory-view-nav', 'priorityActions', 'activateInventoryView',
@@ -177,10 +179,12 @@ def main() -> int:
         './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
         './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css',
         './css/28-app-pr5-newswire-2.css', './css/29-app-pr6-discovery-sync.css',
-        './css/30-app-pr7-diagnostics.css',
+        './css/30-app-pr7-diagnostics.css', './css/31-app-pr8-production-orders.css',
+        './css/32-app-pr9-transfer-center.css',
         './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js',
         './js/24-app-v40-newswire-2.js', './js/25-app-v40-discovery-status.js',
-        './js/26-app-v40-diagnostics.js'
+        './js/26-app-v40-diagnostics.js', './js/27-app-v40-production-orders.js',
+        './js/28-app-v40-transfer-center.js'
     ), 'V4 bootstrap failure UI')
     require_tokens(errors, 'js/22-app-v402-mobile-ui.js', (
         'commsMobileView', 'setForumView', 'commsMobileViewSwitch', "['write', 'preview', 'bbcode']"
@@ -317,6 +321,7 @@ def main() -> int:
         'test_backup_and_storage', 'test_mobile_forum_controls', 'test_pr3_decision_ui',
         'test_pr3_calculator_ui', 'test_pr3_comms_workflow', 'test_pr4_pwa', 'test_pr5_newswire2',
         'test_pr6_discovery_status', 'test_pr7_diagnostics', 'test_pr8_production_orders',
+        'test_pr9_transfer_center',
         'v40NewswireRecoveryState',
         'RHWV4.newswireOrdering.setFilter', 'take_runtime_failures'
     ), 'V4.0.2 + PR1 browser smoke')
@@ -349,6 +354,17 @@ def main() -> int:
         'Shared steel must aggregate across orders', 'Urgent order must sort first',
         'Unverified stock must stay unknown', 'Import must merge instead of deleting current orders'
     ), 'PR8 production order model tests')
+    require_tokens(errors, 'js/28-app-v40-transfer-center.js', (
+        'CROSS-DEVICE TRANSFER CENTER', 'navigator.canShare', 'previewFile', 'confirmImport',
+        'IMPORT SELECTED SECTIONS', 'app.transferCenter'
+    ), 'PR9 cross-device transfer center')
+    require_tokens(errors, 'css/32-app-pr9-transfer-center.css', (
+        '.rhw-transfer-center', '.rhw-transfer-dialog', '.rhw-transfer-section',
+        'min-height: 44px', '@media (max-width: 390px)'
+    ), 'PR9 transfer presentation')
+    require_tokens(errors, 'scripts/test_transfer_center.js', (
+        'V4 inspection', 'selective import', 'safe merge', 'explicit replacement'
+    ), 'PR9 transfer model tests')
     require_tokens(errors, 'scripts/build_recipe_catalog.py', (
         "parser.add_argument('--chunks'", 'def write_catalog(', 'chunk_count = max(1, int(chunk_count))',
         "if ''.join(chunks) != encoded", 'def read_catalog('

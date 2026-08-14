@@ -194,6 +194,9 @@
     'activeWorkspace', 'commandNode', 'inventoryView', 'operationsNode', 'commsNode', 'tickerComposer',
     'commsMobileView'
   ]);
+  const transferSectionKeys = Object.freeze([
+    'drafts', 'senders', 'current', 'priceProfiles', 'shipyardPlanner', 'newswireDraft', 'productionOrders', 'preferences'
+  ]);
 
   function requireStored(key, value) {
     if (!app.store.set(key, value)) throw new Error(`LOCAL STORAGE WRITE FAILED: ${key}`);
@@ -203,19 +206,57 @@
     return Object.fromEntries(preferenceKeys.map(name => [name, app.store.get(keys[name], null)]));
   }
 
-  function importPayload(raw) {
+  function portableCopy(value) {
+    if (value === undefined) return null;
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function inspectPayload(raw) {
     const version = Number(raw?.version);
-    if (!raw || raw.format !== 'rhw-webapp-local-cache' || ![1, 2, 3].includes(version)) {
+    if (!raw || raw.format !== 'rhw-webapp-local-cache' || ![1, 2, 3, 4].includes(version)) {
       throw new Error('UNSUPPORTED CACHE FILE');
     }
-    const incomingSenders = (Array.isArray(raw.localSenders) ? raw.localSenders : []).map(normalizeSender).filter(Boolean);
-    const incomingDrafts = (Array.isArray(raw.drafts) ? raw.drafts : []).map(normalizeDraft).filter(Boolean);
-    app.state.localSenders = mergeByKey(app.state.localSenders, incomingSenders, sender => sender.key);
-    app.state.drafts = mergeByKey(app.state.drafts, incomingDrafts, draft => draft.id);
-    requireStored(keys.localSenders, app.state.localSenders);
-    requireStored(keys.commsDrafts, app.state.drafts);
+    const countObject = value => value && typeof value === 'object' ? Object.keys(value).length : 0;
+    const sections = {
+      drafts: Array.isArray(raw.drafts) ? raw.drafts.length : 0,
+      senders: Array.isArray(raw.localSenders) ? raw.localSenders.length : 0,
+      current: raw.current && typeof raw.current === 'object' ? 1 : 0,
+      priceProfiles: version >= 2 && Array.isArray(raw.priceProfiles) ? raw.priceProfiles.length : 0,
+      shipyardPlanner: version >= 2 && raw.shipyardPlanner && typeof raw.shipyardPlanner === 'object' ? 1 : 0,
+      newswireDraft: version >= 2 && raw.newswireDraft && typeof raw.newswireDraft === 'object' ? 1 : 0,
+      productionOrders: version >= 3 && Array.isArray(raw.productionOrders) ? raw.productionOrders.length : 0,
+      preferences: version >= 2 ? countObject(raw.preferences) : 0
+    };
+    return {
+      version,
+      appVersion: typeof raw.appVersion === 'string' ? raw.appVersion : 'UNKNOWN',
+      exportedAt: typeof raw.exportedAt === 'string' && !Number.isNaN(Date.parse(raw.exportedAt)) ? raw.exportedAt : '',
+      sections,
+      availableSections: transferSectionKeys.filter(key => sections[key] > 0),
+      containsPrivateContent: sections.current > 0 || sections.drafts > 0 || sections.senders > 0 || sections.newswireDraft > 0
+    };
+  }
 
-    if (raw.current && typeof raw.current === 'object') {
+  function importPayload(raw, options = {}) {
+    const inspection = inspectPayload(raw);
+    const version = inspection.version;
+    const selected = Array.isArray(options.sections)
+      ? new Set(options.sections.filter(key => transferSectionKeys.includes(key)))
+      : new Set(transferSectionKeys);
+    const includes = key => selected.has(key);
+
+    if (includes('senders')) {
+      const incomingSenders = (Array.isArray(raw.localSenders) ? raw.localSenders : []).map(normalizeSender).filter(Boolean);
+      app.state.localSenders = mergeByKey(app.state.localSenders, incomingSenders, sender => sender.key);
+      requireStored(keys.localSenders, app.state.localSenders);
+    }
+    if (includes('drafts')) {
+      const incomingDrafts = (Array.isArray(raw.drafts) ? raw.drafts : []).map(normalizeDraft).filter(Boolean);
+      app.state.drafts = mergeByKey(app.state.drafts, incomingDrafts, draft => draft.id);
+      requireStored(keys.commsDrafts, app.state.drafts);
+    }
+
+    if (includes('current') && raw.current && typeof raw.current === 'object') {
       const incomingCurrent = snapshotSender(normalizeState(raw.current));
       const valid = incomingCurrent.senderKey === '__custom__' || Boolean(senderByKey(incomingCurrent.senderKey));
       if (!valid && !incomingCurrent.senderSnapshotName) incomingCurrent.senderKey = app.config.senders[0].key;
@@ -224,21 +265,26 @@
     }
 
     if (version >= 2) {
-      if (Array.isArray(raw.priceProfiles)) requireStored(keys.calculatorPriceProfiles, raw.priceProfiles);
-      if (raw.shipyardPlanner && typeof raw.shipyardPlanner === 'object') requireStored(keys.shipyardPlanner, raw.shipyardPlanner);
-      if (raw.preferences && typeof raw.preferences === 'object') {
+      if (includes('priceProfiles') && Array.isArray(raw.priceProfiles)) {
+        const storedProfiles = app.store.get(keys.calculatorPriceProfiles, []);
+        const existingProfiles = Array.isArray(storedProfiles) ? storedProfiles : [];
+        const incomingProfiles = raw.priceProfiles.filter(profile => profile && typeof profile === 'object' && profile.id);
+        requireStored(keys.calculatorPriceProfiles, mergeByKey(existingProfiles, incomingProfiles, profile => String(profile.id || '')));
+      }
+      if (includes('shipyardPlanner') && raw.shipyardPlanner && typeof raw.shipyardPlanner === 'object') requireStored(keys.shipyardPlanner, raw.shipyardPlanner);
+      if (includes('preferences') && raw.preferences && typeof raw.preferences === 'object') {
         preferenceKeys.forEach(name => {
           if (Object.prototype.hasOwnProperty.call(raw.preferences, name) && raw.preferences[name] !== null) {
             requireStored(keys[name], raw.preferences[name]);
           }
         });
       }
-      if (raw.newswireDraft && typeof raw.newswireDraft === 'object') {
+      if (includes('newswireDraft') && raw.newswireDraft && typeof raw.newswireDraft === 'object') {
         if (app.newswireManager?.restoreDraft) app.newswireManager.restoreDraft(raw.newswireDraft);
         else requireStored(keys.newswireManagerDraft, raw.newswireDraft);
       }
     }
-    if (version >= 3 && Array.isArray(raw.productionOrders)) {
+    if (version >= 3 && includes('productionOrders') && Array.isArray(raw.productionOrders)) {
       if (app.productionOrders?.importOrders) app.productionOrders.importOrders(raw.productionOrders);
       else requireStored(keys.productionOrders, raw.productionOrders);
     }
@@ -247,7 +293,9 @@
       senders: app.state.localSenders.length,
       priceProfiles: (app.store.get(keys.calculatorPriceProfiles, []) || []).length,
       newswireDraft: Boolean(app.store.get(keys.newswireManagerDraft, null)),
-      productionOrders: (app.store.get(keys.productionOrders, []) || []).length
+      productionOrders: (app.store.get(keys.productionOrders, []) || []).length,
+      selectedSections: [...selected],
+      sourceVersion: version
     };
   }
 
@@ -256,17 +304,17 @@
     saveCurrent();
     return {
       format: 'rhw-webapp-local-cache',
-      version: 3,
+      version: 4,
       appVersion: app.version,
       exportedAt: new Date().toISOString(),
-      current: app.state.comms,
-      drafts: app.state.drafts,
-      localSenders: app.state.localSenders,
-      priceProfiles: app.store.get(keys.calculatorPriceProfiles, []) || [],
-      shipyardPlanner: app.store.get(keys.shipyardPlanner, null),
-      productionOrders: app.productionOrders?.snapshot?.() || app.store.get(keys.productionOrders, []) || [],
-      newswireDraft: app.newswireManager?.draftPayload?.() || app.store.get(keys.newswireManagerDraft, null),
-      preferences: portablePreferences()
+      current: portableCopy(app.state.comms),
+      drafts: portableCopy(app.state.drafts),
+      localSenders: portableCopy(app.state.localSenders),
+      priceProfiles: portableCopy(app.store.get(keys.calculatorPriceProfiles, []) || []),
+      shipyardPlanner: portableCopy(app.store.get(keys.shipyardPlanner, null)),
+      productionOrders: portableCopy(app.productionOrders?.snapshot?.() || app.store.get(keys.productionOrders, []) || []),
+      newswireDraft: portableCopy(app.newswireManager?.draftPayload?.() || app.store.get(keys.newswireManagerDraft, null)),
+      preferences: portableCopy(portablePreferences())
     };
   }
 
@@ -284,6 +332,7 @@
     upsertSender,
     removeSender,
     importPayload,
+    inspectPayload,
     exportPayload,
     init() {
       app.state.localSenders = (app.store.get(keys.localSenders, []) || []).map(normalizeSender).filter(Boolean);
