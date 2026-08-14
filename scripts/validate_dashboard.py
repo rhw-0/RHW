@@ -33,7 +33,7 @@ V4_RUNTIME_ASSETS = [
     './css/24-app-pr3-operations-calculator.css', './css/25-app-pr3-comms-workflow.css',
     './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css', './css/28-app-pr5-newswire-2.css',
     './css/29-app-pr6-discovery-sync.css', './css/30-app-pr7-diagnostics.css', './css/31-app-pr8-production-orders.css',
-    './css/32-app-pr9-transfer-center.css',
+    './css/32-app-pr9-transfer-center.css', './css/33-app-pr10-newswire-review.css',
     './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
     './js/16-app-v40-composer.js', './js/16a-app-v40-comms-safety.js', './js/16b-app-v40-newswire-manager.js',
     './js/16c-app-v40-newswire-ordering.js',
@@ -44,10 +44,10 @@ V4_RUNTIME_ASSETS = [
     './js/18d-app-v40-final-ui-polish.js', './js/20-app-v402-fixes.js', './js/21-app-v402-qol.js',
     './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js', './js/24-app-v40-newswire-2.js',
     './js/25-app-v40-discovery-status.js', './js/26-app-v40-diagnostics.js', './js/27-app-v40-production-orders.js',
-    './js/28-app-v40-transfer-center.js',
+    './js/28-app-v40-transfer-center.js', './js/29-app-v40-newswire-review.js',
     './js/19-app-v40-runtime.js',
 ]
-V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py', './scripts/test_production_orders.js', './scripts/test_transfer_center.js']
+V4_SUPPORT_ASSETS = ['./scripts/build_recipe_catalog.py', './scripts/smoke_v40.py', './scripts/test_production_orders.js', './scripts/test_transfer_center.js', './scripts/test_newswire_review.js']
 DISCOVERY_SYNC_ASSETS = [
     './assets/discovery-status.json', './docs/discovery-sync-report.md',
     './scripts/sync_discovery_catalog.py', './scripts/test_discovery_sync.py',
@@ -148,7 +148,7 @@ def main() -> int:
     require_tokens(errors, 'js/12-app-config.js', (
         'alistair-thorne', 'salutations:', 'closings:',
         'operationsNode:', 'calculatorState:', 'defaultAffiliation:', 'shipyardTargets:',
-        'newswireManagerDraft:', 'commsMobileView:'
+        'newswireManagerDraft:', 'newswireReviewHistory:', 'commsMobileView:'
     ), 'V4 configuration')
     require_tokens(errors, 'js/13-app-v40.js', (
         'window.RHWV4', "'operations'", 'workspaceOperations', 'app.installShell', 'app.navigate', 'app.applyRoute',
@@ -180,11 +180,11 @@ def main() -> int:
         './css/26-app-pr3-newswire-manager.css', './css/27-app-pr4-pwa.css',
         './css/28-app-pr5-newswire-2.css', './css/29-app-pr6-discovery-sync.css',
         './css/30-app-pr7-diagnostics.css', './css/31-app-pr8-production-orders.css',
-        './css/32-app-pr9-transfer-center.css',
+        './css/32-app-pr9-transfer-center.css', './css/33-app-pr10-newswire-review.css',
         './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js',
         './js/24-app-v40-newswire-2.js', './js/25-app-v40-discovery-status.js',
         './js/26-app-v40-diagnostics.js', './js/27-app-v40-production-orders.js',
-        './js/28-app-v40-transfer-center.js'
+        './js/28-app-v40-transfer-center.js', './js/29-app-v40-newswire-review.js'
     ), 'V4 bootstrap failure UI')
     require_tokens(errors, 'js/22-app-v402-mobile-ui.js', (
         'commsMobileView', 'setForumView', 'commsMobileViewSwitch', "['write', 'preview', 'bbcode']"
@@ -321,7 +321,7 @@ def main() -> int:
         'test_backup_and_storage', 'test_mobile_forum_controls', 'test_pr3_decision_ui',
         'test_pr3_calculator_ui', 'test_pr3_comms_workflow', 'test_pr4_pwa', 'test_pr5_newswire2',
         'test_pr6_discovery_status', 'test_pr7_diagnostics', 'test_pr8_production_orders',
-        'test_pr9_transfer_center',
+        'test_pr9_transfer_center', 'test_pr10_newswire_review',
         'v40NewswireRecoveryState',
         'RHWV4.newswireOrdering.setFilter', 'take_runtime_failures'
     ), 'V4.0.2 + PR1 browser smoke')
@@ -365,6 +365,18 @@ def main() -> int:
     require_tokens(errors, 'scripts/test_transfer_center.js', (
         'V4 inspection', 'selective import', 'safe merge', 'explicit replacement'
     ), 'PR9 transfer model tests')
+    require_tokens(errors, 'js/29-app-v40-newswire-review.js', (
+        'NEWSWIRE REVIEW DESK', 'diffEntries', 'buildReviewPackage', 'navigator.canShare',
+        'humanReviewRequired: true', 'directPublish: false', 'app.newswireReview'
+    ), 'PR10 Newswire review desk')
+    require_tokens(errors, 'css/33-app-pr10-newswire-review.css', (
+        '.v40-newswire-review', '.v40-newswire-change', '.v40-newswire-history',
+        'min-height: 44px', '@media (max-width: 390px)'
+    ), 'PR10 Newswire review presentation')
+    require_tokens(errors, 'scripts/test_newswire_review.js', (
+        'One bulletin must be reported as added', 'Package summary must include edits',
+        'Forum parity', 'Version history must be capped locally'
+    ), 'PR10 Newswire review model tests')
     require_tokens(errors, 'scripts/build_recipe_catalog.py', (
         "parser.add_argument('--chunks'", 'def write_catalog(', 'chunk_count = max(1, int(chunk_count))',
         "if ''.join(chunks) != encoded", 'def read_catalog('

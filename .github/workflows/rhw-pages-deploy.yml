@@ -39,6 +39,9 @@ jobs:
       - name: Validate Transfer Center model
         run: node scripts/test_transfer_center.js
 
+      - name: Validate Newswire Review model
+        run: node scripts/test_newswire_review.js
+
       - name: Install smoke-test client
         run: python3 -m pip install --disable-pip-version-check --quiet websocket-client
 

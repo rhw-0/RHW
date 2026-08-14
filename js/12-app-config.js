@@ -20,6 +20,7 @@ const RHW_APP_CONFIG = Object.freeze({
     localSenders: 'rhw-webapp-v4:local-senders',
     tickerComposer: 'rhw-webapp-v4:ticker-composer',
     newswireManagerDraft: 'rhw-webapp-v4:newswire-manager-draft',
+    newswireReviewHistory: 'rhw-webapp-v4:newswire-review-history',
     commsMobileView: 'rhw-webapp-v4:comms-mobile-view'
   }),
   operations: Object.freeze({

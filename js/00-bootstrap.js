@@ -16,7 +16,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
      Load every V4 stylesheet immediately to avoid an unstyled app-shell flash,
      but wait until the stable dashboard has initialized before booting V4 JS. */
   (function bootstrapRhwV4Preview() {
-    const RHW_V4_ASSET_REV = '4.0.2-pr9-transfer-center-1';
+    const RHW_V4_ASSET_REV = '4.0.2-pr10-newswire-review-1';
     const versioned = src => `${src}?v=${encodeURIComponent(RHW_V4_ASSET_REV)}`;
 
     [
@@ -40,7 +40,8 @@ if (!window.__RHW_SMOKE_INLINE__) {
       ['./css/29-app-pr6-discovery-sync.css', 'rhwPr6DiscoverySync'],
       ['./css/30-app-pr7-diagnostics.css', 'rhwPr7Diagnostics'],
       ['./css/31-app-pr8-production-orders.css', 'rhwPr8ProductionOrders'],
-      ['./css/32-app-pr9-transfer-center.css', 'rhwPr9TransferCenter']
+      ['./css/32-app-pr9-transfer-center.css', 'rhwPr9TransferCenter'],
+      ['./css/33-app-pr10-newswire-review.css', 'rhwPr10NewswireReview']
     ].forEach(([href, dataKey]) => {
       if (document.querySelector(`link[data-${dataKey.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}="true"]`)) return;
       const link = document.createElement('link');
@@ -82,6 +83,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
         ['./js/26-app-v40-diagnostics.js', 'rhwPr7Diagnostics'],
         ['./js/27-app-v40-production-orders.js', 'rhwPr8ProductionOrders'],
         ['./js/28-app-v40-transfer-center.js', 'rhwPr9TransferCenter'],
+        ['./js/29-app-v40-newswire-review.js', 'rhwPr10NewswireReview'],
         ['./js/19-app-v40-runtime.js', 'rhwV4Runtime']
       ];
 
