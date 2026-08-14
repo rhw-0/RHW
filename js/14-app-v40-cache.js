@@ -206,6 +206,11 @@
     return Object.fromEntries(preferenceKeys.map(name => [name, app.store.get(keys[name], null)]));
   }
 
+  function portableCopy(value) {
+    if (value === undefined) return null;
+    return JSON.parse(JSON.stringify(value));
+  }
+
   function inspectPayload(raw) {
     const version = Number(raw?.version);
     if (!raw || raw.format !== 'rhw-webapp-local-cache' || ![1, 2, 3, 4].includes(version)) {
@@ -302,14 +307,14 @@
       version: 4,
       appVersion: app.version,
       exportedAt: new Date().toISOString(),
-      current: app.state.comms,
-      drafts: app.state.drafts,
-      localSenders: app.state.localSenders,
-      priceProfiles: app.store.get(keys.calculatorPriceProfiles, []) || [],
-      shipyardPlanner: app.store.get(keys.shipyardPlanner, null),
-      productionOrders: app.productionOrders?.snapshot?.() || app.store.get(keys.productionOrders, []) || [],
-      newswireDraft: app.newswireManager?.draftPayload?.() || app.store.get(keys.newswireManagerDraft, null),
-      preferences: portablePreferences()
+      current: portableCopy(app.state.comms),
+      drafts: portableCopy(app.state.drafts),
+      localSenders: portableCopy(app.state.localSenders),
+      priceProfiles: portableCopy(app.store.get(keys.calculatorPriceProfiles, []) || []),
+      shipyardPlanner: portableCopy(app.store.get(keys.shipyardPlanner, null)),
+      productionOrders: portableCopy(app.productionOrders?.snapshot?.() || app.store.get(keys.productionOrders, []) || []),
+      newswireDraft: portableCopy(app.newswireManager?.draftPayload?.() || app.store.get(keys.newswireManagerDraft, null)),
+      preferences: portableCopy(portablePreferences())
     };
   }
 

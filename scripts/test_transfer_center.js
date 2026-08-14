@@ -70,6 +70,8 @@ memory.set(keys.activeWorkspace, 'command');
 
 const exported = app.storage.exportPayload();
 assert.equal(exported.version, 4, 'New private backups must use format V4');
+exported.current.subject = 'DETACHED EXPORT MUTATION';
+assert.equal(app.state.comms.subject, 'KEEP LOCAL CURRENT', 'Exported backup must be detached from live app state');
 const inspection = app.storage.inspectPayload(exported);
 assert.equal(inspection.version, 4);
 assert.ok(inspection.containsPrivateContent, 'Inspector must flag private authoring content');
