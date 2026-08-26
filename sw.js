@@ -1,7 +1,7 @@
-/* RHW V4.0.2 · COMMAND rework service worker
+/* RHW V4.0.2 · unified workspace service worker
    App assets are available offline. Live telemetry remains network-only. */
 const CACHE_PREFIX = 'rhw-v4.0.2-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}2026-08-26-command-rework-1`;
+const CACHE_NAME = `${CACHE_PREFIX}2026-08-26-unified-ui-1`;
 const CSS_NAMES = [
   'core', 'ticker', 'production', 'responsive', 'shipyard', 'shipyard-detail', 'mobile', 'headings', 'v35',
   'maintenance', 'layout-v36', 'app-v40', 'app-v40-navigation', 'app-v40-composer', 'app-v40-audit',
@@ -26,13 +26,9 @@ const APP_SHELL = [
   './js/18a-app-v40-nav-hierarchy.js', './js/18b-app-v40-production-pricing.js', './js/18c-app-v40-recipe-corrections.js',
   './js/18d-app-v40-final-ui-polish.js', './js/19-app-v40-runtime.js', './js/20-app-v402-fixes.js',
   './js/21-app-v402-qol.js', './js/22-app-v402-mobile-ui.js', './js/23-app-v40-pwa.js',
-  './js/24-app-v40-newswire-2.js', './js/25-app-v40-discovery-status.js',
-  './js/26-app-v40-diagnostics.js',
-  './js/27-app-v40-production-orders.js',
-  './js/28-app-v40-transfer-center.js',
-  './js/29-app-v40-newswire-review.js',
-  './js/30-app-v40-full-audit.js',
-  './js/31-app-command-rework.js',
+  './js/24-app-v40-newswire-2.js', './js/25-app-v40-discovery-status.js', './js/26-app-v40-diagnostics.js',
+  './js/27-app-v40-production-orders.js', './js/28-app-v40-transfer-center.js', './js/29-app-v40-newswire-review.js',
+  './js/30-app-v40-full-audit.js', './js/31-app-command-rework.js', './js/32-app-unified-workspaces.js',
   ...Array.from({ length: 6 }, (_, index) => `./assets/recipes/catalog-v1-part-${String(index + 1).padStart(2, '0')}.js`)
 ];
 
@@ -66,6 +62,20 @@ async function networkFirst(request, fallback) {
   }
 }
 
+async function networkFirstData(request) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const response = await fetch(request);
+    if (!response.ok) throw new Error(`NETWORK RESPONSE ${response.status}`);
+    await cache.put(request, response.clone());
+    return response;
+  } catch (error) {
+    const cached = await cache.match(request, { ignoreSearch: true });
+    if (cached) return cached;
+    throw error;
+  }
+}
+
 async function cacheFirst(request) {
   const cache = await caches.open(CACHE_NAME);
   const cached = await cache.match(request, { ignoreSearch: true });
@@ -86,7 +96,11 @@ self.addEventListener('fetch', event => {
   }
 
   if (url.origin === self.location.origin) {
-    if (url.pathname.endsWith('/assets/RHW_Newswire.md')) event.respondWith(networkFirst(request, './assets/RHW_Newswire.md'));
+    const isNewswire = url.pathname.endsWith('/assets/RHW_Newswire.md');
+    const isDiscoveryStatus = url.pathname.endsWith('/assets/discovery-status.json');
+    const isRecipeChunk = /\/assets\/recipes\/catalog-v1-part-\d+\.js$/.test(url.pathname);
+    if (isNewswire) event.respondWith(networkFirst(request, './assets/RHW_Newswire.md'));
+    else if (isDiscoveryStatus || isRecipeChunk) event.respondWith(networkFirstData(request));
     else event.respondWith(cacheFirst(request));
     return;
   }
