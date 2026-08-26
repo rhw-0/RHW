@@ -1,5 +1,7 @@
 # COMMAND Section Rework
 
+**Release status:** merged to `main` on 26 August 2026.
+
 The COMMAND workspace is organized around four visible operational areas:
 
 1. **Inventory** — status board and full manifest.
