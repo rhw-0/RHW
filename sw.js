@@ -1,7 +1,7 @@
-/* RHW V4.0.2 · PR11 full app audit service worker
+/* RHW V4.0.2 · COMMAND rework service worker
    App assets are available offline. Live telemetry remains network-only. */
 const CACHE_PREFIX = 'rhw-v4.0.2-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}2026-08-14-3`;
+const CACHE_NAME = `${CACHE_PREFIX}2026-08-26-command-rework-1`;
 const CSS_NAMES = [
   'core', 'ticker', 'production', 'responsive', 'shipyard', 'shipyard-detail', 'mobile', 'headings', 'v35',
   'maintenance', 'layout-v36', 'app-v40', 'app-v40-navigation', 'app-v40-composer', 'app-v40-audit',
@@ -32,6 +32,7 @@ const APP_SHELL = [
   './js/28-app-v40-transfer-center.js',
   './js/29-app-v40-newswire-review.js',
   './js/30-app-v40-full-audit.js',
+  './js/31-app-command-rework.js',
   ...Array.from({ length: 6 }, (_, index) => `./assets/recipes/catalog-v1-part-${String(index + 1).padStart(2, '0')}.js`)
 ];
 

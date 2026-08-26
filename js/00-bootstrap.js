@@ -16,7 +16,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
      Load every V4 stylesheet immediately to avoid an unstyled app-shell flash,
      but wait until the stable dashboard has initialized before booting V4 JS. */
   (function bootstrapRhwV4Preview() {
-    const RHW_V4_ASSET_REV = '4.0.2-pr11-full-audit-1';
+    const RHW_V4_ASSET_REV = '4.0.2-command-rework-1';
     const versioned = src => `${src}?v=${encodeURIComponent(RHW_V4_ASSET_REV)}`;
 
     [
@@ -86,6 +86,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
         ['./js/28-app-v40-transfer-center.js', 'rhwPr9TransferCenter'],
         ['./js/29-app-v40-newswire-review.js', 'rhwPr10NewswireReview'],
         ['./js/30-app-v40-full-audit.js', 'rhwPr11FullAudit'],
+        ['./js/31-app-command-rework.js', 'rhwCommandRework'],
         ['./js/19-app-v40-runtime.js', 'rhwV4Runtime']
       ];
 
