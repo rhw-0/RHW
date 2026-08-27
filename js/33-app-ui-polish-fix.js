@@ -1,8 +1,8 @@
 /* ==========================================================================
    RHW UI POLISH FIX
    Keeps the unified visual system while clarifying workspace hierarchy,
-   moving maintenance data behind the actual tool, restoring Logistics scans,
-   and removing the redundant mobile COMMAND return control.
+   moving maintenance data behind the actual tool, promoting the external
+   market scan into its own Logistics surface, and removing redundant controls.
    ========================================================================== */
 (function initRhwUiPolishFix() {
   'use strict';
@@ -25,12 +25,8 @@
     const style = document.createElement('style');
     style.id = 'rhwUiPolishFixStyle';
     style.textContent = `
-      /* The old floating return button adds no value while the real module nav is
-         already sticky/reachable. Keep the element for legacy self-tests only. */
       #commandTopButton{display:none!important}
 
-      /* Discovery provenance is a maintenance utility, not the first Calculator
-         surface. It lives collapsed after the actual tool. */
       .rhw-data-status-utility{
         margin:14px 0 0;border:1px solid rgba(120,173,138,.20);border-radius:8px;
         background:linear-gradient(90deg,rgba(120,173,138,.055),rgba(5,8,10,.95) 48%);
@@ -54,18 +50,28 @@
       .rhw-data-status-utility[open]>summary{border-bottom:1px solid rgba(120,173,138,.14)}
       .rhw-data-status-utility #discoveryDataStatus{margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
 
-      /* Make the regional external-market scan impossible to lose inside the
-         Logistics hierarchy. Known fixed links remain directly below it. */
-      body[data-workspace="command"][data-command-node="logistics"] #marketScanSection,
-      body[data-workspace="command"][data-command-node="logistics"] #fixedLogisticsSection{
-        display:block!important;visibility:visible!important;opacity:1!important
+      /* The broad other-POB scan is a first-class Logistics tool. It is no longer
+         nested inside the legacy fixed-link panel, so mobile layout rules cannot
+         bury it behind that old hierarchy. */
+      [data-command-panel="logistics"]>.rhw-market-scan-surface{
+        display:block!important;visibility:visible!important;opacity:1!important;
+        width:100%;margin:0!important;border:1px solid rgba(125,167,234,.24);border-radius:9px;
+        background:linear-gradient(145deg,rgba(125,167,234,.085),rgba(5,8,12,.96) 42%);
+        box-shadow:0 14px 34px rgba(0,0,0,.27);overflow:hidden
       }
-      body[data-workspace="command"][data-command-node="logistics"] #marketScanSection{
-        margin-top:0!important;margin-bottom:14px!important
+      .rhw-market-scan-surface .logistics-subhead{
+        margin:0;padding:14px 16px;border-bottom:1px solid rgba(125,167,234,.15);
+        background:linear-gradient(90deg,rgba(125,167,234,.075),transparent 72%)
       }
+      .rhw-market-scan-surface .logistics-subhead-kicker{color:rgba(125,167,234,.72)!important}
+      .rhw-market-scan-surface .logistics-subhead-title{color:#dce8fb;font-size:clamp(24px,2.1vw,32px)}
+      .rhw-market-scan-scope{
+        display:inline-flex;align-items:center;min-height:28px;padding:5px 8px;border:1px solid rgba(125,167,234,.22);
+        background:rgba(125,167,234,.055);color:#b9cdf0;font-family:var(--font-tech);font-size:7px;font-weight:700;letter-spacing:.08em;white-space:nowrap
+      }
+      .rhw-market-scan-surface .market-scan-grid{display:grid!important;visibility:visible!important;opacity:1!important}
+      [data-command-panel="logistics"]>#externalLogisticsPanel{margin-top:0!important}
 
-      /* Global workspace navigation uses the same squared industrial language as
-         the large module cards. On phones it is simply the compact/thumb version. */
       @media(max-width:760px){
         .rhw-unified-ui .app-tabs{
           padding:4px!important;gap:0!important;border-radius:9px!important;overflow:hidden;
@@ -96,6 +102,12 @@
         .rhw-data-status-utility>summary{min-height:50px;padding:7px 9px;gap:8px}
         .rhw-data-status-copy strong{font-size:9px}.rhw-data-status-copy small{font-size:6px}
         .rhw-data-status-live{font-size:6px;padding:4px 5px}
+        [data-command-panel="logistics"]>.rhw-market-scan-surface{margin:0 9px 12px!important;width:calc(100% - 18px)}
+        .rhw-market-scan-surface .logistics-subhead{padding:12px;gap:9px;align-items:flex-start;flex-direction:column}
+        .rhw-market-scan-surface .market-scan-actions{width:100%;align-items:stretch}
+        .rhw-market-scan-surface .market-sort-segments{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+        .rhw-market-scan-surface .market-sort-button{min-width:0;min-height:44px}
+        .rhw-market-scan-surface .market-scan-grid{grid-template-columns:1fr!important;padding:8px!important;gap:8px!important}
       }
       @media(max-width:390px){
         .rhw-unified-ui .app-tabs button{grid-template-columns:20px minmax(0,1fr)!important;column-gap:5px!important;padding-inline:5px!important}
@@ -106,23 +118,23 @@
     document.head.appendChild(style);
   }
 
-  function relabelFabrication() {
+  function relabelCalculator() {
     const tab = document.querySelector('.app-tabs [data-workspace="operations"]');
     const label = tab?.querySelector(':scope > span');
-    if (label) label.textContent = 'FABRICATION';
+    if (label) label.textContent = 'CALCULATOR';
     const small = tab?.querySelector('small');
-    if (small) small.textContent = 'CALCULATOR + ORDERS';
-    tab?.setAttribute('aria-label', 'FABRICATION: CALCULATOR + ORDERS');
+    if (small) small.textContent = 'COSTING + ORDERS';
+    tab?.setAttribute('aria-label', 'CALCULATOR: COSTING + ORDERS');
 
     const workspace = document.getElementById('workspaceOperations');
-    workspace?.setAttribute('aria-label', 'Fabrication workspace');
+    workspace?.setAttribute('aria-label', 'Calculator workspace');
     const nav = document.getElementById('operationsNodeNav');
-    nav?.setAttribute('aria-label', 'Fabrication tools');
+    nav?.setAttribute('aria-label', 'Calculator tools');
     const kicker = document.querySelector('.operations-heading .workspace-kicker span');
-    if (kicker) kicker.textContent = 'FABRICATION';
+    if (kicker) kicker.textContent = 'CALCULATOR';
 
     const active = document.getElementById('appActiveNode');
-    if (active?.textContent?.includes('OPERATIONS /')) active.textContent = active.textContent.replace('OPERATIONS /', 'FABRICATION /');
+    if (active) active.textContent = active.textContent.replace('OPERATIONS /', 'CALCULATOR /').replace('FABRICATION /', 'CALCULATOR /');
   }
 
   function updateDiscoverySummary() {
@@ -164,40 +176,70 @@
   }
 
   function restoreMarketScan() {
+    const logisticsPanel = document.querySelector('[data-command-panel="logistics"]');
     const external = document.getElementById('externalLogisticsPanel');
     const fixed = document.getElementById('fixedLogisticsSection');
     const market = document.getElementById('marketScanSection');
     const grid = document.getElementById('marketScanGrid');
-    if (!external || !market || !grid) return false;
+    if (!logisticsPanel || !external || !market || !grid) return false;
 
-    [market, fixed].filter(Boolean).forEach(section => {
-      section.hidden = false;
-      section.removeAttribute('hidden');
-      section.style.removeProperty('display');
-      section.style.removeProperty('visibility');
-      section.style.removeProperty('opacity');
-    });
+    market.hidden = false;
+    market.removeAttribute('hidden');
+    market.style.removeProperty('display');
+    market.style.removeProperty('visibility');
+    market.style.removeProperty('opacity');
+    market.classList.add('rhw-market-scan-surface');
 
-    /* Regional scan is the broad "other POBs" view, so put it ahead of the two
-       fixed RHW procurement links instead of burying it below them. */
-    if (fixed?.parentElement === external && market.parentElement === external && market.nextElementSibling !== fixed) {
-      fixed.insertAdjacentElement('beforebegin', market);
-    } else if (market.parentElement !== external) {
-      if (fixed?.parentElement === external) fixed.insertAdjacentElement('beforebegin', market);
-      else external.appendChild(market);
+    /* Leave fixed remote links in their legacy panel, but promote the broad scan
+       to a direct child of LOGISTICS. Moving the live DOM preserves all cached
+       element references used by renderMarketScan/renderSupplier. */
+    if (market.parentElement !== logisticsPanel || market.nextElementSibling !== external) {
+      logisticsPanel.insertBefore(market, external);
     }
 
+    if (fixed) {
+      fixed.hidden = false;
+      fixed.removeAttribute('hidden');
+      fixed.style.removeProperty('display');
+      fixed.style.removeProperty('visibility');
+      fixed.style.removeProperty('opacity');
+    }
+
+    const kicker = market.querySelector('.logistics-subhead-kicker');
+    const title = market.querySelector('.logistics-subhead-title');
+    if (kicker) kicker.textContent = 'ALL KNOWN POBS / GOODS RADAR';
+    if (title) title.textContent = 'EXTERNAL MARKET SCAN';
+
+    const actions = market.querySelector('.market-scan-actions');
+    let scope = document.getElementById('rhwMarketScanScope');
+    if (!scope && actions) {
+      scope = document.createElement('span');
+      scope.id = 'rhwMarketScanScope';
+      scope.className = 'rhw-market-scan-scope';
+      actions.prepend(scope);
+    }
+    const targetCount = typeof MARKET_SCAN !== 'undefined' && Array.isArray(MARKET_SCAN) ? MARKET_SCAN.length : 0;
+    if (scope) scope.textContent = `${targetCount || 'ALL'} GOODS · ALL KNOWN POBS`;
+
+    const externalTitle = external.querySelector('.remote-panel-title');
+    if (externalTitle) externalTitle.textContent = 'FIXED LOGISTICS LINKS';
+    const modeMeta = document.getElementById('externalModeMeta');
+    if (modeMeta) modeMeta.textContent = 'DIRECT PROCUREMENT LINKS';
+
     try {
-      if (typeof window.renderMarketScan === 'function') window.renderMarketScan();
+      if (typeof renderMarketScan === 'function') renderMarketScan();
     } catch {}
     return true;
   }
 
   function selfTest() {
     const failures = [];
-    if (document.querySelector('.app-tabs [data-workspace="operations"] > span')?.textContent !== 'FABRICATION') failures.push('fabrication-label');
+    if (document.querySelector('.app-tabs [data-workspace="operations"] > span')?.textContent !== 'CALCULATOR') failures.push('calculator-label');
     if (!document.getElementById('rhwDataStatusUtility')?.contains(document.getElementById('discoveryDataStatus'))) failures.push('discovery-hierarchy');
-    if (!document.getElementById('marketScanSection') || !document.getElementById('marketScanGrid')) failures.push('market-scan');
+    const logisticsPanel = document.querySelector('[data-command-panel="logistics"]');
+    const market = document.getElementById('marketScanSection');
+    if (!market || !document.getElementById('marketScanGrid') || market.parentElement !== logisticsPanel || !market.classList.contains('rhw-market-scan-surface')) failures.push('market-scan-surface');
+    if (!document.getElementById('rhwMarketScanScope')) failures.push('market-scan-scope');
     if (!document.getElementById('commandTopButton')) failures.push('legacy-command-top-anchor');
     return failures;
   }
@@ -205,20 +247,20 @@
   installStyles();
 
   app.setActiveNode = function polishedActiveNode(value) {
-    const next = String(value || '').replace(/^OPERATIONS\b/, 'FABRICATION');
+    const next = String(value || '').replace(/^OPERATIONS\b/, 'CALCULATOR').replace(/^FABRICATION\b/, 'CALCULATOR');
     return base.setActiveNode.call(this, next);
   };
 
   app.installShell = function polishedInstallShell(...args) {
     const result = base.installShell.apply(this, args);
-    relabelFabrication();
+    relabelCalculator();
     return result;
   };
 
   if (typeof base.commandInit === 'function') {
     app.command.init = function polishedCommandInit(...args) {
       const result = base.commandInit.apply(this, args);
-      relabelFabrication();
+      relabelCalculator();
       restoreMarketScan();
       return result;
     };
@@ -235,7 +277,7 @@
   if (typeof base.operationsInit === 'function') {
     app.operations.init = async function polishedOperationsInit(...args) {
       const result = await base.operationsInit.apply(this, args);
-      relabelFabrication();
+      relabelCalculator();
       return result;
     };
   }
@@ -243,7 +285,7 @@
   if (typeof base.operationsActivate === 'function') {
     app.operations.activate = function polishedOperationsActivate(node, options) {
       const result = base.operationsActivate.call(this, node, options);
-      relabelFabrication();
+      relabelCalculator();
       return result;
     };
   }
@@ -252,6 +294,8 @@
     app.discoveryStatus.init = async function polishedDiscoveryInit(...args) {
       const result = await base.discoveryInit.apply(this, args);
       if (!relocateDiscoveryPanel()) throw new Error('UI POLISH COULD NOT RELOCATE DISCOVERY STATUS');
+      if (!restoreMarketScan()) throw new Error('UI POLISH COULD NOT PROMOTE MARKET SCAN');
+      relabelCalculator();
       const failures = selfTest();
       if (failures.length) throw new Error(`UI POLISH SELF TEST FAILED: ${failures.join(', ')}`);
       return result;
@@ -259,7 +303,8 @@
   }
 
   app.uiPolish = {
-    relabelFabrication,
+    relabelCalculator,
+    relabelFabrication: relabelCalculator,
     relocateDiscoveryPanel,
     restoreMarketScan,
     updateDiscoverySummary,
