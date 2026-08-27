@@ -1,7 +1,7 @@
 /* RHW V4.0.2 · unified workspace service worker
    App assets are available offline. Live telemetry remains network-only. */
 const CACHE_PREFIX = 'rhw-v4.0.2-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}2026-08-27-auto-update-1`;
+const CACHE_NAME = `${CACHE_PREFIX}2026-08-27-calculator-market-scan-1`;
 const CSS_NAMES = [
   'core', 'ticker', 'production', 'responsive', 'shipyard', 'shipyard-detail', 'mobile', 'headings', 'v35',
   'maintenance', 'layout-v36', 'app-v40', 'app-v40-navigation', 'app-v40-composer', 'app-v40-audit',
