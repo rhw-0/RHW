@@ -1,7 +1,7 @@
 /* RHW V4.0.2 · unified workspace service worker
    App assets are available offline. Live telemetry remains network-only. */
 const CACHE_PREFIX = 'rhw-v4.0.2-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}2026-08-27-ui-polish-1`;
+const CACHE_NAME = `${CACHE_PREFIX}2026-08-27-auto-update-1`;
 const CSS_NAMES = [
   'core', 'ticker', 'production', 'responsive', 'shipyard', 'shipyard-detail', 'mobile', 'headings', 'v35',
   'maintenance', 'layout-v36', 'app-v40', 'app-v40-navigation', 'app-v40-composer', 'app-v40-audit',
@@ -34,7 +34,13 @@ const APP_SHELL = [
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(APP_SHELL);
+    /* RHW is a controlled private web app. A newly deployed shell must not sit
+       behind the previous cache waiting for a hidden confirmation prompt. */
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', event => {
