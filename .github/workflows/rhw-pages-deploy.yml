@@ -51,6 +51,17 @@ jobs:
       - name: Runtime smoke test
         run: python3 scripts/smoke_v40.py
 
+      - name: Capture 390px Logistics UI
+        run: python3 scripts/capture_logistics_mobile.py
+
+      - name: Upload Logistics UI debug
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logistics-mobile-debug
+          path: artifacts/ui-debug
+          if-no-files-found: error
+
       - name: Newswire working-copy smoke test
         run: python3 scripts/smoke_v40_newsmanager.py
 
