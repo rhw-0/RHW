@@ -51,13 +51,9 @@
         background:linear-gradient(90deg,rgba(125,167,234,.065),transparent 72%)
       }
 
-      /* The old inventory cross-link pushed the actual Logistics tool below the
-         first phone viewport. Inventory remains permanently reachable in COMMAND. */
       body[data-workspace="command"][data-command-node="logistics"] #commandContextAction{display:none!important}
       body[data-workspace="command"][data-command-node="logistics"] #commandControlDeck{grid-template-columns:minmax(260px,1.45fr) auto}
 
-      /* The old remote wrapper is now only an internal telemetry/status source.
-         Both user-facing Logistics tools are direct children of LOGISTICS. */
       body[data-workspace="command"][data-command-node="logistics"] #externalLogisticsPanel{display:none!important}
       body[data-workspace="command"][data-command-node="logistics"][data-logistics-view="market"] [data-command-panel="logistics"]>#fixedLogisticsSection{
         display:none!important
@@ -79,9 +75,9 @@
         .rhw-logistics-view-nav button{min-height:48px;padding:7px 6px;font-size:8px}
         .rhw-logistics-view-nav button small{font-size:5.5px}
         [data-command-panel="logistics"]{
-          /* Small bottom reserve lets the no-telemetry state scroll just far
-             enough for its sort controls to clear the persistent workspace dock. */
-          padding-bottom:72px!important
+          /* End-of-panel scroll reserve: invisible in normal use, but enough for
+             the no-telemetry Market controls to clear the fixed bottom dock. */
+          padding-bottom:180px!important
         }
         [data-command-panel="logistics"]>.rhw-fixed-logistics-surface{margin:0 9px 12px!important;width:calc(100% - 18px)}
         .rhw-fixed-logistics-surface .logistics-subhead{padding:12px}
@@ -154,8 +150,6 @@
       });
     }
 
-    /* Re-establish this order after the older polish layer has refreshed itself:
-       tabs -> market -> fixed links -> hidden legacy telemetry wrapper. */
     panel.insertBefore(nav, market);
     if (market.nextElementSibling !== fixed) market.insertAdjacentElement('afterend', fixed);
     if (fixed.nextElementSibling !== legacy) fixed.insertAdjacentElement('afterend', legacy);
@@ -166,24 +160,37 @@
 
   function revealLogistics() {
     if (window.innerWidth > 760) return;
+    const started = performance.now();
+    let clearFrames = 0;
 
-    const align = () => {
+    const align = now => {
+      if (document.body.dataset.workspace !== 'command' || document.body.dataset.commandNode !== 'logistics') return;
       const dock = document.querySelector('.app-tabs');
+      const nav = document.getElementById('rhwLogisticsViewNav');
       const price = document.querySelector('[data-market-sort="price"]');
       const stock = document.querySelector('[data-market-sort="stock"]');
-      const dockTop = dock?.getBoundingClientRect().top ?? window.innerHeight;
-      const sortBottom = Math.max(
-        price?.getBoundingClientRect().bottom || 0,
-        stock?.getBoundingClientRect().bottom || 0
-      );
+      if (!dock || !nav || !price || !stock) {
+        if (now - started < 600) requestAnimationFrame(align);
+        return;
+      }
+
+      const dockTop = dock.getBoundingClientRect().top;
+      const sortBottom = Math.max(price.getBoundingClientRect().bottom, stock.getBoundingClientRect().bottom);
+      const navTop = nav.getBoundingClientRect().top;
       const clearance = 12;
       const delta = sortBottom - (dockTop - clearance);
-      if (delta > 2) window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+
+      if (delta > 2) {
+        clearFrames = 0;
+        window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+      } else if (navTop >= 0) {
+        clearFrames += 1;
+      }
+
+      if (now - started < 600 && clearFrames < 4) requestAnimationFrame(align);
     };
 
     requestAnimationFrame(align);
-    window.setTimeout(align, 70);
-    window.setTimeout(align, 160);
   }
 
   function selfTest() {
