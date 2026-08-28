@@ -78,10 +78,10 @@
         }
         .rhw-logistics-view-nav button{min-height:48px;padding:7px 6px;font-size:8px}
         .rhw-logistics-view-nav button small{font-size:5.5px}
-        [data-command-panel="logistics"]>.rhw-market-scan-surface{
-          /* Keep enough scrollable room for the no-telemetry state so the
-             44px sort controls can clear the persistent bottom workspace dock. */
-          min-height:max(720px,calc(100dvh - 100px))
+        [data-command-panel="logistics"]{
+          /* Small bottom reserve lets the no-telemetry state scroll just far
+             enough for its sort controls to clear the persistent workspace dock. */
+          padding-bottom:72px!important
         }
         [data-command-panel="logistics"]>.rhw-fixed-logistics-surface{margin:0 9px 12px!important;width:calc(100% - 18px)}
         .rhw-fixed-logistics-surface .logistics-subhead{padding:12px}
@@ -166,15 +166,19 @@
 
   function revealLogistics() {
     if (window.innerWidth > 760) return;
-    const nav = document.getElementById('rhwLogisticsViewNav');
-    if (!nav) return;
 
     const align = () => {
-      const offsetRaw = getComputedStyle(document.documentElement).getPropertyValue('--rhw-sticky-nav-offset');
-      const desiredTop = Math.max(145, Math.min(205, Number.parseFloat(offsetRaw) || 160));
-      const absoluteTop = window.scrollY + nav.getBoundingClientRect().top;
-      const targetScroll = Math.max(0, absoluteTop - desiredTop);
-      if (Math.abs(window.scrollY - targetScroll) > 2) window.scrollTo({ top: targetScroll, left: 0, behavior: 'auto' });
+      const dock = document.querySelector('.app-tabs');
+      const price = document.querySelector('[data-market-sort="price"]');
+      const stock = document.querySelector('[data-market-sort="stock"]');
+      const dockTop = dock?.getBoundingClientRect().top ?? window.innerHeight;
+      const sortBottom = Math.max(
+        price?.getBoundingClientRect().bottom || 0,
+        stock?.getBoundingClientRect().bottom || 0
+      );
+      const clearance = 12;
+      const delta = sortBottom - (dockTop - clearance);
+      if (delta > 2) window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
     };
 
     requestAnimationFrame(align);
