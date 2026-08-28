@@ -1,7 +1,7 @@
 /* RHW V4.0.2 · unified workspace service worker
    App assets are available offline. Live telemetry remains network-only. */
 const CACHE_PREFIX = 'rhw-v4.0.2-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}2026-08-28-stability-polish-1`;
+const CACHE_NAME = `${CACHE_PREFIX}2026-08-28-command-compact-1`;
 const CSS_NAMES = [
   'core', 'ticker', 'production', 'responsive', 'shipyard', 'shipyard-detail', 'mobile', 'headings', 'v35',
   'maintenance', 'layout-v36', 'app-v40', 'app-v40-navigation', 'app-v40-composer', 'app-v40-audit',
@@ -29,7 +29,7 @@ const APP_SHELL = [
   './js/24-app-v40-newswire-2.js', './js/25-app-v40-discovery-status.js', './js/26-app-v40-diagnostics.js',
   './js/27-app-v40-production-orders.js', './js/28-app-v40-transfer-center.js', './js/29-app-v40-newswire-review.js',
   './js/30-app-v40-full-audit.js', './js/31-app-command-rework.js', './js/32-app-unified-workspaces.js',
-  './js/33-app-ui-polish-fix.js', './js/34-app-stability-polish.js',
+  './js/33-app-ui-polish-fix.js', './js/34-app-stability-polish.js', './js/35-app-command-compact-polish.js',
   ...Array.from({ length: 6 }, (_, index) => `./assets/recipes/catalog-v1-part-${String(index + 1).padStart(2, '0')}.js`)
 ];
 
