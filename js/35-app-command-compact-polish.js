@@ -103,6 +103,28 @@
     document.head.appendChild(style);
   }
 
+  function installInventoryKeyboard(nav) {
+    if (!nav || nav.dataset.rhwCompactKeys === 'true') return;
+    nav.dataset.rhwCompactKeys = 'true';
+    nav.addEventListener('keydown', event => {
+      const button = event.target.closest('[data-inventory-view]');
+      if (!button || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      const buttons = [...nav.querySelectorAll('[data-inventory-view]')];
+      const current = buttons.indexOf(button);
+      if (current < 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      let next = current;
+      if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = buttons.length - 1;
+      else next = (current + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+      const target = buttons[next];
+      if (!target) return;
+      app.command.activateInventoryView?.(target.dataset.inventoryView);
+      target.focus();
+    });
+  }
+
   function decorateInventoryNav() {
     const nav = document.querySelector('.inventory-view-nav');
     if (!nav) return null;
@@ -115,6 +137,7 @@
       marker.textContent = String(index + 1).padStart(2, '0');
       button.prepend(marker);
     });
+    installInventoryKeyboard(nav);
     return nav;
   }
 
@@ -200,6 +223,7 @@
     if (!document.getElementById('rhwCommandCompactPolishStyle')) failures.push('style');
     if (!shell || !commandNav || !inventoryNav || commandNav.nextElementSibling !== inventoryNav) failures.push('inventory-nav-stack');
     if (inventoryNav?.querySelectorAll('.rhw-subview-index').length !== 2) failures.push('inventory-mode-indexes');
+    if (inventoryNav?.dataset.rhwCompactKeys !== 'true') failures.push('inventory-keyboard');
     if (!all?.hidden) failures.push('all-areas-visible');
     if (attention?.dataset.rhwAttentionToggle !== 'true') failures.push('attention-toggle');
     return failures;
