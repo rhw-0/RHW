@@ -79,7 +79,9 @@
         .rhw-logistics-view-nav button{min-height:48px;padding:7px 6px;font-size:8px}
         .rhw-logistics-view-nav button small{font-size:5.5px}
         [data-command-panel="logistics"]>.rhw-market-scan-surface{
-          min-height:max(620px,calc(100dvh - 150px))
+          /* Keep enough scrollable room for the no-telemetry state so the
+             44px sort controls can clear the persistent bottom workspace dock. */
+          min-height:max(720px,calc(100dvh - 100px))
         }
         [data-command-panel="logistics"]>.rhw-fixed-logistics-surface{margin:0 9px 12px!important;width:calc(100% - 18px)}
         .rhw-fixed-logistics-surface .logistics-subhead{padding:12px}
