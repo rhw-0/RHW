@@ -72,12 +72,15 @@
       @media(max-width:760px){
         body[data-workspace="command"][data-command-node="logistics"] #commandControlDeck{grid-template-columns:1fr}
         .rhw-logistics-view-nav{
-          position:sticky;top:var(--rhw-sticky-nav-offset,150px);z-index:74;
+          position:relative;z-index:74;
           width:calc(100% - 18px);margin:0 9px 10px;padding:5px;background:rgba(5,8,12,.98);
           box-shadow:0 10px 28px rgba(0,0,0,.42)
         }
         .rhw-logistics-view-nav button{min-height:48px;padding:7px 6px;font-size:8px}
         .rhw-logistics-view-nav button small{font-size:5.5px}
+        [data-command-panel="logistics"]>.rhw-market-scan-surface{
+          min-height:max(620px,calc(100dvh - 150px))
+        }
         [data-command-panel="logistics"]>.rhw-fixed-logistics-surface{margin:0 9px 12px!important;width:calc(100% - 18px)}
         .rhw-fixed-logistics-surface .logistics-subhead{padding:12px}
       }
@@ -165,11 +168,11 @@
     if (!nav) return;
 
     const align = () => {
-      const context = document.getElementById('appContextNavSlot');
-      const contextBottom = context ? context.getBoundingClientRect().bottom : 0;
-      const desiredTop = Math.max(150, Math.min(220, contextBottom + 8));
-      const delta = nav.getBoundingClientRect().top - desiredTop;
-      if (Math.abs(delta) > 2) window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+      const offsetRaw = getComputedStyle(document.documentElement).getPropertyValue('--rhw-sticky-nav-offset');
+      const desiredTop = Math.max(145, Math.min(205, Number.parseFloat(offsetRaw) || 160));
+      const absoluteTop = window.scrollY + nav.getBoundingClientRect().top;
+      const targetScroll = Math.max(0, absoluteTop - desiredTop);
+      if (Math.abs(window.scrollY - targetScroll) > 2) window.scrollTo({ top: targetScroll, left: 0, behavior: 'auto' });
     };
 
     requestAnimationFrame(align);
