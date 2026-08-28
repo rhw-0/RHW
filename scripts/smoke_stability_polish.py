@@ -55,17 +55,30 @@ def main() -> int:
                 const style=getComputedStyle(element),rect=element.getBoundingClientRect();
                 return style.display!=='none'&&style.visibility!=='hidden'&&style.opacity!=='0'&&rect.width>0&&rect.height>0;
               };
+              const rect=element=>{
+                const r=element?.getBoundingClientRect();
+                return r?{top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height}:{top:9999,bottom:9999,left:0,right:0,width:0,height:0};
+              };
               const nav=document.getElementById('rhwLogisticsViewNav');
               const market=document.getElementById('marketScanSection');
               const fixed=document.getElementById('fixedLogisticsSection');
               const marketTab=nav?.querySelector('[data-logistics-view="market"]');
               const fixedTab=nav?.querySelector('[data-logistics-view="fixed"]');
               const context=document.getElementById('commandContextAction');
+              const title=document.getElementById('marketScanTitle');
+              const price=document.querySelector('[data-market-sort="price"]');
+              const stock=document.querySelector('[data-market-sort="stock"]');
+              const dock=document.querySelector('.app-tabs');
+              const dockTop=rect(dock).top<9999?rect(dock).top:window.innerHeight;
               const initial={
                 view:document.body.dataset.logisticsView||'',
-                navVisible:visible(nav),navTop:nav?.getBoundingClientRect().top??9999,
-                marketVisible:visible(market),marketTop:market?.getBoundingClientRect().top??9999,
+                navVisible:visible(nav),navRect:rect(nav),
+                marketVisible:visible(market),marketRect:rect(market),
                 fixedVisible:visible(fixed),
+                titleVisible:visible(title),titleRect:rect(title),
+                priceVisible:visible(price),priceRect:rect(price),
+                stockVisible:visible(stock),stockRect:rect(stock),
+                dockTop,
                 marketSelected:marketTab?.getAttribute('aria-selected')||'',
                 fixedSelected:fixedTab?.getAttribute('aria-selected')||'',
                 tabHeights:[marketTab,fixedTab].map(x=>x?.getBoundingClientRect().height||0),
@@ -95,8 +108,17 @@ def main() -> int:
                 raise RuntimeError(f"Logistics touch target too small: {result}")
             if initial.get("contextVisible"):
                 raise RuntimeError(f"Redundant Inventory cross-link still blocks Logistics: {result}")
-            if initial.get("navTop", 9999) > 280 or initial.get("marketTop", 9999) > 360:
-                raise RuntimeError(f"Market Scan remains below the useful mobile viewport: {result}")
+
+            dock_top = initial.get("dockTop", 820)
+            nav_rect = initial.get("navRect", {})
+            title_rect = initial.get("titleRect", {})
+            price_rect = initial.get("priceRect", {})
+            stock_rect = initial.get("stockRect", {})
+            if (nav_rect.get("top", 9999) < 0 or nav_rect.get("bottom", 9999) > dock_top - 8
+                    or not initial.get("titleVisible") or title_rect.get("top", 9999) < 0 or title_rect.get("bottom", 9999) > dock_top - 8
+                    or not initial.get("priceVisible") or price_rect.get("top", 9999) < 0 or price_rect.get("bottom", 9999) > dock_top - 8
+                    or not initial.get("stockVisible") or stock_rect.get("top", 9999) < 0 or stock_rect.get("bottom", 9999) > dock_top - 8):
+                raise RuntimeError(f"Market Scan title/sort controls are not fully usable above the mobile dock: {result}")
             if initial.get("overflow", 0) > 2:
                 raise RuntimeError(f"Logistics mobile horizontal overflow: {result}")
 
@@ -114,7 +136,7 @@ def main() -> int:
             if runtime_failures:
                 raise RuntimeError(f"Browser console/runtime errors: {runtime_failures}")
 
-            print("RHW stability smoke passed: 390px Logistics defaults to visible Market Scan, tabs switch cleanly, no blocking cross-link")
+            print("RHW stability smoke passed: 390px Logistics exposes Market Scan title + sort controls above the mobile dock and switches to fixed links cleanly")
             return 0
         finally:
             try:
