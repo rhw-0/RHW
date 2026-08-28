@@ -22,7 +22,7 @@
         display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;
         width:100%;margin:0 0 10px;padding:6px;border:1px solid rgba(125,167,234,.24);
         border-radius:8px;background:linear-gradient(90deg,rgba(125,167,234,.075),rgba(5,8,12,.96) 48%);
-        box-shadow:0 10px 24px rgba(0,0,0,.24);scroll-margin-top:calc(var(--rhw-sticky-nav-offset,150px) + 8px)
+        box-shadow:0 10px 24px rgba(0,0,0,.24)
       }
       .rhw-logistics-view-nav button{
         position:relative;min-width:0;min-height:52px;padding:8px 11px;border:1px solid rgba(125,167,234,.13);
@@ -40,14 +40,26 @@
       }
       .rhw-logistics-view-nav button[aria-selected="true"] small{color:rgba(190,208,235,.72)}
 
+      .rhw-fixed-logistics-surface{
+        display:block!important;visibility:visible!important;opacity:1!important;width:100%;margin:0!important;
+        border:1px solid rgba(125,167,234,.22);border-radius:9px;
+        background:linear-gradient(145deg,rgba(125,167,234,.06),rgba(5,8,12,.96) 42%);
+        box-shadow:0 14px 34px rgba(0,0,0,.25);overflow:hidden
+      }
+      .rhw-fixed-logistics-surface .logistics-subhead{
+        margin:0;padding:14px 16px;border-bottom:1px solid rgba(125,167,234,.14);
+        background:linear-gradient(90deg,rgba(125,167,234,.065),transparent 72%)
+      }
+
       /* The old inventory cross-link pushed the actual Logistics tool below the
          first phone viewport. Inventory remains permanently reachable in COMMAND. */
       body[data-workspace="command"][data-command-node="logistics"] #commandContextAction{display:none!important}
       body[data-workspace="command"][data-command-node="logistics"] #commandControlDeck{grid-template-columns:minmax(260px,1.45fr) auto}
 
-      /* Stable telemetry may toggle hidden attributes while refreshing. The
-         selected Logistics lens remains authoritative for presentation. */
-      body[data-workspace="command"][data-command-node="logistics"][data-logistics-view="market"] #externalLogisticsPanel{
+      /* The old remote wrapper is now only an internal telemetry/status source.
+         Both user-facing Logistics tools are direct children of LOGISTICS. */
+      body[data-workspace="command"][data-command-node="logistics"] #externalLogisticsPanel{display:none!important}
+      body[data-workspace="command"][data-command-node="logistics"][data-logistics-view="market"] [data-command-panel="logistics"]>#fixedLogisticsSection{
         display:none!important
       }
       body[data-workspace="command"][data-command-node="logistics"][data-logistics-view="fixed"] [data-command-panel="logistics"]>#marketScanSection{
@@ -66,6 +78,8 @@
         }
         .rhw-logistics-view-nav button{min-height:48px;padding:7px 6px;font-size:8px}
         .rhw-logistics-view-nav button small{font-size:5.5px}
+        [data-command-panel="logistics"]>.rhw-fixed-logistics-surface{margin:0 9px 12px!important;width:calc(100% - 18px)}
+        .rhw-fixed-logistics-surface .logistics-subhead{padding:12px}
       }
     `;
     document.head.appendChild(style);
@@ -80,7 +94,7 @@
       button.tabIndex = active ? 0 : -1;
     });
     document.getElementById('marketScanSection')?.setAttribute('aria-hidden', safe === 'market' ? 'false' : 'true');
-    document.getElementById('externalLogisticsPanel')?.setAttribute('aria-hidden', safe === 'fixed' ? 'false' : 'true');
+    document.getElementById('fixedLogisticsSection')?.setAttribute('aria-hidden', safe === 'fixed' ? 'false' : 'true');
     return safe;
   }
 
@@ -88,13 +102,19 @@
     app.uiPolish?.restoreMarketScan?.();
     const panel = document.querySelector('[data-command-panel="logistics"]');
     const market = document.getElementById('marketScanSection');
-    const fixed = document.getElementById('externalLogisticsPanel');
-    if (!panel || !market || !fixed) return false;
+    const fixed = document.getElementById('fixedLogisticsSection');
+    const legacy = document.getElementById('externalLogisticsPanel');
+    if (!panel || !market || !fixed || !legacy) return false;
 
-    market.hidden = false;
-    market.removeAttribute('hidden');
-    fixed.hidden = false;
-    fixed.removeAttribute('hidden');
+    [market, fixed].forEach(surface => {
+      surface.hidden = false;
+      surface.removeAttribute('hidden');
+      surface.style.removeProperty('display');
+      surface.style.removeProperty('visibility');
+      surface.style.removeProperty('opacity');
+    });
+    fixed.classList.add('rhw-fixed-logistics-surface');
+    legacy.setAttribute('aria-hidden', 'true');
 
     let nav = document.getElementById('rhwLogisticsViewNav');
     if (!nav) {
@@ -107,10 +127,9 @@
         <button type="button" role="tab" data-logistics-view="market" aria-controls="marketScanSection">
           MARKET SCAN<small>GOODS + ALL KNOWN POBS</small>
         </button>
-        <button type="button" role="tab" data-logistics-view="fixed" aria-controls="externalLogisticsPanel">
+        <button type="button" role="tab" data-logistics-view="fixed" aria-controls="fixedLogisticsSection">
           FIXED LINKS<small>LISHEEN + SHELTON</small>
         </button>`;
-      panel.insertBefore(nav, market);
       nav.addEventListener('click', event => {
         const button = event.target.closest('[data-logistics-view]');
         if (button) setLogisticsView(button.dataset.logisticsView);
@@ -128,9 +147,13 @@
         buttons[next].focus();
         buttons[next].click();
       });
-    } else if (nav.parentElement !== panel || nav.nextElementSibling !== market) {
-      panel.insertBefore(nav, market);
     }
+
+    /* Re-establish this order after the older polish layer has refreshed itself:
+       tabs -> market -> fixed links -> hidden legacy telemetry wrapper. */
+    panel.insertBefore(nav, market);
+    if (market.nextElementSibling !== fixed) market.insertAdjacentElement('afterend', fixed);
+    if (fixed.nextElementSibling !== legacy) fixed.insertAdjacentElement('afterend', legacy);
 
     setLogisticsView(document.body.dataset.logisticsView || 'market');
     return true;
@@ -140,9 +163,18 @@
     if (window.innerWidth > 760) return;
     const nav = document.getElementById('rhwLogisticsViewNav');
     if (!nav) return;
-    const move = () => nav.scrollIntoView({ behavior: 'auto', block: 'start' });
-    requestAnimationFrame(move);
-    window.setTimeout(move, 80);
+
+    const align = () => {
+      const context = document.getElementById('appContextNavSlot');
+      const contextBottom = context ? context.getBoundingClientRect().bottom : 0;
+      const desiredTop = Math.max(150, Math.min(220, contextBottom + 8));
+      const delta = nav.getBoundingClientRect().top - desiredTop;
+      if (Math.abs(delta) > 2) window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+    };
+
+    requestAnimationFrame(align);
+    window.setTimeout(align, 70);
+    window.setTimeout(align, 160);
   }
 
   function selfTest() {
@@ -150,11 +182,13 @@
     const panel = document.querySelector('[data-command-panel="logistics"]');
     const nav = document.getElementById('rhwLogisticsViewNav');
     const market = document.getElementById('marketScanSection');
-    const fixed = document.getElementById('externalLogisticsPanel');
+    const fixed = document.getElementById('fixedLogisticsSection');
+    const legacy = document.getElementById('externalLogisticsPanel');
     if (!document.getElementById('rhwStabilityPolishStyle')) failures.push('style');
     if (!panel || !nav || nav.parentElement !== panel || nav.nextElementSibling !== market) failures.push('logistics-nav-order');
+    if (market?.nextElementSibling !== fixed || fixed?.nextElementSibling !== legacy) failures.push('logistics-surface-order');
     if (nav?.querySelectorAll('[data-logistics-view]').length !== 2) failures.push('logistics-tabs');
-    if (!market || !fixed) failures.push('logistics-surfaces');
+    if (!market || !fixed || !fixed.classList.contains('rhw-fixed-logistics-surface')) failures.push('logistics-surfaces');
     if (typeof setLogisticsView !== 'function') failures.push('logistics-view-api');
     return failures;
   }
