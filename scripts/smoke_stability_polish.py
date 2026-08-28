@@ -48,7 +48,9 @@ def main() -> int:
             if snap.get("ready") != "true" or snap.get("workspace") != "command" or snap.get("commandNode") != "logistics" or snap.get("errors"):
                 raise RuntimeError(f"Stability route did not boot: {snap}")
 
-            time.sleep(.22)
+            # The app deliberately stabilizes late COMMAND layout shifts for up to
+            # 850ms. Measure the final settled UI, not an intermediate boot frame.
+            time.sleep(.95)
             result = base.ev(cdp, """(()=>{
               const visible=element=>{
                 if(!element)return false;
@@ -69,6 +71,7 @@ def main() -> int:
               const price=document.querySelector('[data-market-sort="price"]');
               const stock=document.querySelector('[data-market-sort="stock"]');
               const dock=document.querySelector('.app-tabs');
+              const root=document.scrollingElement||document.documentElement;
               const dockTop=rect(dock).top<9999?rect(dock).top:window.innerHeight;
               const initial={
                 view:document.body.dataset.logisticsView||'',
@@ -84,7 +87,11 @@ def main() -> int:
                 tabHeights:[marketTab,fixedTab].map(x=>x?.getBoundingClientRect().height||0),
                 contextVisible:visible(context),
                 calculator:document.querySelector('.app-tabs [data-workspace="operations"] > span')?.textContent?.trim()||'',
-                scrollY:window.scrollY,
+                innerWidth:window.innerWidth,innerHeight:window.innerHeight,
+                scrollY:window.scrollY,rootScroll:root.scrollTop,maxScroll:Math.max(0,root.scrollHeight-window.innerHeight),
+                revealRuns:document.documentElement.dataset.rhwLogisticsRevealRuns||'',
+                revealDelta:document.documentElement.dataset.rhwLogisticsRevealDelta||'',
+                revealScroll:document.documentElement.dataset.rhwLogisticsRevealScroll||'',
                 overflow:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-window.innerWidth,
                 failures:RHWV4.stabilityPolish?.selfTest?.()||[]
               };
