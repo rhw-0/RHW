@@ -48,9 +48,7 @@ def main() -> int:
             if snap.get("ready") != "true" or snap.get("workspace") != "command" or snap.get("commandNode") != "logistics" or snap.get("errors"):
                 raise RuntimeError(f"Stability route did not boot: {snap}")
 
-            # Let the second requestAnimationFrame/timeout used by the mobile
-            # reveal settle before measuring the viewport.
-            time.sleep(.18)
+            time.sleep(.22)
             result = base.ev(cdp, """(()=>{
               const visible=element=>{
                 if(!element)return false;
@@ -59,7 +57,7 @@ def main() -> int:
               };
               const nav=document.getElementById('rhwLogisticsViewNav');
               const market=document.getElementById('marketScanSection');
-              const fixed=document.getElementById('externalLogisticsPanel');
+              const fixed=document.getElementById('fixedLogisticsSection');
               const marketTab=nav?.querySelector('[data-logistics-view="market"]');
               const fixedTab=nav?.querySelector('[data-logistics-view="fixed"]');
               const context=document.getElementById('commandContextAction');
