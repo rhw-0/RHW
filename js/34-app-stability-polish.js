@@ -177,21 +177,29 @@
     if (window.innerWidth > 760) return;
     const started = performance.now();
     const settleMs = 850;
+    let runs = 0;
 
     const align = now => {
       if (document.body.dataset.workspace !== 'command' || document.body.dataset.commandNode !== 'logistics') return;
+      runs += 1;
+      const root = document.scrollingElement || document.documentElement;
       const dock = document.querySelector('.app-tabs');
       const price = document.querySelector('[data-market-sort="price"]');
       const stock = document.querySelector('[data-market-sort="stock"]');
+      let delta = 0;
       if (dock && price && stock) {
         const dockTop = dock.getBoundingClientRect().top;
         const sortBottom = Math.max(price.getBoundingClientRect().bottom, stock.getBoundingClientRect().bottom);
         const clearance = 12;
-        const delta = sortBottom - (dockTop - clearance);
-        if (delta > 2) window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+        delta = Math.max(0, sortBottom - (dockTop - clearance));
+        if (delta > 2) {
+          const maxScroll = Math.max(0, root.scrollHeight - window.innerHeight);
+          root.scrollTop = Math.min(maxScroll, root.scrollTop + delta);
+        }
       }
-      /* Do not stop after a few apparently stable frames. Other RHW boot layers
-         settle slightly later and may shift COMMAND down again. */
+      document.documentElement.dataset.rhwLogisticsRevealRuns = String(runs);
+      document.documentElement.dataset.rhwLogisticsRevealDelta = String(Math.round(delta));
+      document.documentElement.dataset.rhwLogisticsRevealScroll = String(Math.round(root.scrollTop));
       if (now - started < settleMs) requestAnimationFrame(align);
     };
 
