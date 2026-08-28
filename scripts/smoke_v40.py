@@ -12,6 +12,7 @@ APP_LAYER_ASSETS = [
     "js/31-app-command-rework.js",
     "js/32-app-unified-workspaces.js",
     "js/33-app-ui-polish-fix.js",
+    "js/34-app-stability-polish.js",
 ]
 
 
