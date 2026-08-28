@@ -176,33 +176,23 @@
   function revealLogistics() {
     if (window.innerWidth > 760) return;
     const started = performance.now();
-    let clearFrames = 0;
+    const settleMs = 850;
 
     const align = now => {
       if (document.body.dataset.workspace !== 'command' || document.body.dataset.commandNode !== 'logistics') return;
       const dock = document.querySelector('.app-tabs');
-      const nav = document.getElementById('rhwLogisticsViewNav');
       const price = document.querySelector('[data-market-sort="price"]');
       const stock = document.querySelector('[data-market-sort="stock"]');
-      if (!dock || !nav || !price || !stock) {
-        if (now - started < 600) requestAnimationFrame(align);
-        return;
+      if (dock && price && stock) {
+        const dockTop = dock.getBoundingClientRect().top;
+        const sortBottom = Math.max(price.getBoundingClientRect().bottom, stock.getBoundingClientRect().bottom);
+        const clearance = 12;
+        const delta = sortBottom - (dockTop - clearance);
+        if (delta > 2) window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
       }
-
-      const dockTop = dock.getBoundingClientRect().top;
-      const sortBottom = Math.max(price.getBoundingClientRect().bottom, stock.getBoundingClientRect().bottom);
-      const navTop = nav.getBoundingClientRect().top;
-      const clearance = 12;
-      const delta = sortBottom - (dockTop - clearance);
-
-      if (delta > 2) {
-        clearFrames = 0;
-        window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
-      } else if (navTop >= 0) {
-        clearFrames += 1;
-      }
-
-      if (now - started < 600 && clearFrames < 4) requestAnimationFrame(align);
+      /* Do not stop after a few apparently stable frames. Other RHW boot layers
+         settle slightly later and may shift COMMAND down again. */
+      if (now - started < settleMs) requestAnimationFrame(align);
     };
 
     requestAnimationFrame(align);
