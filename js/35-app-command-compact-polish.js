@@ -63,22 +63,30 @@
       .command-focus-modes.rhw-attention-only [data-command-focus-mode="all"]{display:none!important}
       .command-focus-modes.rhw-attention-empty{display:none!important}
 
+      @media(max-width:980px){
+        body[data-workspace="command"] #commandNodeNav.command-module-nav button[data-command-node]{
+          height:60px!important;min-height:60px!important;max-height:60px!important;
+          grid-template-columns:22px minmax(0,1fr) minmax(0,80px)!important;grid-template-areas:"index copy state"!important;
+          align-items:center!important;gap:6px!important;padding:6px 7px!important;overflow:hidden!important
+        }
+        body[data-workspace="command"] #commandNodeNav .command-module-index{width:22px!important;height:22px!important;font-size:7px!important}
+        body[data-workspace="command"] #commandNodeNav .command-module-copy{gap:0!important}
+        body[data-workspace="command"] #commandNodeNav .command-module-copy strong{font-size:15px!important;line-height:.95!important}
+        body[data-workspace="command"] #commandNodeNav .command-module-copy small{display:none!important}
+        body[data-workspace="command"] #commandNodeNav .command-module-state{
+          justify-self:stretch!important;max-width:none!important;min-width:0!important;padding:3px 4px!important;
+          gap:3px!important;font-size:5.5px!important;line-height:1.15!important;text-align:center!important;overflow:hidden!important
+        }
+        body[data-workspace="command"] #commandNodeNav .command-module-state::after{
+          min-width:16px!important;height:16px!important;padding:0 3px!important;font-size:6px!important
+        }
+      }
       @media(max-width:760px){
         body[data-workspace="command"] .app-context-nav-slot.rhw-command-compact-shell,
         body[data-workspace="command"] #appContextNavSlot.rhw-command-compact-shell{background:#05070a!important}
-        .app-context-nav-slot .command-module-nav button,.command-module-nav button{
-          grid-template-columns:22px minmax(0,1fr) minmax(0,76px)!important;grid-template-areas:"index copy state"!important;
-          align-items:center!important;gap:6px!important;min-height:58px!important;padding:6px 7px!important
+        body[data-workspace="command"] #commandNodeNav.command-module-nav button[data-command-node]{
+          height:58px!important;min-height:58px!important;max-height:58px!important
         }
-        .command-module-index{width:22px!important;height:22px!important;font-size:7px!important}
-        .command-module-copy{gap:0!important}
-        .command-module-copy strong{font-size:15px!important;line-height:.95!important}
-        .command-module-copy small{display:none!important}
-        #commandNodeNav .command-module-state{
-          justify-self:stretch!important;max-width:none!important;min-width:0!important;padding:3px 4px!important;
-          gap:3px!important;font-size:5.5px!important;line-height:1.15!important;text-align:center!important
-        }
-        #commandNodeNav .command-module-state::after{min-width:16px!important;height:16px!important;padding:0 3px!important;font-size:6px!important}
         .command-control-deck{grid-template-columns:minmax(0,1fr) auto!important;gap:5px!important;margin:0 9px 7px!important;padding:5px!important}
         .command-control-deck .command-finder-label{min-height:40px!important;padding:0 7px!important}
         .command-control-deck .command-finder-label>span:first-child{display:none!important}
@@ -91,21 +99,29 @@
         .inventory-view-heading{margin-top:8px!important}
       }
       @media(max-width:390px){
-        .app-context-nav-slot .command-module-nav button,.command-module-nav button{
-          grid-template-columns:20px minmax(0,1fr) minmax(0,68px)!important;min-height:56px!important;padding:5px 6px!important
+        body[data-workspace="command"] #commandNodeNav.command-module-nav button[data-command-node]{
+          height:56px!important;min-height:56px!important;max-height:56px!important;
+          grid-template-columns:20px minmax(0,1fr) minmax(0,68px)!important;padding:5px 6px!important
         }
-        .command-module-index{width:20px!important;height:20px!important}
-        .command-module-copy strong{font-size:14px!important}
-        #commandNodeNav .command-module-state{font-size:5px!important}
+        body[data-workspace="command"] #commandNodeNav .command-module-index{width:20px!important;height:20px!important}
+        body[data-workspace="command"] #commandNodeNav .command-module-copy strong{font-size:14px!important}
+        body[data-workspace="command"] #commandNodeNav .command-module-state{font-size:5px!important}
         .rhw-inventory-mode-nav button>span{font-size:14px!important}
       }
     `;
     document.head.appendChild(style);
   }
 
-  function installInventoryKeyboard(nav) {
-    if (!nav || nav.dataset.rhwCompactKeys === 'true') return;
-    nav.dataset.rhwCompactKeys = 'true';
+  function installInventoryInteraction(nav) {
+    if (!nav || nav.dataset.rhwCompactInteraction === 'true') return;
+    nav.dataset.rhwCompactInteraction = 'true';
+
+    nav.addEventListener('click', event => {
+      const button = event.target.closest('[data-inventory-view]');
+      if (!button || !nav.contains(button)) return;
+      app.command.activateInventoryView?.(button.dataset.inventoryView);
+    });
+
     nav.addEventListener('keydown', event => {
       const button = event.target.closest('[data-inventory-view]');
       if (!button || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -137,7 +153,7 @@
       marker.textContent = String(index + 1).padStart(2, '0');
       button.prepend(marker);
     });
-    installInventoryKeyboard(nav);
+    installInventoryInteraction(nav);
     return nav;
   }
 
@@ -223,7 +239,7 @@
     if (!document.getElementById('rhwCommandCompactPolishStyle')) failures.push('style');
     if (!shell || !commandNav || !inventoryNav || commandNav.nextElementSibling !== inventoryNav) failures.push('inventory-nav-stack');
     if (inventoryNav?.querySelectorAll('.rhw-subview-index').length !== 2) failures.push('inventory-mode-indexes');
-    if (inventoryNav?.dataset.rhwCompactKeys !== 'true') failures.push('inventory-keyboard');
+    if (inventoryNav?.dataset.rhwCompactInteraction !== 'true') failures.push('inventory-interaction');
     if (!all?.hidden) failures.push('all-areas-visible');
     if (attention?.dataset.rhwAttentionToggle !== 'true') failures.push('attention-toggle');
     return failures;
