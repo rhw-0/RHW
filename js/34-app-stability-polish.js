@@ -99,7 +99,22 @@
     return safe;
   }
 
+  function disableLegacyCommandAutoScroll() {
+    const nav = document.getElementById('commandNodeNav');
+    if (!nav?.classList.contains('command-module-nav')) return false;
+    nav.querySelectorAll('[data-command-node]').forEach(button => {
+      if (button.dataset.rhwLegacyScrollDisabled === 'true') return;
+      button.dataset.rhwLegacyScrollDisabled = 'true';
+      /* The legacy V4 tab bar scrolled its active button into view. COMMAND is
+         now a fully visible 2x2 grid on phones, so that scheduled scroll only
+         moves the page and fights the real Logistics tool positioning. */
+      button.scrollIntoView = () => {};
+    });
+    return true;
+  }
+
   function ensureLogisticsSwitcher() {
+    disableLegacyCommandAutoScroll();
     app.uiPolish?.restoreMarketScan?.();
     const panel = document.querySelector('[data-command-panel="logistics"]');
     const market = document.getElementById('marketScanSection');
@@ -200,11 +215,13 @@
     const market = document.getElementById('marketScanSection');
     const fixed = document.getElementById('fixedLogisticsSection');
     const legacy = document.getElementById('externalLogisticsPanel');
+    const commandButtons = [...document.querySelectorAll('#commandNodeNav [data-command-node]')];
     if (!document.getElementById('rhwStabilityPolishStyle')) failures.push('style');
     if (!panel || !nav || nav.parentElement !== panel || nav.nextElementSibling !== market) failures.push('logistics-nav-order');
     if (market?.nextElementSibling !== fixed || fixed?.nextElementSibling !== legacy) failures.push('logistics-surface-order');
     if (nav?.querySelectorAll('[data-logistics-view]').length !== 2) failures.push('logistics-tabs');
     if (!market || !fixed || !fixed.classList.contains('rhw-fixed-logistics-surface')) failures.push('logistics-surfaces');
+    if (!commandButtons.length || commandButtons.some(button => button.dataset.rhwLegacyScrollDisabled !== 'true')) failures.push('legacy-command-scroll');
     if (typeof setLogisticsView !== 'function') failures.push('logistics-view-api');
     return failures;
   }
@@ -223,6 +240,7 @@
 
   if (typeof base.commandActivate === 'function') {
     app.command.activate = function stabilityCommandActivate(node, options) {
+      disableLegacyCommandAutoScroll();
       const previous = app.state.commandNode;
       const result = base.commandActivate.call(this, node, options);
       if (node === 'logistics') {
@@ -240,6 +258,7 @@
     ensureLogisticsSwitcher,
     setLogisticsView,
     revealLogistics,
+    disableLegacyCommandAutoScroll,
     selfTest
   };
 })();
