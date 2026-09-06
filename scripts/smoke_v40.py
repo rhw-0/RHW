@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     def _focused_discovery_test(cdp, workspace, node):
         if (workspace, node) == ("operations", "calculator"):
-            _base.ev(cdp, "RHWV4.focusPass?.openTool?.('data'); true")
+            _base.ev(cdp, "(()=>{RHWV4.focusPass?.openTool?.('data');return true;})()")
             time.sleep(.18)
         return _legacy_discovery_test(cdp, workspace, node)
 
