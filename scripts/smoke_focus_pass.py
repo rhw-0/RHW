@@ -11,6 +11,13 @@ import smoke_v402  # noqa: F401  # installs the production CSS/JS matrix
 
 harness._ensure_app_layer_assets()
 
+VISIBLE_HELPER = """const visible=element=>{if(!element)return false;const style=getComputedStyle(element),rect=element.getBoundingClientRect();return style.display!=='none'&&style.visibility!=='hidden'&&style.opacity!=='0'&&rect.width>0&&rect.height>0};"""
+
+
+def settle(seconds: float = .12) -> None:
+    """Wait one or more real render ticks after a user-like navigation action."""
+    time.sleep(seconds)
+
 
 def main() -> int:
     try:
@@ -46,120 +53,122 @@ def main() -> int:
             if snap.get("ready") != "true" or snap.get("errors"):
                 raise RuntimeError(f"Focus Pass route did not boot: {snap}")
 
-            time.sleep(.35)
-            result = base.ev(cdp, """(()=>{
-              const visible=element=>{
-                if(!element)return false;
-                const style=getComputedStyle(element),rect=element.getBoundingClientRect();
-                return style.display!=='none'&&style.visibility!=='hidden'&&style.opacity!=='0'&&rect.width>0&&rect.height>0;
-              };
-              const title=workspace=>{
-                const button=document.querySelector(`.app-tabs [data-workspace="${workspace}"]`);
+            settle(.35)
+            initial = base.ev(cdp, f"""(()=>{{
+              {VISIBLE_HELPER}
+              const title=workspace=>{{
+                const button=document.querySelector(`.app-tabs [data-workspace="${{workspace}}"]`);
                 const spans=[...(button?.children||[])].filter(x=>x.tagName==='SPAN'&&!x.classList.contains('rhw-workspace-index'));
                 return (spans[0]||button?.querySelector('span'))?.textContent?.trim()||'';
-              };
+              }};
               const api=RHWV4.focusPass;
-              const initial={
+              return{{
                 api:!!api,failures:api?.selfTest?.()||[],
                 labels:[title('command'),title('operations'),title('comms')],
                 toolButton:visible(document.getElementById('rhwFocusToolsBtn')),
                 diagnosticsVisible:visible(document.getElementById('rhwDiagnosticsBtn')),
                 overflow:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-window.innerWidth
-              };
-
-              document.querySelector('.app-tabs [data-workspace="operations"]')?.click();
-              const calculator={
-                workspace:document.body.dataset.workspace,node:document.body.dataset.operationsNode,
-                subnav:visible(document.getElementById('operationsNodeNav')),
-                calculator:visible(document.querySelector('[data-operations-panel="calculator"]')),
-                orders:visible(document.querySelector('[data-operations-panel="orders"]')),
-                dataStatus:visible(document.getElementById('rhwDataStatusUtility')),
-                active:document.getElementById('appActiveNode')?.textContent||''
-              };
-
-              api.openTools();
-              const tools={
-                open:visible(document.getElementById('rhwFocusToolsPanel')),
-                count:document.querySelectorAll('#rhwFocusToolsPanel [data-rhw-tool]').length,
-                buttonExpanded:document.getElementById('rhwFocusToolsBtn')?.getAttribute('aria-expanded')||''
-              };
-              api.openTool('build-queue');
-              const queue={
-                workspace:document.body.dataset.workspace,node:document.body.dataset.operationsNode,
-                tool:document.body.dataset.rhwFocusTool||'',
-                orders:visible(document.querySelector('[data-operations-panel="orders"]')),
-                active:document.getElementById('appActiveNode')?.textContent||''
-              };
-
-              document.querySelector('.app-tabs [data-workspace="operations"]')?.click();
-              const calculatorReturn={workspace:document.body.dataset.workspace,node:document.body.dataset.operationsNode,tool:document.body.dataset.rhwFocusTool||''};
-
-              api.openTool('data');
-              const data={
-                workspace:document.body.dataset.workspace,node:document.body.dataset.operationsNode,
-                tool:document.body.dataset.rhwFocusTool||'',
-                utility:visible(document.getElementById('rhwDataStatusUtility')),
-                open:document.getElementById('rhwDataStatusUtility')?.open===true
-              };
-
-              document.querySelector('.app-tabs [data-workspace="comms"]')?.click();
-              const forum={
-                workspace:document.body.dataset.workspace,node:document.body.dataset.commsNode,
-                subnav:visible(document.getElementById('commsNodeNav')),
-                panel:visible(document.querySelector('[data-comms-panel="forum"]')),
-                tool:document.body.dataset.rhwFocusTool||'',
-                active:document.getElementById('appActiveNode')?.textContent||''
-              };
-
-              api.openTool('newswire');
-              const newswire={workspace:document.body.dataset.workspace,node:document.body.dataset.commsNode,tool:document.body.dataset.rhwFocusTool||'',panel:visible(document.querySelector('[data-comms-panel="ticker"]'))};
-              document.querySelector('.app-tabs [data-workspace="comms"]')?.click();
-              const forumReturn={workspace:document.body.dataset.workspace,node:document.body.dataset.commsNode,tool:document.body.dataset.rhwFocusTool||''};
-
-              api.openTool('system');
-              const system={panel:visible(document.getElementById('rhwDiagnosticsPanel'))};
-              RHWV4.diagnostics?.close?.();
-
-              return{initial,calculator,tools,queue,calculatorReturn,data,forum,newswire,forumReturn,system,
-                overflow:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-window.innerWidth};
-            })()""")
-
-            initial = result.get("initial", {})
+              }};
+            }})()""")
             if not initial.get("api") or initial.get("failures") or initial.get("labels") != ["COMMAND", "CALCULATOR", "FORUM"]:
-                raise RuntimeError(f"Focused primary navigation failed: {result}")
+                raise RuntimeError(f"Focused primary navigation failed: {initial}")
             if not initial.get("toolButton") or initial.get("diagnosticsVisible") or initial.get("overflow", 0) > 2:
-                raise RuntimeError(f"Focused header/tools state failed: {result}")
+                raise RuntimeError(f"Focused header/tools state failed: {initial}")
 
-            calc = result.get("calculator", {})
-            if calc.get("workspace") != "operations" or calc.get("node") != "calculator" or calc.get("subnav") or not calc.get("calculator") or calc.get("orders") or calc.get("dataStatus") or "CALCULATOR" not in calc.get("active", ""):
-                raise RuntimeError(f"Calculator is not a clean daily destination: {result}")
+            base.ev(cdp, "(()=>{document.querySelector('.app-tabs [data-workspace=\"operations\"]')?.click();return true;})()")
+            settle()
+            calculator = base.ev(cdp, f"""(()=>{{{VISIBLE_HELPER}return{{
+              workspace:document.body.dataset.workspace,node:document.body.dataset.operationsNode,
+              subnav:visible(document.getElementById('operationsNodeNav')),
+              calculator:visible(document.querySelector('[data-operations-panel="calculator"]')),
+              orders:visible(document.querySelector('[data-operations-panel="orders"]')),
+              dataStatus:visible(document.getElementById('rhwDataStatusUtility')),
+              active:document.getElementById('appActiveNode')?.textContent||''
+            }};}})()""")
+            if calculator.get("workspace") != "operations" or calculator.get("node") != "calculator" or calculator.get("subnav") or not calculator.get("calculator") or calculator.get("orders") or calculator.get("dataStatus") or "CALCULATOR" not in calculator.get("active", ""):
+                raise RuntimeError(f"Calculator is not a clean daily destination: {calculator}")
 
-            tools = result.get("tools", {})
-            if not tools.get("open") or tools.get("count") != 6 or tools.get("buttonExpanded") != "true":
-                raise RuntimeError(f"TOOLS surface failed: {result}")
+            base.ev(cdp, "(()=>{RHWV4.focusPass.openTools();return true;})()")
+            settle(.06)
+            tools = base.ev(cdp, f"""(()=>{{
+              {VISIBLE_HELPER}
+              const panel=document.getElementById('rhwFocusToolsPanel');
+              const focusable=[...panel.querySelectorAll('button')].filter(visible);
+              const first=focusable[0],last=focusable[focusable.length-1];
+              last?.focus();
+              last?.dispatchEvent(new KeyboardEvent('keydown',{{key:'Tab',bubbles:true,cancelable:true}}));
+              const wrapsForward=document.activeElement===first;
+              first?.focus();
+              first?.dispatchEvent(new KeyboardEvent('keydown',{{key:'Tab',shiftKey:true,bubbles:true,cancelable:true}}));
+              const wrapsBack=document.activeElement===last;
+              return{{open:visible(panel),count:document.querySelectorAll('#rhwFocusToolsPanel [data-rhw-tool]').length,
+                buttonExpanded:document.getElementById('rhwFocusToolsBtn')?.getAttribute('aria-expanded')||'',
+                focusTrap:wrapsForward&&wrapsBack}};
+            }})()""")
+            if not tools.get("open") or tools.get("count") != 6 or tools.get("buttonExpanded") != "true" or not tools.get("focusTrap"):
+                raise RuntimeError(f"TOOLS surface/focus trap failed: {tools}")
 
-            queue = result.get("queue", {})
+            base.ev(cdp, "(()=>{RHWV4.focusPass.openTool('build-queue');return true;})()")
+            settle()
+            queue = base.ev(cdp, f"""(()=>{{{VISIBLE_HELPER}return{{
+              workspace:document.body.dataset.workspace,node:document.body.dataset.operationsNode,
+              tool:document.body.dataset.rhwFocusTool||'',
+              orders:visible(document.querySelector('[data-operations-panel="orders"]')),
+              active:document.getElementById('appActiveNode')?.textContent||''
+            }};}})()""")
             if queue.get("workspace") != "operations" or queue.get("node") != "orders" or queue.get("tool") != "build-queue" or not queue.get("orders") or "TOOLS / BUILD QUEUE" not in queue.get("active", ""):
-                raise RuntimeError(f"Build Queue tool routing failed: {result}")
-            if result.get("calculatorReturn") != {"workspace": "operations", "node": "calculator", "tool": ""}:
-                raise RuntimeError(f"Calculator primary tab did not reset secondary route: {result}")
+                raise RuntimeError(f"Build Queue tool routing failed: {queue}")
 
-            data = result.get("data", {})
+            base.ev(cdp, "(()=>{document.querySelector('.app-tabs [data-workspace=\"operations\"]')?.click();return true;})()")
+            settle()
+            calculator_return = base.ev(cdp, "({workspace:document.body.dataset.workspace,node:document.body.dataset.operationsNode,tool:document.body.dataset.rhwFocusTool||''})")
+            if calculator_return != {"workspace": "operations", "node": "calculator", "tool": ""}:
+                raise RuntimeError(f"Calculator primary tab did not reset secondary route: {calculator_return}")
+
+            base.ev(cdp, "(()=>{RHWV4.focusPass.openTool('data');return true;})()")
+            settle(.18)
+            data = base.ev(cdp, f"""(()=>{{{VISIBLE_HELPER}return{{
+              workspace:document.body.dataset.workspace,node:document.body.dataset.operationsNode,
+              tool:document.body.dataset.rhwFocusTool||'',utility:visible(document.getElementById('rhwDataStatusUtility')),
+              open:document.getElementById('rhwDataStatusUtility')?.open===true
+            }};}})()""")
             if data != {"workspace": "operations", "node": "calculator", "tool": "data", "utility": True, "open": True}:
-                raise RuntimeError(f"Data Status tool failed: {result}")
+                raise RuntimeError(f"Data Status tool failed: {data}")
 
-            forum = result.get("forum", {})
+            base.ev(cdp, "(()=>{document.querySelector('.app-tabs [data-workspace=\"comms\"]')?.click();return true;})()")
+            settle()
+            forum = base.ev(cdp, f"""(()=>{{{VISIBLE_HELPER}return{{
+              workspace:document.body.dataset.workspace,node:document.body.dataset.commsNode,
+              subnav:visible(document.getElementById('commsNodeNav')),
+              panel:visible(document.querySelector('[data-comms-panel="forum"]')),
+              tool:document.body.dataset.rhwFocusTool||'',active:document.getElementById('appActiveNode')?.textContent||''
+            }};}})()""")
             if forum.get("workspace") != "comms" or forum.get("node") != "forum" or forum.get("subnav") or not forum.get("panel") or forum.get("tool") or "FORUM" not in forum.get("active", ""):
-                raise RuntimeError(f"Forum is not a clean daily destination: {result}")
-            newswire = result.get("newswire", {})
+                raise RuntimeError(f"Forum is not a clean daily destination: {forum}")
+
+            base.ev(cdp, "(()=>{RHWV4.focusPass.openTool('newswire');return true;})()")
+            settle()
+            newswire = base.ev(cdp, f"""(()=>{{{VISIBLE_HELPER}return{{workspace:document.body.dataset.workspace,node:document.body.dataset.commsNode,
+              tool:document.body.dataset.rhwFocusTool||'',panel:visible(document.querySelector('[data-comms-panel="ticker"]'))}};}})()""")
             if newswire != {"workspace": "comms", "node": "ticker", "tool": "newswire", "panel": True}:
-                raise RuntimeError(f"Newswire tool routing failed: {result}")
-            if result.get("forumReturn") != {"workspace": "comms", "node": "forum", "tool": ""}:
-                raise RuntimeError(f"Forum primary tab did not reset secondary route: {result}")
-            if not result.get("system", {}).get("panel"):
-                raise RuntimeError(f"System Check tool routing failed: {result}")
-            if result.get("overflow", 0) > 2:
-                raise RuntimeError(f"Focus Pass mobile horizontal overflow: {result}")
+                raise RuntimeError(f"Newswire tool routing failed: {newswire}")
+
+            base.ev(cdp, "(()=>{document.querySelector('.app-tabs [data-workspace=\"comms\"]')?.click();return true;})()")
+            settle()
+            forum_return = base.ev(cdp, "({workspace:document.body.dataset.workspace,node:document.body.dataset.commsNode,tool:document.body.dataset.rhwFocusTool||''})")
+            if forum_return != {"workspace": "comms", "node": "forum", "tool": ""}:
+                raise RuntimeError(f"Forum primary tab did not reset secondary route: {forum_return}")
+
+            base.ev(cdp, "(()=>{RHWV4.focusPass.openTool('system');return true;})()")
+            settle(.06)
+            system = base.ev(cdp, f"""(()=>{{{VISIBLE_HELPER}return{{panel:visible(document.getElementById('rhwDiagnosticsPanel'))}};}})()""")
+            if not system.get("panel"):
+                raise RuntimeError(f"System Check tool routing failed: {system}")
+            base.ev(cdp, "(()=>{RHWV4.diagnostics?.close?.();return true;})()")
+
+            overflow = base.ev(cdp, "Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-window.innerWidth")
+            if overflow > 2:
+                raise RuntimeError(f"Focus Pass mobile horizontal overflow: {overflow}")
 
             runtime_failures = [
                 failure for failure in cdp.take_runtime_failures()
