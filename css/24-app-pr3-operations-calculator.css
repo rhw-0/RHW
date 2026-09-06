@@ -276,7 +276,6 @@
 @media(max-width:760px) {
   .ops-recipe-fee { flex-wrap:wrap; }
   #workspaceOperations .ops-mobile-decision small { font-size:11px; line-height:1.5; letter-spacing:.03em; color:#ccc7b8; }
-  #workspaceOperations :is(button, input, select) { min-height:44px; }
   #workspaceOperations :is(.comms-field > span, .comms-field > small, .ops-recipe-meta small, .ops-cost-note, .ops-price-memory) { font-size:11px; line-height:1.5; }
   #workspaceOperations input { font-size:16px; }
 }
