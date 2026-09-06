@@ -135,7 +135,40 @@
       const tool = TOOL_META[key];
       return `<button type="button" class="rhw-focus-tool-card" data-rhw-tool="${key}"><span class="rhw-focus-tool-index">${index}</span><span class="rhw-focus-tool-copy"><strong>${tool.label}</strong><small>${tool.sub}</small></span><span class="rhw-focus-tool-arrow" aria-hidden="true">›</span></button>`;
     }).join('');
-    return `<aside class="rhw-focus-tools-overlay" id="rhwFocusToolsPanel" role="dialog" aria-modal="true" aria-labelledby="rhwFocusToolsTitle" hidden><section class="rhw-focus-tools-sheet"><header class="rhw-focus-tools-head"><div><small>SECONDARY RHW UTILITIES</small><strong id="rhwFocusToolsTitle">TOOLS</strong><span>DAILY RHW STAYS FOCUSED ON COMMAND, CALCULATOR AND FORUM</span></div><button type="button" id="rhwFocusToolsClose">CLOSE</button></header><div class="rhw-focus-tools-grid">${cards}</div><p class="rhw-focus-tools-note">Nothing was removed. These tools remain fully available, but they no longer compete with the daily operational workflow.</p></section></aside>`;
+    return `<aside class="rhw-focus-tools-overlay" id="rhwFocusToolsPanel" role="dialog" aria-modal="true" aria-labelledby="rhwFocusToolsTitle" data-focus-trap="true" hidden><section class="rhw-focus-tools-sheet"><header class="rhw-focus-tools-head"><div><small>SECONDARY RHW UTILITIES</small><strong id="rhwFocusToolsTitle">TOOLS</strong><span>DAILY RHW STAYS FOCUSED ON COMMAND, CALCULATOR AND FORUM</span></div><button type="button" id="rhwFocusToolsClose">CLOSE</button></header><div class="rhw-focus-tools-grid">${cards}</div><p class="rhw-focus-tools-note">Nothing was removed. These tools remain fully available, but they no longer compete with the daily operational workflow.</p></section></aside>`;
+  }
+
+  function toolsFocusable(panel = document.getElementById('rhwFocusToolsPanel')) {
+    if (!panel) return [];
+    return [...panel.querySelectorAll('button,a[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(element => {
+      if (element.disabled || element.hidden || element.closest('[hidden]')) return false;
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+    });
+  }
+
+  function trapToolsFocus(event) {
+    const panel = document.getElementById('rhwFocusToolsPanel');
+    if (!panel || panel.hidden || event.key !== 'Tab') return;
+    const focusable = toolsFocusable(panel);
+    if (!focusable.length) {
+      event.preventDefault();
+      panel.focus?.();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    } else if (!panel.contains(document.activeElement)) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   function mountTools() {
@@ -157,15 +190,18 @@
       else brand.appendChild(button);
     }
     if (!document.getElementById('rhwFocusToolsPanel')) document.body.insertAdjacentHTML('beforeend', toolsMarkup());
+    const panel = document.getElementById('rhwFocusToolsPanel');
+    if (panel) panel.dataset.focusTrap = 'true';
     if (button.dataset.rhwFocusBound !== 'true') {
       button.dataset.rhwFocusBound = 'true';
       button.addEventListener('click', openTools);
       document.getElementById('rhwFocusToolsClose')?.addEventListener('click', closeTools);
-      document.getElementById('rhwFocusToolsPanel')?.addEventListener('click', event => {
+      panel?.addEventListener('click', event => {
         if (event.target.id === 'rhwFocusToolsPanel') closeTools();
         const tool = event.target.closest('[data-rhw-tool]');
         if (tool) openTool(tool.dataset.rhwTool);
       });
+      panel?.addEventListener('keydown', trapToolsFocus);
       window.addEventListener('keydown', event => {
         if (event.key === 'Escape' && !document.getElementById('rhwFocusToolsPanel')?.hidden) closeTools();
       });
@@ -287,6 +323,7 @@
     if (tabs.command !== 'COMMAND' || tabs.calculator !== 'CALCULATOR' || tabs.forum !== 'FORUM') failures.push('primary-tabs');
     if (!document.getElementById('rhwFocusToolsBtn') || !document.getElementById('rhwFocusToolsPanel')) failures.push('tools-surface');
     if (document.querySelectorAll('#rhwFocusToolsPanel [data-rhw-tool]').length !== 6) failures.push('tool-count');
+    if (document.getElementById('rhwFocusToolsPanel')?.dataset.focusTrap !== 'true') failures.push('tools-focus-trap');
     if (!document.documentElement.classList.contains('rhw-focus-pass')) failures.push('focus-class');
     return failures;
   }
