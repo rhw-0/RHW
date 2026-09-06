@@ -18,7 +18,7 @@
   const state = {
     entries: [], baseEntries: [], sourceText: '', baseHash: '', editingId: '',
     dirty: false, sourceMode: 'loading', loaded: false, loadError: '',
-    draftSourceChanged: false, draftSavedAt: 0
+    draftSourceChanged: false, draftSavedAt: 0, sourceFetchedAt: null
   };
 
   const esc = value => app.util.escape(String(value ?? ''));
@@ -290,6 +290,7 @@
   }
 
   function statusText() {
+    if (state.sourceMode === 'cache') return [`${state.entries.length} BULLETINS // CACHED SOURCE // RELOAD ONLINE BEFORE REVIEW HANDOFF`, 'warn'];
     if (state.dirty && state.draftSourceChanged) return [`${state.entries.length} BULLETINS // RECOVERED LOCAL EDITS // SOURCE CHANGED`, 'warn'];
     if (state.dirty) return [`${state.entries.length} BULLETINS // LOCAL EDITS // NOT PUBLISHED`, 'dirty'];
     if (!state.loaded) return ['LOADING RHW_NEWSWIRE.MD', 'muted'];
@@ -298,6 +299,7 @@
   }
 
   function publishBannerCopy() {
+    if (state.sourceMode === 'cache') return ['CACHED SOURCE // LOCAL WORKING COPY', 'FRESHNESS IS UNVERIFIED. EDITS STAY LOCAL; RELOAD ONLINE BEFORE CREATING A REVIEW PACKAGE.', 'warn'];
     if (state.dirty && state.draftSourceChanged) return ['RECOVERED DRAFT // SOURCE CHANGED', 'THE REPOSITORY FILE CHANGED SINCE THIS LOCAL DRAFT WAS SAVED. REVIEW THE RECOVERED BULLETINS BEFORE COPYING OR EXPORTING.', 'warn'];
     if (state.dirty) return ['LOCAL EDITS // SAVED IN THIS BROWSER', 'YOUR WORKING COPY SURVIVES TAB AND APP RESTARTS, BUT IS NOT PUBLISHED. USE COPY UPDATED NEWSWIRE OR EXPORT RHW_NEWSWIRE.MD TO PUBLISH.', 'dirty'];
     if (!state.loaded) return ['LOADING CURRENT SOURCE', 'THE MANAGER HAS NOT LOADED A SOURCE FILE YET.', 'clean'];
@@ -330,7 +332,7 @@
     const recovery = document.getElementById('v40NewswireRecoveryState');
     const output = document.getElementById('v40NewswireOutputState');
     const file = document.getElementById('v40NewswireFileState');
-    if (source) source.textContent = !state.loaded ? 'LOADING' : state.sourceMode === 'fallback' ? 'FALLBACK' : 'REPOSITORY FILE';
+    if (source) source.textContent = !state.loaded ? 'LOADING' : state.sourceMode === 'cache' ? 'CACHED FILE' : state.sourceMode === 'fallback' ? 'FALLBACK' : 'REPOSITORY FILE';
     if (recovery) recovery.textContent = state.dirty ? savedTimeLabel() : 'READY';
     if (output) output.textContent = state.dirty ? 'LOCAL ONLY' : 'NOT PUBLISHED';
     if (file) file.textContent = state.dirty ? `${state.entries.length} BULLETINS // ${savedTimeLabel()}` : `${state.entries.length} BULLETINS // CURRENT SOURCE`;
@@ -557,16 +559,19 @@
     state.sourceMode = 'loading';
     renderManager();
     try {
-      const response = await fetch(SOURCE_URL, { headers: { Accept: 'text/markdown,text/plain;q=0.9,*/*;q=0.1' }, cache: 'no-store' });
+      const response = await fetchWithTimeout(SOURCE_URL, { headers: { Accept: 'text/markdown,text/plain;q=0.9,*/*;q=0.1' }, cache: 'no-store' }, 10000);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const sourceText = await response.text();
       const parsed = parseSource(sourceText);
       if (!parsed.length) throw new Error('NO BULLETINS PARSED');
-      if (force) clearLocalDraft();
-      applyLoadedSource(sourceText, 'repository');
+      const cached = response.headers.get('X-RHW-Source') === 'cache' || (navigator.serviceWorker?.controller && response.headers.get('X-RHW-Source') !== 'network');
+      state.sourceFetchedAt = response.headers.get('X-RHW-Fetched-At') || (cached ? null : new Date().toISOString());
+      if (force && !cached) clearLocalDraft();
+      applyLoadedSource(sourceText, cached ? 'cache' : 'repository');
     } catch (error) {
       state.loadError = String(error?.message || error || 'UNKNOWN SOURCE ERROR');
       const entries = fallbackEntries();
+      state.sourceFetchedAt = null;
       applyLoadedSource(serializeSource(entries), 'fallback');
     }
   }
@@ -621,9 +626,12 @@
     if (copy.length !== 2) failures.push('delete');
     const dirtyBanner = (() => {
       const original = state.dirty;
+      const sourceMode = state.sourceMode;
+      state.sourceMode = 'repository';
       state.dirty = true;
       const copyValue = publishBannerCopy();
       state.dirty = original;
+      state.sourceMode = sourceMode;
       return copyValue;
     })();
     if (!dirtyBanner[0].includes('LOCAL EDITS') || !dirtyBanner[1].includes('NOT PUBLISHED')) failures.push('publish-banner-copy');

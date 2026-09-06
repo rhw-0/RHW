@@ -1,5 +1,20 @@
 function updateBaseTelemetry() {
-  if (!rhwBase) return;
+  const snapshot = telemetrySnapshot();
+  const anchor = els.baseMoneyVal?.closest('.base-telemetry-bar') || document.querySelector('.base-telemetry-bar');
+  let status = document.getElementById('commandTelemetryStatus');
+  if (!status && anchor) {
+    status = document.createElement('div');
+    status.id = 'commandTelemetryStatus';
+    status.setAttribute('role', 'status');
+    anchor.insertAdjacentElement('afterend', status);
+  }
+  if (status) { status.textContent = snapshot.detail; status.dataset.tone = snapshot.tone; }
+  if (!rhwBase) {
+    [els.baseMoneyVal, els.baseStorageVal, els.baseHealthVal].forEach(node => {
+      if (node) node.textContent = typeof lastSyncError !== 'undefined' && lastSyncError ? 'UNAVAILABLE' : 'CONNECTING';
+    });
+    return;
+  }
   const money = rhwBase.money ?? rhwBase.credits ?? rhwBase.base_money;
   const cargo = rhwBase.cargospace ?? rhwBase.cargo_space ?? rhwBase.cargo_space_left ?? rhwBase.storage_free;
   const health = rhwBase.health ?? rhwBase.base_health;
@@ -267,7 +282,7 @@ function buildIndustrialNewswireMessages() {
   if (!rhwBase) {
     return Array.from({ length: TICKER_DYNAMIC_SLOT_COUNT }, (_, index) => ({
       tag: index === 0 ? 'BMM NEWSWIRE' : 'EDITORIAL DESK',
-      text: index === 0 ? 'AWAITING INITIAL TELEMETRY BURST' : 'ASSEMBLING MARKET AND REGIONAL BULLETINS',
+      text: index === 0 ? telemetrySnapshot().label : 'LIVE MARKET COVERAGE REQUIRES A SUCCESSFUL SYNC',
       tone: index === 0 ? 'warn' : 'muted'
     }));
   }

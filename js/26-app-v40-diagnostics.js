@@ -41,18 +41,13 @@
     const recorded = state.events.filter(entry => entry.type === 'runtime').length;
     if (recorded) return result('runtime', 'APP RUNTIME', 'danger', `${recorded} ERROR${recorded === 1 ? '' : 'S'}`, 'A runtime failure was recorded during this session.');
     return ready
-      ? result('runtime', 'APP RUNTIME', 'good', 'READY', `${app.version} booted and passed its internal module checks.`)
+      ? result('runtime', 'APP RUNTIME', 'good', 'READY', `${app.version} // BUILD ${app.config.build?.revision || 'UNKNOWN'}. Boot checks passed.`)
       : result('runtime', 'APP RUNTIME', 'warn', 'STARTING', 'The application boot sequence is still being verified.');
   }
 
   function telemetryHealth() {
-    let verified = false;
-    try { verified = typeof window.hasVerifiedTelemetry === 'function' && window.hasVerifiedTelemetry(); } catch {}
-    const stale = typeof dataIsStale !== 'undefined' && Boolean(dataIsStale);
-    if (!verified) return result('telemetry', 'LIVE TELEMETRY', 'warn', 'NO VERIFIED DATA', 'The app is ready, but no verified facility snapshot is available yet.');
-    return stale
-      ? result('telemetry', 'LIVE TELEMETRY', 'warn', 'CACHE ACTIVE', 'The last verified snapshot is visible while the uplink retries.')
-      : result('telemetry', 'LIVE TELEMETRY', 'good', 'LIVE', 'A verified facility snapshot is active.');
+    const snapshot = window.telemetrySnapshot();
+    return result('telemetry', 'LIVE TELEMETRY', snapshot.tone, snapshot.label, snapshot.detail);
   }
 
   function pwaHealth() {
@@ -78,9 +73,9 @@
     const recipes = Number(status?.catalog?.effective?.recipes) || 0;
     if (!status || !recipes) return result('discovery', 'DISCOVERY SYNC', 'warn', 'UNKNOWN', 'Catalog provenance could not be verified.');
     const reviewed = status.workflow?.reviewRequired === true && status.workflow?.autoMerge === false;
-    return reviewed
-      ? result('discovery', 'DISCOVERY SYNC', 'good', 'REVIEW-GATED', `${app.util.number(recipes)} effective recipes; automation cannot merge by itself.`)
-      : result('discovery', 'DISCOVERY SYNC', 'danger', 'POLICY ERROR', 'The catalog review gate is not active.');
+    if (!reviewed) return result('discovery', 'DISCOVERY SYNC', 'danger', 'POLICY ERROR', 'The catalog review gate is not active.');
+    const run = app.discoveryStatus.runSnapshot();
+    return result('discovery', 'DISCOVERY SYNC', run.tone === 'muted' ? 'warn' : run.tone, run.label, `${run.detail} // DRAFT PR ONLY; AUTO-MERGE DISABLED`);
   }
 
   function newswireHealth() {
@@ -88,6 +83,7 @@
     if (!manager) return result('newswire', 'NEWSWIRE', 'danger', 'MISSING', 'The editorial working-copy manager did not load.');
     const entries = Number(manager.state?.entries?.length) || 0;
     const dirty = Boolean(manager.state?.dirty);
+    if (manager.state?.sourceMode !== 'repository') return result('newswire', 'NEWSWIRE', 'warn', 'SOURCE NOT CURRENT', 'Cached or fallback source; review handoff needs a fresh online copy.');
     return result('newswire', 'NEWSWIRE', dirty ? 'warn' : 'good', dirty ? 'LOCAL EDITS' : 'READY', `${app.util.number(entries)} bulletins in the current working copy.`);
   }
 
@@ -116,7 +112,7 @@
     const danger = checks.filter(check => check.tone === 'danger').length + state.lastSelfTestFailures.length;
     const warnings = checks.filter(check => check.tone === 'warn').length;
     if (danger) return { tone: 'danger', title: 'ATTENTION REQUIRED', detail: `${danger} blocking check${danger === 1 ? '' : 's'} detected.` };
-    if (warnings) return { tone: 'warn', title: 'CORE SYSTEMS NOMINAL', detail: `${warnings} status notice${warnings === 1 ? '' : 's'}; no blocking app failure detected.` };
+    if (warnings) return { tone: 'warn', title: 'STATUS NEEDS ATTENTION', detail: `${warnings} status notice${warnings === 1 ? '' : 's'}; no blocking app failure detected.` };
     return { tone: 'good', title: 'ALL SYSTEMS NOMINAL', detail: 'No blocking failures or status notices detected.' };
   }
 
@@ -150,6 +146,7 @@
       'RHW SYSTEM CHECK',
       `GENERATED: ${new Date().toISOString()}`,
       `APP: ${app.version}`,
+      `BUILD: ${app.config.build?.revision || 'UNKNOWN'}`,
       `ROUTE: ${route.workspace || 'unknown'} / ${route.node || 'unknown'}`,
       `WINDOW: ${window.RHWPWA?.isStandalone?.() ? 'STANDALONE APP' : 'BROWSER'}`,
       '',

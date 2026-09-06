@@ -100,8 +100,10 @@
 
   function priorityActions() {
     const actions = [];
-    const verified = typeof window.hasVerifiedTelemetry === 'function' ? window.hasVerifiedTelemetry() : false;
-    if (!verified) return [{ state: 'critical', node: 'inventory', title: 'RESTORE VERIFIED TELEMETRY', meta: 'LOCAL INVENTORY HAS NOT BEEN VERIFIED' }];
+    const snapshot = window.telemetrySnapshot();
+    const verified = snapshot.available;
+    if (!verified) return [{ state: 'critical', node: 'inventory', title: 'RESTORE VERIFIED TELEMETRY', meta: snapshot.detail }];
+    if (snapshot.stale) actions.push({ state: 'critical', node: 'inventory', title: 'REFRESH CACHED STOCK', meta: snapshot.detail });
 
     safeOperationalItems().forEach(item => {
       const severity = roleSeverity(item);
@@ -157,7 +159,8 @@
 
   function updateOverview() {
     if (!document.getElementById('v40OverviewInventory')) return;
-    const verified = typeof window.hasVerifiedTelemetry === 'function' ? window.hasVerifiedTelemetry() : false;
+    const snapshot = window.telemetrySnapshot();
+    const verified = snapshot.available;
     if (!verified) {
       write('v40OverviewInventory', 'AWAITING TELEMETRY');
       write('v40OverviewInventoryMeta', 'NO VERIFIED LOCAL INVENTORY');

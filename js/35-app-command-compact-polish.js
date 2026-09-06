@@ -53,9 +53,9 @@
       .command-global-alerts[data-alert-count="0"],.command-global-alerts[hidden]{display:none!important}
       .command-global-alerts:not(.expanded) .command-priority-list{display:none!important}
       .command-global-alerts{margin:0 0 7px!important;border-radius:5px!important}
-      .command-global-alerts .command-alert-toggle{min-height:38px!important;padding:5px 9px!important;gap:8px!important}
+      .command-global-alerts .command-alert-toggle{min-height:44px!important;padding:5px 9px!important;gap:8px!important}
       .command-global-alerts .command-alert-copy strong{font-size:8px!important}
-      .command-global-alerts .command-alert-copy small{font-size:6px!important}
+      .command-global-alerts .command-alert-copy small{font-size:10px!important}
       .command-global-alerts .command-alert-signal{width:7px!important;height:7px!important}
       .command-global-alerts .command-priority-list{padding:0 6px 6px!important}
 
@@ -66,7 +66,7 @@
       @media(max-width:980px){
         body[data-workspace="command"] #commandNodeNav.command-module-nav button[data-command-node]{
           height:60px!important;min-height:60px!important;max-height:60px!important;
-          grid-template-columns:22px minmax(0,1fr) minmax(0,80px)!important;grid-template-areas:"index copy state"!important;
+          grid-template-columns:22px minmax(0,1fr) minmax(0,100px)!important;grid-template-areas:"index copy state"!important;
           align-items:center!important;gap:6px!important;padding:6px 7px!important;overflow:hidden!important
         }
         body[data-workspace="command"] #commandNodeNav .command-module-index{width:22px!important;height:22px!important;font-size:7px!important}
@@ -75,10 +75,10 @@
         body[data-workspace="command"] #commandNodeNav .command-module-copy small{display:none!important}
         body[data-workspace="command"] #commandNodeNav .command-module-state{
           justify-self:stretch!important;max-width:none!important;min-width:0!important;padding:3px 4px!important;
-          gap:3px!important;font-size:5.5px!important;line-height:1.15!important;text-align:center!important;overflow:hidden!important
+          gap:3px!important;font-size:10px!important;color:#d0cabc!important;white-space:normal!important;line-height:1.3!important;text-align:center!important;overflow:hidden!important
         }
         body[data-workspace="command"] #commandNodeNav .command-module-state::after{
-          min-width:16px!important;height:16px!important;padding:0 3px!important;font-size:6px!important
+          min-width:16px!important;height:16px!important;padding:0 3px!important;font-size:10px!important
         }
       }
       @media(max-width:760px){
@@ -88,10 +88,10 @@
           height:58px!important;min-height:58px!important;max-height:58px!important
         }
         .command-control-deck{grid-template-columns:minmax(0,1fr) auto!important;gap:5px!important;margin:0 9px 7px!important;padding:5px!important}
-        .command-control-deck .command-finder-label{min-height:40px!important;padding:0 7px!important}
+        .command-control-deck .command-finder-label{min-height:44px!important;padding:0 7px!important}
         .command-control-deck .command-finder-label>span:first-child{display:none!important}
-        #commandGlobalSearch{min-height:38px!important;font-size:10px!important}
-        .command-focus-modes button,.command-context-action{min-height:40px!important;padding:6px 8px!important;font-size:6.5px!important}
+        #commandGlobalSearch{min-height:44px!important;font-size:16px!important}
+        .command-focus-modes button,.command-context-action{min-height:44px!important;padding:6px 8px!important;font-size:11px!important}
         .command-context-action:not([hidden]){grid-column:1/-1!important}
         .command-global-alerts{margin:0 9px 6px!important}
         .command-global-alerts .command-alert-copy small{display:none!important}
@@ -101,11 +101,11 @@
       @media(max-width:390px){
         body[data-workspace="command"] #commandNodeNav.command-module-nav button[data-command-node]{
           height:56px!important;min-height:56px!important;max-height:56px!important;
-          grid-template-columns:20px minmax(0,1fr) minmax(0,68px)!important;padding:5px 6px!important
+          grid-template-columns:20px minmax(0,1fr) minmax(0,92px)!important;padding:5px 6px!important
         }
         body[data-workspace="command"] #commandNodeNav .command-module-index{width:20px!important;height:20px!important}
         body[data-workspace="command"] #commandNodeNav .command-module-copy strong{font-size:14px!important}
-        body[data-workspace="command"] #commandNodeNav .command-module-state{font-size:5px!important}
+        body[data-workspace="command"] #commandNodeNav .command-module-state{font-size:10px!important}
         .rhw-inventory-mode-nav button>span{font-size:14px!important}
       }
     `;

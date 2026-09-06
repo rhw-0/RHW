@@ -16,7 +16,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
      Load every V4 stylesheet immediately to avoid an unstyled app-shell flash,
      but wait until the stable dashboard has initialized before booting V4 JS. */
   (function bootstrapRhwV4Preview() {
-    const RHW_V4_ASSET_REV = '4.0.2-focus-pass-1';
+    const RHW_V4_ASSET_REV = window.RHW_BUILD.revision;
     const versioned = src => `${src}?v=${encodeURIComponent(RHW_V4_ASSET_REV)}`;
 
     [

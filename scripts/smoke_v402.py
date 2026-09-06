@@ -312,8 +312,8 @@ def test_backup_and_storage(cdp):
 
 def test_v402(cdp, workspace, node):
     if (workspace, node) == ("command", "overview"):
-        states = base.ev(cdp, "(()=>{const f=(verified,stale)=>{window.hasVerifiedTelemetry=()=>verified;dataIsStale=stale;RHWV4.command.updateOverview();RHWV4.v402Fixes.sync();return [v40OverviewTelemetryState.textContent.trim(),v40OverviewTelemetryState.dataset.state]};return{live:f(true,false),cache:f(true,true),offline:f(false,false)}})()")
-        if states != {"live": ["LIVE TELEMETRY", "live"], "cache": ["CACHE TELEMETRY", "stale"], "offline": ["AWAITING TELEMETRY", "offline"]}:
+        states = base.ev(cdp, "(()=>{const f=(verified,stale)=>{window.hasVerifiedTelemetry=()=>verified;dataIsStale=stale;lastSyncError='';lastLoaded=verified?new Date():null;RHWV4.command.updateOverview();RHWV4.v402Fixes.sync();return [v40OverviewTelemetryState.textContent.trim(),v40OverviewTelemetryState.dataset.state]};return{live:f(true,false),cache:f(true,true),offline:f(false,false)}})()")
+        if states != {"live": ["LIVE TELEMETRY", "live"], "cache": ["CACHE TELEMETRY", "stale"], "offline": ["AWAITING VERIFIED TELEMETRY", "offline"]}:
             raise RuntimeError(f"V4.0.2 telemetry truth-state failed: {states}")
         cache = base.ev(cdp, "(()=>{lastLoaded=null;updateNetworkFeed('error','test outage');return tickerContainer.textContent})()")
         if "NO VERIFIED CACHE AVAILABLE" not in cache:
@@ -988,7 +988,7 @@ def test_pr10_newswire_review(cdp, workspace, node):
         raise RuntimeError(f"PR10 Newswire review mount/QA gate failed: {result}")
     if result.get("diff") != {"added": 1, "edited": 1, "deleted": 1, "moved": 1} or result.get("qa") != 0 or result.get("changeRows") != 4:
         raise RuntimeError(f"PR10 repository/local diff failed: {result}")
-    if result.get("format") != "rhw-newswire-review-package" or result.get("repository") != "rhw-0/RHW" or result.get("directPublish") is not False:
+    if result.get("format") != "rhw-newswire-review-package" or result.get("repository") != "PhyteHQ/RHW" or result.get("directPublish") is not False:
         raise RuntimeError(f"PR10 controlled review package failed: {result}")
     if "OPERATIONS TWO EDITED" not in result.get("markdown", "") or "OPERATIONS TWO" not in result.get("baseMarkdown", "") or not result.get("forumParity") or "does not publish automatically" not in result.get("report", ""):
         raise RuntimeError(f"PR10 Markdown/Forum/report parity failed: {result}")

@@ -9,9 +9,10 @@
   if (!app || !core || app.discoveryStatus) return;
 
   const STATUS_URL = './assets/discovery-status.json';
-  const WORKFLOW_URL = 'https://github.com/rhw-0/RHW/actions/workflows/discovery-catalog-sync.yml';
-  const REPORT_URL = 'https://github.com/rhw-0/RHW/blob/main/docs/discovery-sync-report.md';
-  const RUNS_API = 'https://api.github.com/repos/rhw-0/RHW/actions/workflows/discovery-catalog-sync.yml/runs?per_page=1&exclude_pull_requests=true';
+  const REPOSITORY = app.config.repository;
+  const WORKFLOW_URL = `https://github.com/${REPOSITORY}/actions/workflows/discovery-catalog-sync.yml`;
+  const REPORT_URL = `https://github.com/${REPOSITORY}/blob/main/docs/discovery-sync-report.md`;
+  const RUNS_API = `https://api.github.com/repos/${REPOSITORY}/actions/workflows/discovery-catalog-sync.yml/runs?per_page=1&exclude_pull_requests=true`;
   const state = { status: null, latestRun: null, checking: false };
   const esc = value => app.util.escape(String(value ?? ''));
 
@@ -68,9 +69,13 @@
 
   function runSnapshot() {
     const run = state.latestRun;
+    if (state.checking) return { tone: 'warn', label: 'CHECKING', detail: 'CONTACTING SYNC CONTROL' };
+    if (state.checkError) return { tone: 'warn', label: 'CHECK UNAVAILABLE', detail: 'LATEST RUN COULD NOT BE VERIFIED' };
     if (!run) return { tone: 'muted', label: 'NO LIVE CHECK YET', detail: 'TAP CHECK LATEST RUN' };
     const conclusion = String(run.conclusion || run.status || 'unknown').toUpperCase();
-    const tone = conclusion === 'SUCCESS' ? 'good' : (conclusion === 'FAILURE' || conclusion === 'CANCELLED' ? 'danger' : 'warn');
+    const runTime = Date.parse(run.updated_at || run.created_at);
+    if (conclusion === 'SUCCESS' && (!Number.isFinite(runTime) || Date.now() - runTime > 8 * 86400000)) return { tone: 'warn', label: 'CHECK OVERDUE', detail: dateLabel(run.updated_at || run.created_at) };
+    const tone = conclusion === 'SUCCESS' ? 'good' : (['FAILURE', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED'].includes(conclusion) ? 'danger' : 'warn');
     return { tone, label: conclusion, detail: dateLabel(run.updated_at || run.created_at) };
   }
 
@@ -120,26 +125,29 @@
     const button = document.getElementById('discoveryCheckRun');
     if (label) { label.textContent = run.label; label.dataset.tone = run.tone; }
     if (detail) detail.textContent = run.detail;
+    app.diagnostics?.render?.();
     if (button) { button.disabled = state.checking; button.textContent = state.checking ? 'CHECKING…' : 'CHECK LATEST RUN'; }
   }
 
   async function checkLatestRun({ announceFailure = false } = {}) {
-    if (state.checking || window.__RHW_SMOKE_INLINE__ || navigator.onLine === false) return null;
+    if (state.checking || window.__RHW_SMOKE_INLINE__) return null;
+    if (navigator.onLine === false) { state.checkError = true; updateLiveRun(); return null; }
     state.checking = true;
+    state.checkError = false;
     updateLiveRun();
     try {
-      const response = await fetch(RUNS_API, {
+      const response = await fetchWithTimeout(RUNS_API, {
         cache: 'no-store',
         headers: { Accept: 'application/vnd.github+json' }
-      });
+      }, 10000);
       if (!response.ok) throw new Error(`GitHub status ${response.status}`);
       const payload = await response.json();
       state.latestRun = Array.isArray(payload.workflow_runs) ? payload.workflow_runs[0] || null : null;
-      if (state.latestRun?.html_url && !String(state.latestRun.html_url).startsWith('https://github.com/rhw-0/RHW/actions/runs/')) {
+      if (state.latestRun?.html_url && !String(state.latestRun.html_url).startsWith(`https://github.com/${REPOSITORY}/actions/runs/`)) {
         state.latestRun.html_url = null;
       }
     } catch (_error) {
-      if (announceFailure) state.latestRun = { conclusion: 'unavailable', updated_at: null };
+      state.checkError = true;
     } finally {
       state.checking = false;
       updateLiveRun();
@@ -175,5 +183,5 @@
     return failures;
   }
 
-  app.discoveryStatus = { init, loadStatus, checkLatestRun, selfTest, state, urls: { workflow: WORKFLOW_URL, report: REPORT_URL } };
+  app.discoveryStatus = { init, loadStatus, checkLatestRun, selfTest, runSnapshot, state, urls: { workflow: WORKFLOW_URL, report: REPORT_URL } };
 })();

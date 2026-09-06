@@ -245,6 +245,12 @@
       : new Set(transferSectionKeys);
     const includes = key => selected.has(key);
 
+    // Check the merged queue before applying ANY selected backup section.
+    if (version >= 3 && includes('productionOrders') && Array.isArray(raw.productionOrders)) {
+      if (!app.productionOrders?.prepareImport) throw new Error('ORDER BOARD NOT READY // RETRY IMPORT AFTER STARTUP');
+      app.productionOrders.prepareImport(raw.productionOrders);
+    }
+
     if (includes('senders')) {
       const incomingSenders = (Array.isArray(raw.localSenders) ? raw.localSenders : []).map(normalizeSender).filter(Boolean);
       app.state.localSenders = mergeByKey(app.state.localSenders, incomingSenders, sender => sender.key);

@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   sync:
-    if: github.repository == 'rhw-0/RHW'
+    if: github.repository == 'PhyteHQ/RHW'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:

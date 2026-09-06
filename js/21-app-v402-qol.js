@@ -205,11 +205,6 @@
     app.store.set(PLANNER_KEY, { ...plannerState(), ...patch });
   }
 
-  function verifiedTelemetry() {
-    try { return typeof hasVerifiedTelemetry === 'function' && hasVerifiedTelemetry(); }
-    catch { return false; }
-  }
-
   function componentStock(name) {
     try {
       if (typeof stockFor === 'function') return Math.max(0, Number(stockFor(name)) || 0);
@@ -248,7 +243,8 @@
     const qty = Math.max(1, Math.min(20, integer(qtyInput?.value, 1)));
     if (qtyInput && qtyInput.value !== String(qty)) qtyInput.value = String(qty);
     const hull = config.hulls.find(entry => entry.key === hullKey) || config.hulls[0];
-    const verified = verifiedTelemetry();
+    const telemetry = window.telemetrySnapshot();
+    const verified = telemetry.available;
     const rows = config.components.map(component => {
       const perHull = Math.max(1, Number(component.required) || 1);
       const required = perHull * qty;
@@ -262,14 +258,14 @@
     const build = document.getElementById('shipyardPlanBuildable');
     const shortage = document.getElementById('shipyardPlanShortages');
     if (target) target.textContent = `${qty} × ${String(hull?.name || hullKey).replace(/-Class/i, '').toUpperCase()}`;
-    if (build) { build.textContent = buildable === null ? 'AWAITING UPLINK' : `${buildable} HULL${buildable === 1 ? '' : 'S'}`; build.className = buildable !== null && buildable >= qty ? 'good' : 'warn'; }
+    if (build) { build.textContent = buildable === null ? 'STOCK UNKNOWN' : `${buildable} HULL${buildable === 1 ? '' : 'S'}`; build.className = buildable !== null && buildable >= qty ? 'good' : 'warn'; }
     if (shortage) { shortage.textContent = verified ? String(shortages.length) : '—'; shortage.className = verified && !shortages.length ? 'good' : 'warn'; }
     const host = document.getElementById('shipyardPlanRows');
     if (host) host.innerHTML = rows.map(row => `<div class="shipyard-plan-component-row"><strong>${esc(row.name)}</strong><span>${row.required.toLocaleString('en-US')}</span><span>${row.stock === null ? '—' : row.stock.toLocaleString('en-US')}</span><span class="gap${row.gap === 0 ? ' zero' : ''}">${row.gap === null ? '—' : row.gap.toLocaleString('en-US')}</span></div>`).join('');
     const note = document.getElementById('shipyardPlanNote');
-    if (note) note.textContent = !verified
-      ? 'AWAITING VERIFIED RHW INVENTORY // TARGET CAN STILL BE SENT TO THE CALCULATOR, BUT COMPONENT GAPS ARE HIDDEN.'
-      : (shortages.length ? `${shortages.length} COMPONENT TYPE${shortages.length === 1 ? '' : 'S'} BELOW TARGET REQUIREMENT // ONLY CURRENT VERIFIED STOCK IS USED.` : 'TARGET FULLY COVERED BY CURRENT VERIFIED COMPONENT STOCK.');
+    if (note) note.textContent = `${telemetry.detail} // ` + (!verified
+      ? 'PLAN YOUR TARGET OFFLINE; COMPONENT GAPS NEED A STOCK SNAPSHOT.'
+      : (shortages.length ? `${shortages.length} COMPONENT TYPE${shortages.length === 1 ? '' : 'S'} BELOW TARGET REQUIREMENT.` : 'TARGET COVERED BY THIS COMPONENT SNAPSHOT.'));
     savePlannerState({ hullKey: hull.key, quantity: qty });
   }
 
@@ -293,8 +289,9 @@
   function ensureShipyardPlanner() {
     const mount = document.getElementById('shipyardControl');
     const config = plannerConfig();
-    const stockAndRegistry = mount?.querySelector('.shipyard-control-grid');
-    if (!mount || !config?.hulls?.length || !mount.querySelector('.shipyard-control-head') || !stockAndRegistry) return;
+    if (!mount || !config?.hulls?.length) return;
+    const stockAndRegistry = mount.querySelector('.shipyard-control-grid') || mount.querySelector('.shipyard-control-head') || mount.firstElementChild;
+    if (!stockAndRegistry) return;
     let panel = document.getElementById('shipyardBuildPlanner');
     if (!panel) {
       stockAndRegistry.insertAdjacentHTML('afterend', plannerMarkup());

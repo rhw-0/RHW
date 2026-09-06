@@ -20,15 +20,11 @@
     commodity_diamonds: 'Diamonds',
     commodity_bluediamonds: 'Hessian Tears'
   });
-  const STYLE_ID = 'rhwV40RecipeCorrectionsStyle';
-  let feeObserver = null;
-  let feeQueued = false;
 
   const number = value => {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
   };
-  const money = value => `$${Math.round(Math.max(0, number(value))).toLocaleString('en-US')}`;
   const friendlyName = id => PRODUCT_NAMES[id] || String(id || '')
     .replace(/^commodity_/, '')
     .replace(/_/g, ' ')
@@ -141,119 +137,6 @@
     }
   };
 
-  function installStyles() {
-    if (document.getElementById(STYLE_ID)) return;
-    const style = document.createElement('style');
-    style.id = STYLE_ID;
-    style.textContent = `
-      .ops-recipe-fee{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:10px 0 0;padding:10px 12px;border:1px solid rgba(212,175,55,.20);background:rgba(212,175,55,.035)}
-      .ops-recipe-fee>div{display:grid;gap:3px}.ops-recipe-fee small{font-family:var(--font-tech);font-size:8px;letter-spacing:.08em;color:rgba(224,224,224,.52)}
-      .ops-recipe-fee strong{font-family:var(--font-tech);font-size:10px;letter-spacing:.055em;color:#dfc471}.ops-recipe-fee b{font-family:var(--font-display);font-size:20px;color:#f0d06b}
-      @media(max-width:700px){.ops-recipe-fee{align-items:flex-start;flex-direction:column}.ops-recipe-fee b{font-size:18px}}
-    `;
-    document.head.appendChild(style);
-  }
-
-  function currentMaterialCost() {
-    const rows = [...document.querySelectorAll('#workspaceOperations .ops-material-row')];
-    let known = 0;
-    let complete = true;
-    for (const row of rows) {
-      const required = Math.max(0, number(row.dataset.required));
-      const input = row.querySelector('[data-material-price]');
-      if (!input || input.value === '') { complete = false; continue; }
-      known += required * Math.max(0, number(input.value));
-    }
-    return { known, complete, count: rows.length };
-  }
-
-  function actualOutput() {
-    const block = [...document.querySelectorAll('#workspaceOperations .ops-recipe-meta > div')]
-      .find(entry => entry.querySelector('small')?.textContent?.trim() === 'ACTUAL OUTPUT');
-    return Math.max(1, number(block?.querySelector('strong')?.textContent?.replace(/[^0-9.-]/g, '')) || 1);
-  }
-
-  function marginPercent() {
-    return Math.max(0, Math.min(95, number(document.getElementById('opsMargin')?.value || 20)));
-  }
-
-  function write(id, value) {
-    const node = document.getElementById(id);
-    if (node && node.textContent !== value) node.textContent = value;
-  }
-
-  function applyRecipeFee() {
-    const plan = core.state.currentPlan;
-    const panel = document.querySelector('#workspaceOperations .ops-cost-panel');
-    if (!plan || !panel) return;
-    const fee = Math.max(0, number(plan.recipeFeeTotal));
-    let box = panel.querySelector('.ops-recipe-fee');
-    if (!fee) {
-      box?.remove();
-      return;
-    }
-    if (!box) {
-      box = document.createElement('div');
-      box.className = 'ops-recipe-fee';
-      const notes = panel.querySelector('.ops-price-memory, .ops-details');
-      if (notes) notes.insertAdjacentElement('beforebegin', box); else panel.appendChild(box);
-    }
-    const feeText = `${money(plan.recipeFeePerCycle)} / CYCLE × ${Math.max(0, number(plan.cycles)).toLocaleString('en-US')}`;
-    const feeTotal = money(fee);
-    const markup = `<div><small>FIXED RECIPE FEE</small><strong>${feeText}</strong></div><b>${feeTotal}</b>`;
-    if (box.innerHTML !== markup) box.innerHTML = markup;
-
-    const materials = currentMaterialCost();
-    const knownTotal = materials.known + fee;
-    const total = materials.complete ? knownTotal : null;
-    const output = actualOutput();
-    const unitCost = total === null ? null : total / output;
-    const margin = marginPercent() / 100;
-    const sell = unitCost === null ? null : Math.ceil(unitCost / Math.max(.05, 1 - margin));
-    const profitUnit = sell === null || unitCost === null ? null : sell - unitCost;
-    const revenue = sell === null ? null : sell * output;
-    const profit = revenue === null || total === null ? null : revenue - total;
-
-    write('opsTotalCost', materials.complete ? money(total) : `${money(knownTotal)} PARTIAL`);
-    write('opsUnitCost', unitCost === null ? '—' : money(unitCost));
-    write('opsSellUnit', sell === null ? '—' : money(sell));
-    write('opsProfitUnit', profitUnit === null ? '—' : money(profitUnit));
-    write('opsProfit', profit === null ? '—' : money(profit));
-    write('opsRevenue', revenue === null ? '—' : money(revenue));
-    const warning = document.getElementById('opsPricingWarning');
-    if (warning && materials.complete) {
-      const text = 'ALL MATERIALS PRICED // FIXED RECIPE FEE INCLUDED // SALE QUOTE READY';
-      if (warning.textContent !== text) warning.textContent = text;
-    }
-  }
-
-  function queueFee() {
-    if (feeQueued) return;
-    feeQueued = true;
-    queueMicrotask(() => { feeQueued = false; applyRecipeFee(); });
-  }
-
-  function installFeeObserver() {
-    installStyles();
-    const workspace = document.getElementById('workspaceOperations');
-    if (!workspace || workspace.dataset.v40RecipeFeeObserver === 'true') return;
-    workspace.dataset.v40RecipeFeeObserver = 'true';
-    workspace.addEventListener('input', queueFee);
-    workspace.addEventListener('change', queueFee);
-    feeObserver = new MutationObserver(queueFee);
-    feeObserver.observe(workspace, { childList: true, subtree: true });
-    queueFee();
-  }
-
-  const baseOperationsInit = app.operations?.init;
-  if (typeof baseOperationsInit === 'function') {
-    app.operations.init = async function correctedOperationsInit(...args) {
-      const result = await baseOperationsInit.apply(this, args);
-      installFeeObserver();
-      return result;
-    };
-  }
-
   function selfTest() {
     const failures = [];
     const catalog = core.state.catalog;
@@ -273,7 +156,6 @@
     normalizeCatalog,
     outputFor,
     affiliationCandidates,
-    applyRecipeFee,
     selfTest,
     deprecatedRecipeIds: DEPRECATED_RECIPE_IDS
   };

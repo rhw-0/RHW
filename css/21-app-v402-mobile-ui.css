@@ -92,9 +92,9 @@
 
   /* Every primary app control is a real touch target. 16px inputs also prevent
      browser auto-zoom while composing on phones. */
-  .app-workspace :is(button, input, select, summary),
+  .app-workspace :is(button, input:not([type="checkbox"]), select, summary),
   .rhw-app-nav button {
-    min-height: 44px;
+    min-height: 44px !important;
     touch-action: manipulation;
   }
   .app-workspace :is(input, select, textarea) { font-size: 16px; }
@@ -203,4 +203,9 @@
   .app-context-nav-slot .workspace-subnav button { min-width: 108px; }
   .workspace-heading p { display: none; }
   .comms-mobile-view-switch { margin-inline: 0; }
+}
+
+@media(max-width:760px) {
+  .app-workspace button, .rhw-app-nav button, .rhw-diagnostics-overlay button, .rhw-pwa-panel button { min-width:44px; min-height:44px!important; }
+  .app-workspace :is(button, input, select):focus-visible, .rhw-focus-tools-overlay button:focus-visible { outline:2px solid #f0d06b; outline-offset:3px; }
 }

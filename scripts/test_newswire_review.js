@@ -34,7 +34,7 @@ const manager = {
 
 global.RHWV4 = {
   version: 'V4.0.2',
-  config: { storageKeys: { newswireReviewHistory: 'test:newswire-history' } },
+  config: { repository: 'PhyteHQ/RHW', storageKeys: { newswireReviewHistory: 'test:newswire-history' } },
   util: { escape: value => String(value), copy: async () => true },
   store: {
     get: (key, fallback) => memory.has(key) ? memory.get(key) : fallback,
@@ -62,7 +62,7 @@ assert.strictEqual(diff.moved.length, 1, 'One unchanged bulletin must be reporte
 
 const payload = review.buildReviewPackage();
 assert.strictEqual(payload.format, 'rhw-newswire-review-package', 'Review package format must be explicit');
-assert.strictEqual(payload.repository.name, 'rhw-0/RHW', 'Review package must target the RHW repository');
+assert.strictEqual(payload.repository.name, 'PhyteHQ/RHW', 'Review package must target the RHW repository');
 assert.strictEqual(payload.repository.base, 'main', 'Review package must target main');
 assert.strictEqual(payload.summary.added, 1, 'Package summary must use the canonical diff');
 assert.strictEqual(payload.summary.edited, 1, 'Package summary must include edits');
@@ -80,6 +80,9 @@ for (let index = 0; index < 10; index += 1) {
 }
 assert.strictEqual(review.readHistory().length, review.HISTORY_LIMIT, 'Version history must be capped locally');
 assert(review.reportText().includes('This package does not publish automatically'), 'Review report must explain the controlled handoff');
+
+manager.state.sourceMode = 'cache';
+assert.throws(() => review.buildReviewPackage(), /RELOAD THE CURRENT REPOSITORY FILE/, 'Cached source must block review handoff even when its response was HTTP 200');
 
 manager.state.sourceMode = 'fallback';
 assert.throws(() => review.buildReviewPackage(), /RELOAD THE CURRENT REPOSITORY FILE/, 'Fallback data must block a GitHub handoff');

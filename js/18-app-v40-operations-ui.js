@@ -13,6 +13,16 @@
     ['orders', 'PRODUCTION ORDERS', 'QUEUE + MATERIALS']
   ]);
   const RECIPE_ALIASES = Object.freeze({
+    // CFG produces medium_miner_package (Modular Miner); the civilian recipe
+    // requires blueprint_medium_miner (Archon Design Schematics).
+    ship_assembly_medium_miner: Object.freeze({
+      outputId: 'medium_miner_package', name: '"Archon" Modular Miner',
+      terms: 'archon modular miner medium miner'
+    }),
+    ship_assembly_medium_miner_legit: Object.freeze({
+      outputId: 'medium_miner_package', name: '"Archon" Modular Miner',
+      terms: 'archon modular miner medium miner kishiro gmg samura'
+    }),
     ship_assembly_dsy_barge: Object.freeze({
       outputId: 'dsy_barge_package',
       name: '"Bustard" Civilian Light Carrier',
@@ -186,32 +196,11 @@
     return Number.isFinite(value) && value >= 0 ? value : null;
   }
 
-  function pricingFor(rows, calc, actualOutput) {
-    let knownCost = 0;
-    let pricedCount = 0;
-    for (const row of rows) {
-      const price = storedPrice(calc.materialPrices, row.id);
-      if (price === null) continue;
-      pricedCount += 1;
-      knownCost += row.required * price;
-    }
-    const missingCount = rows.length - pricedCount;
-    const complete = missingCount === 0;
-    const totalCost = complete ? knownCost : null;
-    const unitCost = complete && actualOutput > 0 ? totalCost / actualOutput : null;
-    const marginRatio = clampMargin(calc.marginPercent) / 100;
-    const sellPerUnit = unitCost === null ? null : Math.ceil(unitCost / Math.max(0.05, 1 - marginRatio));
-    const profitUnit = sellPerUnit === null || unitCost === null ? null : sellPerUnit - unitCost;
-    const revenue = sellPerUnit === null ? null : sellPerUnit * actualOutput;
-    const profit = revenue === null || totalCost === null ? null : revenue - totalCost;
-    return { knownCost, pricedCount, missingCount, complete, totalCost, unitCost, sellPerUnit, profitUnit, revenue, profit };
-  }
-
   function materialsMarkup(rows, calc) {
     if (!rows.length) return '<div class="ops-empty good">THIS RECIPE HAS NO CONSUMED MATERIAL INPUTS</div>';
     return `<div class="ops-material-table-wrap"><table class="ops-material-table"><thead><tr><th>MATERIAL</th><th>REQUIRED</th><th>PRICE / UNIT</th><th>LINE COST</th></tr></thead><tbody>${rows.map(row => {
       const price = storedPrice(calc.materialPrices, row.id);
-      return `<tr class="ops-material-row" data-material-id="${esc(row.id)}" data-required="${row.required}"><td><strong>${esc(row.name)}</strong><small>${esc(row.id)}</small></td><td>${fmt(row.required)}</td><td><div class="ops-price-input-wrap"><input class="ops-price-input" data-material-price="${esc(row.id)}" type="number" inputmode="decimal" min="0" step="1" value="${price === null ? '' : esc(String(price))}" placeholder="0"><span>CR</span></div></td><td data-line-cost>${money(price === null ? null : row.required * price)}</td></tr>`;
+      return `<tr class="ops-material-row" data-material-id="${esc(row.id)}" data-required="${row.required}"><td><strong>${esc(row.name)}</strong><details class="ops-material-id"><summary>ITEM ID</summary><small>${esc(row.id)}</small></details></td><td>${fmt(row.required)}</td><td><div class="ops-price-input-wrap"><input class="ops-price-input" aria-label="${esc(row.name)} price per unit" data-material-price="${esc(row.id)}" type="number" inputmode="decimal" min="0" step="1" value="${price === null ? '' : esc(String(price))}" placeholder="0"><span>CR</span></div></td><td data-line-cost>${money(price === null ? null : row.required * price)}</td></tr>`;
     }).join('')}</tbody></table></div>`;
   }
 
@@ -227,7 +216,7 @@
     return `<div class="ops-pricing-summary">
       <div class="ops-priced-state"><span>PRICE COVERAGE</span><strong id="opsPriceCoverage" class="${pricing.complete ? 'good' : 'warn'}">${pricing.pricedCount} / ${rows.length} MATERIALS</strong></div>
       <div class="ops-pricing-flow">
-        <section class="ops-flow-card ops-flow-cost"><small>01 · MATERIAL COST</small><strong id="opsTotalCost">${total}</strong><span>TOTAL BUILD COST</span><div><em>COST / PRODUCED ITEM</em><b id="opsUnitCost">${money(pricing.unitCost)}</b></div></section>
+        <section class="ops-flow-card ops-flow-cost"><small>01 · FULL BUILD COST</small><strong id="opsTotalCost">${total}</strong><span>TOTAL BUILD COST</span><div><em>COST / PRODUCED ITEM</em><b id="opsUnitCost">${money(pricing.unitCost)}</b></div></section>
         <div class="ops-flow-arrow" aria-hidden="true">›</div>
         <label class="ops-flow-card ops-flow-margin"><small>02 · TARGET PROFIT MARGIN</small><div class="ops-margin-input"><input id="opsMargin" type="number" inputmode="decimal" min="0" max="95" step="1" value="${esc(String(calc.marginPercent))}"><span>%</span></div><strong id="opsMarginLabel">${calc.marginPercent}% MARGIN</strong><p>PROFIT AS SHARE OF SELL PRICE</p></label>
         <div class="ops-flow-arrow" aria-hidden="true">›</div>
@@ -238,7 +227,7 @@
         <div><small>TOTAL PROFIT</small><strong id="opsProfit">${money(pricing.profit)}</strong></div>
         <div class="ops-revenue-line"><small>TOTAL REVENUE // ${fmt(actualOutput)} PRODUCED</small><strong id="opsRevenue">${money(pricing.revenue)}</strong></div>
       </div>
-      <div id="opsPricingWarning" class="ops-cost-note ${pricing.complete ? 'good' : 'warn'}">${pricing.complete ? 'ALL MATERIALS PRICED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD MATERIAL PRICES TO COMPLETE THE QUOTE`}</div>
+      <div id="opsPricingWarning" class="ops-cost-note ${pricing.complete ? 'good' : 'warn'}">${pricing.complete ? 'ALL MATERIALS PRICED // RECIPE FEES INCLUDED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD MATERIAL PRICES TO COMPLETE THE QUOTE`}</div>
     </div>`;
   }
 
@@ -279,7 +268,7 @@
 
     core.state.currentPlan = plan;
     const rows = materialRows(plan);
-    const pricing = pricingFor(rows, calc, plan.actualOutput);
+    const pricing = core.priceQuote(rows, calc, plan);
     const iff = iffEntries(recipe, calc.affiliationId);
     const outputPerCycle = Math.max(1, Number(plan.tree?.outputPerCycle) || Number(primaryOutput(recipe)?.qty) || 1);
     const matches = resolved.matches.length ? resolved.matches : matchingRecipes('');
@@ -292,7 +281,7 @@
         <div class="ops-form-grid">
           <label class="comms-field ops-wide"><span>SEARCH RECIPE</span><input id="opsRecipeSearch" type="search" value="${esc(calc.search)}" placeholder="Bustard, Superstructure, Reactor, Gold…" autocomplete="off"><small>TYPE A NAME OR RECIPE ID // FIRST MATCH IS SELECTED AUTOMATICALLY</small></label>
           <label class="comms-field ops-wide"><span>SELECTED RECIPE</span><select id="opsRecipe">${recipeOptions(matches, calc.recipeId)}</select><small>${matches.length} MATCH${matches.length === 1 ? '' : 'ES'} // ${esc(recipe.craftType || recipe.sourceType || 'GENERAL')}${recipe.restricted ? ' // RESTRICTED IFF' : ''}</small></label>
-          <label class="comms-field"><span>OUTPUT QUANTITY</span><div class="ops-quantity-control"><button type="button" data-ops-quantity="-1" aria-label="Decrease output quantity">−</button><input id="opsQuantity" type="number" inputmode="numeric" min="1" step="1" value="${calc.quantity}"><button type="button" data-ops-quantity="1" aria-label="Increase output quantity">+</button></div><small>EXAMPLE: 200 REACTORS</small></label>
+          <label class="comms-field"><span>OUTPUT QUANTITY</span><div class="ops-quantity-control"><button type="button" data-ops-quantity="-1" aria-label="Decrease output quantity">−</button><input id="opsQuantity" aria-label="Output quantity" type="number" inputmode="numeric" min="1" step="1" value="${calc.quantity}"><button type="button" data-ops-quantity="1" aria-label="Increase output quantity">+</button></div><small>EXAMPLE: 200 REACTORS</small></label>
           <label class="comms-field"><span>AFFILIATION / IFF</span><select id="opsAffiliation">${iff.map(entry => `<option value="${esc(entry.id)}"${entry.id === calc.affiliationId ? ' selected' : ''}>${esc(entry.name)}</option>`).join('')}</select><small>${esc(iffHint)}</small></label>
         </div>
         <div class="ops-recipe-meta"><div><small>OUTPUT / CYCLE</small><strong>${fmt(outputPerCycle)}</strong></div><div><small>CYCLES</small><strong>${fmt(plan.cycles)}</strong></div><div><small>ACTUAL OUTPUT</small><strong>${fmt(plan.actualOutput)}</strong></div></div>
@@ -300,7 +289,7 @@
         <div class="ops-mobile-decision" aria-label="Current quote summary"><div><small>RECOMMENDED SALE</small><strong id="opsMobileSellUnit">${money(pricing.sellPerUnit)}</strong></div><div><small>COST / ITEM</small><strong id="opsMobileUnitCost">${money(pricing.unitCost)}</strong></div><div><small>TOTAL PROFIT</small><strong id="opsMobileProfit">${money(pricing.profit)}</strong></div></div>
         <nav class="ops-mobile-jumps" aria-label="Calculator sections"><button type="button" data-ops-jump="opsMaterialPanel">ENTER MATERIAL PRICES</button><button type="button" data-ops-jump="opsQuotePanel">VIEW FULL QUOTE</button></nav>
       </section>
-      <section class="ops-panel ops-cost-panel" id="opsMaterialPanel"><div class="ops-panel-head"><div><span>02</span><strong>MATERIAL COST</strong></div><small>ENTER YOUR UNIT PRICES</small></div>${materialsMarkup(rows, calc)}<div class="ops-price-memory">MATERIAL PRICES ARE SAVED LOCALLY IN THIS BROWSER AND REUSED IN OTHER RECIPES.</div>${notesMarkup(plan)}<button class="ops-mobile-quote-jump" type="button" data-ops-jump="opsQuotePanel">VIEW UPDATED QUOTE</button></section>
+      <section class="ops-panel ops-cost-panel" id="opsMaterialPanel"><div class="ops-panel-head"><div><span>02</span><strong>MATERIAL COST</strong></div><small>ENTER YOUR UNIT PRICES</small></div>${materialsMarkup(rows, calc)}${plan.recipeFeeTotal ? `<div class="ops-recipe-fee"><div><small>FIXED RECIPE FEE · INCLUDED IN QUOTE</small><strong>${money(plan.recipeFeePerCycle)} / CYCLE × ${fmt(plan.cycles)}</strong></div><b>${money(plan.recipeFeeTotal)}</b></div>` : ''}<div class="ops-price-memory">MATERIAL PRICES APPLY TO THIS RECIPE SESSION. SAVE A PRICE PROFILE TO REUSE THEM.</div>${notesMarkup(plan)}<button class="ops-mobile-quote-jump" type="button" data-ops-jump="opsQuotePanel">VIEW UPDATED QUOTE</button></section>
       <section class="ops-panel ops-quote-panel" id="opsQuotePanel"><div class="ops-panel-head"><div><span>03</span><strong>PRICE CALCULATION</strong></div><small>COST → MARGIN → SELL PRICE</small></div>${quoteMarkup(pricing, calc, rows, plan.actualOutput)}</section>
     </div>`;
     bindCalculator(plan, rows);
@@ -318,7 +307,7 @@
 
   function updatePricing(plan, rows) {
     const calc = currentState();
-    const pricing = pricingFor(rows, calc, plan.actualOutput);
+    const pricing = core.priceQuote(rows, calc, plan);
     document.querySelectorAll('.ops-material-row').forEach(row => {
       const id = row.dataset.materialId || '';
       const required = num(row.dataset.required);
@@ -342,7 +331,7 @@
     const warning = document.getElementById('opsPricingWarning');
     if (warning) {
       warning.className = `ops-cost-note ${pricing.complete ? 'good' : 'warn'}`;
-      warning.textContent = pricing.complete ? 'ALL MATERIALS PRICED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD MATERIAL PRICES TO COMPLETE THE QUOTE`;
+      warning.textContent = pricing.complete ? 'ALL MATERIALS PRICED // RECIPE FEES INCLUDED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD MATERIAL PRICES TO COMPLETE THE QUOTE`;
     }
   }
 
@@ -388,7 +377,7 @@
         app.notify('PRODUCTION ORDER BOARD IS NOT READY', 'danger');
         return;
       }
-      app.productionOrders.add(target);
+      if (!app.productionOrders.add(target)) return;
       app.notify(`${target.productName.toUpperCase()} ADDED TO ORDER BOARD`, 'good');
     });
   }
@@ -479,5 +468,5 @@
     installShipyardBridge();
   }
 
-  app.operations = { init, activate, openTarget, openSelection, renderCalculator, currentOrderTarget, nodes: NODES, recipeAliases: RECIPE_ALIASES };
+  app.operations = { init, activate, openTarget, openSelection, renderCalculator, currentOrderTarget, matchingRecipes, nodes: NODES, recipeAliases: RECIPE_ALIASES };
 })();

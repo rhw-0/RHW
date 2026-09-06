@@ -21,7 +21,7 @@ EXPECTED_CSS = [
     './css/09-v35.css', './css/10-maintenance.css', './css/11-layout-v36.css',
 ]
 EXPECTED_JS = [
-    './js/config.js', './js/00-bootstrap.js', './js/01-wire.js', './js/02-utils.js', './js/03-telemetry.js',
+    './js/build-info.js', './js/config.js', './js/00-bootstrap.js', './js/01-wire.js', './js/02-utils.js', './js/03-telemetry.js',
     './js/04-state-production.js', './js/05-shipyard.js', './js/06-logistics.js', './js/07-overview.js',
     './js/08-data.js', './js/09-newswire.js', './js/10-maintenance.js', './js/11-layout-v36.js',
 ]
@@ -334,7 +334,7 @@ def main() -> int:
     ), 'V4 OPERATIONS planner')
     require_tokens(errors, 'js/18-app-v40-operations-ui.js', (
         'ITEM CALCULATOR', 'SEARCH RECIPE', 'PRICE / UNIT', 'TARGET PROFIT MARGIN', 'materialPrices',
-        'NO MATCHING RECIPE', 'Math.ceil(unitCost', 'AUTHORIZED IFF', 'RESTRICTED RECIPE',
+        'NO MATCHING RECIPE', 'core.priceQuote(rows, calc, plan)', 'AUTHORIZED IFF', 'RESTRICTED RECIPE',
         'installShipyardBridge', 'PRICE / PLAN 1 HULL', 'ops-mobile-decision',
         'data-ops-quantity', 'data-ops-jump', 'opsMobileSellUnit'
     ), 'V4 OPERATIONS UI')
@@ -431,7 +431,7 @@ def main() -> int:
         errors.append('Clipboard fallback must not report success when document.execCommand is unavailable.')
 
     require_tokens(errors, 'js/20-app-v402-fixes.js', (
-        'v40OverviewTelemetryState', "'CACHE TELEMETRY'", "'AWAITING TELEMETRY'",
+        'v40OverviewTelemetryState', "'CACHE TELEMETRY'", 'window.telemetrySnapshot()',
         'price per unit', 'Generated Newswire source block', 'Updated RHW Newswire Markdown source'
     ), 'V4.0.2 runtime fixes')
     require_tokens(errors, 'js/03-telemetry.js', (
@@ -451,10 +451,9 @@ def main() -> int:
     if not title_match or version not in title_match.group(1):
         errors.append(f'index.html title does not advertise the current app version {version}.')
 
-    revision_match = re.search(r"RHW_V4_ASSET_REV\s*=\s*'([^']+)'", bootstrap)
-    release_number = version.removeprefix('V')
-    if not revision_match or not revision_match.group(1).startswith(f'{release_number}-'):
-        errors.append(f'V4 cache-busting revision is not aligned with app version {version}.')
+    build_info = (ROOT / 'js/build-info.js').read_text(encoding='utf-8')
+    if not re.search(r"revision:\s*'[^']+'", build_info) or 'window.RHW_BUILD.revision' not in bootstrap or 'self.RHW_BUILD.revision' not in (ROOT / 'sw.js').read_text():
+        errors.append('Page assets and service-worker cache must use the shared build revision.')
 
     readme = (ROOT / 'README.md').read_text(encoding='utf-8')
     if f'# Resolution Heavy Works Web App - {version}' not in readme or f'{version} is the current RHW web app release.' not in readme:

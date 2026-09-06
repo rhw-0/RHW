@@ -52,8 +52,9 @@ function renderMarketScan() {
   }
 
   if (!Array.isArray(allBases) || !allBases.length) {
-    if (els.marketScanMeta) els.marketScanMeta.textContent = 'AWAITING FIRST TELEMETRY BURST';
-    grid.innerHTML = '<div class="supplier-empty">MARKET SCAN PENDING<small>AWAITING FIRST TELEMETRY BURST</small></div>';
+    const failed = Boolean(lastSyncError);
+    if (els.marketScanMeta) els.marketScanMeta.textContent = failed ? 'TELEMETRY UNAVAILABLE' : 'AWAITING FIRST TELEMETRY BURST';
+    grid.innerHTML = `<div class="supplier-empty">${failed ? 'MARKET DATA UNAVAILABLE' : 'MARKET SCAN PENDING'}<small>${failed ? 'SYNC FAILED // RETRY WITH REFRESH' : 'AWAITING FIRST TELEMETRY BURST'}</small></div>`;
     return { totalOffers: 0, uniqueBases: 0, pending: true };
   }
 
