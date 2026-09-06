@@ -63,6 +63,21 @@ function hasVerifiedTelemetry() {
   return Boolean(rhwBase && lastLoaded && Array.isArray(items));
 }
 
+// Keep snapshot availability separate from freshness. Cached stock is useful,
+// but must carry its original timestamp through every screen and export.
+function telemetrySnapshot(now = Date.now()) {
+  const available = hasVerifiedTelemetry();
+  const timestamp = available ? new Date(lastLoaded).getTime() : NaN;
+  const fetchedAt = Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
+  const ageMs = fetchedAt ? Math.max(0, now - timestamp) : null;
+  const maxAge = (typeof DASHBOARD_CONFIG !== 'undefined' ? DASHBOARD_CONFIG.autoRefreshMs : 300000) * 2;
+  const stale = available && (Boolean(dataIsStale) || !fetchedAt || ageMs > maxAge || (typeof navigator !== 'undefined' && navigator.onLine === false));
+  const failed = typeof lastSyncError !== 'undefined' && Boolean(lastSyncError);
+  const label = available ? (stale ? 'CACHED STOCK' : 'LIVE STOCK') : (failed ? 'TELEMETRY UNAVAILABLE' : 'AWAITING VERIFIED TELEMETRY');
+  const detail = fetchedAt ? `${label} // SNAPSHOT ${fetchedAt} // AGE ${Math.floor(ageMs / 60000)} MIN` : `${label} // STOCK AND COVERAGE UNKNOWN`;
+  return { available, stale, fetchedAt, ageMs, label, detail, tone: available && !stale ? 'good' : 'warn' };
+}
+
 function assetRoles(item) {
   const nm = commodityKey(item);
   const roles = [];
@@ -385,4 +400,3 @@ function renderProductionModules() {
   }).join('');
   applyProductionModuleFilters();
 }
-

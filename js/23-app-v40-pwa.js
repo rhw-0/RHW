@@ -6,7 +6,7 @@
   'use strict';
   if (window.RHWPWA) return;
 
-  const state = { installPrompt: null, registration: null, updateWorker: null, reloading: false, shellObserver: null };
+  const state = { installPrompt: null, registration: null, updateWorker: null, reloading: false, restartRequested: false, shellObserver: null };
   const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const isAndroid = (userAgent = navigator.userAgent) => /Android/i.test(userAgent);
   const isIos = (userAgent = navigator.userAgent, platform = navigator.platform, maxTouchPoints = navigator.maxTouchPoints) =>
@@ -156,9 +156,21 @@
     state.updateWorker = worker;
     showPanel({
       kicker: 'APP UPDATE READY', title: 'RESTART WITH LATEST RHW',
-      message: 'YOUR LOCAL DRAFTS AND SETTINGS STAY ON THIS DEVICE. UPDATE WHEN YOU ARE READY.',
-      primaryLabel: 'UPDATE NOW', onPrimary: () => worker.postMessage({ type: 'SKIP_WAITING' })
+      message: 'FINISH YOUR WORK FIRST. SAVE A PRICE PROFILE TO KEEP CURRENT MATERIAL PRICES. UNSAVED EDITOR INPUTS WILL CLEAR ON RESTART.',
+      primaryLabel: 'UPDATE NOW', onPrimary: () => requestRestart(worker)
     });
+  }
+
+  function hasSessionPrices() {
+    return Object.keys(window.RHWV4?.state?.calculator?.materialPrices || {}).length > 0;
+  }
+
+  function requestRestart(worker = null) {
+    if (hasSessionPrices() && !window.confirm('Restart clears the current material prices. Save a price profile first if you need them. Restart now?')) return false;
+    state.restartRequested = true;
+    if (worker) worker.postMessage({ type: 'SKIP_WAITING' });
+    else { state.reloading = true; window.location.reload(); }
+    return true;
   }
 
   function watchRegistration(registration) {
@@ -180,7 +192,8 @@
     try {
       const registration = await navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' });
       state.registration = registration;
-      document.documentElement.dataset.rhwPwa = 'ready';
+      document.documentElement.dataset.rhwPwa = registration.active ? 'ready' : 'installing';
+      navigator.serviceWorker.ready.then(() => { document.documentElement.dataset.rhwPwa = 'ready'; });
       watchRegistration(registration);
       window.setInterval(() => registration.update().catch(() => {}), 60 * 60 * 1000);
     } catch (error) {
@@ -200,14 +213,22 @@
   window.addEventListener('offline', syncConnectionState);
   navigator.serviceWorker?.addEventListener('controllerchange', () => {
     if (state.reloading) return;
-    state.reloading = true;
-    window.location.reload();
+    document.documentElement.dataset.rhwPwa = 'ready';
+    if (state.restartRequested) {
+      state.reloading = true;
+      window.location.reload();
+    } else if (state.updateWorker) {
+      // Another tab may activate the worker. This tab retains its input state.
+      showPanel({ kicker: 'APP UPDATE ACTIVE', title: 'RESTART WHEN READY',
+        message: 'YOU CAN FINISH WORK IN THIS TAB. SAVE PRICES AND EDITOR INPUTS BEFORE RESTARTING.',
+        primaryLabel: 'RESTART', onPrimary: () => requestRestart() });
+    }
   });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') state.registration?.update().catch(() => {});
   });
 
-  window.RHWPWA = { state, register, showInstallHelp, showManualInstructions, manualInstructions, syncConnectionState, isStandalone };
+  window.RHWPWA = { state, register, announceUpdate, requestRestart, hasSessionPrices, showInstallHelp, showManualInstructions, manualInstructions, syncConnectionState, isStandalone };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', register, { once: true });
   else register();
 })();

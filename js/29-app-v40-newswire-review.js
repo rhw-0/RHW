@@ -11,7 +11,7 @@
 
   const HISTORY_LIMIT = 8;
   const HISTORY_KEY = app.config.storageKeys.newswireReviewHistory || 'rhw-webapp-v4:newswire-review-history';
-  const REPOSITORY = 'rhw-0/RHW';
+  const REPOSITORY = app.config.repository;
   const SOURCE_PATH = 'assets/RHW_Newswire.md';
   const esc = value => app.util.escape(String(value ?? ''));
   const cloneEntries = entries => (entries || []).map(entry => ({ ...entry }));

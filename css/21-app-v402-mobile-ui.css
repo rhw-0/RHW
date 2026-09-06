@@ -204,3 +204,8 @@
   .workspace-heading p { display: none; }
   .comms-mobile-view-switch { margin-inline: 0; }
 }
+
+@media(max-width:760px) {
+  .app-workspace button, .rhw-app-nav button, .rhw-diagnostics-overlay button, .rhw-pwa-panel button { min-width:44px; }
+  .app-workspace :is(button, input, select):focus-visible, .rhw-focus-tools-overlay button:focus-visible { outline:2px solid #f0d06b; outline-offset:3px; }
+}

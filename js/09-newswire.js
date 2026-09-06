@@ -176,8 +176,10 @@ async function loadNewswire({ schedule = true } = {}) {
     if (!count) throw new Error('NO BULLETINS PARSED');
 
     applyNewswirePools(remotePools);
-    safeStorageSet(STORAGE_KEYS.newswireCache, { sourceText, savedAt: Date.now() });
-    setNewswireFeedStatus('live', count);
+    const cached = response.headers.get('X-RHW-Source') === 'cache' || (navigator.serviceWorker?.controller && response.headers.get('X-RHW-Source') !== 'network');
+    const fetchedAt = Date.parse(response.headers.get('X-RHW-Fetched-At')) || (cached ? 0 : Date.now());
+    safeStorageSet(STORAGE_KEYS.newswireCache, { sourceText, savedAt: fetchedAt });
+    setNewswireFeedStatus(cached ? 'stale' : 'live', count, fetchedAt);
   } catch (error) {
     const cached = safeStorageGet(STORAGE_KEYS.newswireCache, null);
     const cachedPools = cached?.sourceText ? parseNewswireMarkdown(cached.sourceText) : {};

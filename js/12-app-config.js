@@ -5,6 +5,8 @@
 const RHW_APP_VERSION = 'V4.0.2';
 
 const RHW_APP_CONFIG = Object.freeze({
+  build: window.RHW_BUILD,
+  repository: window.RHW_BUILD.repository,
   storageKeys: Object.freeze({
     activeWorkspace: 'rhw-webapp-v4:workspace',
     commandNode: 'rhw-webapp-v4:command-node',

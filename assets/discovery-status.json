@@ -44,7 +44,7 @@
   "workflow": {
     "autoMerge": false,
     "file": "discovery-catalog-sync.yml",
-    "repository": "rhw-0/RHW",
+    "repository": "PhyteHQ/RHW",
     "reviewRequired": true
   }
 }

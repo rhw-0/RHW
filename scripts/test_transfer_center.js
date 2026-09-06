@@ -47,6 +47,7 @@ function mergeOrders(incoming) {
 
 app.productionOrders = {
   snapshot: () => clone(memory.get(keys.productionOrders) || []),
+  prepareImport: () => {},
   importOrders: incoming => mergeOrders(incoming)
 };
 
@@ -122,3 +123,9 @@ assert.equal(memory.get(keys.activeWorkspace), 'comms');
 assert.throws(() => app.storage.inspectPayload({ format: 'rhw-webapp-local-cache', version: 99 }), /UNSUPPORTED CACHE FILE/);
 
 console.log('Transfer Center tests passed: V4 inspection, selective import, safe merge and explicit replacement.');
+
+// An order-capacity rejection must happen before other selected sections mutate.
+const beforeRejectedImport = JSON.stringify({ state: app.state, memory: [...memory] });
+app.productionOrders.prepareImport = () => { throw new Error('LIMIT 100'); };
+assert.throws(() => app.storage.importPayload(incoming, { sections: ['drafts', 'senders', 'productionOrders'] }), /LIMIT 100/);
+assert.equal(JSON.stringify({ state: app.state, memory: [...memory] }), beforeRejectedImport);

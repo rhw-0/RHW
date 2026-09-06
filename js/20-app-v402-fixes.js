@@ -11,23 +11,15 @@
   let observer = null;
   let badgeTimer = null;
 
-  function telemetryVerified() {
-    try { return typeof hasVerifiedTelemetry === 'function' && hasVerifiedTelemetry(); }
-    catch { return false; }
-  }
-
-  function telemetryStale() {
-    try { return Boolean(telemetryVerified() && typeof dataIsStale !== 'undefined' && dataIsStale); }
-    catch { return false; }
-  }
-
   function syncTelemetryBadge() {
     const badge = document.querySelector('.command-overview-live');
     if (!badge) return;
-    const verified = telemetryVerified();
-    const stale = telemetryStale();
+    const snapshot = window.telemetrySnapshot();
+    const verified = snapshot.available;
+    const stale = snapshot.stale;
     const state = verified ? (stale ? 'stale' : 'live') : 'offline';
-    const label = state === 'live' ? 'LIVE TELEMETRY' : (state === 'stale' ? 'CACHE TELEMETRY' : 'AWAITING TELEMETRY');
+    const label = state === 'live' ? 'LIVE TELEMETRY' : (state === 'stale' ? 'CACHE TELEMETRY' : snapshot.label);
+    badge.title = snapshot.detail;
 
     badge.id = 'v40OverviewTelemetryState';
     badge.dataset.state = state;

@@ -1,7 +1,8 @@
 /* RHW V4.0.2 · unified workspace service worker
    App assets are available offline. Live telemetry remains network-only. */
+importScripts('./js/build-info.js');
 const CACHE_PREFIX = 'rhw-v4.0.2-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}2026-09-06-focus-pass-1`;
+const CACHE_NAME = `${CACHE_PREFIX}${self.RHW_BUILD.revision}`;
 const CSS_NAMES = [
   'core', 'ticker', 'production', 'responsive', 'shipyard', 'shipyard-detail', 'mobile', 'headings', 'v35',
   'maintenance', 'layout-v36', 'app-v40', 'app-v40-navigation', 'app-v40-composer', 'app-v40-audit',
@@ -17,7 +18,7 @@ const APP_SHELL = [
   './assets/apple-touch-icon.png', './assets/pwa-icon-192.png', './assets/pwa-icon-512.png',
   './assets/pwa-icon-maskable-512.png',
   ...CSS_NAMES.map((name, index) => `./css/${String(index + 1).padStart(2, '0')}-${name}.css`),
-  './js/config.js', './js/00-bootstrap.js', './js/01-wire.js', './js/02-utils.js', './js/03-telemetry.js',
+  './js/build-info.js', './js/config.js', './js/00-bootstrap.js', './js/01-wire.js', './js/02-utils.js', './js/03-telemetry.js',
   './js/04-state-production.js', './js/05-shipyard.js', './js/06-logistics.js', './js/07-overview.js',
   './js/08-data.js', './js/09-newswire.js', './js/10-maintenance.js', './js/11-layout-v36.js',
   './js/12-app-config.js', './js/13-app-v40.js', './js/14-app-v40-cache.js', './js/15-app-v40-navigation.js',
@@ -38,9 +39,7 @@ self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
     await cache.addAll(APP_SHELL);
-    /* RHW is a controlled private web app. A newly deployed shell must not sit
-       behind the previous cache waiting for a hidden confirmation prompt. */
-    await self.skipWaiting();
+    // Updates wait for an explicit restart; active calculator sessions stay open.
   })());
 });
 
@@ -67,6 +66,28 @@ async function networkFirst(request, fallback) {
     const cached = await cache.match(request) || await cache.match(fallback);
     if (cached) return cached;
     throw error;
+  }
+}
+
+function sourceResponse(response, source, fetchedAt) {
+  const headers = new Headers(response.headers);
+  headers.set('X-RHW-Source', source);
+  if (fetchedAt) headers.set('X-RHW-Fetched-At', fetchedAt);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
+async function newswireResponse(request) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const response = await fetch(request);
+    if (!response.ok) throw new Error(`NETWORK RESPONSE ${response.status}`);
+    const marked = sourceResponse(response, 'network', new Date().toISOString());
+    await cache.put(request, marked.clone());
+    return marked;
+  } catch (error) {
+    const cached = await cache.match(request, { ignoreSearch: true }) || await cache.match('./assets/RHW_Newswire.md');
+    if (!cached) throw error;
+    return sourceResponse(cached, 'cache', cached.headers.get('X-RHW-Fetched-At'));
   }
 }
 
@@ -107,7 +128,7 @@ self.addEventListener('fetch', event => {
     const isNewswire = url.pathname.endsWith('/assets/RHW_Newswire.md');
     const isDiscoveryStatus = url.pathname.endsWith('/assets/discovery-status.json');
     const isRecipeChunk = /\/assets\/recipes\/catalog-v1-part-\d+\.js$/.test(url.pathname);
-    if (isNewswire) event.respondWith(networkFirst(request, './assets/RHW_Newswire.md'));
+    if (isNewswire) event.respondWith(newswireResponse(request));
     else if (isDiscoveryStatus || isRecipeChunk) event.respondWith(networkFirstData(request));
     else event.respondWith(cacheFirst(request));
     return;

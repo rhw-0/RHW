@@ -12,7 +12,7 @@ function feedstockAnalysis(item) {
 }
 
 function updateDataFreshnessIndicators() {
-  const stale = Boolean(dataIsStale && hasVerifiedTelemetry());
+  const stale = telemetrySnapshot().stale;
   document.body.classList.toggle('stale-data', stale);
   document.body.classList.toggle('no-telemetry', !hasVerifiedTelemetry());
   const time = lastLoaded ? lastLoaded.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';

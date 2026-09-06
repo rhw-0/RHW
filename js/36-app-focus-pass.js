@@ -52,14 +52,14 @@
       html.rhw-focus-pass body[data-workspace="operations"][data-operations-node="calculator"]:not([data-rhw-focus-tool="data"]) #rhwDataStatusUtility{display:none!important}
 
       .rhw-focus-tools-button{
-        min-height:40px;padding:6px 10px;border:1px solid rgba(212,175,55,.24);border-radius:5px;
+        min-height:44px;padding:6px 10px;border:1px solid rgba(212,175,55,.24);border-radius:5px;
         background:rgba(212,175,55,.045);color:rgba(235,220,167,.78);font-family:var(--font-tech);
-        font-size:7px;font-weight:700;letter-spacing:.08em;clip-path:none;box-shadow:none;white-space:nowrap
+        font-size:11px;font-weight:700;letter-spacing:.08em;clip-path:none;box-shadow:none;white-space:nowrap
       }
       .rhw-focus-tools-button:hover,.rhw-focus-tools-button:focus-visible,.rhw-focus-tools-button[data-tool-open="true"]{
         border-color:rgba(212,175,55,.42);background:rgba(212,175,55,.11);color:#f0d470
       }
-      .rhw-focus-tools-button span{display:block;font-size:8px}.rhw-focus-tools-button small{display:block;margin-top:2px;font-size:5.5px;color:rgba(190,190,184,.54)}
+      .rhw-focus-tools-button span{display:block;font-size:11px}.rhw-focus-tools-button small{display:block;margin-top:2px;font-size:11px;color:rgba(190,190,184,.54)}
 
       .rhw-focus-tools-overlay{
         position:fixed;z-index:310;inset:0;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.72);
@@ -71,9 +71,9 @@
         border-radius:9px;background:linear-gradient(180deg,rgba(13,15,18,.99),rgba(4,6,8,.99));box-shadow:0 28px 80px rgba(0,0,0,.7)
       }
       .rhw-focus-tools-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:15px 16px;border-bottom:1px solid rgba(212,175,55,.14)}
-      .rhw-focus-tools-head div{display:grid;gap:3px}.rhw-focus-tools-head small{font-family:var(--font-tech);font-size:7px;letter-spacing:.09em;color:rgba(212,175,55,.58)}
-      .rhw-focus-tools-head strong{font-family:var(--font-title);font-size:24px;letter-spacing:.055em;color:#e8d28a}.rhw-focus-tools-head span{font-family:var(--font-tech);font-size:7px;color:rgba(190,195,200,.58);letter-spacing:.055em}
-      .rhw-focus-tools-head button{min-height:40px;padding:7px 10px;border:1px solid rgba(255,255,255,.1);border-radius:5px;background:rgba(255,255,255,.025);color:#d8d8d2;font-family:var(--font-tech);font-size:7px;letter-spacing:.07em}
+      .rhw-focus-tools-head div{display:grid;gap:3px}.rhw-focus-tools-head small{font-family:var(--font-tech);font-size:11px;letter-spacing:.09em;color:rgba(212,175,55,.58)}
+      .rhw-focus-tools-head strong{font-family:var(--font-title);font-size:24px;letter-spacing:.055em;color:#e8d28a}.rhw-focus-tools-head span{font-family:var(--font-tech);font-size:11px;color:#bcbebf;letter-spacing:.055em}
+      .rhw-focus-tools-head button{min-height:44px;padding:7px 10px;border:1px solid rgba(255,255,255,.1);border-radius:5px;background:rgba(255,255,255,.025);color:#d8d8d2;font-family:var(--font-tech);font-size:11px;letter-spacing:.07em}
       .rhw-focus-tools-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:10px}
       .rhw-focus-tool-card{
         position:relative;display:grid;grid-template-columns:30px minmax(0,1fr) auto;grid-template-areas:"idx copy arrow";align-items:center;gap:10px;
@@ -81,10 +81,10 @@
         color:#dddcd5;text-align:left;clip-path:none;box-shadow:none
       }
       .rhw-focus-tool-card:hover,.rhw-focus-tool-card:focus-visible{border-color:rgba(212,175,55,.3);background:rgba(212,175,55,.07)}
-      .rhw-focus-tool-index{grid-area:idx;display:grid;place-items:center;width:30px;height:30px;border:1px solid rgba(212,175,55,.2);background:rgba(212,175,55,.04);color:#cbb45f;font-family:var(--font-tech);font-size:7px}
-      .rhw-focus-tool-copy{grid-area:copy;display:grid;gap:3px;min-width:0}.rhw-focus-tool-copy strong{font-family:var(--font-title);font-size:17px;letter-spacing:.045em;color:#e1dfd7}.rhw-focus-tool-copy small{font-family:var(--font-tech);font-size:6px;letter-spacing:.06em;color:rgba(170,176,182,.54)}
+      .rhw-focus-tool-index{grid-area:idx;display:grid;place-items:center;width:30px;height:30px;border:1px solid rgba(212,175,55,.2);background:rgba(212,175,55,.04);color:#cbb45f;font-family:var(--font-tech);font-size:11px}
+      .rhw-focus-tool-copy{grid-area:copy;display:grid;gap:3px;min-width:0}.rhw-focus-tool-copy strong{font-family:var(--font-title);font-size:17px;letter-spacing:.045em;color:#e1dfd7}.rhw-focus-tool-copy small{font-family:var(--font-tech);font-size:11px;letter-spacing:.06em;color:#bcbebf}
       .rhw-focus-tool-arrow{grid-area:arrow;color:rgba(212,175,55,.5);font-size:15px}
-      .rhw-focus-tools-note{margin:0 10px 10px;padding:8px 10px;border:1px solid rgba(120,173,138,.14);border-radius:5px;background:rgba(120,173,138,.035);font-family:var(--font-tech);font-size:7px;line-height:1.5;letter-spacing:.045em;color:rgba(178,196,184,.66)}
+      .rhw-focus-tools-note{margin:0 10px 10px;padding:8px 10px;border:1px solid rgba(120,173,138,.14);border-radius:5px;background:rgba(120,173,138,.035);font-family:var(--font-tech);font-size:11px;line-height:1.5;letter-spacing:.045em;color:rgba(178,196,184,.66)}
 
       body[data-rhw-focus-tool]:not([data-rhw-focus-tool=""]) .rhw-focus-tools-button::after{content:"";display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:#d6ba59;box-shadow:0 0 9px rgba(214,186,89,.55);vertical-align:middle}
 

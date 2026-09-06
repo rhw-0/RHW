@@ -49,7 +49,7 @@ app.operationsCore = {
   }
 };
 
-global.window = { RHWV4: app };
+global.window = { RHWV4: app, telemetrySnapshot: () => ({ available: verified, stale: verified, fetchedAt: '2026-09-01T00:00:00.000Z', label: verified ? 'CACHED STOCK' : 'AWAITING VERIFIED TELEMETRY', detail: verified ? 'CACHED STOCK // SNAPSHOT 2026-09-01T00:00:00.000Z' : 'AWAITING VERIFIED TELEMETRY', tone: 'warn' }) };
 global.document = { getElementById: () => null, querySelector: () => null };
 require(path.join(__dirname, '..', 'js', '27-app-v40-production-orders.js'));
 
@@ -85,5 +85,28 @@ api.remove(beta.id);
 assert.equal(api.snapshot().length, 1);
 api.clear();
 assert.deepEqual(api.snapshot(), []);
+
+// Overflow must be rejected atomically, including batches with duplicate IDs.
+const full = Array.from({ length: 100 }, (_, i) => ({ ...alpha, id: `existing-${i}`, createdAt: i + 1, updatedAt: i + 1 }));
+api.restore(full);
+const before = JSON.stringify(api.snapshot());
+const savedBefore = JSON.stringify(memory.get('test:production-orders'));
+assert.throws(() => api.importOrders([{ ...beta, id: 'new-101' }]), /LIMIT 100/);
+assert.equal(JSON.stringify(api.snapshot()), before, 'Overflow must keep every existing order');
+assert.equal(JSON.stringify(memory.get('test:production-orders')), savedBefore, 'Rejected import must not write storage');
+api.importOrders([{ ...full[0], quantity: 8, updatedAt: 1000 }]);
+assert.equal(api.snapshot().length, 100, 'Updates to existing IDs fit at the limit');
+assert.equal(api.snapshot().find(order => order.id === 'existing-0').quantity, 8);
+assert.throws(() => api.importOrders(Array.from({length: 250}, (_, i) => ({ ...beta, id: `large-${i}` }))), /LIMIT 100/);
+const staleReport = api.buildReport();
+assert.match(api.buildBbcode(staleReport), /CACHED STOCK/);
+assert.match(api.buildBbcode(staleReport), /2026-09-01T00:00:00.000Z/);
+assert.doesNotMatch(api.buildBbcode(staleReport), /VERIFIED STOCK \/\//);
+const savedSet = app.store.set;
+app.store.set = () => false;
+const beforeFailure = JSON.stringify(api.snapshot());
+assert.throws(() => api.importOrders([{ ...full[1], quantity: 77, updatedAt: 2000 }]), /NOT SAVED/);
+assert.equal(JSON.stringify(api.snapshot()), beforeFailure, 'Storage failure must keep the active queue');
+app.store.set = savedSet;
 
 console.log('Production Order tests passed: priority, aggregation, telemetry truth-state, BBCode parity and safe import merge.');

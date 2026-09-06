@@ -157,5 +157,30 @@
     };
   }
 
-  app.operationsCore = { state, loadCatalog, product, recipe, recipesFor, factorFor, authorizedFor, telemetryReady, telemetryQuantity, buildPlan, displayName };
+  // Numeric plan data is the only costing input; formatted DOM values are display-only.
+  function priceQuote(rows, calc, plan) {
+    let materialCost = 0;
+    let pricedCount = 0;
+    for (const row of rows) {
+      const raw = calc.materialPrices?.[row.id];
+      if (raw === '' || raw == null || !Number.isFinite(Number(raw)) || Number(raw) < 0) continue;
+      pricedCount += 1;
+      materialCost += row.required * Number(raw);
+    }
+    const recipeFee = Math.max(0, Number(plan.recipeFeeTotal) || 0);
+    const knownCost = materialCost + recipeFee;
+    const missingCount = rows.length - pricedCount;
+    const complete = missingCount === 0;
+    const totalCost = complete ? knownCost : null;
+    const output = Number(plan.actualOutput);
+    const unitCost = complete && output > 0 ? totalCost / output : null;
+    const margin = Number.isFinite(Number(calc.marginPercent)) ? Math.max(0, Math.min(95, Number(calc.marginPercent))) : 20;
+    const sellPerUnit = unitCost === null ? null : Math.ceil(unitCost / Math.max(0.05, 1 - margin / 100));
+    const profitUnit = sellPerUnit === null ? null : sellPerUnit - unitCost;
+    const revenue = sellPerUnit === null ? null : sellPerUnit * output;
+    const profit = revenue === null ? null : revenue - totalCost;
+    return { materialCost, recipeFee, knownCost, pricedCount, missingCount, complete, totalCost, unitCost, sellPerUnit, profitUnit, revenue, profit };
+  }
+
+  app.operationsCore = { state, loadCatalog, product, recipe, recipesFor, factorFor, authorizedFor, telemetryReady, telemetryQuantity, buildPlan, priceQuote, displayName };
 })();

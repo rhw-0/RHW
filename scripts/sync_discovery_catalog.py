@@ -45,7 +45,7 @@ def utc_now() -> str:
 def _download(url: str, timeout: float = 35.0) -> bytes:
     request = Request(url, headers={
         'Accept': 'text/plain,application/octet-stream;q=0.9,*/*;q=0.2',
-        'User-Agent': 'RHW-Discovery-Catalog-Sync/1.0 (+https://github.com/rhw-0/RHW)',
+        'User-Agent': 'RHW-Discovery-Catalog-Sync/1.0 (+https://github.com/PhyteHQ/RHW)',
     })
     with urlopen(request, timeout=timeout) as response:
         content_type = response.headers.get('Content-Type', '')
@@ -222,7 +222,7 @@ def make_status(catalog: dict, diff: dict, downloaded_from: dict[str, str], chec
         },
         'changes': _summary_counts(diff),
         'workflow': {
-            'repository': 'rhw-0/RHW',
+            'repository': 'PhyteHQ/RHW',
             'file': 'discovery-catalog-sync.yml',
             'reviewRequired': True,
             'autoMerge': False,

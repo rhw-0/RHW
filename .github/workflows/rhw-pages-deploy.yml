@@ -49,6 +49,9 @@ jobs:
       - name: Validate Newswire Review model
         run: node scripts/test_newswire_review.js
 
+      - name: Validate audit regressions
+        run: node scripts/test_audit_regressions.js
+
       - name: Validate Full App Audit model
         run: node scripts/test_full_audit.js
 

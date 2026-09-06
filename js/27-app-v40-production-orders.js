@@ -52,11 +52,11 @@
 
   function uniqueOrders(raw) {
     const map = new Map();
-    raw.slice(0, MAX_ORDERS * 2).map(normalize).filter(Boolean).forEach(order => {
+    raw.map(normalize).filter(Boolean).forEach(order => {
       const current = map.get(order.id);
       if (!current || order.updatedAt >= current.updatedAt) map.set(order.id, order);
     });
-    return [...map.values()].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, MAX_ORDERS).sort((a, b) => a.createdAt - b.createdAt);
+    return [...map.values()].sort((a, b) => a.createdAt - b.createdAt);
   }
 
   function sortedOrders() {
@@ -112,7 +112,8 @@
         materialMap.set(id, current);
       }
     }
-    const telemetryReady = core.telemetryReady();
+    const telemetry = window.telemetrySnapshot();
+    const telemetryReady = telemetry.available;
     const materials = [...materialMap.values()].map(row => {
       const stock = telemetryReady ? core.telemetryQuantity(row.item) : null;
       const deficit = stock === null ? null : Math.max(0, row.required - stock);
@@ -124,6 +125,7 @@
     const report = {
       generatedAt: new Date().toISOString(),
       telemetryReady,
+      telemetry,
       orders: plannedOrders,
       materials,
       validOrders: plannedOrders.filter(entry => entry.plan).length,
@@ -149,7 +151,7 @@
       '',
       `[color=${forum.textColor}][b]${report.orders.length} ORDER${report.orders.length === 1 ? '' : 'S'} // ${fmt(report.totalOutput)} PLANNED OUTPUT[/b][/color]`,
       report.telemetryReady
-        ? `[color=${report.bottlenecks ? '#c98b2c' : '#78ad8a'}]VERIFIED STOCK // ${report.bottlenecks} MATERIAL BOTTLENECK${report.bottlenecks === 1 ? '' : 'S'}[/color]`
+        ? `[color=${report.telemetry?.stale || report.bottlenecks ? '#c98b2c' : '#78ad8a'}]${bbSafe(report.telemetry?.detail || 'STOCK FRESHNESS UNKNOWN')} // ${report.bottlenecks} MATERIAL BOTTLENECK${report.bottlenecks === 1 ? '' : 'S'}[/color]`
         : `[color=${forum.mutedColor}]STOCK STATUS // AWAITING VERIFIED TELEMETRY[/color]`,
       '',
       '[table]',
@@ -186,11 +188,11 @@
 
   function materialRows(report) {
     if (!report.materials.length) return '<div class="production-material-empty">ADD AN ORDER TO CALCULATE THE SHARED MATERIAL MANIFEST</div>';
-    return `<div class="production-material-list">${report.materials.map(row => `<div class="production-material-row${row.deficit > 0 ? ' has-deficit' : ''}" data-production-material="${esc(row.id)}"><div><strong>${esc(row.name)}</strong><small>${esc(row.id)}</small></div><div><small>REQUIRED</small><strong>${fmt(row.required)}</strong></div><div><small>VERIFIED STOCK</small><strong>${row.stock === null ? 'AWAITING' : fmt(row.stock)}</strong></div><div><small>${row.deficit === null ? 'STATUS' : 'GAP'}</small><strong>${row.deficit === null ? 'NO VERIFIED DATA' : row.deficit > 0 ? fmt(row.deficit) : 'COVERED'}</strong></div></div>`).join('')}</div>`;
+    return `<div class="production-material-list">${report.materials.map(row => `<div class="production-material-row${row.deficit > 0 ? ' has-deficit' : ''}" data-production-material="${esc(row.id)}"><div><strong>${esc(row.name)}</strong><small>${esc(row.id)}</small></div><div><small>REQUIRED</small><strong>${fmt(row.required)}</strong></div><div><small>${esc(report.telemetry.label)}</small><strong>${row.stock === null ? 'AWAITING' : fmt(row.stock)}</strong></div><div><small>${row.deficit === null ? 'STATUS' : 'GAP'}</small><strong>${row.deficit === null ? 'NO VERIFIED DATA' : row.deficit > 0 ? fmt(row.deficit) : 'COVERED'}</strong></div></div>`).join('')}</div>`;
   }
 
   function forumPreview(report) {
-    return `<div class="production-forum-document"><div class="production-forum-title"><span>RHW</span><div><strong>PRODUCTION ORDER BOARD</strong><small>${esc(app.config.forum.organisation)} // ${esc(app.config.forum.subline)}</small></div></div><div class="production-forum-summary"><strong>${report.orders.length} ORDER${report.orders.length === 1 ? '' : 'S'} // ${fmt(report.totalOutput)} PLANNED OUTPUT</strong><span>${report.telemetryReady ? `${report.bottlenecks} MATERIAL BOTTLENECK${report.bottlenecks === 1 ? '' : 'S'}` : 'AWAITING VERIFIED STOCK TELEMETRY'}</span></div><div class="production-forum-orders">${report.orders.map(entry => `<div><b>${PRIORITY_LABELS[entry.order.priority]}</b><span data-forum-order-name>${esc(entry.productName)}</span><strong>× ${fmt(entry.order.quantity)}</strong></div>`).join('') || '<div><span>NO PRODUCTION ORDERS</span></div>'}</div><div class="production-forum-materials"><strong>AGGREGATED DIRECT MATERIALS</strong>${report.materials.map(row => `<div><span>${esc(row.name)}</span><b>${fmt(row.required)}</b><small>${row.stock === null ? 'AWAITING STOCK' : row.deficit > 0 ? `GAP ${fmt(row.deficit)}` : 'COVERED'}</small></div>`).join('') || '<p>NO MATERIAL REQUIREMENTS</p>'}</div></div>`;
+    return `<div class="production-forum-document"><div class="production-forum-title"><span>RHW</span><div><strong>PRODUCTION ORDER BOARD</strong><small>${esc(app.config.forum.organisation)} // ${esc(app.config.forum.subline)}</small></div></div><div class="production-forum-summary"><strong>${report.orders.length} ORDER${report.orders.length === 1 ? '' : 'S'} // ${fmt(report.totalOutput)} PLANNED OUTPUT</strong><span>${esc(report.telemetry.detail)} // ${report.telemetryReady ? `${report.bottlenecks} MATERIAL BOTTLENECK${report.bottlenecks === 1 ? '' : 'S'}` : 'AWAITING VERIFIED STOCK TELEMETRY'}</span></div><div class="production-forum-orders">${report.orders.map(entry => `<div><b>${PRIORITY_LABELS[entry.order.priority]}</b><span data-forum-order-name>${esc(entry.productName)}</span><strong>× ${fmt(entry.order.quantity)}</strong></div>`).join('') || '<div><span>NO PRODUCTION ORDERS</span></div>'}</div><div class="production-forum-materials"><strong>AGGREGATED DIRECT MATERIALS</strong>${report.materials.map(row => `<div><span>${esc(row.name)}</span><b>${fmt(row.required)}</b><small>${row.stock === null ? 'AWAITING STOCK' : row.deficit > 0 ? `GAP ${fmt(row.deficit)}` : 'COVERED'}</small></div>`).join('') || '<p>NO MATERIAL REQUIREMENTS</p>'}</div></div>`;
   }
 
   function render() {
@@ -202,7 +204,7 @@
     mount.className = 'production-orders-dashboard';
     mount.innerHTML = `<div class="production-orders-metrics"><div><small>QUEUED ORDERS</small><strong>${report.orders.length}</strong></div><div><small>PLANNED OUTPUT</small><strong>${fmt(report.totalOutput)}</strong></div><div><small>DIRECT MATERIALS</small><strong>${report.materials.length}</strong></div><div class="${report.bottlenecks ? 'warn' : report.telemetryReady ? 'good' : ''}"><small>MATERIAL BOTTLENECKS</small><strong>${report.bottlenecks === null ? 'AWAITING' : report.bottlenecks}</strong></div></div>
       <div class="production-orders-grid"><section class="production-orders-panel production-orders-queue"><header><div><span>01</span><div><strong>PRIORITY QUEUE</strong><small>Saved locally in this browser</small></div></div>${report.orders.length ? '<button type="button" id="productionOrdersClear">CLEAR ALL</button>' : ''}</header><div class="production-orders-list">${orderCards(report)}</div></section>
-      <section class="production-orders-panel production-material-panel"><header><div><span>02</span><div><strong>SHARED MATERIAL MANIFEST</strong><small>All direct recipe inputs, counted once</small></div></div><b class="${report.telemetryReady ? 'good' : 'warn'}">${report.telemetryReady ? 'VERIFIED STOCK' : 'AWAITING TELEMETRY'}</b></header>${materialRows(report)}<p class="production-material-note">Material quantities use the same recipe, IFF and batch rounding as the Item Calculator. Stock is only shown when verified telemetry is available.</p></section></div>
+      <section class="production-orders-panel production-material-panel"><header><div><span>02</span><div><strong>SHARED MATERIAL MANIFEST</strong><small>All direct recipe inputs, counted once</small></div></div><b class="${report.telemetry.tone}">${esc(report.telemetry.label)}</b></header>${materialRows(report)}<p class="production-material-note">Material quantities use the same recipe, IFF and batch rounding as the Item Calculator. ${esc(report.telemetry.detail)}.</p></section></div>
       <section class="production-orders-panel production-orders-forum"><header><div><span>03</span><div><strong>FORUM REPORT</strong><small>Preview and BBCode use the same order snapshot</small></div></div><button type="button" id="productionOrdersCopy">COPY FORUM BBCode</button></header><div class="production-orders-forum-grid">${forumPreview(report)}<label class="production-orders-bbcode"><span>FORUM BBCode</span><textarea id="productionOrdersBbcode" readonly spellcheck="false">${esc(bbcode)}</textarea></label></div></section>`;
     bind();
     return true;
@@ -260,11 +262,19 @@
   }
 
   function importOrders(raw) {
-    ensureInitialized();
-    state.orders = uniqueOrders([...state.orders, ...(Array.isArray(raw) ? raw : [])]);
-    save();
+    const next = prepareImport(raw);
+    // Persist first so storage failure leaves the current queue intact.
+    if (app.store.set(KEY, next) === false) throw new Error('ORDER IMPORT NOT SAVED // LOCAL QUEUE UNCHANGED');
+    state.orders = next;
     render();
     return snapshot();
+  }
+
+  function prepareImport(raw) {
+    ensureInitialized();
+    const next = uniqueOrders([...state.orders, ...(Array.isArray(raw) ? raw : [])]);
+    if (next.length > MAX_ORDERS) throw new Error(`IMPORT WOULD CREATE ${next.length} ORDERS // LIMIT ${MAX_ORDERS} // REMOVE ORDERS OR SELECT A SMALLER BACKUP. NOTHING IMPORTED.`);
+    return next;
   }
 
   function snapshot() {
@@ -310,5 +320,5 @@
     return failures;
   }
 
-  app.productionOrders = { state, activate, render, add, updateOrder, remove, clear, restore, importOrders, snapshot, buildReport, buildBbcode, selfTest, priorities: PRIORITIES };
+  app.productionOrders = { state, activate, render, add, updateOrder, remove, clear, restore, importOrders, prepareImport, snapshot, buildReport, buildBbcode, selfTest, priorities: PRIORITIES };
 })();
