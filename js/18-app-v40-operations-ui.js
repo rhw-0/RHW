@@ -211,6 +211,11 @@
     return `<details class="ops-details"><summary>RECIPE NOTES</summary><div><strong>RETAINED / NOT CONSUMED</strong><span>${esc(catalysts)}</span><strong>BYPRODUCTS / NOT CREDITED AGAINST COST</strong><span>${esc(byproducts)}</span></div></details>`;
   }
 
+  function pricingMessage(pricing) {
+    if (!pricing.complete) return `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD MATERIAL PRICES TO COMPLETE THE QUOTE`;
+    return `ALL MATERIALS PRICED // ${pricing.recipeFee ? 'FIXED RECIPE FEE INCLUDED // ' : ''}SALE QUOTE READY`;
+  }
+
   function quoteMarkup(pricing, calc, rows, actualOutput) {
     const total = pricing.complete ? money(pricing.totalCost) : `${money(pricing.knownCost)} PARTIAL`;
     return `<div class="ops-pricing-summary">
@@ -227,7 +232,7 @@
         <div><small>TOTAL PROFIT</small><strong id="opsProfit">${money(pricing.profit)}</strong></div>
         <div class="ops-revenue-line"><small>TOTAL REVENUE // ${fmt(actualOutput)} PRODUCED</small><strong id="opsRevenue">${money(pricing.revenue)}</strong></div>
       </div>
-      <div id="opsPricingWarning" class="ops-cost-note ${pricing.complete ? 'good' : 'warn'}">${pricing.complete ? 'ALL MATERIALS PRICED // RECIPE FEES INCLUDED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD MATERIAL PRICES TO COMPLETE THE QUOTE`}</div>
+      <div id="opsPricingWarning" class="ops-cost-note ${pricing.complete ? 'good' : 'warn'}">${pricingMessage(pricing)}</div>
     </div>`;
   }
 
@@ -331,7 +336,7 @@
     const warning = document.getElementById('opsPricingWarning');
     if (warning) {
       warning.className = `ops-cost-note ${pricing.complete ? 'good' : 'warn'}`;
-      warning.textContent = pricing.complete ? 'ALL MATERIALS PRICED // RECIPE FEES INCLUDED // SALE QUOTE READY' : `${pricing.missingCount} MATERIAL PRICE${pricing.missingCount === 1 ? '' : 'S'} STILL MISSING // ADD MATERIAL PRICES TO COMPLETE THE QUOTE`;
+      warning.textContent = pricingMessage(pricing);
     }
   }
 
