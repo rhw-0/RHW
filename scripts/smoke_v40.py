@@ -5,6 +5,8 @@ Legacy interaction helpers remain in smoke_v40_base.py. The V4.0.2 production
 runner composes those helpers with the exact deployed asset order and current
 regression / quality-of-life coverage.
 """
+import time
+
 import smoke_v40_base as _base
 from smoke_v40_base import *  # noqa: F401,F403
 
@@ -32,7 +34,20 @@ _ensure_app_layer_assets()
 
 
 if __name__ == '__main__':
-    from smoke_v402 import main
+    import smoke_v402 as _v402
+
     # smoke_v402 composes its own production-order list during import.
     _ensure_app_layer_assets()
-    raise SystemExit(main())
+
+    # DATA STATUS is now intentionally secondary. Keep the original Discovery
+    # coverage, but reach it through the same TOOLS action a real user uses.
+    _legacy_discovery_test = _v402.test_pr6_discovery_status
+
+    def _focused_discovery_test(cdp, workspace, node):
+        if (workspace, node) == ("operations", "calculator"):
+            _base.ev(cdp, "RHWV4.focusPass?.openTool?.('data'); true")
+            time.sleep(.18)
+        return _legacy_discovery_test(cdp, workspace, node)
+
+    _v402.test_pr6_discovery_status = _focused_discovery_test
+    raise SystemExit(_v402.main())
