@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
     def _focused_diagnostics_test(cdp, workspace, node):
         if (workspace, node) == ("command", "overview"):
-            _base.ev(cdp, """(()=>{let s=document.getElementById('rhwLegacyDiagnosticsSmokeStyle');if(!s){s=document.createElement('style');s.id='rhwLegacyDiagnosticsSmokeStyle';s.textContent='#rhwDiagnosticsBtn{display:block!important;position:fixed!important;left:-9999px!important;top:0!important;min-height:44px!important}';document.head.appendChild(s);}return true;})()""")
+            _base.ev(cdp, """(()=>{let s=document.getElementById('rhwLegacyDiagnosticsSmokeStyle');if(!s){s=document.createElement('style');s.id='rhwLegacyDiagnosticsSmokeStyle';s.textContent='html.rhw-focus-pass #rhwDiagnosticsBtn{display:block!important;position:fixed!important;left:-9999px!important;top:0!important;min-height:44px!important}';document.head.appendChild(s);}return true;})()""")
         return _legacy_diagnostics_test(cdp, workspace, node)
 
     _v402.test_pr7_diagnostics = _focused_diagnostics_test
