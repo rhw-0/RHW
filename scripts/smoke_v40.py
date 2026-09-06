@@ -50,4 +50,17 @@ if __name__ == '__main__':
         return _legacy_discovery_test(cdp, workspace, node)
 
     _v402.test_pr6_discovery_status = _focused_discovery_test
+
+    # SYS CHECK moved out of the daily header and into TOOLS. The legacy PR7
+    # test still validates the original button contract, so expose that anchor
+    # off-canvas only for this legacy check. The new Focus Pass smoke verifies
+    # the actual user path through TOOLS -> SYSTEM CHECK.
+    _legacy_diagnostics_test = _v402.test_pr7_diagnostics
+
+    def _focused_diagnostics_test(cdp, workspace, node):
+        if (workspace, node) == ("command", "overview"):
+            _base.ev(cdp, """(()=>{let s=document.getElementById('rhwLegacyDiagnosticsSmokeStyle');if(!s){s=document.createElement('style');s.id='rhwLegacyDiagnosticsSmokeStyle';s.textContent='#rhwDiagnosticsBtn{display:block!important;position:fixed!important;left:-9999px!important;top:0!important;min-height:44px!important}';document.head.appendChild(s);}return true;})()""")
+        return _legacy_diagnostics_test(cdp, workspace, node)
+
+    _v402.test_pr7_diagnostics = _focused_diagnostics_test
     raise SystemExit(_v402.main())
