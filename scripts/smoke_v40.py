@@ -71,7 +71,7 @@ if __name__ == '__main__':
     _legacy_mobile_forum_test = _v402.test_mobile_forum_controls
 
     def _focused_mobile_forum_test(cdp):
-        _base.ev(cdp, """(()=>{let s=document.getElementById('rhwLegacyForumContextSmokeStyle');if(!s){s=document.createElement('style');s.id='rhwLegacyForumContextSmokeStyle';s.textContent='html.rhw-focus-pass #appContextNavSlot{min-height:44px!important}';document.head.appendChild(s);}return true;})()""")
+        _base.ev(cdp, """(()=>{let s=document.getElementById('rhwLegacyForumContextSmokeStyle');if(!s){s=document.createElement('style');s.id='rhwLegacyForumContextSmokeStyle';s.textContent='html.rhw-focus-pass body[data-workspace="comms"] #appContextNavSlot{display:block!important;min-height:44px!important;height:44px!important}';document.head.appendChild(s);}return true;})()""")
         try:
             return _legacy_mobile_forum_test(cdp)
         finally:
