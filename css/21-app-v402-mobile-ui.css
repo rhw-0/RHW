@@ -92,7 +92,7 @@
 
   /* Every primary app control is a real touch target. 16px inputs also prevent
      browser auto-zoom while composing on phones. */
-  .app-workspace :is(button, input:not([type="checkbox"]), select, summary),
+  .app-workspace :is(button, input, select, summary),
   .rhw-app-nav button {
     min-height: 44px;
     touch-action: manipulation;
