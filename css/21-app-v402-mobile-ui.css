@@ -94,7 +94,7 @@
      browser auto-zoom while composing on phones. */
   .app-workspace :is(button, input:not([type="checkbox"]), select, summary),
   .rhw-app-nav button {
-    min-height: 44px !important;
+    min-height: 44px;
     touch-action: manipulation;
   }
   .app-workspace :is(input, select, textarea) { font-size: 16px; }
@@ -206,6 +206,6 @@
 }
 
 @media(max-width:760px) {
-  .app-workspace button, .rhw-app-nav button, .rhw-diagnostics-overlay button, .rhw-pwa-panel button { min-width:44px; min-height:44px!important; }
+  .app-workspace button, .rhw-app-nav button, .rhw-diagnostics-overlay button, .rhw-pwa-panel button { min-width:44px; }
   .app-workspace :is(button, input, select):focus-visible, .rhw-focus-tools-overlay button:focus-visible { outline:2px solid #f0d06b; outline-offset:3px; }
 }
