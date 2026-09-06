@@ -16,7 +16,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
      Load every V4 stylesheet immediately to avoid an unstyled app-shell flash,
      but wait until the stable dashboard has initialized before booting V4 JS. */
   (function bootstrapRhwV4Preview() {
-    const RHW_V4_ASSET_REV = '4.0.2-command-compact-1';
+    const RHW_V4_ASSET_REV = '4.0.2-focus-pass-1';
     const versioned = src => `${src}?v=${encodeURIComponent(RHW_V4_ASSET_REV)}`;
 
     [
@@ -91,6 +91,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
         ['./js/33-app-ui-polish-fix.js', 'rhwUiPolishFix'],
         ['./js/34-app-stability-polish.js', 'rhwStabilityPolish'],
         ['./js/35-app-command-compact-polish.js', 'rhwCommandCompactPolish'],
+        ['./js/36-app-focus-pass.js', 'rhwFocusPass'],
         ['./js/19-app-v40-runtime.js', 'rhwV4Runtime']
       ];
 
