@@ -35,9 +35,10 @@ MOBILE_WIDTHS = (360, 390, 412, 430)
 
 def test_boot_failure(cdp, frame_id):
     bootstrap = base.safe((base.ROOT / "js/00-bootstrap.js").read_text(encoding="utf-8"))
+    build_info = base.safe((base.ROOT / "js/build-info.js").read_text(encoding="utf-8"))
     markup = f"""<!doctype html><html><head><meta charset="utf-8"></head><body>
     <script>window.__RHW_BOOTSTRAP_TEST__={{failAsset:'./js/12-app-config.js'}};</script>
-    <script>{bootstrap}</script></body></html>"""
+    <script>{build_info}</script><script>{bootstrap}</script></body></html>"""
     cdp.call("Page.navigate", {"url": "about:blank"})
     cdp.call("Page.setDocumentContent", {"frameId": frame_id, "html": markup})
     end = time.time() + 3

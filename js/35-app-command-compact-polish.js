@@ -65,9 +65,9 @@
 
       @media(max-width:980px){
         body[data-workspace="command"] #commandNodeNav.command-module-nav button[data-command-node]{
-          height:60px!important;min-height:60px!important;max-height:60px!important;
-          grid-template-columns:22px minmax(0,1fr) minmax(0,100px)!important;grid-template-areas:"index copy state"!important;
-          align-items:center!important;gap:6px!important;padding:6px 7px!important;overflow:hidden!important
+          height:64px!important;min-height:64px!important;max-height:64px!important;
+          grid-template-columns:22px minmax(0,1fr)!important;grid-template-areas:"index copy" "state state"!important;grid-template-rows:22px minmax(0,1fr)!important;
+          align-items:center!important;gap:3px 6px!important;padding:5px 7px!important;overflow:hidden!important
         }
         body[data-workspace="command"] #commandNodeNav .command-module-index{width:22px!important;height:22px!important;font-size:7px!important}
         body[data-workspace="command"] #commandNodeNav .command-module-copy{gap:0!important}
@@ -75,7 +75,7 @@
         body[data-workspace="command"] #commandNodeNav .command-module-copy small{display:none!important}
         body[data-workspace="command"] #commandNodeNav .command-module-state{
           justify-self:stretch!important;max-width:none!important;min-width:0!important;padding:3px 4px!important;
-          gap:3px!important;font-size:10px!important;color:#d0cabc!important;white-space:normal!important;line-height:1.3!important;text-align:center!important;overflow:hidden!important
+          gap:3px!important;font-size:10px!important;letter-spacing:.02em!important;color:#d0cabc!important;white-space:normal!important;line-height:1.3!important;text-align:center!important;overflow:hidden!important
         }
         body[data-workspace="command"] #commandNodeNav .command-module-state::after{
           min-width:16px!important;height:16px!important;padding:0 3px!important;font-size:10px!important
@@ -85,7 +85,7 @@
         body[data-workspace="command"] .app-context-nav-slot.rhw-command-compact-shell,
         body[data-workspace="command"] #appContextNavSlot.rhw-command-compact-shell{background:#05070a!important}
         body[data-workspace="command"] #commandNodeNav.command-module-nav button[data-command-node]{
-          height:58px!important;min-height:58px!important;max-height:58px!important
+          height:64px!important;min-height:64px!important;max-height:64px!important
         }
         .command-control-deck{grid-template-columns:minmax(0,1fr) auto!important;gap:5px!important;margin:0 9px 7px!important;padding:5px!important}
         .command-control-deck .command-finder-label{min-height:44px!important;padding:0 7px!important}
@@ -100,8 +100,8 @@
       }
       @media(max-width:390px){
         body[data-workspace="command"] #commandNodeNav.command-module-nav button[data-command-node]{
-          height:56px!important;min-height:56px!important;max-height:56px!important;
-          grid-template-columns:20px minmax(0,1fr) minmax(0,92px)!important;padding:5px 6px!important
+          height:64px!important;min-height:64px!important;max-height:64px!important;
+          grid-template-columns:20px minmax(0,1fr)!important;padding:5px 6px!important
         }
         body[data-workspace="command"] #commandNodeNav .command-module-index{width:20px!important;height:20px!important}
         body[data-workspace="command"] #commandNodeNav .command-module-copy strong{font-size:14px!important}

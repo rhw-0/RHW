@@ -452,7 +452,7 @@ def main() -> int:
         errors.append(f'index.html title does not advertise the current app version {version}.')
 
     build_info = (ROOT / 'js/build-info.js').read_text(encoding='utf-8')
-    if not re.search(r"revision:\s*'[^']+'", build_info) or 'window.RHW_BUILD.revision' not in bootstrap or 'self.RHW_BUILD.revision' not in (ROOT / 'sw.js').read_text():
+    if not re.search(r"revision:\s*'[^']+'", build_info) or 'window.RHW_BUILD?.revision' not in bootstrap or 'self.RHW_BUILD.revision' not in (ROOT / 'sw.js').read_text():
         errors.append('Page assets and service-worker cache must use the shared build revision.')
 
     readme = (ROOT / 'README.md').read_text(encoding='utf-8')

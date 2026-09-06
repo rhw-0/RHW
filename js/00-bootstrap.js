@@ -16,7 +16,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
      Load every V4 stylesheet immediately to avoid an unstyled app-shell flash,
      but wait until the stable dashboard has initialized before booting V4 JS. */
   (function bootstrapRhwV4Preview() {
-    const RHW_V4_ASSET_REV = window.RHW_BUILD.revision;
+    const RHW_V4_ASSET_REV = window.RHW_BUILD?.revision || 'unavailable';
     const versioned = src => `${src}?v=${encodeURIComponent(RHW_V4_ASSET_REV)}`;
 
     [
@@ -109,7 +109,7 @@ if (!window.__RHW_SMOKE_INLINE__) {
           const retry = document.createElement('button');
           retry.type = 'button';
           retry.textContent = 'RETRY';
-          retry.style.cssText = 'min-height:38px;padding:8px 14px;border:1px solid #c75e5e;background:#2a1117;color:#fff;font:700 11px monospace;cursor:pointer';
+          retry.style.cssText = 'min-height:44px;padding:8px 14px;border:1px solid #c75e5e;background:#2a1117;color:#fff;font:700 11px monospace;cursor:pointer';
           retry.addEventListener('click', () => window.location.reload());
           panel.append(copy, retry);
           document.body.appendChild(panel);
@@ -117,6 +117,11 @@ if (!window.__RHW_SMOKE_INLINE__) {
         const copy = panel.querySelector('[data-boot-failure-copy]');
         if (copy) copy.textContent = `RHW WEB APP COULD NOT START // ${src} // ${reason}`;
       };
+
+      if (!window.RHW_BUILD?.revision) {
+        showBootFailure('./js/build-info.js', 'BUILD METADATA UNAVAILABLE');
+        return;
+      }
 
       const loadNext = index => {
         if (index >= files.length) {
