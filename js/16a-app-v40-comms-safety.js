@@ -183,13 +183,17 @@
       ['log', 'COMM LOG', '[spoiler=COMMUNICATION LOG]…[/spoiler]'],
       ['blur', 'BLUR', '[sp2]…[/sp2]']
     ];
+    const more = document.createElement('details');
+    more.className = 'comms-format-more';
+    more.innerHTML = '<summary>MORE</summary><div class="comms-format-options"></div>';
+    toolbar.appendChild(more);
     extras.forEach(([kind, label, title]) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.dataset.rhwFormat = kind;
       button.textContent = label;
       button.title = title;
-      toolbar.appendChild(button);
+      more.querySelector('.comms-format-options').appendChild(button);
     });
     toolbar.addEventListener('click', event => {
       const button = event.target.closest('[data-rhw-format]');

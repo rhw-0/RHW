@@ -131,8 +131,8 @@
       app.commsSafety?.init();
       installDesktopReadabilityCoverage();
       await app.operations?.init();
-      await app.discoveryStatus?.init();
       if (!app.diagnostics?.init?.()) throw new Error('RHW SYSTEM CHECK COULD NOT MOUNT');
+      await app.discoveryStatus?.init();
       if (!app.fullAudit?.init?.()) throw new Error('RHW FULL APP AUDIT COULD NOT MOUNT');
       app.applyRoute({ replace: true });
       if (!app.navHierarchy?.init?.()) throw new Error('V4 NAVIGATION HIERARCHY COULD NOT MOUNT');

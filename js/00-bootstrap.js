@@ -42,7 +42,8 @@ if (!window.__RHW_SMOKE_INLINE__) {
       ['./css/31-app-pr8-production-orders.css', 'rhwPr8ProductionOrders'],
       ['./css/32-app-pr9-transfer-center.css', 'rhwPr9TransferCenter'],
       ['./css/33-app-pr10-newswire-review.css', 'rhwPr10NewswireReview'],
-      ['./css/34-app-pr11-full-audit.css', 'rhwPr11FullAudit']
+      ['./css/34-app-pr11-full-audit.css', 'rhwPr11FullAudit'],
+      ['./css/35-app-interface-cleanup.css', 'rhwInterfaceCleanup']
     ].forEach(([href, dataKey]) => {
       if (document.querySelector(`link[data-${dataKey.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}="true"]`)) return;
       const link = document.createElement('link');

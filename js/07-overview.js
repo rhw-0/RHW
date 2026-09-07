@@ -200,7 +200,7 @@ function renderAll() {
   if (FEATURES.fixedLogistics || FEATURES.marketScan) renderSupplier();
   renderProductionModules();
   renderManifest();
-  if (rhwBase) updateBaseTelemetry();
+  updateBaseTelemetry();
   updateDataFreshnessIndicators();
 }
 
@@ -213,4 +213,3 @@ function findRemoteFacility(data, facility) {
     });
   }) || null;
 }
-

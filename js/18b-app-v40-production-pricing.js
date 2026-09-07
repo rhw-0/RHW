@@ -81,10 +81,6 @@
     });
     workspace.querySelectorAll('.ops-price-source').forEach(node => node.remove());
 
-    const memoryText = 'MATERIAL PRICES APPLY TO THE CURRENT CALCULATION ONLY // THEY ARE NOT SAVED OR PRE-FILLED.';
-    const memory = workspace.querySelector('.ops-price-memory');
-    if (memory && memory.textContent !== memoryText) memory.textContent = memoryText;
-
     const costHeadText = 'ENTER YOUR UNIT PRICES';
     const costHead = workspace.querySelector('.ops-cost-panel .ops-panel-head small');
     if (costHead && costHead.textContent !== costHeadText) costHead.textContent = costHeadText;

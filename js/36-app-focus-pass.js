@@ -15,7 +15,7 @@
     backup: Object.freeze({ label: 'BACKUP + DRAFTS', sub: 'DEVICE TRANSFER + LOCAL ARCHIVE', workspace: 'comms', node: 'drafts' }),
     newswire: Object.freeze({ label: 'NEWSWIRE', sub: 'EDITORIAL MANAGER', workspace: 'comms', node: 'ticker' }),
     senders: Object.freeze({ label: 'SENDERS', sub: 'PROFILE REGISTRY', workspace: 'comms', node: 'senders' }),
-    system: Object.freeze({ label: 'SYSTEM CHECK', sub: 'APP HEALTH + AUDIT', workspace: null, node: null })
+    system: Object.freeze({ label: 'SYSTEM + DATA', sub: 'APP HEALTH + CATALOG + SYNC', workspace: null, node: null })
   });
 
   const ROUTE_TOOL = Object.freeze({
@@ -130,12 +130,12 @@
 
   function toolsMarkup() {
     const cards = [
-      ['build-queue', '01'], ['data', '02'], ['backup', '03'], ['newswire', '04'], ['senders', '05'], ['system', '06']
+      ['build-queue', '01'], ['backup', '02'], ['newswire', '03'], ['senders', '04'], ['system', '05']
     ].map(([key, index]) => {
       const tool = TOOL_META[key];
       return `<button type="button" class="rhw-focus-tool-card" data-rhw-tool="${key}"><span class="rhw-focus-tool-index">${index}</span><span class="rhw-focus-tool-copy"><strong>${tool.label}</strong><small>${tool.sub}</small></span><span class="rhw-focus-tool-arrow" aria-hidden="true">›</span></button>`;
     }).join('');
-    return `<aside class="rhw-focus-tools-overlay" id="rhwFocusToolsPanel" role="dialog" aria-modal="true" aria-labelledby="rhwFocusToolsTitle" data-focus-trap="true" hidden><section class="rhw-focus-tools-sheet"><header class="rhw-focus-tools-head"><div><small>SECONDARY RHW UTILITIES</small><strong id="rhwFocusToolsTitle">TOOLS</strong><span>DAILY RHW STAYS FOCUSED ON COMMAND, CALCULATOR AND FORUM</span></div><button type="button" id="rhwFocusToolsClose">CLOSE</button></header><div class="rhw-focus-tools-grid">${cards}</div><p class="rhw-focus-tools-note">Nothing was removed. These tools remain fully available, but they no longer compete with the daily operational workflow.</p></section></aside>`;
+    return `<aside class="rhw-focus-tools-overlay" id="rhwFocusToolsPanel" role="dialog" aria-modal="true" aria-labelledby="rhwFocusToolsTitle" data-focus-trap="true" hidden><section class="rhw-focus-tools-sheet"><header class="rhw-focus-tools-head"><div><strong id="rhwFocusToolsTitle">TOOLS</strong></div><button type="button" id="rhwFocusToolsClose">CLOSE</button></header><div class="rhw-focus-tools-grid">${cards}</div></section></aside>`;
   }
 
   function toolsFocusable(panel = document.getElementById('rhwFocusToolsPanel')) {
@@ -184,7 +184,7 @@
       button.setAttribute('aria-haspopup', 'dialog');
       button.setAttribute('aria-controls', 'rhwFocusToolsPanel');
       button.setAttribute('aria-expanded', 'false');
-      button.innerHTML = '<span>TOOLS</span><small>SECONDARY</small>';
+      button.innerHTML = '<span>TOOLS</span>';
       const install = document.getElementById('rhwPwaInstallBtn');
       if (install) brand.insertBefore(button, install);
       else brand.appendChild(button);
@@ -229,12 +229,10 @@
   }
 
   function routeTool() {
-    if (requestedTool === 'data' && app.state.activeWorkspace === 'operations' && app.state.operationsNode === 'calculator') return 'data';
     return ROUTE_TOOL[`${app.state.activeWorkspace}/${app.state.activeWorkspace === 'operations' ? app.state.operationsNode : app.state.activeWorkspace === 'comms' ? app.state.commsNode : ''}`] || '';
   }
 
   function revealDataStatus() {
-    if (routeTool() !== 'data') return;
     const details = document.getElementById('rhwDataStatusUtility');
     if (!details) return;
     details.hidden = false;
@@ -284,9 +282,10 @@
     const tool = TOOL_META[key];
     if (!tool) return;
     closeTools();
-    if (key === 'system') {
+    if (key === 'system' || key === 'data') {
       app.diagnostics?.open?.();
       if (!app.diagnostics?.open) document.getElementById('rhwDiagnosticsBtn')?.click();
+      if (key === 'data') revealDataStatus();
       return;
     }
     requestedTool = key === 'data' ? 'data' : '';
@@ -322,7 +321,7 @@
     };
     if (tabs.command !== 'COMMAND' || tabs.calculator !== 'CALCULATOR' || tabs.forum !== 'FORUM') failures.push('primary-tabs');
     if (!document.getElementById('rhwFocusToolsBtn') || !document.getElementById('rhwFocusToolsPanel')) failures.push('tools-surface');
-    if (document.querySelectorAll('#rhwFocusToolsPanel [data-rhw-tool]').length !== 6) failures.push('tool-count');
+    if (document.querySelectorAll('#rhwFocusToolsPanel [data-rhw-tool]').length !== 5) failures.push('tool-count');
     if (document.getElementById('rhwFocusToolsPanel')?.dataset.focusTrap !== 'true') failures.push('tools-focus-trap');
     if (!document.documentElement.classList.contains('rhw-focus-pass')) failures.push('focus-class');
     return failures;

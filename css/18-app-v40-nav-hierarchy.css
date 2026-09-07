@@ -128,7 +128,7 @@ body[data-workspace="comms"] {
     linear-gradient(90deg, rgba(var(--app-nav-accent-rgb), .06), rgba(7,9,12,.94) 28%, rgba(7,9,12,.94));
 }
 .app-context-nav-slot::before {
-  content: 'ACTIVE WORKSPACE';
+  content: none;
   position: absolute;
   top: 4px;
   right: 9px;

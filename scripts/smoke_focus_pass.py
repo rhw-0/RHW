@@ -105,7 +105,7 @@ def main() -> int:
                 buttonExpanded:document.getElementById('rhwFocusToolsBtn')?.getAttribute('aria-expanded')||'',
                 focusTrap:wrapsForward&&wrapsBack}};
             }})()""")
-            if not tools.get("open") or tools.get("count") != 6 or tools.get("buttonExpanded") != "true" or not tools.get("focusTrap"):
+            if not tools.get("open") or tools.get("count") != 5 or tools.get("buttonExpanded") != "true" or not tools.get("focusTrap"):
                 raise RuntimeError(f"TOOLS surface/focus trap failed: {tools}")
 
             base.ev(cdp, "(()=>{RHWV4.focusPass.openTool('build-queue');return true;})()")
@@ -130,10 +130,11 @@ def main() -> int:
             data = base.ev(cdp, f"""(()=>{{{VISIBLE_HELPER}return{{
               workspace:document.body.dataset.workspace,node:document.body.dataset.operationsNode,
               tool:document.body.dataset.rhwFocusTool||'',utility:visible(document.getElementById('rhwDataStatusUtility')),
-              open:document.getElementById('rhwDataStatusUtility')?.open===true
+              open:document.getElementById('rhwDataStatusUtility')?.open===true,system:visible(document.getElementById('rhwDiagnosticsPanel'))
             }};}})()""")
-            if data != {"workspace": "operations", "node": "calculator", "tool": "data", "utility": True, "open": True}:
+            if data != {"workspace": "operations", "node": "calculator", "tool": "", "utility": True, "open": True, "system": True}:
                 raise RuntimeError(f"Data Status tool failed: {data}")
+            base.ev(cdp, "(()=>{RHWV4.diagnostics.close();return true;})()")
 
             base.ev(cdp, "(()=>{document.querySelector('.app-tabs [data-workspace=\"comms\"]')?.click();return true;})()")
             settle()
@@ -165,6 +166,77 @@ def main() -> int:
             if not system.get("panel"):
                 raise RuntimeError(f"System Check tool routing failed: {system}")
             base.ev(cdp, "(()=>{RHWV4.diagnostics?.close?.();return true;})()")
+
+            # Native disclosures must actually hide controls, then reveal usable inputs.
+            base.ev(cdp, "(()=>{RHWV4.navigate('operations','calculator');return true;})()")
+            settle(.2)
+            costing = base.ev(cdp, f"""(()=>{{{VISIBLE_HELPER}
+              const profile=document.getElementById('opsPriceProfiles');
+              const collapsed=!profile.open&&!visible(document.getElementById('opsPriceProfileName'));
+              profile.querySelector('summary').click();
+              const expanded=profile.open&&visible(document.getElementById('opsPriceProfileName'));
+              const fields=[...document.querySelectorAll('[data-material-price]')];
+              fields.forEach(field=>{{field.value='';field.dispatchEvent(new Event('input',{{bubbles:true}}));}});
+              const button=document.getElementById('opsCompletePrices');
+              button.click();
+              const first=document.activeElement===fields[0];
+              fields[0].value='0';fields[0].dispatchEvent(new Event('input',{{bubbles:true}}));
+              button.click();
+              const next=fields.length<2||document.activeElement===fields[1];
+              fields.forEach(field=>{{field.value='1';field.dispatchEvent(new Event('input',{{bubbles:true}}));}});
+              return{{collapsed,expanded,first,next,done:button.hidden,
+                memory:document.querySelector('.ops-price-memory').textContent,
+                duplicates:document.querySelectorAll('#opsPriceProfiles').length}};
+            }})()""")
+            if not all(costing.get(key) for key in ['collapsed','expanded','first','next','done']) or costing.get('duplicates') != 1 or 'Save a price profile' not in costing.get('memory',''):
+                raise RuntimeError(f"Calculator disclosure or missing-price action failed: {costing}")
+
+            base.ev(cdp, "(()=>{RHWV4.navigate('comms','forum');return true;})()")
+            settle(.2)
+            composer = base.ev(cdp, f"""(()=>{{{VISIBLE_HELPER}
+              const advanced=document.querySelector('.comms-advanced');
+              const message=document.getElementById('commsMessage');
+              const location=document.getElementById('commsLocation');
+              const encryption=document.getElementById('commsEncryption');
+              const initial=visible(message)&&!visible(location)&&!visible(encryption);
+              const before=RHWV4.comms.buildBbcode();
+              advanced.querySelector('summary').click();
+              const expanded=advanced.open&&visible(location)&&visible(encryption);
+              const preserved=before===RHWV4.comms.buildBbcode();
+              const more=document.querySelector('.comms-format-more');
+              const blur=more.querySelector('[data-rhw-format="blur"]');
+              const folded=!visible(blur);more.querySelector('summary').click();
+              message.value='Format check';message.dispatchEvent(new Event('input',{{bubbles:true}}));
+              message.setSelectionRange(0,message.value.length);blur.click();
+              return{{initial,expanded,preserved,folded,formatted:message.value==='[sp2]Format check[/sp2]',
+                metadataAfterMessage:!!(message.compareDocumentPosition(location)&Node.DOCUMENT_POSITION_FOLLOWING)}};
+            }})()""")
+            if not all(composer.values()):
+                raise RuntimeError(f"Forum disclosure, metadata or formatting failed: {composer}")
+            for destination in ['drafts', 'senders']:
+                base.ev(cdp, f"(()=>{{document.querySelector('[data-forum-tool=\"{destination}\"]').click();return true;}})()")
+                settle(.15)
+                route = base.ev(cdp, "document.body.dataset.commsNode")
+                if route != destination:
+                    raise RuntimeError(f"Forum context link failed: {destination} -> {route}")
+                base.ev(cdp, "(()=>{document.querySelector('.app-tabs [data-workspace=\"comms\"]').click();return true;})()")
+                settle(.15)
+
+            for width in [360, 390, 412, 430, 1366]:
+                cdp.call("Emulation.setDeviceMetricsOverride", {"width":width,"height":900,"deviceScaleFactor":1,"mobile":width<760})
+                geometry=base.ev(cdp, f"""(()=>{{{VISIBLE_HELPER}
+                  const details=document.getElementById('uplinkDetails');details.open=false;
+                  const collapsed=!visible(document.getElementById('headerClock'));
+                  const headerHeight=document.querySelector('.command-header').getBoundingClientRect().height;
+                  details.querySelector('summary').click();
+                  const expanded=visible(document.getElementById('headerClock'));
+                  const overflow=Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-innerWidth;
+                  const refresh=document.getElementById('headerRefreshBtn').getBoundingClientRect().height;
+                  details.querySelector('summary').click();
+                  return{{collapsed,expanded,headerHeight,overflow,refresh}};
+                }})()""")
+                if not geometry['collapsed'] or not geometry['expanded'] or geometry['overflow']>2 or geometry['refresh']<44 or geometry['headerHeight']>(300 if width<760 else 220):
+                    raise RuntimeError(f"Compact header at {width}px failed: {geometry}")
 
             overflow = base.ev(cdp, "Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-window.innerWidth")
             if overflow > 2:

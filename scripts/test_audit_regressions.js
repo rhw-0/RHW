@@ -104,7 +104,12 @@ async function models() {
   assert.equal(ctx.telemetrySnapshot().label, 'TELEMETRY UNAVAILABLE');
   ctx.els = { baseMoneyVal: node(), baseStorageVal: node(), baseHealthVal: node() };
   ctx.els.baseMoneyVal.closest = () => null;
-  run(ctx, 'js/03-telemetry.js'); ctx.updateBaseTelemetry();
+  run(ctx, 'js/03-telemetry.js');
+  run(ctx, 'js/07-overview.js');
+  ctx.FEATURES = {};
+  for (const name of ['renderOverview', 'renderProductionModules', 'renderManifest', 'updateDataFreshnessIndicators']) ctx[name] = () => {};
+  // Exercise the real render entry point after a failed first fetch.
+  ctx.renderAll();
   assert.ok(Object.values(ctx.els).every(n => n.textContent === 'UNAVAILABLE'));
   ctx.TICKER_DYNAMIC_SLOT_COUNT = 2;
   assert.equal(ctx.buildIndustrialNewswireMessages()[0].text, 'TELEMETRY UNAVAILABLE');
