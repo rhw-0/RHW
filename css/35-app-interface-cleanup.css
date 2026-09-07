@@ -1,4 +1,5 @@
 /* Daily workspace layout. Optional controls use native, keyboard-accessible details. */
+:is(.uplink-details,#opsPriceProfiles,.comms-format-more,.comms-advanced):not([open]) > :not(summary) { display: none !important; }
 html.rhw-focus-pass .command-header { padding: 16px var(--layout-gutter); }
 html.rhw-focus-pass .command-header-inner { display: grid; grid-template-columns: minmax(0,1fr) 290px; gap: 20px; align-items: center; }
 html.rhw-focus-pass .command-brand { display: grid; grid-template-columns: 78px minmax(0,1fr); gap: 14px; align-items: center; }
@@ -34,6 +35,7 @@ html.rhw-focus-pass .workspace-heading { padding: 12px 16px; box-shadow: none; }
 html.rhw-focus-pass .workspace-heading h2 { margin: 0; }
 html.rhw-focus-pass .workspace-heading p { margin: 4px 0 0; font-size: 11px; color: #bcbebf; }
 html.rhw-focus-pass .rhw-focus-tools-head { align-items: center; }
+html.rhw-focus-pass .rhw-focus-tool-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
 html.rhw-focus-pass .rhw-focus-tools-button { border-color: #454a50; color: #d4d7da; background: #101318; }
 
 #opsPriceProfiles > summary,
@@ -55,6 +57,8 @@ html.rhw-focus-pass .ops-price-memory { font-size: 11px !important; line-height:
 html.rhw-focus-pass .comms-advanced .comms-document-control { margin: 8px 0; }
 html.rhw-focus-pass .comms-advanced .comms-field-grid { padding: 0; }
 #rhwDiagnosticsPanel .rhw-data-status-utility { margin: 12px 16px; }
+#rhwDiagnosticsPanel .rhw-data-status-copy small { font-size: 11px; color: #bcbebf; white-space: normal; line-height: 1.4; }
+#rhwDiagnosticsPanel .rhw-data-status-live { font-size: 11px; white-space: normal; }
 html.rhw-focus-pass #rhwDiagnosticsPanel .discovery-data-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 html.rhw-focus-pass #rhwDiagnosticsPanel .discovery-data-grid article { min-width: 0; overflow-wrap: anywhere; }
 :is(.uplink-details,#opsPriceProfiles,.comms-format-more,.comms-advanced) > summary:focus-visible,
