@@ -1,12 +1,14 @@
 function updateBaseTelemetry() {
   const snapshot = telemetrySnapshot();
   const anchor = els.baseMoneyVal?.closest('.base-telemetry-bar') || document.querySelector('.base-telemetry-bar');
+  const connectionDetails = document.querySelector('#uplinkDetails .uplink-grid');
   let status = document.getElementById('commandTelemetryStatus');
   if (!status && anchor) {
     status = document.createElement('div');
     status.id = 'commandTelemetryStatus';
     status.setAttribute('role', 'status');
-    anchor.insertAdjacentElement('afterend', status);
+    if (connectionDetails) connectionDetails.appendChild(status);
+    else anchor.insertAdjacentElement('afterend', status);
   }
   if (status) { status.textContent = snapshot.detail; status.dataset.tone = snapshot.tone; }
   if (!rhwBase) {

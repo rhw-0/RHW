@@ -15,7 +15,7 @@ base.V4_CSS = [
     "css/25-app-pr3-comms-workflow.css", "css/26-app-pr3-newswire-manager.css",
     "css/27-app-pr4-pwa.css", "css/28-app-pr5-newswire-2.css", "css/29-app-pr6-discovery-sync.css",
     "css/30-app-pr7-diagnostics.css", "css/31-app-pr8-production-orders.css", "css/32-app-pr9-transfer-center.css",
-    "css/33-app-pr10-newswire-review.css", "css/34-app-pr11-full-audit.css",
+    "css/33-app-pr10-newswire-review.css", "css/34-app-pr11-full-audit.css", "css/35-app-interface-cleanup.css",
 ]
 base.V4_JS = [
     "js/12-app-config.js", "js/13-app-v40.js", "js/14-app-v40-cache.js", "js/15-app-v40-navigation.js",

@@ -10,7 +10,7 @@ const CSS_NAMES = [
   'app-v402-mobile-ui', 'app-pr3-command-mobile', 'app-pr3-yard-production', 'app-pr3-operations-calculator',
   'app-pr3-comms-workflow', 'app-pr3-newswire-manager', 'app-pr4-pwa', 'app-pr5-newswire-2',
   'app-pr6-discovery-sync', 'app-pr7-diagnostics', 'app-pr8-production-orders', 'app-pr9-transfer-center',
-  'app-pr10-newswire-review', 'app-pr11-full-audit'
+  'app-pr10-newswire-review', 'app-pr11-full-audit', 'app-interface-cleanup'
 ];
 const APP_SHELL = [
   './', './index.html', './manifest.webmanifest',

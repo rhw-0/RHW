@@ -151,8 +151,8 @@
 
   function relocateDiscoveryPanel() {
     const panel = document.getElementById('discoveryDataStatus');
-    const calculatorPanel = document.querySelector('[data-operations-panel="calculator"]');
-    if (!panel || !calculatorPanel) return false;
+    const systemSheet = document.querySelector('#rhwDiagnosticsPanel .rhw-diagnostics-sheet');
+    if (!panel || !systemSheet) return false;
 
     let details = document.getElementById('rhwDataStatusUtility');
     if (!details) {
@@ -163,7 +163,7 @@
       summary.id = 'rhwDataStatusSummary';
       summary.setAttribute('aria-label', 'Open Discovery catalog and sync details');
       details.appendChild(summary);
-      calculatorPanel.appendChild(details);
+      systemSheet.querySelector('.rhw-diagnostics-events').before(details);
     }
     if (panel.parentElement !== details) details.appendChild(panel);
     details.open = false;

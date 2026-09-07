@@ -42,8 +42,8 @@
   }
 
   function profilePanelMarkup() {
-    return `<section class="ops-price-profiles" id="opsPriceProfiles">
-      <div class="ops-price-profiles-head"><div><small>OPTIONAL LOCAL TOOL</small><strong>PRICE PROFILES</strong></div><small>EXPLICIT SAVE + LOAD // NEVER AUTO-APPLIED</small></div>
+    return `<details class="ops-price-profiles" id="opsPriceProfiles">
+      <summary>PRICE PROFILES <small>Save or load prices</small></summary>
       <div class="ops-profile-controls">
         <label class="comms-field"><span>SAVED PROFILE</span><select id="opsPriceProfileSelect" aria-label="Saved calculator price profile"></select><small>SELECT A PROFILE TO LOAD OR UPDATE</small></label>
         <label class="comms-field"><span>PROFILE NAME</span><input id="opsPriceProfileName" type="text" maxlength="40" placeholder="Current Market, Admiralty Offer…"><small>SAVING UPDATES CURRENT RECIPE MATERIALS IN THIS PROFILE</small></label>
@@ -55,7 +55,7 @@
         <button type="button" class="danger" id="opsPriceProfileDelete">DELETE PROFILE</button>
       </div>
       <div class="ops-profile-status" id="opsPriceProfileStatus" data-tone="muted"></div>
-    </section>`;
+    </details>`;
   }
 
   function selectedProfile() {

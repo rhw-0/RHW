@@ -222,7 +222,7 @@
     document.body.insertAdjacentHTML('beforeend', `<aside class="rhw-diagnostics-overlay" id="rhwDiagnosticsPanel" role="dialog" aria-modal="true" aria-labelledby="rhwDiagnosticsTitle" hidden>
       <section class="rhw-diagnostics-sheet">
         <header class="rhw-diagnostics-head">
-          <div><small>PR11 / RELIABILITY + FULL APP AUDIT</small><strong id="rhwDiagnosticsTitle">RHW SYSTEM CHECK</strong><span>RUNTIME // STORAGE // DATA // UI // WORKFLOWS</span></div>
+          <div><strong id="rhwDiagnosticsTitle">SYSTEM + DATA</strong></div>
           <button type="button" id="rhwDiagnosticsClose" aria-label="Close system check">CLOSE</button>
         </header>
         <div class="rhw-diagnostics-overall" id="rhwDiagnosticsOverall" data-tone="muted" role="status" aria-live="polite"><i aria-hidden="true"></i><div><strong>CHECKING SYSTEMS</strong><span>Collecting content-free app status.</span></div></div>

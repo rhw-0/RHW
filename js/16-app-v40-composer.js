@@ -54,17 +54,10 @@
     return `<section class="comms-node-panel" data-comms-panel="forum">
       <div class="comms-grid">
         <section class="comms-panel composer-panel" id="commsComposerPanel">
-          <div class="comms-panel-head"><div><span>01</span><strong>TRANSMISSION PARAMETERS</strong></div><small>AUTOSAVE ACTIVE</small></div>
+          <div class="comms-panel-head"><div><span>01</span><strong>WRITE TRANSMISSION</strong></div><small>AUTOSAVE ACTIVE</small></div>
           <div class="comms-workflow-status" id="commsWorkflowStatus" aria-live="polite"></div>
+          <div class="comms-context-tools" aria-label="Forum tools"><button type="button" data-forum-tool="drafts">OPEN DRAFTS</button><button type="button" data-forum-tool="senders">MANAGE SENDERS</button></div>
           <form id="commsForm" autocomplete="off">
-            <section class="comms-document-control">
-              <div class="comms-document-control-head"><div><small>DOCUMENT CONTROL</small><strong>TRANSMISSION PROFILE</strong></div><span id="v40DocumentControlSummary"></span></div>
-              <div class="comms-document-control-grid">
-                <label class="comms-field"><span>DOCUMENT TYPE</span><select id="commsTemplate">${templateOptions()}</select><small id="templateDescription"></small></label>
-                <label class="comms-field"><span>SECURITY CLASSIFICATION</span><select id="commsClassification">${classificationOptions()}</select><small>DISPLAYED AS ITS OWN SECURITY BANNER</small></label>
-              </div>
-            </section>
-
             <div class="comms-field-grid">
               <label class="comms-field"><span>SENDER PROFILE</span><select id="commsSender"></select><small>SENDER PROFILE CONTROLS THE SIGNATURE</small></label>
               <div class="comms-signature-auto" id="v40SignatureAuto"></div>
@@ -73,21 +66,32 @@
                 <label class="comms-field"><span>SENDER ROLE / TITLE</span><input id="commsSignatureTitle" type="text" maxlength="120" placeholder="Role / organisation" /></label>
               </div>
               <label class="comms-field comms-wide"><span>RECIPIENT ID</span><input id="commsRecipient" type="text" maxlength="180" placeholder="Recipient / office / organisation" /></label>
-              <label class="comms-field"><span>LOCATION</span><input id="commsLocation" type="text" maxlength="160" /></label>
-              <label class="comms-field"><span>ENCRYPTION</span><div class="comms-inline-control"><input id="commsEncryption" type="text" maxlength="120" /><button type="button" id="randomizeCipherBtn" class="comms-mini-action">↻ ROLL CIPHER</button></div><small>RP CIPHER DESIGNATION // DOES NOT ENCRYPT THE POST</small></label>
-              <label class="comms-field comms-wide"><span>SALUTATION / OPENING</span><select id="commsSalutation">${selectOptions(app.config.salutations)}</select><input id="commsSalutationCustom" type="text" maxlength="160" placeholder="Custom opening" hidden /><small>OPTIONAL OPENING BASED ON RECIPIENT CONTEXT</small></label>
               <label class="comms-field comms-wide"><span>SUBJECT</span><input id="commsSubject" type="text" maxlength="180" /></label>
-              <label class="comms-field comms-wide message-field"><span>MESSAGE</span>
+              <div class="comms-field comms-wide message-field"><label for="commsMessage">MESSAGE</label>
                 <div class="comms-editor-toolbar" role="toolbar" aria-label="Message formatting">
                   <button type="button" data-format="heading">HEADING</button><button type="button" data-format="bold">BOLD</button><button type="button" data-format="status">STATUS</button><button type="button" data-format="warning">WARNING</button><button type="button" data-format="list">LIST</button>
                 </div>
                 <textarea id="commsMessage" rows="14" placeholder="Write the actual forum post here — no BB code required."></textarea><small class="comms-message-help"><span>SMART MARKUP: ## HEADING · **BOLD** · !WARNING · !STATUS · - LIST</span><b id="commsMessageCount">0 CHARACTERS</b></small>
-              </label>
-              <label class="comms-field"><span>SIGN-OFF / CLOSING</span><select id="commsClosing">${selectOptions(app.config.closings)}</select><input id="commsClosingCustom" type="text" maxlength="100" placeholder="Custom sign-off" hidden /><small>PRESETS BY RECIPIENT CONTEXT</small></label>
-              <label class="comms-field"><span>RP SYSTEM DATE</span><input id="commsSystemDate" type="text" maxlength="40" placeholder="05/08/836" /></label>
+              </div>
               <label class="comms-field comms-wide"><span>DRAFT NAME</span><input id="commsDraftName" type="text" maxlength="100" placeholder="e.g. BAF Dunkirk Offer" /></label>
             </div>
-            <details class="comms-advanced"><summary>ADVANCED TRANSMISSION SETTINGS</summary><label class="comms-field"><span>FOOTER / SECURITY STAMP</span><input id="commsFooterMotto" type="text" maxlength="180" /></label></details>
+            <details class="comms-advanced"><summary>TRANSMISSION SETTINGS <span id="v40DocumentControlSummary"></span></summary>
+            <section class="comms-document-control">
+              <div class="comms-document-control-grid">
+                <label class="comms-field"><span>DOCUMENT TYPE</span><select id="commsTemplate">${templateOptions()}</select><small id="templateDescription"></small></label>
+                <label class="comms-field"><span>SECURITY CLASSIFICATION</span><select id="commsClassification">${classificationOptions()}</select><small>DISPLAYED AS ITS OWN SECURITY BANNER</small></label>
+              </div>
+            </section>
+
+              <div class="comms-field-grid">
+              <label class="comms-field"><span>LOCATION</span><input id="commsLocation" type="text" maxlength="160" /></label>
+              <label class="comms-field"><span>ENCRYPTION</span><div class="comms-inline-control"><input id="commsEncryption" type="text" maxlength="120" /><button type="button" id="randomizeCipherBtn" class="comms-mini-action">↻ ROLL CIPHER</button></div><small>RP CIPHER DESIGNATION // DOES NOT ENCRYPT THE POST</small></label>
+              <label class="comms-field comms-wide"><span>SALUTATION / OPENING</span><select id="commsSalutation">${selectOptions(app.config.salutations)}</select><input id="commsSalutationCustom" type="text" maxlength="160" placeholder="Custom opening" hidden /><small>OPTIONAL OPENING BASED ON RECIPIENT CONTEXT</small></label>
+              <label class="comms-field"><span>SIGN-OFF / CLOSING</span><select id="commsClosing">${selectOptions(app.config.closings)}</select><input id="commsClosingCustom" type="text" maxlength="100" placeholder="Custom sign-off" hidden /><small>PRESETS BY RECIPIENT CONTEXT</small></label>
+              <label class="comms-field"><span>RP SYSTEM DATE</span><input id="commsSystemDate" type="text" maxlength="40" placeholder="05/08/836" /></label>
+                <label class="comms-field comms-wide"><span>FOOTER / SECURITY STAMP</span><input id="commsFooterMotto" type="text" maxlength="180" /></label>
+              </div>
+            </details>
             <div class="comms-actions">
               <button class="comms-primary" type="button" id="copyBbcodeBtn"><span>COPY BB CODE</span></button>
               <button type="button" id="saveDraftBtn"><span>SAVE NAMED DRAFT</span></button>
@@ -681,6 +685,7 @@
       syncFromForm();
       app.notify('NEW CIPHER DESIGNATION ISSUED');
     });
+    document.querySelectorAll('[data-forum-tool]').forEach(button => button.addEventListener('click', () => app.navigate('comms', button.dataset.forumTool)));
     document.querySelector('.comms-editor-toolbar')?.addEventListener('click', event => {
       const button = event.target.closest('[data-format]');
       if (button) insertFormat(button.dataset.format);
