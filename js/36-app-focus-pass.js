@@ -35,7 +35,6 @@
     commsActivate: app.comms?.activate
   };
 
-  let requestedTool = '';
   let toolOpenedBy = null;
   let syncTimer = 0;
 
@@ -49,7 +48,6 @@
       html.rhw-focus-pass body[data-workspace="operations"] #appContextNavSlot,
       html.rhw-focus-pass body[data-workspace="comms"] #appContextNavSlot{min-height:0!important;height:auto!important;padding-top:0!important;padding-bottom:0!important}
       html.rhw-focus-pass #rhwDiagnosticsBtn{display:none!important}
-      html.rhw-focus-pass body[data-workspace="operations"][data-operations-node="calculator"]:not([data-rhw-focus-tool="data"]) #rhwDataStatusUtility{display:none!important}
 
       .rhw-focus-tools-button{
         min-height:44px;padding:6px 10px;border:1px solid rgba(212,175,55,.24);border-radius:5px;
@@ -243,7 +241,7 @@
   function syncHeadings(toolKey) {
     if (app.state.activeWorkspace === 'operations') {
       const kicker = document.querySelector('#workspaceOperations .workspace-kicker');
-      if (kicker) kicker.innerHTML = toolKey === 'build-queue' ? '<span>TOOLS</span> RHW BUILD QUEUE' : toolKey === 'data' ? '<span>TOOLS</span> RHW DATA STATUS' : '<span>CALCULATOR</span> RHW INDUSTRIAL COSTING';
+      if (kicker) kicker.innerHTML = toolKey === 'build-queue' ? '<span>TOOLS</span> RHW BUILD QUEUE' : '<span>CALCULATOR</span> RHW INDUSTRIAL COSTING';
     }
     if (app.state.activeWorkspace === 'comms') {
       const kicker = document.querySelector('#workspaceComms .workspace-kicker');
@@ -260,15 +258,10 @@
     relabelPrimaryTabs();
     mountTools();
     const toolKey = routeTool();
-    if (!toolKey && requestedTool !== 'data') requestedTool = '';
     document.body.dataset.rhwFocusTool = toolKey;
     const toolsButton = document.getElementById('rhwFocusToolsBtn');
     if (toolsButton) toolsButton.dataset.toolOpen = toolKey ? 'true' : 'false';
     syncHeadings(toolKey);
-    if (toolKey === 'data') {
-      requestAnimationFrame(revealDataStatus);
-      window.setTimeout(revealDataStatus, 90);
-    }
   }
 
   function queueSync() {
@@ -288,7 +281,6 @@
       if (key === 'data') revealDataStatus();
       return;
     }
-    requestedTool = key === 'data' ? 'data' : '';
     app.navigate(tool.workspace, tool.node);
     queueSync();
   }
@@ -301,7 +293,6 @@
       const button = event.target.closest('.app-tabs [data-workspace]');
       if (!button) return;
       const workspace = button.dataset.workspace;
-      requestedTool = '';
       if (workspace === 'operations' || workspace === 'comms') {
         event.preventDefault();
         event.stopPropagation();
@@ -343,15 +334,12 @@
 
   app.applyRoute = function focusedApplyRoute(...args) {
     const result = base.applyRoute.apply(this, args);
-    requestedTool = '';
     queueSync();
     return result;
   };
 
   app.navigate = function focusedNavigate(workspace, node, options) {
-    const preserveData = requestedTool === 'data' && workspace === 'operations' && (node || 'calculator') === 'calculator';
     const result = base.navigate.call(this, workspace, node, options);
-    if (!preserveData) requestedTool = '';
     queueSync();
     return result;
   };
