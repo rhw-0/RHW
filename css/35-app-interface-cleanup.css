@@ -14,7 +14,7 @@ html.rhw-focus-pass .base-telemetry-stat:first-child { padding-left: 0; }
 html.rhw-focus-pass .base-telemetry-stat small { font-size: 10px; min-height: 0; color: #bcbebf; letter-spacing: .025em; }
 html.rhw-focus-pass .base-telemetry-stat strong { font-size: 15px; }
 html.rhw-focus-pass .telemetry-divider { display: none; }
-html.rhw-focus-pass #commandTelemetryStatus { font-size: 11px; line-height: 1.4; margin-top: 4px; }
+html.rhw-focus-pass #commandTelemetryStatus { grid-column: 1 / -1; font-size: 11px; line-height: 1.4; margin-top: 4px; }
 html.rhw-focus-pass .uplink-panel { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px 10px; width: 100%; max-width: none; padding: 10px; }
 html.rhw-focus-pass .uplink-header { grid-column: 1 / -1; padding: 0; margin: 0 0 4px; border: 0; }
 html.rhw-focus-pass .uplink-label { font-size: 10px; color: #bcbebf; }
